@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React from "react";
 
-const WorkoutDetails = () => {
+const ExerciseDetails = () => {
   return (
     <View>
       <Text>WorkoutDetails</Text>
@@ -9,4 +9,4 @@ const WorkoutDetails = () => {
   );
 };
 
-export default WorkoutDetails;
+export default ExerciseDetails;

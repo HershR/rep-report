@@ -11,7 +11,7 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         ></Stack.Screen>
         <Stack.Screen
-          name="workout/[id]"
+          name="exercise/[id]"
           options={{ headerShown: false }}
         ></Stack.Screen>
       </Stack>

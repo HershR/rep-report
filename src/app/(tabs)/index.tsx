@@ -1,25 +1,87 @@
-import { Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { DateTime } from "luxon";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
+import useFetch from "@/src/services/useFetch";
+import { fetchExcercises } from "@/src/services/api";
+import { ExerciseInfo } from "@/src/interfaces/interface";
+import RecentExerciseCard from "@/src/components/RecentExcerciseCard";
+import SearchBar from "@/src/components/searchBar";
+import { useRouter } from "expo-router";
 export default function Index() {
+  const router = useRouter();
+
   const [date, setDate] = useState<DateTime>(DateTime.now());
   function updateDate(newDate: DateTime) {
     if (!!newDate) {
       setDate(newDate);
     }
   }
-  const test = [1, 2, 3, 4, 5].map((x) => (
-    <View key={x} className="flex-1 w-10"></View>
-  ));
+  const {
+    data: recentExercise,
+    loading,
+    error,
+  }: { data: ExerciseInfo[]; loading: boolean; error: any } = useFetch(() =>
+    fetchExcercises({ offset: "", category: "", equipment: "" })
+  );
+
   return (
     <View className="flex-1 bg-secondary">
       <SafeAreaView className="flex-1 mx-8 my-10">
         <View className="flex">
           <DatePickerWithWeek currentDate={date} onDateChange={updateDate} />
         </View>
-        <View className="flex-1 border-2"></View>
+        {loading ? (
+          <ActivityIndicator
+            size={"large"}
+            className="mt-10 self-center"
+          ></ActivityIndicator>
+        ) : (
+          <View className="flex-1">
+            <View className="flex">
+              <Text className="text-primary text-lg font-bold">
+                Recent Exercise
+              </Text>
+              {recentExercise ? (
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="mb-4 mt-3"
+                  data={recentExercise.filter((x) => {
+                    return (
+                      x.translations.find((y) => !!y && y.language === 2) !==
+                      undefined
+                    );
+                  })}
+                  keyExtractor={(item) => item.uuid}
+                  contentContainerStyle={{ gap: 26 }}
+                  renderItem={({ item, index }) => (
+                    <RecentExerciseCard {...item} />
+                  )}
+                  ItemSeparatorComponent={() => <View className="w-4" />}
+                  initialNumToRender={5}
+                ></FlatList>
+              ) : null}
+            </View>
+            <View className="flex-1 border-2">
+              <SearchBar
+                placeholder={"Add exercise"}
+                value={""}
+                onPress={() => router.push("/search")}
+              />
+              <Text className="text-primary text-lg font-bold">
+                Completed Exercise
+              </Text>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
