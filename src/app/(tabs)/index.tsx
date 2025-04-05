@@ -15,6 +15,7 @@ import { ExerciseInfo } from "@/src/interfaces/interface";
 import RecentExerciseCard from "@/src/components/RecentExcerciseCard";
 import SearchBar from "@/src/components/searchBar";
 import { useRouter } from "expo-router";
+import exerciseInfo from "@/src/data/exerciseInfo";
 export default function Index() {
   const router = useRouter();
 
@@ -24,13 +25,16 @@ export default function Index() {
       setDate(newDate);
     }
   }
-  const {
-    data: recentExercise,
-    loading,
-    error,
-  }: { data: ExerciseInfo[]; loading: boolean; error: any } = useFetch(() =>
-    fetchExcercises({ offset: "", category: "", equipment: "" })
-  );
+  // const {
+  //   data: recentExercise,
+  //   loading,
+  //   error,
+  // }: { data: ExerciseInfo[]; loading: boolean; error: any } = useFetch(() =>
+  //   fetchExcercises({ offset: "", category: "", equipment: "" })
+  // );
+  const recentExercise = exerciseInfo;
+  const loading = false;
+  const error = undefined;
 
   return (
     <View className="flex-1 bg-secondary">
