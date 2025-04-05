@@ -27,7 +27,6 @@ const MuscleCard = ({ muscleList, isFront }: MuscleCardProps) => {
         uri={`https://wger.de${
           index == 0 ? x.image_url_main : x.image_url_secondary
         }`}
-        className="rounded-lg border-2"
       ></SvgUri>
     </View>
   ));

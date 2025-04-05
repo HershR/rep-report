@@ -8,8 +8,8 @@ import { useSharedValue } from "react-native-reanimated";
 import { DotStyle } from "react-native-reanimated-carousel/lib/typescript/components/Pagination/Basic/PaginationItem";
 
 interface CarouselProps {
-  width: number;
-  height: number;
+  width?: number | undefined;
+  height?: number | undefined;
   loop: boolean;
   style?: StyleProp<ViewStyle>;
   data: any[];
@@ -48,14 +48,16 @@ const CustomCarousel = ({
         style={style}
         onProgressChange={progress}
       ></Carousel>
-      <Pagination.Basic
-        progress={progress}
-        data={data}
-        dotStyle={dotStyle}
-        activeDotStyle={activeDotStyle}
-        containerStyle={{ gap: 5, marginTop: 5 }}
-        onPress={onPressPagination}
-      />
+      {data.length > 1 && (
+        <Pagination.Basic
+          progress={progress}
+          data={data}
+          dotStyle={dotStyle}
+          activeDotStyle={activeDotStyle}
+          containerStyle={{ gap: 5, marginTop: 5 }}
+          onPress={onPressPagination}
+        />
+      )}
     </>
   );
 };
