@@ -12,8 +12,8 @@ import { useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
 import { ExerciseInfo } from "@/src/interfaces/interface";
-import RecentExerciseCard from "@/src/components/RecentExcerciseCard";
-import SearchBar from "@/src/components/searchBar";
+import RecentExerciseCard from "@/src/components/RecentExerciseCard";
+import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import exerciseInfo from "@/src/data/exerciseInfo";
 export default function Index() {

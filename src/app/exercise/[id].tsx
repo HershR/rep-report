@@ -17,6 +17,7 @@ import { removeHTML, toCamelCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
 import { SearchChip } from "../../components/SearchChip";
+import { icons } from "@/src/constants/icons";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -51,7 +52,7 @@ const ExerciseDetails = () => {
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-4 mt-8">
+        <SafeAreaView className="flex-1 mx-4 mt-8 relative">
           <ScrollView
             className="flex-1 px-5"
             showsVerticalScrollIndicator={false}
@@ -61,7 +62,7 @@ const ExerciseDetails = () => {
               <View className="flex-1 items-center">
                 <CustomCarousel
                   width={350}
-                  height={450}
+                  height={350}
                   loop={false}
                   data={exercise?.images.map((x) => x.image)}
                   dotStyle={{
@@ -81,7 +82,7 @@ const ExerciseDetails = () => {
                           source={{
                             uri: item,
                           }}
-                          className="rounded-lg aspect-[7/9] w-full bg-accent"
+                          className="rounded-lg aspect-square w-full bg-gray-300"
                           resizeMode="cover"
                         />
                       </View>
@@ -114,6 +115,16 @@ const ExerciseDetails = () => {
                 {equipment !== undefined && equipment}
               </View>
             )}
+            <TouchableOpacity className="flex flex-row items-center justify-center bg-accent rounded-lg py-3.5 my-5">
+              <Text className="text-secondary font-semibold text-base">
+                Start
+              </Text>
+              <Image
+                source={icons.arrow}
+                className="size-5 ml-1 mt-0.5"
+                tintColor={"#fff"}
+              />
+            </TouchableOpacity>
             {muscles !== undefined && muscles.length > 0 && (
               <View className="flex-1 mt-2 justify-center">
                 <Text className="text-primary font-bold text-xl">
@@ -150,8 +161,15 @@ const ExerciseDetails = () => {
               </View>
             )}
           </ScrollView>
-          <TouchableOpacity className="w-24 h-14 mb-4 rounded-md bg-accent absolute bottom-5 right-4 justify-center items-center">
-            <Text className="text-secondary text-xl text-center">Start</Text>
+          <TouchableOpacity
+            className="absolute left-0 top-0 self-start flex-shrink justify-center items-center bg-transparent rounded-full px-2 py-2 border-accent border-2"
+            onPress={router.back}
+          >
+            <Image
+              source={icons.arrow}
+              className="size-5 rotate-180"
+              tintColor={"#2b2e3d"}
+            />
           </TouchableOpacity>
         </SafeAreaView>
       )}

@@ -51,9 +51,11 @@ export const fetchExerciseDetail = async (
   }
 };
 
-export const fetchSearchExercise = async (
-  query: string
-): Promise<ExerciseSuggestion[]> => {
+export const searchExercise = async ({
+  query,
+}: {
+  query: string;
+}): Promise<ExerciseSuggestion[]> => {
   try {
     const endpoint = `${WGER_CONFIG.BASE_URL}/api/v2/exercise/search/?term=${query}&language=en`;
     const response = await fetch(endpoint, {
@@ -64,7 +66,7 @@ export const fetchSearchExercise = async (
       throw new Error("Failed to fetch movies", response.statusText);
     }
     const data = await response.json();
-    return data;
+    return data.suggestions;
   } catch (err) {
     console.log(err);
     throw err;
