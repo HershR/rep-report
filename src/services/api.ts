@@ -1,3 +1,5 @@
+import { ExerciseInfo } from "../interfaces/interface";
+
 export const WGER_CONFIG = {
   BASE_URL: "https://wger.de/api/v2",
   header: {
@@ -29,16 +31,22 @@ export const fetchExcercises = async ({
   return data.results;
 };
 
-export const fetchExcerciseDetail = async ({ id }: { id: string }) => {
-  const endpoint = `${WGER_CONFIG.BASE_URL}/exerciseinfo/${id}?offset=0`;
-  const response = await fetch(endpoint, {
-    method: "GET",
-    headers: WGER_CONFIG.header,
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch movies", response.statusText);
+export const fetchExerciseDetail = async (
+  exerciseId: string
+): Promise<ExerciseInfo> => {
+  try {
+    const endpoint = `${WGER_CONFIG.BASE_URL}/exerciseinfo/${exerciseId}?offset=0`;
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: WGER_CONFIG.header,
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch movies", response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.log(err);
+    throw err;
   }
-
-  const data = await response.json();
-  return data.results;
 };
