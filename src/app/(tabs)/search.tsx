@@ -45,7 +45,7 @@ const Search = () => {
             <>
               <View className="my-5">
                 <SearchBar
-                  placeholder="Search movies..."
+                  placeholder="Search exercise..."
                   value={searchQuery}
                   onChangeText={(text: string) => {
                     setSearchQuery(text);
@@ -70,7 +70,7 @@ const Search = () => {
               searchQuery.trim() &&
               exercies &&
               exercies?.length > 0 ? (
-                <Text className="text-xl text-white font-bold">
+                <Text className="text-xl text-gray-400 font-bold">
                   Search Results for{" "}
                   <Text className="text-accent">{searchQuery}</Text>
                 </Text>
@@ -80,7 +80,7 @@ const Search = () => {
           ListEmptyComponent={
             !loading && !error ? (
               <View className="mt-10 px-5">
-                <Text className="text-center text-gray-500">
+                <Text className="text-center text-accent">
                   {searchQuery.trim() ? "No Movies Found" : "Search"}
                 </Text>
               </View>

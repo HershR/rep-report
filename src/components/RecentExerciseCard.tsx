@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { Link } from "expo-router";
 import { ExerciseInfo } from "../interfaces/interface";
-import { toCamelCase as firstLetterUpperCase } from "../services/textFormatter";
+import { toUpperCase } from "../services/textFormatter";
 
 const RecentExerciseCard = (item: ExerciseInfo) => {
   const translation = item.translations.find((x) => x.language === 2);
@@ -25,7 +25,7 @@ const RecentExerciseCard = (item: ExerciseInfo) => {
           numberOfLines={1}
           className="text-left text-sm font-bold mt-1 ml-1 text-primary"
         >
-          {firstLetterUpperCase(translation?.name!)}
+          {toUpperCase(translation?.name!)}
         </Text>
         <Text className="text-accent text-sm bg-secondary rounded-lg absolute top-2 right-2 px-1">
           {item.category.name}

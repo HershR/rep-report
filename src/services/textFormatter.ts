@@ -1,4 +1,4 @@
-export function toCamelCase(str: string | undefined) {
+export function toUpperCase(str: string | undefined) {
   if (!!str)
     return str
       .split(/[-_\s]/)
@@ -16,4 +16,4 @@ export function removeHTML(str: string | undefined) {
   return "";
 }
 
-export default [toCamelCase, removeHTML];
+export default [toUpperCase, removeHTML];

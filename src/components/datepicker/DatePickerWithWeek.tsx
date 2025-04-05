@@ -73,7 +73,7 @@ const DatePickerWithWeek = ({
   };
 
   return (
-    <View className="flex py-5 gap-y-1">
+    <View className="flex py-5 gap-y-4">
       <View className="flex flex-row justify-center items-center gap-x-5">
         <AntDesign
           name="leftcircle"
