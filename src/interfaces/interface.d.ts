@@ -1,9 +1,4 @@
 export interface ExerciseInfo {
-  count: number;
-  results: ExerciseInfo[];
-}
-
-export interface ExerciseInfo {
   id: number;
   uuid: string;
   category: Category;
@@ -42,4 +37,15 @@ export interface TranslationBaseInfo {
   exercise: number;
   description: string;
   language: number;
+}
+
+export interface ExerciseSuggestion {
+  value: string;
+  data: {
+    id: number;
+    name: string;
+    category: string;
+    image: string;
+    image_thumbnail: string;
+  };
 }
