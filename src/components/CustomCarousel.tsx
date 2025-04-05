@@ -13,8 +13,9 @@ interface CarouselProps {
   loop: boolean;
   style?: StyleProp<ViewStyle>;
   data: any[];
-  dotStyle: DotStyle;
-  renderItem: (item: any, index?: number) => any;
+  dotStyle?: DotStyle;
+  activeDotStyle?: DotStyle;
+  renderFunction: (item: any, index?: number) => any;
 }
 
 const CustomCarousel = ({
@@ -24,16 +25,13 @@ const CustomCarousel = ({
   style,
   data,
   dotStyle,
-  renderItem,
+  activeDotStyle,
+  renderFunction: renderItem,
 }: CarouselProps) => {
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const onPressPagination = (index: number) => {
     ref.current?.scrollTo({
-      /**
-       * Calculate the difference between the current index and the target index
-       * to ensure that the carousel scrolls to the nearest index
-       */
       count: index - progress.value,
       animated: true,
     });
@@ -48,12 +46,14 @@ const CustomCarousel = ({
         height={height}
         renderItem={({ item, index }) => renderItem(item, index)}
         style={style}
+        onProgressChange={progress}
       ></Carousel>
       <Pagination.Basic
         progress={progress}
         data={data}
         dotStyle={dotStyle}
-        containerStyle={{ gap: 5, marginTop: 10 }}
+        activeDotStyle={activeDotStyle}
+        containerStyle={{ gap: 5, marginTop: 5 }}
         onPress={onPressPagination}
       />
     </>

@@ -40,7 +40,7 @@ const ExerciseDetails = () => {
 
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10 border-2">
+      <SafeAreaView className="flex-1 mx-4 mt-8">
         <ScrollView
           className="flex-1 px-5"
           showsVerticalScrollIndicator={false}
@@ -53,18 +53,20 @@ const ExerciseDetails = () => {
                   ? exercise?.images[0].image
                   : undefined,
             }}
-            className="w-full h-[400px] rounded-lg bg-accent"
+            className="rounded-lg aspect-[7/9] w-full bg-accent"
             resizeMode="cover"
           />
           <Text className="text-primary text-4xl font-bold mt-4">{name}</Text>
           <Text
             numberOfLines={showDescription ? undefined : 3}
-            className="text-gray-500 text-xl"
+            className="text-light text-gr text-xl"
           >
             {desciption}
           </Text>
           <TouchableOpacity onPress={toggleShowDescription}>
-            <Text>{showDescription ? "Show Less" : "Show More"}</Text>
+            <Text className="text-light text-lg font-bold">
+              {showDescription ? "Show Less" : "Show More"}
+            </Text>
           </TouchableOpacity>
           {!!equipment && (
             <View className="flex-row mt-4">
@@ -85,10 +87,16 @@ const ExerciseDetails = () => {
                   loop={false}
                   data={[musclesFront, musclesBack]}
                   dotStyle={{
-                    backgroundColor: "rgba(0,0,0,0.2)",
+                    backgroundColor: "#9ca3af",
                     borderRadius: 50,
+                    overflow: "hidden",
                   }}
-                  renderItem={function (item: any, index?: number) {
+                  activeDotStyle={{
+                    borderRadius: 100,
+                    overflow: "hidden",
+                    backgroundColor: "#2A2E3C",
+                  }}
+                  renderFunction={function (item: any, index?: number) {
                     return (
                       <MuscleCard
                         muscleList={item}
@@ -101,8 +109,10 @@ const ExerciseDetails = () => {
             </View>
           )}
         </ScrollView>
-        <TouchableOpacity className="w-24 h-14 rounded-full bg-accent absolute bottom-5 right-4 justify-center items-center">
-          <Text className="text-secondary text-xl font-bold">Add</Text>
+        <TouchableOpacity className="w-24 h-14 mb-4 rounded-full bg-accent absolute bottom-5 right-4 justify-center items-center">
+          <Text className="text-secondary text-md font-bold text-center">
+            Start Exercise
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
