@@ -16,11 +16,10 @@ import { Muscles } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
-import { SearchChip } from "../../components/SearchChip";
+import { SearchChip } from "@/src/components/SearchChip";
 import { icons } from "@/src/constants/icons";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import { useDate } from "@/src/context/DateContext";
-
 const ExerciseDetails = () => {
   const router = useRouter();
   const { selectedDate, setSelectedDate } = useDate();

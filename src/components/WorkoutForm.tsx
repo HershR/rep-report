@@ -205,7 +205,6 @@ const WorkoutForm = ({
         <Picker
           selectedValue={selectedMode}
           onValueChange={(itemValue, itemIndex) => {
-            console.log("new Mode: ", itemValue);
             setSelectedMode(itemValue);
           }}
         >

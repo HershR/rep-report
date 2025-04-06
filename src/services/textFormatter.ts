@@ -9,9 +9,11 @@ export function toUpperCase(str: string | undefined) {
   return "";
 }
 
-export function removeHTML(str: string | undefined) {
-  if (!!str) {
-    return str.replace(/<[^>]*>/g, "");
+export function removeHTML(htmlString: string | undefined) {
+  if (!!htmlString) {
+    let text = htmlString.replace(/<[^>]*>/g, ""); // Remove HTML tags
+    text = text.replace(/&nbsp;/g, " "); // Replace &nbsp; with a space
+    return text;
   }
   return "";
 }
