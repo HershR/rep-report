@@ -79,7 +79,7 @@ export default function Index() {
                 ></FlatList>
               ) : null}
             </View>
-            <View className="flex-1 border-2">
+            <View className="flex-1">
               <SearchBar
                 placeholder={"Add exercise"}
                 value={""}

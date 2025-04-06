@@ -24,13 +24,19 @@ import { useDate } from "@/src/context/DateContext";
 const ExerciseDetails = () => {
   const router = useRouter();
   const { selectedDate, setSelectedDate } = useDate();
+
   const { id }: { id: string } = useLocalSearchParams();
+  const { width } = useWindowDimensions();
+
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
   const [showMuscles, setShowMuscles] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
   const maxLineCount = 3;
+
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
-  const { width } = useWindowDimensions();
+
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
   const desciption = removeHTML(translation?.description);
@@ -122,7 +128,10 @@ const ExerciseDetails = () => {
                 numberOfLines={showDescription ? undefined : maxLineCount}
                 className="text-light text-gr text-xl"
                 onTextLayout={(e) => {
-                  if (descriptionLineCount < maxLineCount)
+                  if (
+                    descriptionLineCount < e.nativeEvent.lines.length &&
+                    descriptionLineCount < maxLineCount
+                  )
                     setDescriptionLineCount(e.nativeEvent.lines.length);
                 }}
               >
@@ -142,16 +151,30 @@ const ExerciseDetails = () => {
                 {equipment !== undefined && equipment}
               </View>
             )}
-            <TouchableOpacity className="flex flex-row items-center justify-center bg-accent rounded-lg py-3.5 my-5">
-              <Text className="text-secondary font-semibold text-base">
-                Start
-              </Text>
-              <Image
-                source={icons.arrow}
-                className="size-5 ml-1 mt-0.5"
-                tintColor={"#fff"}
+            {!showForm && (
+              <TouchableOpacity
+                onPress={() => setShowForm(true)}
+                className="flex flex-row items-center justify-center bg-accent rounded-lg py-3.5 my-5"
+              >
+                <Text className="text-secondary font-semibold text-center">
+                  Start
+                </Text>
+                <Image
+                  source={icons.arrow}
+                  className="size-5 ml-1 mt-0.5"
+                  tintColor={"#fff"}
+                />
+              </TouchableOpacity>
+            )}
+            {showForm && (
+              <WorkoutForm
+                date={selectedDate?.toISODate()!}
+                exerciseId={id}
+                exerciseName={name}
+                exerciseCategory={exercise!.category.name}
+                mode={"weight"}
               />
-            </TouchableOpacity>
+            )}
             {muscles !== undefined && muscles.length > 0 && (
               <View className="flex mt-2 justify-center">
                 <TouchableOpacity
@@ -162,6 +185,7 @@ const ExerciseDetails = () => {
                     {`Targeted Muscles ${showMuscles ? " ^" : " V"}`}
                   </Text>
                 </TouchableOpacity>
+
                 {showMuscles && (
                   <View className="flex-1 items-center mt-4">
                     <CustomCarousel
@@ -194,12 +218,6 @@ const ExerciseDetails = () => {
                 )}
               </View>
             )}
-            {/* <WorkoutForm
-              date={""}
-              exerciseId={id}
-              exerciseName={name}
-              exerciseCategory={exercise!.category.name}
-            /> */}
           </ScrollView>
         </SafeAreaView>
       )}

@@ -13,7 +13,7 @@ const RecentExerciseCard = (item: ExerciseInfo) => {
           source={{
             uri: item.images.length > 0 ? item.images[0].image : undefined,
           }}
-          className="w-36 h-36 rounded-lg bg-gray-300 border-2"
+          className="w-36 h-36 rounded-lg bg-gray-300"
           resizeMode="cover"
         ></Image>
         {item.images.length === 0 && (
