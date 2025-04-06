@@ -16,15 +16,17 @@ import RecentExerciseCard from "@/src/components/RecentExerciseCard";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import exerciseInfo from "@/src/data/exerciseInfo";
+import { useDate } from "@/src/context/DateContext";
 export default function Index() {
   const router = useRouter();
 
-  const [date, setDate] = useState<DateTime>(DateTime.now());
+  const { selectedDate, setSelectedDate } = useDate();
   function updateDate(newDate: DateTime) {
     if (!!newDate) {
-      setDate(newDate);
+      setSelectedDate(newDate);
     }
   }
+
   // const {
   //   data: recentExercise,
   //   loading,
@@ -40,7 +42,10 @@ export default function Index() {
     <View className="flex-1 bg-secondary">
       <SafeAreaView className="flex-1 mx-8 my-10">
         <View className="flex">
-          <DatePickerWithWeek currentDate={date} onDateChange={updateDate} />
+          <DatePickerWithWeek
+            currentDate={selectedDate!}
+            onDateChange={updateDate}
+          />
         </View>
         {loading ? (
           <ActivityIndicator

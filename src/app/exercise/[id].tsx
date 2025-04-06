@@ -18,18 +18,18 @@ import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
 import { SearchChip } from "../../components/SearchChip";
 import { icons } from "@/src/constants/icons";
-import WorkoutForm from "@/src/components/modals/WorkoutForm";
+import WorkoutForm from "@/src/components/WorkoutForm";
+import { useDate } from "@/src/context/DateContext";
 
 const ExerciseDetails = () => {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { selectedDate, setSelectedDate } = useDate();
+  const { id }: { id: string } = useLocalSearchParams();
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
   const [showMuscles, setShowMuscles] = useState(false);
   const maxLineCount = 3;
-  const { data: exercise, loading } = useFetch(() =>
-    fetchExerciseDetail(id as string)
-  );
+  const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
   const { width } = useWindowDimensions();
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
@@ -194,8 +194,13 @@ const ExerciseDetails = () => {
                 )}
               </View>
             )}
+            {/* <WorkoutForm
+              date={""}
+              exerciseId={id}
+              exerciseName={name}
+              exerciseCategory={exercise!.category.name}
+            /> */}
           </ScrollView>
-          <WorkoutForm exercise={exercise} date={""} />
         </SafeAreaView>
       )}
     </View>
