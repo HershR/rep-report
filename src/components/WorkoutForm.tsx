@@ -6,7 +6,7 @@ import {
   TextInput,
 } from "react-native";
 import React, { useState } from "react";
-import { ExerciseInfo, SetInfo } from "@/src/interfaces/interface";
+import { ExerciseInfo, WorkoutSet } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import { SearchChip } from "./SearchChip";
 import { AntDesign, Feather } from "@expo/vector-icons";
@@ -18,7 +18,7 @@ interface Props {
   exerciseName: string;
   exerciseCategory: string;
   exerciseImage?: string;
-  prevData?: SetInfo[] | undefined;
+  prevData?: WorkoutSet[] | undefined;
   mode: "weight" | "time";
 }
 const WorkoutForm = ({
@@ -30,7 +30,7 @@ const WorkoutForm = ({
   prevData: defaultData,
   mode = "weight",
 }: Props) => {
-  const [exerciseSets, setExerciseSets] = useState<SetInfo[]>(
+  const [exerciseSets, setExerciseSets] = useState<WorkoutSet[]>(
     defaultData || []
   );
   const [selectedMode, setSelectedMode] = useState(mode);

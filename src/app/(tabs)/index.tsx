@@ -17,10 +17,15 @@ import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import exerciseInfo from "@/src/data/exerciseInfo";
 import { useDate } from "@/src/context/DateContext";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
+
 export default function Index() {
   const router = useRouter();
 
   const { selectedDate, setSelectedDate } = useDate();
+
   function updateDate(newDate: DateTime) {
     if (!!newDate) {
       setSelectedDate(newDate);
