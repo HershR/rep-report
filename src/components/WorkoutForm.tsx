@@ -6,11 +6,12 @@ import {
   TextInput,
 } from "react-native";
 import React, { useState } from "react";
-import { ExerciseInfo, WorkoutSet } from "@/src/interfaces/interface";
+import { ExerciseInfo, Workout, WorkoutSet } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import { SearchChip } from "./SearchChip";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { createWorkoutWithExercise } from "../db/dbHelpers";
 
 interface Props {
   date: string;
@@ -20,15 +21,14 @@ interface Props {
   exerciseImage?: string;
   prevData?: WorkoutSet[] | undefined;
   mode: "weight" | "time";
+  onSubmit: (form: Workout) => void;
 }
 const WorkoutForm = ({
   date,
   exerciseId,
-  exerciseName,
-  exerciseCategory,
-  exerciseImage,
   prevData: defaultData,
   mode = "weight",
+  onSubmit,
 }: Props) => {
   const [exerciseSets, setExerciseSets] = useState<WorkoutSet[]>(
     defaultData || []
@@ -40,17 +40,9 @@ const WorkoutForm = ({
       {
         id: 0,
         workout_id: 0,
-        index: prev.length,
+        order: prev.length,
       },
     ]);
-  }
-
-  function updateUnit(newUnit: "lb" | "kg") {
-    setExerciseSets((prev) =>
-      prev.map((x) => {
-        return { ...x, unit: newUnit };
-      })
-    );
   }
 
   function updateWeight(index: number, newWeight: number) {
@@ -66,8 +58,8 @@ const WorkoutForm = ({
       })
     );
   }
-  function updateDurration(index: number, newDurration: string) {
-    let formattedText = newDurration.replace(/[^0-9]/g, "");
+  function updateDuration(index: number, newDuration: string) {
+    let formattedText = newDuration.replace(/[^0-9]/g, "");
 
     if (formattedText.length > 6) {
       formattedText = formattedText.slice(0, 6);
@@ -80,10 +72,11 @@ const WorkoutForm = ({
     if (formattedText.length >= 6) {
       formattedText = formattedText.slice(0, 5) + ":" + formattedText.slice(5);
     }
+    console.log("formatted time: ", formattedText);
     setExerciseSets((prev) =>
       prev.map((x, i) => {
         if (index === i) {
-          return { ...x, durration: formattedText };
+          return { ...x, duration: formattedText };
         }
         return x;
       })
@@ -105,21 +98,22 @@ const WorkoutForm = ({
   function deleteSet(index: number) {
     setExerciseSets((prev) =>
       prev
-        .filter((x) => x.index !== index)
+        .filter((x) => x.order !== index)
         .map((y, i) => {
           return { ...y, index: i };
         })
     );
   }
   function save() {
-    const form = {
-      date,
-      exerciseId,
-      exerciseName,
-      exerciseCategory,
-      exerciseImage,
-      exerciseSets,
+    const workoutForm: Workout = {
+      id: 0,
+      date: date,
+      mode: selectedMode === "time" ? 1 : 0,
+      exercise_id:
+        typeof exerciseId === "number" ? exerciseId : parseInt(exerciseId),
+      sets: exerciseSets,
     };
+    onSubmit(workoutForm);
   }
   function setField() {
     if (selectedMode === "time") {
@@ -136,15 +130,15 @@ const WorkoutForm = ({
               <Feather name="x-circle" size={24} color="#2A2E3C" />
             </TouchableOpacity>
             <TextInput
-              keyboardType="number-pad"
+              keyboardType="numeric"
               autoComplete="off"
               autoCapitalize="none"
               onChangeText={(text) => {
-                updateDurration(index, text);
+                updateDuration(index, text);
               }}
               placeholder="HH:MM:SS"
               maxLength={8}
-              value={x.durration || undefined}
+              value={x.duration || undefined}
               className="flex-1 bg-gray-300 rounded-lg"
             ></TextInput>
           </View>
@@ -197,7 +191,7 @@ const WorkoutForm = ({
       <View className="flex-1 bg-gray-300 mx-5 rounded-lg">
         <Picker
           selectedValue={selectedMode}
-          onValueChange={(itemValue, itemIndex) => {
+          onValueChange={(itemValue) => {
             setSelectedMode(itemValue);
           }}
         >
@@ -233,7 +227,10 @@ const WorkoutForm = ({
         </TouchableOpacity>
       </View>
       <View className="flex-row justify-center items-center mx-5 gap-x-4">
-        <TouchableOpacity className="flex-1 bg-green-500 justify-center items-center rounded-lg py-3.5">
+        <TouchableOpacity
+          className="flex-1 bg-green-500 justify-center items-center rounded-lg py-3.5"
+          onPress={save}
+        >
           <Text className="text-secondary text-xl font-semibold text-center">
             Save
           </Text>

@@ -8,7 +8,7 @@ import {
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { DateTime } from "luxon";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
 import { ExerciseInfo } from "@/src/interfaces/interface";
@@ -17,12 +17,18 @@ import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import exerciseInfo from "@/src/data/exerciseInfo";
 import { useDate } from "@/src/context/DateContext";
-import { useSQLiteContext } from "expo-sqlite";
+import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
+import { getRecentWorkouts } from "@/src/db/dbHelpers";
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 
 export default function Index() {
   const router = useRouter();
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+  useDrizzleStudio(db);
+  const [workouts, setWorkouts] = useState([]);
 
   const { selectedDate, setSelectedDate } = useDate();
 
@@ -32,6 +38,15 @@ export default function Index() {
     }
   }
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const recent = await getRecentWorkouts(drizzleDb, 10);
+      console.log("recent exercises: ", recent);
+      setWorkouts([]);
+    };
+    console.log("useEffect");
+    fetchData();
+  }, []);
   // const {
   //   data: recentExercise,
   //   loading,
@@ -39,6 +54,7 @@ export default function Index() {
   // }: { data: ExerciseInfo[]; loading: boolean; error: any } = useFetch(() =>
   //   fetchExcercises({ offset: "", category: "", equipment: "" })
   // );
+
   const recentExercise = exerciseInfo;
   const loading = false;
   const error = undefined;
