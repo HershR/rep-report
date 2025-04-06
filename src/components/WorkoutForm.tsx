@@ -6,7 +6,7 @@ import {
   TextInput,
 } from "react-native";
 import React, { useState } from "react";
-import { ExerciseInfo } from "@/src/interfaces/interface";
+import { ExerciseInfo, SetInfo } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import { SearchChip } from "./SearchChip";
 import { AntDesign, Feather } from "@expo/vector-icons";
@@ -21,15 +21,6 @@ interface Props {
   prevData?: SetInfo[] | undefined;
   mode: "weight" | "time";
 }
-
-interface SetInfo {
-  index: number;
-  reps?: number;
-  weight?: number;
-  unit?: string;
-  durration?: string;
-}
-
 const WorkoutForm = ({
   date,
   exerciseId,
@@ -47,6 +38,8 @@ const WorkoutForm = ({
     setExerciseSets((prev) => [
       ...prev,
       {
+        id: 0,
+        workout_id: 0,
         index: prev.length,
       },
     ]);
