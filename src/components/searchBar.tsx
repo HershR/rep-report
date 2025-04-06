@@ -29,7 +29,7 @@ const SearchBar = ({
         value={value}
         onChangeText={onChangeText}
         placeholderTextColor={"#21232f"}
-        className="flex-1 ml-2 text-primary"
+        className="flex-1 text-primary ml-2 "
       />
     </View>
   );
