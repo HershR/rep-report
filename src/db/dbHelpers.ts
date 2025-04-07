@@ -59,6 +59,18 @@ export const getWorkoutById = async (
     },
   });
 };
+export const getWorkoutsByDate = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  date: string
+) => {
+  return db.query.workouts.findMany({
+    where: eq(workouts.date, date),
+    with: {
+      sets: true,
+      exercise: true,
+    },
+  });
+};
 export const getRecentWorkouts = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   limit: number = 10
@@ -146,7 +158,6 @@ export const createWorkoutWithExercise = async (
   let id = existing?.id;
   // Step 2: If not, fetch from Wger
   if (!existing) {
-    console.log("Create Excercise: ", exercise_id);
     const remoteExercise = await fetchExerciseDetail(exercise_id.toString());
     if (!remoteExercise) throw new Error("Exercise not found from Wger");
 
@@ -165,7 +176,6 @@ export const createWorkoutWithExercise = async (
       .returning({ id: exercises.id });
     id = result[0]?.id;
   }
-  console.log("Create workout");
   // Step 4: Insert workout
   const result = await db
     .insert(workouts)

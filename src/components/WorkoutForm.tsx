@@ -72,7 +72,6 @@ const WorkoutForm = ({
     if (formattedText.length >= 6) {
       formattedText = formattedText.slice(0, 5) + ":" + formattedText.slice(5);
     }
-    console.log("formatted time: ", formattedText);
     setExerciseSets((prev) =>
       prev.map((x, i) => {
         if (index === i) {

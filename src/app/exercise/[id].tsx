@@ -75,9 +75,19 @@ const ExerciseDetails = () => {
     for (let index = 0; index < workoutForm.sets.length; index++) {
       let element = workoutForm.sets[index];
       if (workoutForm.mode === 0) {
-        element = { ...element, duration: undefined };
+        element = {
+          ...element,
+          duration: undefined,
+          weight: element.weight || 0,
+          reps: element.reps || 1,
+        };
       } else {
-        element = { ...element, weight: undefined, reps: undefined };
+        element = {
+          ...element,
+          weight: undefined,
+          reps: undefined,
+          duration: element.duration || "00:00:00",
+        };
       }
       console.log("set:", element);
       await addSetToWorkout(drizzleDb, {

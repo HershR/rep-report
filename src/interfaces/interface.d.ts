@@ -57,7 +57,7 @@ interface Exercise {
   wger_id: number; // Wger API ID
   name: string;
   category: string;
-  image: string; // URI
+  image?: string; // URI
 }
 interface Workout {
   id: number;
