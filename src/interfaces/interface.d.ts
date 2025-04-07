@@ -52,39 +52,45 @@ export interface ExerciseSuggestion {
   };
 }
 //DB
-interface Workout {
-  id: number; //primary key
-  date: string; //ISO format YYYY-MM-DD
-  exercise_id: number; //api id
-  exercise_name: string;
-  exercise_category: string;
-  exercise_image: string; //image uri
-  exercise_mode: 0 | 1; //weights or time
-  exercise_sets: SetInfo[];
-  collection_id: number; // foreign key
+interface Exercise {
+  id: number;
+  wger_id: number; // Wger API ID
+  name: string;
+  category: string;
+  image?: string; // URI
 }
-export interface SetInfo {
-  workout_id: number; // foreign key
-  id: number; //primary key
-  index: number; //order
-  reps?: number; //if mode is weight
-  weight?: number; //if mode is weight
-  durration?: string; //if mode is time ISO time format HH:mm:ss
+interface Workout {
+  id: number;
+  date: string; // ISO date
+  mode: 0 | 1; // weight or time
+  collection_id?: number; // foreign key
+  exercise_id: number; // foreign key -> Exercise
+  sets: WorkoutSet[];
+}
+export interface WorkoutSet {
+  id: number;
+  workout_id: number; //foreign key -> Workout
+  order: number;
+  reps?: number;
+  weight?: number;
+  duration?: string; // ISO HH:mm:ss
+  notes?: string;
 }
 
+//Collection of exercises
 interface WorkoutRoutine {
-  id: number; //primary key
+  id: number;
+  name: string;
   date_created: string;
   last_updated: string;
-  workout_count: number;
-  name: string;
+  workout_count: number; // maybe computed later instead?
+  description?: string; // optional
 }
 
-interface RoutineItem {
-  routine_id: number; // foeign key
-  id: number; //primary key
-  exercise_id: number; //api id
-  exercise_name: string;
-  exercise_category: string;
-  exercise_image: string; //image uri
+//Exercise belonging to a routine
+interface RoutineExercise {
+  id: number;
+  routine_id: number; // foreign key -> Routine
+  exercise_id: number; // foreign key -> Exercise
+  order: number; // optional, for drag & drop later
 }

@@ -15,18 +15,18 @@ import { Picker } from "@react-native-picker/picker";
 import { wgerCategories } from "@/src/constants/excerciseCategory";
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState<string>("");
+  const [category, setCategory] = useState<string>("none");
   const {
     data: exercies,
     loading: loading,
     error: error,
-    refetch: loadMovies,
+    refetch: loadExercise,
     reset,
   } = useFetch(() => searchExercise({ query: searchQuery }), false);
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (searchQuery.trim()) {
-        await loadMovies();
+        await loadExercise();
       } else {
         reset();
       }
@@ -44,7 +44,7 @@ const Search = () => {
   };
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-8">
+      <SafeAreaView className="flex-1 mx-8 my-10">
         <FlatList
           data={
             category !== "none"
@@ -53,7 +53,7 @@ const Search = () => {
           }
           renderItem={({ item }) => <SearchExerciseCard {...item} />}
           keyExtractor={(item) => item.data.id.toString()}
-          className="px-5"
+          className=""
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: "center",
@@ -63,7 +63,7 @@ const Search = () => {
           contentContainerStyle={{ paddingBottom: 100 }}
           ListHeaderComponent={
             <>
-              <View className="flex flex-row justify-center items-center my-5 gap-x-2 border-2">
+              <View className="flex flex-row justify-center items-center my-5 gap-x-2">
                 <View className="w-[60%]">
                   <SearchBar
                     placeholder="Search exercise..."
@@ -80,7 +80,6 @@ const Search = () => {
                     prompt="Select Category"
                     selectedValue={category}
                     onValueChange={(item) => {
-                      console.log("newcat: ", item);
                       setCategory(item);
                     }}
                     itemStyle={{ fontSize: 5, color: "#2A2E3C" }}
@@ -117,7 +116,7 @@ const Search = () => {
             !loading && !error ? (
               <View className="mt-10 px-5">
                 <Text className="text-center text-accent">
-                  {searchQuery.trim() ? "No Movies Found" : "Search"}
+                  {searchQuery.trim() ? "No Exercise Found" : "Search"}
                 </Text>
               </View>
             ) : null

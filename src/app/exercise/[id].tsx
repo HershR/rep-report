@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Muscles } from "@/src/interfaces/interface";
+import { Muscles, Workout } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
@@ -20,8 +20,15 @@ import { SearchChip } from "@/src/components/SearchChip";
 import { icons } from "@/src/constants/icons";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import { useDate } from "@/src/context/DateContext";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src/db/schema";
+import { addSetToWorkout, createWorkoutWithExercise } from "@/src/db/dbHelpers";
+
 const ExerciseDetails = () => {
   const router = useRouter();
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
   const { selectedDate, setSelectedDate } = useDate();
 
   const { id }: { id: string } = useLocalSearchParams();
@@ -59,6 +66,38 @@ const ExerciseDetails = () => {
   function closeModal() {
     setShowMuscles(false);
   }
+
+  async function saveWorkout(workoutForm: Workout) {
+    console.log("Save Workout ", workoutForm);
+    const workoutID = await createWorkoutWithExercise(drizzleDb, {
+      ...workoutForm,
+    });
+    for (let index = 0; index < workoutForm.sets.length; index++) {
+      let element = workoutForm.sets[index];
+      if (workoutForm.mode === 0) {
+        element = {
+          ...element,
+          duration: undefined,
+          weight: element.weight || 0,
+          reps: element.reps || 1,
+        };
+      } else {
+        element = {
+          ...element,
+          weight: undefined,
+          reps: undefined,
+          duration: element.duration || "00:00:00",
+        };
+      }
+      console.log("set:", element);
+      await addSetToWorkout(drizzleDb, {
+        ...element,
+        workout_id: workoutID,
+        order: index,
+      });
+    }
+  }
+
   return (
     <View className="flex-1 bg-secondary">
       {loading ? (
@@ -172,6 +211,7 @@ const ExerciseDetails = () => {
                 exerciseName={name}
                 exerciseCategory={exercise!.category.name}
                 mode={"weight"}
+                onSubmit={saveWorkout}
               />
             )}
             {muscles !== undefined && muscles.length > 0 && (
