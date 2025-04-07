@@ -47,7 +47,7 @@ export default function Index() {
   }, [selectedDate]);
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10 border-2">
+      <SafeAreaView className="flex-1 mx-8 my-10">
         <View className="w-full h-36 mb-3">
           <DatePickerWithWeek
             currentDate={selectedDate!}
@@ -73,7 +73,7 @@ export default function Index() {
                     className="mb-4 mt-1"
                     data={recentExercise}
                     keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={{ gap: 26 }}
+                    contentContainerStyle={{ gap: 5 }}
                     renderItem={({ item, index }) => {
                       return (
                         <RecentExerciseCard
