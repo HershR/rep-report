@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { AntDesign } from "@expo/vector-icons";
 import { DateTime } from "luxon";
-
+import { Button } from "../ui/button";
+import { Text as TextR } from "~/components/ui/text";
+import { CircleArrowRight } from "~/lib/icons/CircleArrowRight";
 interface CustomDatePickerProps {
   currentDate: DateTime;
   onDateChange: (args0: DateTime) => void;
@@ -41,40 +43,32 @@ const DatePickerWithWeek = ({
       start = start.plus({ day: 1 });
     }
 
-    return days.map((date) => (
-      <TouchableOpacity
-        key={date.day}
-        className="flex w-[40px] h-[60px] rounded-md justify-center items-center"
-        onPress={() => {
-          updateDate(date);
-        }}
-        style={{
-          backgroundColor: currentDate.day === date.day ? "#2A2E3C" : "#E5E6EF",
-        }}
-      >
-        <Text
-          className="text-center text-md"
-          style={{
-            color: currentDate.day === date.day ? "#E5E6EF" : "#2A2E3C",
+    return days.map((date) => {
+      const bgColor = currentDate.day !== date.day ? "bg-border" : "bg-primary";
+      const textColor =
+        currentDate.day !== date.day ? "text-primary" : "text-border";
+      return (
+        <TouchableOpacity
+          key={date.day}
+          className={`flex-1 rounded-md justify-center items-center ${bgColor}`}
+          onPress={() => {
+            updateDate(date);
           }}
         >
-          {date.weekdayShort}
-        </Text>
-        <Text
-          className="text-center text-xs -my-1"
-          style={{
-            color: currentDate.day === date.day ? "#E5E6EF" : "#2A2E3C",
-          }}
-        >
-          {date.day < 10 ? `0${date.day}` : date.day}
-        </Text>
-      </TouchableOpacity>
-    ));
+          <TextR className={`bg-none text-center text-md ${textColor}`}>
+            {date.weekdayShort}
+          </TextR>
+          <TextR className={`bg-none text-center text-xs -my-1 ${textColor}`}>
+            {date.day < 10 ? `0${date.day}` : date.day}
+          </TextR>
+        </TouchableOpacity>
+      );
+    });
   };
 
   return (
-    <View className="flex py-5 gap-y-4">
-      <View className="flex flex-row justify-center items-center gap-x-5">
+    <View className="flex-1 justify-center items-center">
+      <View className="flex-1 flex-row justify-center items-center gap-x-5 my-2">
         <AntDesign
           name="leftcircle"
           size={24}
@@ -82,9 +76,9 @@ const DatePickerWithWeek = ({
           onPress={() => updateWeek(-1)}
         />
         <View className="flex-row pl-10 pr-10 gap-x-2">
-          <Text className="text-primary text-4xl font-medium text-center">
+          <TextR className="text-primary text-4xl font-medium text-center">
             {currentDate.monthLong}
-          </Text>
+          </TextR>
           <AntDesign
             name="calendar"
             size={30}
@@ -99,7 +93,7 @@ const DatePickerWithWeek = ({
           onPress={() => updateWeek(1)}
         />
       </View>
-      <View className="flex-row flex-nowrap gap-x-3 justify-evenly items-center">
+      <View className="flex-1 flex-row max-h-16 gap-x-2">
         {createDateChips()}
       </View>
       <DateTimePickerModal

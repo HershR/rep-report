@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { DateTime } from "luxon";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +13,7 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { getRecentWorkouts, getWorkoutsByDate } from "@/src/db/dbHelpers";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-
+import { Text } from "~/components/ui/text";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -47,8 +47,8 @@ export default function Index() {
   }, [selectedDate]);
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10">
-        <View className="flex">
+      <SafeAreaView className="flex-1 mx-8 my-10 border-2">
+        <View className="w-full h-36 mb-3">
           <DatePickerWithWeek
             currentDate={selectedDate!}
             onDateChange={updateDate}
@@ -65,12 +65,12 @@ export default function Index() {
               {recentExercise ? (
                 <>
                   <Text className="text-primary text-lg font-bold">
-                    Recent Exercise
+                    Recent Exercise:
                   </Text>
                   <FlatList
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    className="mb-4 mt-3"
+                    className="mb-4 mt-1"
                     data={recentExercise}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={{ gap: 26 }}
