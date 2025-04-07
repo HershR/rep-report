@@ -7,12 +7,12 @@ const SearchExerciseCard = ({ value, data }: ExerciseSuggestion) => {
   const { id, base_id, name, category, image, image_thumbnail } = data;
   return (
     <Link href={`/exercise/${base_id}`} asChild>
-      <TouchableOpacity className="w-[50%] aspect-square justify-center items-center">
+      <TouchableOpacity className="flex-1 aspect-square justify-center items-center">
         <Image
           source={{
             uri: image_thumbnail ? `https://wger.de/${image}` : undefined,
           }}
-          className="w-full h-full rounded-lg bg-gray-300"
+          className="w-full h-full rounded-md bg-background"
           resizeMode="cover"
         />
         <View

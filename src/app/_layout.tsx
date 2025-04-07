@@ -16,6 +16,7 @@ import {
 import { Platform } from "react-native";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
+import { PortalHost } from "@rn-primitives/portal";
 
 export const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
@@ -80,6 +81,7 @@ export default function RootLayout() {
                   options={{ headerShown: false }}
                 ></Stack.Screen>
               </Stack>
+              <PortalHost />
             </ThemeProvider>
           </DateProvider>
         </SQLiteProvider>
