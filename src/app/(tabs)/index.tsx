@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { DateTime } from "luxon";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +14,8 @@ import * as schema from "@/src//db/schema";
 import { getRecentWorkouts, getWorkoutsByDate } from "@/src/db/dbHelpers";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
+import { Button } from "@/src/components/ui/button";
+import { toUpperCase } from "@/src/services/textFormatter";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -32,7 +34,9 @@ export default function Index() {
     loading: todayExerciseLoading,
     error: todayExerciseError,
     refetch: refetchToday,
-  } = useFetch(() => getWorkoutsByDate(drizzleDb, selectedDate!.toISODate()!));
+  } = useFetch(() =>
+    getWorkoutsByDate(drizzleDb, selectedDate!.toISODate()!, true)
+  );
 
   function updateDate(newDate: DateTime) {
     if (!!newDate) {
@@ -42,7 +46,7 @@ export default function Index() {
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       await refetchToday();
-    }, 500);
+    }, 200);
     return () => clearTimeout(timeoutId);
   }, [selectedDate]);
   return (
@@ -107,6 +111,57 @@ export default function Index() {
                   <Text className="text-primary text-lg font-bold mt-4">
                     Today's Workouts
                   </Text>
+                  <FlatList
+                    data={todayExercises}
+                    keyExtractor={(item) => item.id.toString()}
+                    ItemSeparatorComponent={() => <View className="h-4"></View>}
+                    renderItem={({ item }) => {
+                      const image = item.exercise.image;
+                      const sets = item.sets.map((x) => (
+                        <Text key={x.id} className="font-semibold">
+                          {x.weight}{" "}
+                          <Text className="text-muted-foreground">lb</Text> x{" "}
+                          {x.reps}{" "}
+                          <Text className="text-muted-foreground">reps</Text>
+                        </Text>
+                      ));
+                      return (
+                        <View className="flex flex-row w-full justify-between items-center">
+                          <Image
+                            className="w-20 h-20 rounded-md bg-white"
+                            source={{
+                              uri: !!image ? image : undefined,
+                            }}
+                            resizeMode="contain"
+                          />
+                          <View className="flex-1 mx-4">
+                            <Text className="flex text-left text-lg font-bold">
+                              {toUpperCase(item.exercise.name)}{" "}
+                              <Text>({item.exercise.category})</Text>
+                            </Text>
+                            <Text className="text-muted-foreground">
+                              Sets: {item.sets.length}
+                            </Text>
+                            {/* {sets} */}
+                          </View>
+                          <Button
+                            onPress={() =>
+                              router.push({
+                                pathname: "../workout/[id]",
+                                params: {
+                                  id: item.id,
+                                  exerciseId: item.exercise_id,
+                                  exerciseName: item.exercise.name,
+                                },
+                              })
+                            }
+                          >
+                            <Text>Update</Text>
+                          </Button>
+                        </View>
+                      );
+                    }}
+                  ></FlatList>
                 </>
               )}
             </View>

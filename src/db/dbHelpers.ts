@@ -61,13 +61,14 @@ export const getWorkoutById = async (
 };
 export const getWorkoutsByDate = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  date: string
+  date: string,
+  includeSets: boolean = false
 ) => {
   return db.query.workouts.findMany({
     where: eq(workouts.date, date),
     with: {
-      sets: true,
       exercise: true,
+      ...(includeSets ? { sets: true } : {}),
     },
   });
 };
@@ -80,6 +81,19 @@ export const getRecentWorkouts = async (
     limit,
     with: {
       exercise: true,
+    },
+  });
+};
+export const getRecentWorkout = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  id: number
+) => {
+  return db.query.workouts.findFirst({
+    orderBy: (workouts, { desc }) => [desc(workouts.date)],
+    where: eq(workouts.exercise_id, id),
+    with: {
+      exercise: true,
+      sets: true,
     },
   });
 };
@@ -125,9 +139,9 @@ export const createWorkout = async (
   }: {
     date: string;
     mode: 0 | 1;
-    collection_id: number;
+    collection_id: number | null;
     exercise_id: number;
-    notes?: string;
+    notes: string | null;
   }
 ) => {
   const result = await db
@@ -147,7 +161,7 @@ export const createWorkoutWithExercise = async (
   }: {
     date: string;
     mode: 0 | 1;
-    collection_id?: number;
+    collection_id: number | null;
     exercise_id: number;
   }
 ) => {
@@ -196,10 +210,10 @@ export const addSetToWorkout = async (
   }: {
     workout_id: number;
     order: number;
-    reps?: number;
-    weight?: number;
-    duration?: string;
-    notes?: string;
+    reps: number | null;
+    weight: number | null;
+    duration: string | null;
+    notes: string | null;
   }
 ) => {
   return db.insert(workoutSets).values({

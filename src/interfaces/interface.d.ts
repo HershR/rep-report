@@ -52,18 +52,18 @@ export interface ExerciseSuggestion {
   };
 }
 //DB
-interface Exercise {
+export interface Exercise {
   id: number;
   wger_id: number; // Wger API ID
   name: string;
   category: string;
-  image?: string; // URI
+  image: string | null; // URI
 }
-interface Workout {
+export interface Workout {
   id: number;
   date: string; // ISO date
   mode: 0 | 1; // weight or time
-  collection_id?: number; // foreign key
+  collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   sets: WorkoutSet[];
 }
@@ -71,10 +71,10 @@ export interface WorkoutSet {
   id: number;
   workout_id: number; //foreign key -> Workout
   order: number;
-  reps?: number;
-  weight?: number;
-  duration?: string; // ISO HH:mm:ss
-  notes?: string;
+  reps: number | null;
+  weight: number | null;
+  duration: string | null; // ISO HH:mm:ss
+  notes: string | null;
 }
 
 //Collection of exercises

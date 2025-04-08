@@ -24,7 +24,7 @@ export const fetchExcercises = async ({
     headers: WGER_CONFIG.header,
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch movies", response.statusText);
+    throw new Error("Failed to fetch exercies", response.statusText);
   }
 
   const data = await response.json();
@@ -41,7 +41,7 @@ export const fetchExerciseDetail = async (
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch movies", response.statusText);
+      throw new Error("Failed to fetch exercie details", response.statusText);
     }
     const data = await response.json();
     return data;
@@ -63,7 +63,7 @@ export const searchExercise = async ({
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch movies", response.statusText);
+      throw new Error("Failed to fetch exercies search", response.statusText);
     }
     const data = await response.json();
     return data.suggestions;
