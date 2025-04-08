@@ -5,7 +5,6 @@ import { searchExercise } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchExerciseCard from "@/src/components/SearchExerciseCard";
-import { Picker } from "@react-native-picker/picker";
 import { wgerCategories } from "@/src/constants/excerciseCategory";
 
 import {
@@ -39,16 +38,9 @@ const Search = () => {
   }, [searchQuery]);
 
   const selectItems = () => {
-    const items = Object.values(wgerCategories).map((category) => (
-      <>
-        <SelectItem
-          key={category}
-          label={category}
-          value={category}
-          className="text-md"
-        ></SelectItem>
-      </>
-    ));
+    const items = Object.entries(wgerCategories).map(([key, value]) => {
+      return <SelectItem key={key} label={value} value={value}></SelectItem>;
+    });
     return items;
   };
   return (
@@ -61,7 +53,7 @@ const Search = () => {
               : exercies
           }
           renderItem={({ item }) => <SearchExerciseCard {...item} />}
-          keyExtractor={(item) => item.data.id.toString()}
+          keyExtractor={(item) => item.data.base_id.toString()}
           className=""
           numColumns={2}
           columnWrapperStyle={{
@@ -94,16 +86,14 @@ const Search = () => {
                       placeholder="Select Muscle Group"
                     />
                   </SelectTrigger>
-                  <SelectContent align="center" className="w-full ">
+                  <SelectContent align="center">
                     <SelectGroup>
-                      <>
-                        <SelectItem
-                          key={"none"}
-                          value={""}
-                          label={"None"}
-                        ></SelectItem>
-                      </>
-                      {selectItems().slice(0, 8)}
+                      <SelectItem
+                        key={"none"}
+                        value={""}
+                        label={"None"}
+                      ></SelectItem>
+                      {selectItems()}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

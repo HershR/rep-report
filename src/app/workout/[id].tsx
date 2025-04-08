@@ -208,7 +208,7 @@ const WorkoutDetails = () => {
           {selectedMode === 0 ? (
             <>
               <Input
-                keyboardType="numeric"
+                inputMode="numeric"
                 autoComplete="off"
                 autoCapitalize="none"
                 onChangeText={(text) => {
@@ -219,7 +219,7 @@ const WorkoutDetails = () => {
                 className="flex-1"
               ></Input>
               <Input
-                keyboardType="numeric"
+                inputMode="numeric"
                 autoComplete="off"
                 autoCapitalize="none"
                 onChangeText={(text) => {
