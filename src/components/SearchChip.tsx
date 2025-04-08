@@ -9,7 +9,7 @@ interface Props {
 export const SearchChip = ({ item, onPress, disabled = true }: Props) => {
   return (
     <Badge
-      className="justify-center items-center px-4 min-h-14"
+      className="justify-center items-center py-2 px-4"
       variant={"default"}
       key={item?.id}
     >

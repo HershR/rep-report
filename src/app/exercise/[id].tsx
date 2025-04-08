@@ -45,9 +45,6 @@ const ExerciseDetails = () => {
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
   const desciption = removeHTML(translation?.description);
-  const equipment = exercise?.equipment.map((x) => (
-    <SearchChip key={x.id} item={x} onPress={() => {}} disabled={false} />
-  ));
   const muscles = exercise?.muscles.concat(exercise.muscles_secondary);
   const musclesFront = muscles?.filter((x) => x.is_front);
   const musclesBack = muscles?.filter((x) => !x.is_front);
@@ -130,7 +127,9 @@ const ExerciseDetails = () => {
               </View>
             )}
             <Text className="text-2xl font-bold mt-4 mb-2">{name}</Text>
-            <View className="flex-row flex-wrap gap-2">{chipItems()}</View>
+            <View className="flex-row flex-wrap items-center gap-2">
+              {chipItems()}
+            </View>
             <>
               <Text
                 numberOfLines={showDescription ? undefined : maxLineCount}
@@ -153,24 +152,6 @@ const ExerciseDetails = () => {
                 </TouchableOpacity>
               )}
             </>
-            {/* {!showForm && (
-              <Button
-                onPress={() => setShowForm(true)}
-                className="items-center justify-center"
-              >
-                <Text>Start Workout</Text>
-              </Button>
-            )}
-            {showForm && (
-              <WorkoutForm
-                date={selectedDate?.toISODate()!}
-                exerciseId={id}
-                exerciseName={name}
-                exerciseCategory={exercise!.category.name}
-                mode={"weight"}
-                onSubmit={saveWorkout}
-              />
-            )} */}
             {muscles !== undefined && muscles.length > 0 && (
               <Accordion
                 type="single"
@@ -220,7 +201,12 @@ const ExerciseDetails = () => {
           </ScrollView>
 
           <Button
-            onPress={() => console.log("Show Workout Page")}
+            onPress={() =>
+              router.push({
+                pathname: "../workout/[id]",
+                params: { id: -1, exerciseId: id, exerciseName: name },
+              })
+            }
             className="absolute w-full bottom-10 items-center justify-center"
           >
             <Text>Start Workout</Text>

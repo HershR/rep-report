@@ -23,6 +23,7 @@
     "@rn-primitives/accordion": "^1.1.0",
     "@rn-primitives/select": "^1.1.0",
     "@rn-primitives/slot": "^1.1.0",
+    "@rn-primitives/switch": "^1.1.0",
     "@rn-primitives/types": "^1.1.0",
     "babel-plugin-inline-import": "^3.0.0",
     "class-variance-authority": "^0.7.1",
