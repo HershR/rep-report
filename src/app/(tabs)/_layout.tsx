@@ -37,6 +37,7 @@ const _Layout = () => {
           justifyContent: "center",
           alignItems: "center",
         },
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: "#2A2E3C",
           position: "absolute",

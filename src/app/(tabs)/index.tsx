@@ -153,6 +153,7 @@ export default function Index() {
                                   id: item.id,
                                   exerciseId: item.exercise_id,
                                   exerciseName: item.exercise.name,
+                                  exerciseURI: item.exercise.image,
                                 },
                               })
                             }
