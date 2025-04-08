@@ -20,7 +20,7 @@ const RecentExerciseCard = ({
             uri: !!image ? image : undefined,
           }}
           className="w-36 h-36 rounded-lg bg-border"
-          resizeMode="cover"
+          resizeMode="contain"
         ></Image>
         {!!!image && (
           <View className="absolute top-1/3 m-0 p-0 justify-center items-center">

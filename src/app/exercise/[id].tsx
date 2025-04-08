@@ -1,13 +1,13 @@
 import {
   View,
-  Text,
   Image,
   ScrollView,
   useWindowDimensions,
   TouchableOpacity,
   ActivityIndicator,
+  FlatList,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
@@ -17,13 +17,21 @@ import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
 import { SearchChip } from "@/src/components/SearchChip";
-import { icons } from "@/src/constants/icons";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import { useDate } from "@/src/context/DateContext";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
 import { addSetToWorkout, createWorkoutWithExercise } from "@/src/db/dbHelpers";
+import { Text } from "@/src/components/ui/text";
+import { ArrowRight } from "@/src/lib/icons/ArrowRight";
+import { Button } from "@/src/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "~/components/ui/accordion";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -34,6 +42,7 @@ const ExerciseDetails = () => {
   const { id }: { id: string } = useLocalSearchParams();
   const { width } = useWindowDimensions();
 
+  const scrollViewRef = useRef(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
   const [showMuscles, setShowMuscles] = useState(false);
@@ -52,19 +61,32 @@ const ExerciseDetails = () => {
   const muscles = exercise?.muscles.concat(exercise.muscles_secondary);
   const musclesFront = muscles?.filter((x) => x.is_front);
   const musclesBack = muscles?.filter((x) => !x.is_front);
-
-  const muscleChip = [musclesFront?.[0], musclesBack?.[0]]
-    .filter((x) => x !== undefined)
-    .map((x) => <SearchChip key={x?.id} item={x} disabled={false} />);
+  const allMuscles = [musclesFront, musclesBack].filter(
+    (x) => !!x && x.length > 0
+  );
+  const chipItems = () => {
+    const items: { id: number; name: string }[] = [];
+    if (!!exercise?.category) {
+      items.push(exercise.category);
+    }
+    if (!!musclesFront && !!musclesFront[0]) {
+      items.push(musclesFront[0]);
+    }
+    if (!!musclesBack && !!musclesBack[0]) {
+      items.push(musclesBack[0]);
+    }
+    if (!!exercise?.equipment && exercise.equipment.length > 0) {
+      exercise.equipment.forEach((x) => {
+        if (x.id !== 7) items.push(x);
+      });
+    }
+    return items.map((item) => (
+      <SearchChip key={item.id.toString()} item={item} disabled={true} />
+    ));
+  };
 
   function toggleShowDescription() {
     setShowDescription((prev) => !prev);
-  }
-  function openModal() {
-    setShowMuscles(true);
-  }
-  function closeModal() {
-    setShowMuscles(false);
   }
 
   async function saveWorkout(workoutForm: Workout) {
@@ -89,7 +111,6 @@ const ExerciseDetails = () => {
           duration: element.duration || "00:00:00",
         };
       }
-      console.log("set:", element);
       await addSetToWorkout(drizzleDb, {
         ...element,
         workout_id: workoutID,
@@ -105,22 +126,16 @@ const ExerciseDetails = () => {
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-4 mt-8 relative">
-          <TouchableOpacity
-            className="self-start justify-center items-center bg-transparent rounded-full px-2 py-2 border-accent border-2"
-            onPress={router.back}
-          >
-            <Image
-              source={icons.arrow}
-              className="size-5 rotate-180"
-              tintColor={"#2b2e3d"}
-            />
-          </TouchableOpacity>
+        <SafeAreaView className="flex-1 mx-4 relative">
           <ScrollView
+            ref={scrollViewRef}
             className="flex-1 px-5 mt-3"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ minHeight: "100%", paddingBottom: 10 }}
           >
+            <Button variant={"ghost"} size={"icon"} onPress={router.back}>
+              <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
+            </Button>
             {exercise?.images !== undefined && exercise.images.length > 0 && (
               <View className="flex items-center">
                 <CustomCarousel
@@ -145,8 +160,8 @@ const ExerciseDetails = () => {
                           source={{
                             uri: item,
                           }}
-                          className="rounded-lg aspect-square w-full bg-gray-300"
-                          resizeMode="cover"
+                          className="rounded-lg aspect-square w-full bg-background"
+                          resizeMode="contain"
                         />
                       </View>
                     );
@@ -154,17 +169,12 @@ const ExerciseDetails = () => {
                 />
               </View>
             )}
-            <Text className="text-primary text-4xl font-bold mt-4">{name}</Text>
-            <View className="flex-row gap-2">
-              {exercise?.category !== undefined && (
-                <SearchChip item={exercise.category} disabled={false} />
-              )}
-              {muscleChip}
-            </View>
+            <Text className="text-2xl font-bold mt-4 mb-2">{name}</Text>
+            <View className="flex-row flex-wrap gap-2">{chipItems()}</View>
             <>
               <Text
                 numberOfLines={showDescription ? undefined : maxLineCount}
-                className="text-light text-gr text-xl"
+                className="text-primary text-xl"
                 onTextLayout={(e) => {
                   if (
                     descriptionLineCount < e.nativeEvent.lines.length &&
@@ -177,32 +187,19 @@ const ExerciseDetails = () => {
               </Text>
               {descriptionLineCount > maxLineCount && (
                 <TouchableOpacity onPress={toggleShowDescription}>
-                  <Text className="text-light text-lg font-bold">
+                  <Text className="text-lg font-bold">
                     {showDescription ? "Show Less" : "Show More"}
                   </Text>
                 </TouchableOpacity>
               )}
             </>
-            {equipment !== undefined && equipment.length > 0 && (
-              <View className="flex-row justify-start items-center gap-1">
-                <Text>Equipment: </Text>
-                {equipment !== undefined && equipment}
-              </View>
-            )}
-            {!showForm && (
-              <TouchableOpacity
+            {/* {!showForm && (
+              <Button
                 onPress={() => setShowForm(true)}
-                className="flex flex-row items-center justify-center bg-accent rounded-lg py-3.5 my-5"
+                className="items-center justify-center"
               >
-                <Text className="text-secondary font-semibold text-center">
-                  Start
-                </Text>
-                <Image
-                  source={icons.arrow}
-                  className="size-5 ml-1 mt-0.5"
-                  tintColor={"#fff"}
-                />
-              </TouchableOpacity>
+                <Text>Start Workout</Text>
+              </Button>
             )}
             {showForm && (
               <WorkoutForm
@@ -213,27 +210,30 @@ const ExerciseDetails = () => {
                 mode={"weight"}
                 onSubmit={saveWorkout}
               />
-            )}
+            )} */}
             {muscles !== undefined && muscles.length > 0 && (
-              <View className="flex mt-2 justify-center">
-                <TouchableOpacity
-                  className="flex"
-                  onPress={() => setShowMuscles((prev) => !prev)}
-                >
-                  <Text className="text-primary font-bold text-xl">
-                    {`Targeted Muscles ${showMuscles ? " ^" : " V"}`}
-                  </Text>
-                </TouchableOpacity>
-
-                {showMuscles && (
-                  <View className="flex-1 items-center mt-4">
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full max-w-sm native:max-w-md mt-4 mb-12"
+                onValueChange={(val) => {
+                  if (!!val) {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  } else {
+                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                  }
+                }}
+              >
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>
+                    <Text>Targeted Muscles</Text>
+                  </AccordionTrigger>
+                  <AccordionContent className="justify-center items-center">
                     <CustomCarousel
                       width={width}
                       height={width}
                       loop={false}
-                      data={[musclesFront, musclesBack].filter(
-                        (x) => !!x && x.length > 0
-                      )}
+                      data={allMuscles}
                       dotStyle={{
                         backgroundColor: "#9ca3af",
                         borderRadius: 50,
@@ -253,11 +253,18 @@ const ExerciseDetails = () => {
                         );
                       }}
                     />
-                  </View>
-                )}
-              </View>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             )}
           </ScrollView>
+
+          <Button
+            onPress={() => console.log("Show Workout Page")}
+            className="absolute w-full bottom-10 items-center justify-center"
+          >
+            <Text>Start Workout</Text>
+          </Button>
         </SafeAreaView>
       )}
     </View>

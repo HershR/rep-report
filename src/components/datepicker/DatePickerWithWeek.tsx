@@ -5,7 +5,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { DateTime } from "luxon";
 import { Button } from "../ui/button";
 import { Text as TextR } from "~/components/ui/text";
-import { CircleArrowRight } from "~/lib/icons/CircleArrowRight";
+import { CircleArrowRight } from "@/src/lib/icons/ArrowRight";
 interface CustomDatePickerProps {
   currentDate: DateTime;
   onDateChange: (args0: DateTime) => void;
