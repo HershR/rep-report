@@ -66,6 +66,7 @@ export interface Workout {
   collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   sets: WorkoutSet[];
+  notes: string | null;
 }
 export interface WorkoutSet {
   id: number;
@@ -74,7 +75,6 @@ export interface WorkoutSet {
   reps: number | null;
   weight: number | null;
   duration: string | null; // ISO HH:mm:ss
-  notes: string | null;
 }
 
 //Collection of exercises

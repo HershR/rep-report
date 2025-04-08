@@ -1,7 +1,11 @@
 import { View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { WorkoutSet, Workout as WorkoutType } from "@/src/interfaces/interface";
+import {
+  Workout,
+  WorkoutSet,
+  Workout as WorkoutType,
+} from "@/src/interfaces/interface";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useDate } from "@/src/context/DateContext";
@@ -12,8 +16,10 @@ import {
   createWorkoutWithExercise,
   getWorkoutById,
   getRecentWorkout,
+  deleteWorkoutSet,
+  updateWorkoutWithSets,
 } from "@/src/db/dbHelpers";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import useFetch from "@/src/services/useFetch";
 
 import {
@@ -29,6 +35,7 @@ import { Feather } from "@expo/vector-icons";
 import { Input } from "@/src/components/ui/input";
 import { Textarea } from "@/src/components/ui/textarea";
 import { DateTime } from "luxon";
+import { index } from "drizzle-orm/gel-core";
 
 enum FormMode {
   Create = 0,
@@ -51,7 +58,7 @@ const WorkoutDetails = () => {
   const [workoutNotes, setWorkoutNotes] = useState<string | null>(null);
   const [deletedSets, setDeletedSets] = useState<number[]>([]);
   const {
-    data: prevWorkout,
+    data: originalWorkout,
     loading,
     error,
   } = useFetch(() =>
@@ -60,29 +67,26 @@ const WorkoutDetails = () => {
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
   useEffect(() => {
-    console.log("loading: ", loading);
     if (
       loading === false &&
       error === null &&
-      !!prevWorkout &&
-      !!prevWorkout.sets
+      !!originalWorkout &&
+      !!originalWorkout.sets
     ) {
-      console.log("Sets: ", prevWorkout.sets);
-      setExerciseSets(prevWorkout.sets);
-      setWorkoutNotes(prevWorkout.notes);
-      setSelectedDate(DateTime.fromISO(prevWorkout.date));
+      setExerciseSets(originalWorkout.sets);
+      setWorkoutNotes(originalWorkout.notes);
+      setSelectedDate(DateTime.fromISO(originalWorkout.date));
     }
   }, [loading]);
 
   function addSet() {
     const emptySet: WorkoutSet = {
-      id: 0,
+      id: -1,
       workout_id: 0,
       order: exerciseSets.length,
       reps: null,
       weight: null,
       duration: null,
-      notes: null,
     };
     setExerciseSets((prev) => [...prev, emptySet]);
   }
@@ -148,44 +152,47 @@ const WorkoutDetails = () => {
       })
     );
   }
-  function save() {
-    // const workoutForm: WorkoutType = {
-    //   id: 0,
-    //   date: date,
-    //   mode: selectedMode,
-    //   exercise_id:
-    //     typeof exerciseId === "number" ? exerciseId : parseInt(exerciseId),
-    //   sets: exerciseSets,
-    // };
-    //onSubmit(workoutForm);
-  }
-  async function saveWorkout(workoutForm: WorkoutType) {
-    console.log("Save Workout ", workoutForm);
-    const workoutID = await createWorkoutWithExercise(drizzleDb, {
-      ...workoutForm,
-    });
-    for (let index = 0; index < workoutForm.sets.length; index++) {
-      let element = workoutForm.sets[index];
-      if (workoutForm.mode === 0) {
-        element = {
+
+  async function saveWorkout() {
+    const workoutForm: Workout = {
+      date: selectedDate?.toISODate()!,
+      mode: selectedMode,
+      exercise_id: parseInt(exerciseId),
+      notes: workoutNotes,
+      sets: exerciseSets,
+      id: 0,
+      collection_id: null,
+    };
+    if (mode === FormMode.Create) {
+      const workoutID = await createWorkoutWithExercise(drizzleDb, workoutForm);
+      for (let index = 0; index < workoutForm.sets.length; index++) {
+        let element = workoutForm.sets[index];
+        if (workoutForm.mode === 0) {
+          element = {
+            ...element,
+            order: index,
+            duration: null,
+            weight: element.weight || 0,
+            reps: element.reps || 1,
+          };
+        } else {
+          element = {
+            ...element,
+            order: index,
+            weight: null,
+            reps: null,
+            duration: element.duration || "00:00:00",
+          };
+        }
+        await addSetToWorkout(drizzleDb, {
           ...element,
-          duration: null,
-          weight: element.weight || 0,
-          reps: element.reps || 1,
-        };
-      } else {
-        element = {
-          ...element,
-          weight: null,
-          reps: null,
-          duration: element.duration || "00:00:00",
-        };
+          workout_id: workoutID,
+          order: element.order,
+        });
+        router.push("/");
       }
-      await addSetToWorkout(drizzleDb, {
-        ...element,
-        workout_id: workoutID,
-        order: element.order,
-      });
+    } else {
+      await updateWorkoutWithSets(drizzleDb, originalWorkout!.id, workoutForm);
     }
   }
   function setField() {
@@ -304,13 +311,21 @@ const WorkoutDetails = () => {
               <Text>Add Set</Text>
             </Button>
             <View className="flex-row w-full justify-center items-center gap-x-2">
-              <Button className="flex-1">
+              <Button
+                className="flex-1"
+                onPress={async () => await saveWorkout()}
+              >
                 <Text>Save</Text>
               </Button>
               <Button
                 className="flex-1"
                 variant={"destructive"}
-                onPress={() => setExerciseSets([])}
+                onPress={() => {
+                  setDeletedSets((prev) =>
+                    exerciseSets.filter((x) => x.id >= 0).map((y) => y.id)
+                  );
+                  setExerciseSets([]);
+                }}
               >
                 <Text>Clear</Text>
               </Button>

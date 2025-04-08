@@ -51,7 +51,7 @@ export default function Index() {
   }, [selectedDate]);
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10">
+      <SafeAreaView className="flex-1 mx-8 mt-10 pb-20">
         <View className="w-full h-36 mb-3">
           <DatePickerWithWeek
             currentDate={selectedDate!}
@@ -113,6 +113,7 @@ export default function Index() {
                   </Text>
                   <FlatList
                     data={todayExercises}
+                    showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.id.toString()}
                     ItemSeparatorComponent={() => <View className="h-4"></View>}
                     renderItem={({ item }) => {
