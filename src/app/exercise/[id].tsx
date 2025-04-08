@@ -42,7 +42,7 @@ const ExerciseDetails = () => {
   const { id }: { id: string } = useLocalSearchParams();
   const { width } = useWindowDimensions();
 
-  const scrollViewRef = useRef(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
   const [showMuscles, setShowMuscles] = useState(false);
@@ -231,7 +231,7 @@ const ExerciseDetails = () => {
                   <AccordionContent className="justify-center items-center">
                     <CustomCarousel
                       width={width}
-                      height={width}
+                      height={Math.min(500, width)}
                       loop={false}
                       data={allMuscles}
                       dotStyle={{

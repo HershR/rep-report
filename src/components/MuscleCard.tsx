@@ -1,7 +1,8 @@
 import { Muscles } from "@/src/interfaces/interface";
 import React from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { SvgUri } from "react-native-svg";
+import { Text } from "~/components/ui/text";
 
 interface MuscleCardProps {
   muscleList: Muscles[] | undefined;
@@ -31,10 +32,10 @@ const MuscleCard = ({ muscleList, isFront }: MuscleCardProps) => {
     </View>
   ));
   return (
-    <View className="flex-1 justify-start items-center relative">
+    <View className="flex-1 relative justify-start items-center">
       {base}
       {child}
-      <Text numberOfLines={2} className="text-primary text-md text-wrap">
+      <Text className="text-center text-lg text-wrap w-[80%] border-2">
         {muscleList.map((x) => x.name).join(", ")}
       </Text>
     </View>
