@@ -80,6 +80,10 @@ export default function RootLayout() {
                   name="exercise/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
+                <Stack.Screen
+                  name="workout/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
               </Stack>
               <PortalHost />
             </ThemeProvider>

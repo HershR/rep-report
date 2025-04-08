@@ -37,15 +37,7 @@ const Search = () => {
     }, 500);
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
-  const pickerOptions = () => {
-    const style = { fontSize: 15, borderWidth: 2 };
-    return [
-      <Picker.Item key={"none"} label="None" value={"none"} style={style} />,
-      ...Object.values(wgerCategories).map((x) => (
-        <Picker.Item style={style} label={x} value={x} key={x} />
-      )),
-    ];
-  };
+
   const selectItems = () => {
     const items = Object.values(wgerCategories).map((category) => (
       <>
