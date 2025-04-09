@@ -1,6 +1,6 @@
 import React from "react";
-import { TouchableOpacity, Text } from "react-native";
-
+import { Badge } from "./ui/badge";
+import { Text } from "./ui/text";
 interface Props {
   item: { id: number | string; name: string };
   disabled: boolean;
@@ -8,14 +8,14 @@ interface Props {
 }
 export const SearchChip = ({ item, onPress, disabled = true }: Props) => {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled}
-      className="bg-gray-200 rounded-full px-4 py-3"
+    <Badge
+      className="justify-center items-center py-2 px-4"
+      variant={"default"}
+      key={item?.id}
     >
-      <Text numberOfLines={1} className="text-accent text-center text-md">
-        {item.name}
+      <Text disabled={disabled} className="text-md font-normal">
+        {item?.name}
       </Text>
-    </TouchableOpacity>
+    </Badge>
   );
 };

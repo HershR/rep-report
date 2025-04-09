@@ -57,7 +57,6 @@ export const workoutSets = sqliteTable("workout_sets", {
   reps: integer("reps"),
   weight: integer("weight"),
   duration: text("duration"), // HH:mm:ss
-  notes: text("notes"),
 });
 
 // Optional, for easier querying
