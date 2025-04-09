@@ -1,6 +1,4 @@
 import {
-  ActivityIndicator,
-  FlatList,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -9,11 +7,7 @@ import {
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Workout,
-  WorkoutSet,
-  Workout as WorkoutType,
-} from "@/src/interfaces/interface";
+import { Workout, WorkoutSet } from "@/src/interfaces/interface";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useDate } from "@/src/context/DateContext";
@@ -24,25 +18,25 @@ import {
   createWorkoutWithExercise,
   getWorkoutById,
   getRecentWorkout,
-  deleteWorkoutSet,
   updateWorkoutWithSets,
 } from "@/src/db/dbHelpers";
 import { router, useLocalSearchParams } from "expo-router";
 import useFetch from "@/src/services/useFetch";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { Feather } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { Input } from "@/src/components/ui/input";
 import { Textarea } from "@/src/components/ui/textarea";
 import { DateTime } from "luxon";
+import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 
 enum FormMode {
   Create = 0,
@@ -67,9 +61,12 @@ const WorkoutDetails = () => {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const { selectedDate, setSelectedDate } = useDate();
-  const [selectedMode, setSelectedMode] = useState<0 | 1>(0);
+  const [localDate, setLocalDate] = useState(selectedDate);
+  const [selectedMode, setSelectedMode] = useState<FormMode>(0);
   const [workoutSets, setExerciseSets] = useState<WorkoutSet[]>([]);
   const [workoutNotes, setWorkoutNotes] = useState<string | null>(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
   const {
     data: originalWorkout,
     loading,
@@ -89,7 +86,7 @@ const WorkoutDetails = () => {
     ) {
       setExerciseSets(originalWorkout.sets);
       setWorkoutNotes(originalWorkout.notes);
-      setSelectedDate(DateTime.fromISO(originalWorkout.date));
+      setLocalDate(DateTime.fromISO(originalWorkout.date));
     }
   }, [loading]);
 
@@ -164,7 +161,7 @@ const WorkoutDetails = () => {
 
   async function saveWorkout() {
     const workoutForm: Workout = {
-      date: selectedDate?.toISODate()!,
+      date: localDate?.toISODate()!,
       mode: selectedMode,
       exercise_id: parseInt(exerciseId),
       notes: workoutNotes,
@@ -269,9 +266,22 @@ const WorkoutDetails = () => {
   }
   return (
     <View className="flex-1 bg-secondary">
+      <Image
+        source={{ uri: exerciseURI }}
+        className="w-full h-64 bg-secondary"
+        resizeMode="cover"
+      ></Image>
       <SafeAreaView className="flex-1">
+        <Button
+          variant={"ghost"}
+          size={"icon"}
+          onPress={router.back}
+          className="absolute mx-8"
+        >
+          <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
+        </Button>
         <KeyboardAvoidingView
-          className="flex-1 mx-8 my-10 justify-start items-center"
+          className="relative flex-1 mx-8 my-10 justify-start items-center"
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           {/* <Text className="text-4xl font-bold mb-2">
@@ -281,10 +291,19 @@ const WorkoutDetails = () => {
             <View testID="header">
               <CardHeader>
                 <CardTitle>{exerciseName}</CardTitle>
+                <View className="flex-row items-center gap-x-2">
+                  <Text className="text-2xl">
+                    {localDate?.toFormat("LLL dd, yyyy")}
+                  </Text>
+                  <Button variant={"ghost"} size={"icon"}>
+                    <AntDesign
+                      name="calendar"
+                      size={30}
+                      onPress={() => setDatePickerVisibility(true)}
+                    />
+                  </Button>
+                </View>
               </CardHeader>
-              <CardContent className="flex-row">
-                <Text>{selectedDate?.toISODate()}</Text>
-              </CardContent>
               <CardContent className="">
                 <Textarea
                   placeholder="Enter Notes"
@@ -336,13 +355,23 @@ const WorkoutDetails = () => {
                     setExerciseSets([]);
                   }}
                 >
-                  <Text>Clear</Text>
+                  <Text>Clear Sets</Text>
                 </Button>
               </View>
             </CardFooter>
           </Card>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        date={localDate?.toJSDate()}
+        onConfirm={(date) => {
+          setLocalDate(DateTime.fromJSDate(date));
+          setDatePickerVisibility(false);
+        }}
+        onCancel={() => setDatePickerVisibility(false)}
+      />
     </View>
   );
 };
