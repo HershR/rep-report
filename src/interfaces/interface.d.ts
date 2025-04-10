@@ -65,8 +65,8 @@ export interface Workout {
   mode: 0 | 1; // weight or time
   collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
-  sets: WorkoutSet[];
   notes: string | null;
+  sets: WorkoutSet[];
 }
 export interface WorkoutSet {
   id: number;
