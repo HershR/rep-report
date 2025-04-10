@@ -1,7 +1,6 @@
 import { View, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { Link } from "expo-router";
-import { Exercise, ExerciseInfo, Workout } from "../interfaces/interface";
 import { toUpperCase } from "../services/textFormatter";
 import { Text } from "~/components/ui/text";
 

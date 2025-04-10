@@ -8,8 +8,8 @@ import { useSharedValue } from "react-native-reanimated";
 import { DotStyle } from "react-native-reanimated-carousel/lib/typescript/components/Pagination/Basic/PaginationItem";
 
 interface CarouselProps {
-  width: number | undefined;
-  height: number | undefined;
+  width: number;
+  height: number;
   loop: boolean;
   style?: StyleProp<ViewStyle>;
   data: any[];

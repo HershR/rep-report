@@ -1,4 +1,3 @@
-import { Muscles } from "@/src/interfaces/interface";
 import React from "react";
 import { View } from "react-native";
 import { SvgUri } from "react-native-svg";

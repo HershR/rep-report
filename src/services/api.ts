@@ -1,5 +1,3 @@
-import { ExerciseInfo, ExerciseSuggestion } from "../interfaces/interface";
-
 export const WGER_CONFIG = {
   BASE_URL: "https://wger.de",
   header: {

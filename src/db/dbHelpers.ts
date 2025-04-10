@@ -11,7 +11,6 @@ import {
 } from "./schema";
 import { eq } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
-import { Workout, WorkoutSet } from "../interfaces/interface";
 
 //Get
 

@@ -11,7 +11,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Muscles } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
@@ -40,7 +39,8 @@ const ExerciseDetails = () => {
 
   const maxLineCount = 3;
 
-  const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
+  const { data: exercise, loading }: { data: ExerciseInfo; loading: boolean } =
+    useFetch(() => fetchExerciseDetail(id));
 
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
