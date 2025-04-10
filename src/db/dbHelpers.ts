@@ -154,19 +154,7 @@ export const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  {
-    date,
-    mode,
-    collection_id,
-    exercise_id,
-    notes,
-  }: {
-    date: string;
-    mode: 0 | 1;
-    collection_id: number | null;
-    exercise_id: number;
-    notes: string | null;
-  }
+  { date, mode, collection_id, exercise_id, notes }: Workout
 ) => {
   // Step 1: Check if exercise is in local DB
   const existing = await db.query.exercises.findFirst({

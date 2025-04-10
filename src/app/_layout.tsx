@@ -17,6 +17,7 @@ import { Platform } from "react-native";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
+import Toast from "react-native-toast-message";
 
 export const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
@@ -88,6 +89,7 @@ export default function RootLayout() {
                 ></Stack.Screen>
               </Stack>
               <PortalHost />
+              <Toast />
             </ThemeProvider>
           </DateProvider>
         </SQLiteProvider>

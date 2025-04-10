@@ -1,7 +1,11 @@
-import { ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import React, { useRef, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { Exercise, Workout, WorkoutSet } from "../interfaces/interface";
+import {
+  Controller,
+  FieldErrors,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Text } from "./ui/text";
@@ -17,16 +21,23 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Textarea } from "./ui/textarea";
 import { DateTime } from "luxon";
 import { useDate } from "../context/DateContext";
+import Toast from "react-native-toast-message";
+
+interface WorkoutWithExercise
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
+  exercise: Pick<Exercise, "name" | "image">;
+}
 
 interface Props {
-  defaultForm?: Workout;
-  exercise: Partial<Exercise>;
+  defaultForm: WorkoutWithExercise;
   onSubmit: (data: Workout) => void;
 }
 
-const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
+  console.log("default: ", defaultForm);
+
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const { control, handleSubmit, watch, setValue } = useForm<Workout>({
     defaultValues: {
@@ -53,10 +64,46 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
     };
     append(emptySet);
   };
+  const validateAndSubmit = (data: Workout) => {
+    console.log("Validate");
+    if (data.sets.length === 0) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Please add one Set",
+      });
+      return;
+    }
+
+    const hasEmptySet = data.sets.some((set) => {
+      return mode === 0
+        ? set.reps == null || set.weight == null
+        : !!set.duration;
+    });
+
+    if (hasEmptySet) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "One or more Field are Empty",
+      });
+      return;
+    }
+    Toast.show({
+      type: "success",
+      text1: "Workout Saved",
+    });
+    onSubmit(data);
+  };
+
+  function handleErrors(errors: FieldErrors<Workout>) {
+    console.error(errors);
+  }
+
   return (
     <Card className="flex-1 w-full">
       <CardHeader>
-        <CardTitle>{exercise.name}</CardTitle>
+        <CardTitle>{defaultForm.exercise.name}</CardTitle>
       </CardHeader>
       {/* DATE */}
       <CardContent>
@@ -142,7 +189,7 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
       </CardContent>
       <ScrollView
         ref={scrollViewRef}
-        className="flex flex-grow mb-2"
+        className="flex mb-2"
         showsVerticalScrollIndicator={false}
       >
         {fields.map((field, index) => (
@@ -158,7 +205,6 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
                 <Controller
                   control={control}
                   name={`sets.${index}.reps`}
-                  rules={{ required: true }}
                   render={({ field: { onChange, value } }) => (
                     <Input
                       className="flex-1"
@@ -181,7 +227,6 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
                 <Controller
                   control={control}
                   name={`sets.${index}.weight`}
-                  rules={{ required: true }}
                   render={({ field: { onChange, value } }) => (
                     <Input
                       className="flex-1"
@@ -206,7 +251,6 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
               <Controller
                 control={control}
                 name={`sets.${index}.duration`}
-                rules={{ required: true }}
                 render={({ field: { onChange, value } }) => (
                   <Input
                     className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-center"
@@ -229,7 +273,7 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
         ))}
       </ScrollView>
 
-      {/* ADD SET */}
+      {/* Footer */}
       <CardFooter className="flex flex-col gap-y-2">
         <Button
           className="w-full"
@@ -242,7 +286,10 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
           <Text>Add Set</Text>
         </Button>
         <View className="flex-row w-full justify-center items-center gap-x-2">
-          <Button className="flex-1" onPress={handleSubmit(onSubmit)}>
+          <Button
+            className="flex-1"
+            onPress={handleSubmit(validateAndSubmit, handleErrors)}
+          >
             <Text>Save</Text>
           </Button>
           <Button
@@ -250,6 +297,7 @@ const WorkoutForm = ({ defaultForm, exercise, onSubmit }: Props) => {
             variant={"destructive"}
             onPress={() => {
               remove();
+              addSet();
             }}
           >
             <Text>Clear Sets</Text>
