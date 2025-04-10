@@ -1,6 +1,6 @@
-import { Stack } from "expo-router";
 import "../global.css";
-import { ActivityIndicator, StatusBar } from "react-native";
+import { Stack } from "expo-router";
+import { ActivityIndicator, StatusBar, View, Text } from "react-native";
 import { DateProvider } from "../context/DateContext";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
@@ -60,6 +60,20 @@ export default function RootLayout() {
     hasMounted.current = true;
   }, []);
 
+  if (error) {
+    return (
+      <View>
+        <Text>Migration error: {error.message}</Text>
+      </View>
+    );
+  }
+  if (!success) {
+    return (
+      <View>
+        <Text>Migration is in progress...</Text>
+      </View>
+    );
+  }
   if (!isColorSchemeLoaded) {
     return null;
   }

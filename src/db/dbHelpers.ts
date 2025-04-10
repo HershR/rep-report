@@ -9,7 +9,7 @@ import {
   workoutSets,
   exercises,
 } from "./schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
 
 //Get
@@ -145,9 +145,18 @@ export const createWorkout = async (
     notes: string | null;
   }
 ) => {
+  const now = new Date().toISOString();
   const result = await db
     .insert(workouts)
-    .values({ date, mode, collection_id, exercise_id, notes })
+    .values({
+      date,
+      mode,
+      collection_id,
+      exercise_id,
+      notes,
+      created_date: now,
+      updated_date: now,
+    })
     .returning({ id: workouts.id });
 
   return result[0]?.id;
@@ -182,9 +191,18 @@ export const createWorkoutWithExercise = async (
     id = result[0]?.id;
   }
   // Step 4: Insert workout
+  const now = new Date().toISOString();
   const result = await db
     .insert(workouts)
-    .values({ date, mode, collection_id, exercise_id: id!, notes })
+    .values({
+      date,
+      mode,
+      collection_id,
+      exercise_id: id!,
+      notes,
+      created_date: now,
+      updated_date: now,
+    })
     .returning({ id: workouts.id });
 
   return result[0]?.id;
