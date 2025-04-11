@@ -77,7 +77,10 @@ export const getRecentWorkouts = async (
   limit: number = 10
 ) => {
   return db.query.workouts.findMany({
-    orderBy: (workouts, { desc }) => [desc(workouts.date), desc(workouts.id)],
+    orderBy: (workouts, { desc }) => [
+      desc(workouts.updated_date),
+      desc(workouts.id),
+    ],
     limit,
     with: {
       exercise: true,
@@ -191,48 +194,54 @@ export const createWorkoutWithExercise = async (
     id = result[0]?.id;
   }
   // Step 4: Insert workout
-  const now = new Date().toISOString();
-  const result = await db
-    .insert(workouts)
-    .values({
-      date,
-      mode,
-      collection_id,
-      exercise_id: id!,
-      notes,
-      created_date: now,
-      updated_date: now,
-    })
-    .returning({ id: workouts.id });
-
-  return result[0]?.id;
-};
-export const addSetToWorkout = async (
-  db: ExpoSQLiteDatabase<typeof schema>,
-  {
-    workout_id,
-    order,
-    reps,
-    weight,
-    duration,
-  }: {
-    workout_id: number;
-    order: number;
-    reps: number | null;
-    weight: number | null;
-    duration: string | null;
-  }
-) => {
-  return db.insert(workoutSets).values({
-    workout_id,
-    order,
-    reps,
-    weight,
-    duration,
+  return await createWorkout(db, {
+    date,
+    mode,
+    collection_id,
+    exercise_id: id!,
+    notes,
   });
 };
 
+export const addSetsToWorkout = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  workout_id: number,
+  sets: Omit<WorkoutSet, "id">[]
+) => {
+  const newSets = sets.map((set, index) => ({
+    workout_id,
+    order: index,
+    reps: set.reps,
+    weight: set.weight,
+    duration: set.duration,
+  }));
+  return db.insert(workoutSets).values(newSets);
+};
+
 //Update
+export const updateWorkoutWithSets = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  workoutId: number,
+  workoutForm: Omit<Workout, "exercise_id"> // assume exercise can't be changed
+) => {
+  await db
+    .update(workouts)
+    .set({
+      date: workoutForm.date,
+      mode: workoutForm.mode,
+      collection_id: workoutForm.collection_id,
+      notes: workoutForm.notes,
+      updated_date: new Date().toISOString(),
+    })
+    .where(eq(workouts.id, workoutId));
+
+  // Step 2: Delete old sets
+  await db.delete(workoutSets).where(eq(workoutSets.workout_id, workoutId));
+  addSetsToWorkout(db, workoutId, workoutForm.sets);
+
+  return workoutId;
+};
+
 export const updateRoutineName = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number,
@@ -242,35 +251,6 @@ export const updateRoutineName = async (
     .update(workoutRoutines)
     .set({ name: newName, last_updated: new Date().toISOString() })
     .where(eq(workoutRoutines.id, id));
-};
-export const updateWorkoutWithSets = async (
-  db: ExpoSQLiteDatabase<typeof schema>,
-  workoutId: number,
-  form: Omit<Workout, "exercise_id"> // assume exercise can't be changed
-) => {
-  await db
-    .update(workouts)
-    .set({
-      date: form.date,
-      mode: form.mode,
-      collection_id: form.collection_id,
-      notes: form.notes,
-    })
-    .where(eq(workouts.id, workoutId));
-
-  // Step 2: Delete old sets
-  await db.delete(workoutSets).where(eq(workoutSets.workout_id, workoutId));
-  const newSets = form.sets.map((set) => ({
-    workout_id: workoutId,
-    order: set.order,
-    reps: set.reps,
-    weight: set.weight,
-    duration: set.duration,
-  }));
-
-  await db.insert(workoutSets).values(newSets);
-
-  return workoutId;
 };
 
 //Delete
@@ -295,3 +275,19 @@ export const deleteWorkoutSet = async (
 ) => {
   return db.delete(workoutSets).where(eq(workoutSets.id, id));
 };
+
+//Reset
+
+export async function resetDatebase(db: ExpoSQLiteDatabase<typeof schema>) {
+  try {
+    db.run(sql`DROP TABLE IF EXISTS routine_exercises`);
+    db.run(sql`DROP TABLE IF EXISTS workout_routines`);
+    db.run(sql`DROP TABLE IF EXISTS workout_sets`);
+    db.run(sql`DROP TABLE IF EXISTS workouts`);
+    db.run(sql`DROP TABLE IF EXISTS exercises`);
+    db.run(sql`DROP TABLE IF EXISTS _drizzle_migrations`);
+    console.log("Database cleared!");
+  } catch (error) {
+    console.error("Error clearing database:", error);
+  }
+}

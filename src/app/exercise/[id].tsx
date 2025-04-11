@@ -65,7 +65,7 @@ const ExerciseDetails = () => {
       });
     }
     return items.map((item) => (
-      <SearchChip key={item.id.toString()} item={item} disabled={true} />
+      <SearchChip key={item.name} item={item} disabled={true} />
     ));
   };
 

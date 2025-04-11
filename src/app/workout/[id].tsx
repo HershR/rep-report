@@ -3,7 +3,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   View,
-  Image,
 } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,9 +13,9 @@ import * as schema from "@/src/db/schema";
 import {
   getWorkoutById,
   getRecentWorkout,
-  addSetToWorkout,
   createWorkoutWithExercise,
   updateWorkoutWithSets,
+  addSetsToWorkout,
 } from "@/src/db/dbHelpers";
 import { router, useLocalSearchParams } from "expo-router";
 import useFetch from "@/src/services/useFetch";
@@ -54,6 +53,7 @@ const WorkoutDetails = () => {
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
   function saveSuccessMsg() {
+    console.log("Successful save");
     Toast.show({
       type: "success",
       text1: "Workout Saved",
@@ -69,40 +69,40 @@ const WorkoutDetails = () => {
     });
   }
   async function saveWorkout(workoutForm: Workout) {
+    console.log("New Workout: ", workoutForm);
     if (mode === FormMode.Create) {
-      workoutForm.exercise_id = parseInt(exerciseId);
-      const workoutID = await createWorkoutWithExercise(drizzleDb, workoutForm);
-      for (let index = 0; index < workoutForm.sets.length; index++) {
-        let element = workoutForm.sets[index];
-        if (workoutForm.mode === 0) {
-          element = {
-            ...element,
-            order: index,
-            duration: null,
-            weight: element.weight || 0,
-            reps: element.reps || 1,
-          };
-        } else {
-          element = {
-            ...element,
-            order: index,
-            weight: null,
-            reps: null,
-            duration: element.duration || "00:00:00",
-          };
+      try {
+        workoutForm.exercise_id = parseInt(exerciseId);
+        const workoutID = await createWorkoutWithExercise(
+          drizzleDb,
+          workoutForm
+        );
+        for (let index = 0; index < workoutForm.sets.length; index++) {
+          let element = workoutForm.sets[index];
+          if (workoutForm.mode === 0) {
+            element = {
+              ...element,
+              order: index,
+              duration: null,
+              weight: element.weight || 0,
+              reps: element.reps || 1,
+            };
+          } else {
+            element = {
+              ...element,
+              order: index,
+              weight: null,
+              reps: null,
+              duration: element.duration || "00:00:00",
+            };
+          }
         }
-        try {
-          await addSetToWorkout(drizzleDb, {
-            ...element,
-            workout_id: workoutID,
-            order: element.order,
-          });
-          saveSuccessMsg();
-          router.push("/");
-        } catch (error) {
-          saveFailMsg(error);
-        }
+        await addSetsToWorkout(drizzleDb, workoutID, workoutForm.sets);
+      } catch (error: any) {
+        saveFailMsg(error);
       }
+      saveSuccessMsg();
+      router.push("/");
     } else {
       try {
         await updateWorkoutWithSets(
@@ -116,6 +116,14 @@ const WorkoutDetails = () => {
       }
     }
   }
+  const emptySet = {
+    id: -1,
+    workout_id: -1,
+    order: 0,
+    reps: null,
+    weight: null,
+    duration: null,
+  };
   return (
     <View className="flex-1 bg-secondary">
       {/* <Image
@@ -143,18 +151,19 @@ const WorkoutDetails = () => {
             <WorkoutForm
               defaultForm={
                 mode === FormMode.Update && !!originalWorkout
-                  ? originalWorkout
+                  ? {
+                      ...originalWorkout,
+                      mode: originalWorkout.mode === 0 ? 0 : 1,
+                    }
                   : {
-                      date: selectedDate?.toISODate(),
+                      date:
+                        selectedDate?.toISODate() ?? new Date().toISOString(),
                       mode: 0,
-                      exercise: { name: exerciseName, image: undefined },
-                      sets: [{ order: 1 }, { order: 2 }],
+                      notes: null,
+                      exercise: { name: exerciseName, image: null },
+                      sets: [emptySet, emptySet],
                     }
               }
-              exercise={{
-                wger_id: parseInt(exerciseId),
-                name: exerciseName,
-              }}
               onSubmit={saveWorkout}
             />
           )}
