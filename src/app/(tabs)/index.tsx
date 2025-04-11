@@ -111,7 +111,7 @@ export default function Index() {
                 />
               ) : (
                 <>
-                  <Text className="text-primary text-lg font-bold mt-4">
+                  <Text className="text-primary text-lg font-bold my-4">
                     Today's Workouts
                   </Text>
                   <FlatList

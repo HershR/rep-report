@@ -1,6 +1,5 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
-import { ExerciseSuggestion } from "../interfaces/interface";
 import { Link } from "expo-router";
 
 const SearchExerciseCard = ({ value, data }: ExerciseSuggestion) => {

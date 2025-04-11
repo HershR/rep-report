@@ -11,7 +11,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Muscles } from "@/src/interfaces/interface";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
@@ -35,8 +34,6 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-  const [showMuscles, setShowMuscles] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
   const maxLineCount = 3;
 
@@ -68,7 +65,7 @@ const ExerciseDetails = () => {
       });
     }
     return items.map((item) => (
-      <SearchChip key={item.id.toString()} item={item} disabled={true} />
+      <SearchChip key={item.name} item={item} disabled={true} />
     ));
   };
 
@@ -110,7 +107,7 @@ const ExerciseDetails = () => {
                     overflow: "hidden",
                     backgroundColor: "#2A2E3C",
                   }}
-                  renderFunction={(item: string, index?: number) => {
+                  renderFunction={(item: string) => {
                     return (
                       <View className="flex-1 justify-center items-center">
                         <Image
@@ -185,7 +182,7 @@ const ExerciseDetails = () => {
                         overflow: "hidden",
                         backgroundColor: "#2A2E3C",
                       }}
-                      renderFunction={(item: Muscles[], index?: number) => {
+                      renderFunction={(item: Muscles[]) => {
                         return (
                           <MuscleCard
                             muscleList={item}

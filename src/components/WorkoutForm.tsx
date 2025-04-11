@@ -1,249 +1,393 @@
+import { ScrollView, View } from "react-native";
+import React, { useRef, useState } from "react";
 import {
-  View,
-  Text,
-  useWindowDimensions,
-  TouchableOpacity,
-  TextInput,
-} from "react-native";
-import React, { useState } from "react";
-import { ExerciseInfo, Workout, WorkoutSet } from "@/src/interfaces/interface";
-import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
-import { SearchChip } from "./SearchChip";
+  Controller,
+  FieldErrors,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Text } from "./ui/text";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 import { AntDesign, Feather } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
-import { createWorkoutWithExercise } from "../db/dbHelpers";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { Textarea } from "./ui/textarea";
+import { DateTime } from "luxon";
+
+interface WorkoutWithExercise
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
+  exercise: Pick<Exercise, "name" | "image">;
+}
 
 interface Props {
-  date: string;
-  exerciseId: number | string;
-  exerciseName: string;
-  exerciseCategory: string;
-  exerciseImage?: string;
-  prevData?: WorkoutSet[] | undefined;
-  mode: "weight" | "time";
-  onSubmit: (form: Workout) => void;
+  defaultForm: WorkoutWithExercise;
+  onSubmit: (data: Workout) => void;
 }
-const WorkoutForm = ({
-  date,
-  exerciseId,
-  prevData: defaultData,
-  mode = "weight",
-  onSubmit,
-}: Props) => {
-  const [exerciseSets, setExerciseSets] = useState<WorkoutSet[]>(
-    defaultData || []
-  );
-  const [selectedMode, setSelectedMode] = useState(mode);
-  function addSet() {
-    setExerciseSets((prev) => [
-      ...prev,
-      {
-        id: 0,
-        workout_id: 0,
-        order: prev.length,
-      },
-    ]);
-  }
 
-  function updateWeight(index: number, newWeight: number) {
-    setExerciseSets((prev) =>
-      prev.map((x, i) => {
-        if (index === i) {
-          return {
-            ...x,
-            weight: !!newWeight && !isNaN(newWeight) ? newWeight : 0,
-          };
-        }
-        return x;
-      })
-    );
-  }
-  function updateDuration(index: number, newDuration: string) {
-    let formattedText = newDuration.replace(/[^0-9]/g, "");
+const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
-    if (formattedText.length > 6) {
-      formattedText = formattedText.slice(0, 6);
-    }
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    clearErrors,
+  } = useForm<Workout>({
+    defaultValues: {
+      ...defaultForm,
+      mode: defaultForm?.mode || 0,
+      date: defaultForm?.date || new Date().toISOString().slice(0, 10),
+    },
+  });
+  const date = watch("date");
+  const mode = watch("mode");
 
-    if (formattedText.length >= 3) {
-      formattedText = formattedText.slice(0, 2) + ":" + formattedText.slice(2);
-    }
-
-    if (formattedText.length >= 6) {
-      formattedText = formattedText.slice(0, 5) + ":" + formattedText.slice(5);
-    }
-    setExerciseSets((prev) =>
-      prev.map((x, i) => {
-        if (index === i) {
-          return { ...x, duration: formattedText };
-        }
-        return x;
-      })
-    );
-  }
-  function updateRep(index: number, newRep: number) {
-    setExerciseSets((prev) =>
-      prev.map((x, i) => {
-        if (index === i) {
-          return {
-            ...x,
-            reps: !!newRep && !isNaN(newRep) ? newRep : 1,
-          };
-        }
-        return x;
-      })
-    );
-  }
-  function deleteSet(index: number) {
-    setExerciseSets((prev) =>
-      prev
-        .filter((x) => x.order !== index)
-        .map((y, i) => {
-          return { ...y, index: i };
-        })
-    );
-  }
-  function save() {
-    const workoutForm: Workout = {
-      id: 0,
-      date: date,
-      mode: selectedMode === "time" ? 1 : 0,
-      exercise_id:
-        typeof exerciseId === "number" ? exerciseId : parseInt(exerciseId),
-      sets: exerciseSets,
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "sets",
+  });
+  const addSet = () => {
+    const emptySet: WorkoutSet = {
+      id: -1,
+      workout_id: 0,
+      order: fields.length,
+      reps: null,
+      weight: null,
+      duration: null,
     };
-    onSubmit(workoutForm);
+    append(emptySet);
+  };
+  function formatTime(duration: string) {
+    const n = duration.length;
+    const format = "00:00:00";
+    const pad = format.slice(0, 8 - duration.length);
+    duration = pad + duration;
+
+    return duration;
   }
-  function setField() {
-    if (selectedMode === "time") {
-      return exerciseSets.map((x, index) => {
-        return (
-          <View
-            key={index}
-            className="flex-1 flex-row justify-evenly items-center px-5 gap-x-10"
-          >
-            <TouchableOpacity
-              className="absolute -left-4"
-              onPress={() => deleteSet(index)}
-            >
-              <Feather name="x-circle" size={24} color="#2A2E3C" />
-            </TouchableOpacity>
-            <TextInput
-              keyboardType="numeric"
-              autoComplete="off"
-              autoCapitalize="none"
-              onChangeText={(text) => {
-                updateDuration(index, text);
-              }}
-              placeholder="HH:MM:SS"
-              maxLength={8}
-              value={x.duration || undefined}
-              className="flex-1 bg-gray-300 rounded-lg"
-            ></TextInput>
-          </View>
-        );
-      });
+  const validateAndSubmit = (data: Workout) => {
+    for (let i = 0; i < data.sets.length; i++) {
+      const set = data.sets[i];
+      if (data.mode === 0) {
+        set.duration = null;
+      } else {
+        set.reps = null;
+        set.weight = null;
+        set.duration = formatTime(set.duration!);
+      }
     }
-    return exerciseSets.map((x, index) => {
-      return (
-        <View
-          key={index}
-          className="flex-1 flex-row justify-evenly items-center px-5 gap-x-10"
-        >
-          <TouchableOpacity
-            className="absolute -left-4"
-            onPress={() => deleteSet(index)}
-          >
-            <Feather name="x-circle" size={24} color="#2A2E3C" />
-          </TouchableOpacity>
-          <TextInput
-            keyboardType="numeric"
-            autoComplete="off"
-            autoCapitalize="none"
-            onChangeText={(text) => {
-              updateWeight(index, parseFloat(text));
-            }}
-            placeholder="enter weight"
-            value={x.weight?.toString() || undefined}
-            className="flex-1 bg-gray-300 rounded-lg"
-          ></TextInput>
-          <TextInput
-            keyboardType="numeric"
-            autoComplete="off"
-            autoCapitalize="none"
-            onChangeText={(text) => {
-              updateRep(index, parseFloat(text));
-            }}
-            placeholder="enter reps"
-            value={x.reps?.toString() || undefined}
-            className="flex-1 bg-gray-300 rounded-lg"
-          ></TextInput>
-        </View>
-      );
-    });
+
+    onSubmit(data);
+  };
+
+  function handleErrors(errors: FieldErrors<Workout>) {
+    console.error(errors);
   }
+
   return (
-    <View className="flex gap-y-4 mt-4">
-      <Text className="flex-1 text-primary text-xl font-bold">
-        Record Workout
-      </Text>
-      <View className="flex-1 bg-gray-300 mx-5 rounded-lg">
-        <Picker
-          selectedValue={selectedMode}
-          onValueChange={(itemValue) => {
-            setSelectedMode(itemValue);
+    <Card className="flex-1 w-full">
+      <CardHeader>
+        <CardTitle>{defaultForm.exercise.name}</CardTitle>
+      </CardHeader>
+      {/* DATE */}
+      <CardContent>
+        <Text className="font-semibold">Date</Text>
+        <Controller
+          control={control}
+          name="date"
+          render={({ field: { onChange, value } }) => (
+            <View className="flex-row items-center gap-x-2">
+              <Text className="font-medium text-xl">{date}</Text>
+              <Button variant={"ghost"} size={"icon"}>
+                <AntDesign
+                  name="calendar"
+                  size={30}
+                  onPress={() => {
+                    setDatePickerVisibility(true);
+                  }}
+                />
+              </Button>
+            </View>
+          )}
+        />
+      </CardContent>
+
+      {/* NOTES */}
+      <CardContent>
+        <Controller
+          control={control}
+          name="notes"
+          render={({ field: { onChange, value } }) => (
+            <Textarea
+              placeholder="Enter Notes"
+              value={value ?? ""}
+              onChangeText={onChange}
+            ></Textarea>
+          )}
+        />
+      </CardContent>
+      {/* MODE */}
+      <CardContent>
+        <View className="flex-row">
+          <Button
+            className={`flex-1 py-2 rounded-lg rounded-r-none items-center ${
+              mode === 0 ? "bg-primary" : "bg-border"
+            }`}
+            onPress={() => {
+              if (mode !== 0) {
+                clearErrors();
+              }
+              setValue("mode", 0);
+            }}
+          >
+            <Text className={`${mode === 0 ? "" : "text-primary"} font-medium`}>
+              Weight
+            </Text>
+          </Button>
+          <Button
+            className={`flex-1 py-2 rounded-lg rounded-l-none items-center ${
+              mode === 1 ? "bg-primary" : "bg-border"
+            }`}
+            onPress={() => {
+              if (mode !== 1) {
+                clearErrors();
+              }
+              setValue("mode", 1);
+            }}
+          >
+            <Text className={`${mode === 1 ? "" : "text-primary"} font-medium`}>
+              Time
+            </Text>
+          </Button>
+        </View>
+      </CardContent>
+      {/* SETS */}
+      <CardContent>
+        <Text className="font-semibold mb-2">Sets</Text>
+        <View className="flex-row gap-x-4 justify-center items-center">
+          <Text className="flex text-center text-lg w-8">#</Text>
+          {mode === 0 ? (
+            <>
+              <Text className="flex-1 text-center text-lg">Reps</Text>
+              <Text className="flex-1 text-center text-lg">Weight (lb)</Text>
+            </>
+          ) : (
+            <Text className="flex-1 text-center text-lg">Time</Text>
+          )}
+          <View className="flex w-10 text-center text-lg"></View>
+        </View>
+      </CardContent>
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex mb-2"
+        showsVerticalScrollIndicator={false}
+      >
+        {fields.map((field, index) => (
+          <CardContent
+            key={index}
+            className="flex w-full justify-center pb-2 mb-2"
+          >
+            <View className="flex-1 flex-row w-full items-center gap-x-4">
+              <View className="w-8 h-8 justify-center items-center bg-primary rounded-full">
+                <Text className="text-center text-secondary">{index + 1}</Text>
+              </View>
+              {mode === 0 ? (
+                <>
+                  <Controller
+                    control={control}
+                    name={`sets.${index}.reps`}
+                    rules={{
+                      required: true,
+                      validate: (value) => {
+                        if (value != null && !isNaN(value)) {
+                          return true;
+                        }
+                        return false;
+                      },
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        className={`flex-1 ${
+                          errors.sets?.[index]?.reps != null
+                            ? "border-destructive"
+                            : ""
+                        }`}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        keyboardType="numeric"
+                        placeholder="Reps"
+                        value={value?.toString() ?? ""}
+                        onChangeText={onChange}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name={`sets.${index}.weight`}
+                    rules={{
+                      required: true,
+                      validate: (value) => {
+                        if (value != null && !isNaN(value)) {
+                          return true;
+                        }
+                        return false;
+                      },
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        className={`flex-1 ${
+                          errors.sets?.[index]?.weight != null
+                            ? "border-destructive"
+                            : ""
+                        }`}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        keyboardType="numeric"
+                        placeholder="Weight"
+                        value={value?.toString() ?? ""}
+                        onChangeText={onChange}
+                      />
+                    )}
+                  />
+                </>
+              ) : (
+                <Controller
+                  control={control}
+                  name={`sets.${index}.duration`}
+                  rules={{
+                    required: true,
+                    minLength: 1,
+                    maxLength: 8,
+                    // pattern: /^([0-9]{2}:)?([0-5]?[0-9]:)?([0-5]?[0-9])/,
+                    validate: (text) => {
+                      const split = text?.split(":");
+                      if (split?.length === 3) {
+                        return (
+                          !isNaN(parseInt(split[0])) &&
+                          parseInt(split[1]) < 60 &&
+                          parseInt(split[2]) < 60
+                        );
+                      } else {
+                        return split?.every(
+                          (x) => !isNaN(parseInt(x)) && parseInt(x) < 60
+                        );
+                      }
+                    },
+                  }}
+                  render={({ field: { onChange, value } }) => (
+                    <View className="flex-1 flex-col">
+                      <Input
+                        className={`flex-1 ${
+                          errors.sets?.[index]?.duration != null
+                            ? "border-destructive"
+                            : ""
+                        }`}
+                        placeholder="HH:MM:SS"
+                        value={value?.replace(/^(00:)+(0)?/, "") ?? ""}
+                        onChangeText={(text) => {
+                          let formattedText = text.replace(/[^0-9]/g, "");
+                          formattedText = formattedText.slice(0, 8);
+                          if (formattedText.length > 6) {
+                            formattedText = formattedText.slice(0, 6);
+                          }
+                          if (formattedText.length >= 5) {
+                            formattedText =
+                              formattedText.slice(0, formattedText.length - 4) +
+                              ":" +
+                              formattedText.slice(formattedText.length - 4);
+                          }
+                          if (formattedText.length >= 3) {
+                            formattedText =
+                              formattedText.slice(0, formattedText.length - 2) +
+                              ":" +
+                              formattedText.slice(formattedText.length - 2);
+                          }
+                          // if (formattedText.length >= 3) {
+                          //   formattedText =
+                          //     formattedText.slice(0, 2) +
+                          //     ":" +
+                          //     formattedText.slice(2);
+                          // }
+
+                          onChange(formattedText);
+                        }}
+                      />
+                    </View>
+                  )}
+                />
+              )}
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                className="flex"
+                onPress={() => remove(index)}
+              >
+                <Feather name="x-circle" size={24} />
+              </Button>
+            </View>
+            {errors.sets?.length && errors.sets[index] != null ? (
+              <Text className="text-destructive ml-12">
+                {mode === 0
+                  ? "Please fill in all fields"
+                  : "Please check format"}
+              </Text>
+            ) : null}
+          </CardContent>
+        ))}
+      </ScrollView>
+
+      {/* Footer */}
+      <CardFooter className="flex flex-col gap-y-2">
+        <Button
+          className="w-full"
+          onPress={() => {
+            addSet();
+            scrollViewRef.current?.scrollToEnd();
           }}
+          disabled={fields.length >= 15}
         >
-          <Picker.Item label="Weight" value="weight" />
-          <Picker.Item label="Time" value="time" />
-        </Picker>
-      </View>
-      {selectedMode === "weight" ? (
-        <View className="flex-row justify-evenly items-center">
-          <Text className="flex-1 text-primary text-xl font-black text-center uppercase">
-            Weight (lb)
-          </Text>
-          <Text className="flex-1 text-primary text-xl font-black text-center uppercase">
-            Reps
-          </Text>
+          <Text>Add Set</Text>
+        </Button>
+        <View className="flex-row w-full justify-center items-center gap-x-2">
+          <Button
+            className="flex-1"
+            onPress={handleSubmit(validateAndSubmit, handleErrors)}
+          >
+            <Text>Save</Text>
+          </Button>
+          <Button
+            className="flex-1"
+            variant={"destructive"}
+            onPress={() => {
+              remove();
+              addSet();
+            }}
+          >
+            <Text>Clear Sets</Text>
+          </Button>
         </View>
-      ) : (
-        <View>
-          <Text className="flex-1 text-primary text-xl font-black text-center uppercase">
-            Time (HH:mm:ss)
-          </Text>
-        </View>
-      )}
-      {setField()}
-      <View className="justify-center items-center mx-5">
-        <TouchableOpacity
-          onPress={addSet}
-          className="w-full items-center justify-center bg-accent rounded-lg py-3.5"
-        >
-          <Text className="text-secondary text-xl font-semibold text-center">
-            Add Set +
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View className="flex-row justify-center items-center mx-5 gap-x-4">
-        <TouchableOpacity
-          className="flex-1 bg-green-500 justify-center items-center rounded-lg py-3.5"
-          onPress={save}
-        >
-          <Text className="text-secondary text-xl font-semibold text-center">
-            Save
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setExerciseSets([])}
-          className="flex-1  bg-red-500 justify-center items-center rounded-lg py-3.5"
-        >
-          <Text className="text-secondary text-xl font-semibold text-center">
-            Clear
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      </CardFooter>
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        date={DateTime.fromISO(date).toJSDate()}
+        onConfirm={(date) => {
+          setValue("date", DateTime.fromJSDate(date).toISODate()!);
+          setDatePickerVisibility(false);
+        }}
+        onCancel={() => setDatePickerVisibility(false)}
+      />
+    </Card>
   );
 };
 

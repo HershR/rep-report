@@ -1,5 +1,5 @@
 //API
-export interface ExerciseInfo {
+interface ExerciseInfo {
   id: number;
   uuid: string;
   category: Category;
@@ -10,7 +10,7 @@ export interface ExerciseInfo {
   translations: TranslationBaseInfo[];
 }
 
-export interface Muscles {
+interface Muscles {
   id: number;
   name: string;
   is_front: boolean;
@@ -18,21 +18,21 @@ export interface Muscles {
   image_url_secondary: string;
 }
 
-export interface Equipment {
+interface Equipment {
   id: number;
   name: string;
 }
-export interface Category {
+interface Category {
   id: number;
   name: string;
 }
 
-export interface ExerciseImage {
+interface ExerciseImage {
   id: number;
   image: string;
 }
 
-export interface TranslationBaseInfo {
+interface TranslationBaseInfo {
   id: number;
   name: string;
   exercise: number;
@@ -40,7 +40,7 @@ export interface TranslationBaseInfo {
   language: number;
 }
 
-export interface ExerciseSuggestion {
+interface ExerciseSuggestion {
   value: string;
   data: {
     id: number;
@@ -52,23 +52,23 @@ export interface ExerciseSuggestion {
   };
 }
 //DB
-export interface Exercise {
+interface Exercise {
   id: number;
   wger_id: number; // Wger API ID
   name: string;
   category: string;
   image: string | null; // URI
 }
-export interface Workout {
+interface Workout {
   id: number;
   date: string; // ISO date
   mode: 0 | 1; // weight or time
   collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
-  sets: WorkoutSet[];
   notes: string | null;
+  sets: WorkoutSet[];
 }
-export interface WorkoutSet {
+interface WorkoutSet {
   id: number;
   workout_id: number; //foreign key -> Workout
   order: number;
