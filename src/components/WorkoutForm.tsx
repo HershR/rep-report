@@ -34,8 +34,6 @@ interface Props {
 }
 
 const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
-  console.log("default: ", defaultForm);
-
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
@@ -65,7 +63,6 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
     append(emptySet);
   };
   const validateAndSubmit = (data: Workout) => {
-    console.log("Validate");
     if (data.sets.length === 0) {
       Toast.show({
         type: "error",
@@ -89,10 +86,6 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
       });
       return;
     }
-    Toast.show({
-      type: "success",
-      text1: "Workout Saved",
-    });
     onSubmit(data);
   };
 
@@ -215,7 +208,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                       value={value?.toString() ?? ""}
                       onChangeText={(text) => {
                         const num = parseInt(text);
-                        if (!!num && !isNaN(num)) {
+                        if (num != null && !isNaN(num)) {
                           onChange(num);
                           return;
                         }
@@ -237,7 +230,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                       value={value?.toString() ?? ""}
                       onChangeText={(text) => {
                         const num = parseFloat(text);
-                        if (!!num && !isNaN(num)) {
+                        if (num != null && !isNaN(num)) {
                           onChange(num);
                           return;
                         }

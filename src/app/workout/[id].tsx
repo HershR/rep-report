@@ -24,6 +24,7 @@ import useFetch from "@/src/services/useFetch";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import WorkoutForm from "@/src/components/WorkoutForm";
+import Toast from "react-native-toast-message";
 
 enum FormMode {
   Create = 0,
@@ -52,6 +53,21 @@ const WorkoutDetails = () => {
       ? getWorkoutById(drizzleDb, parseInt(id))
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
+  function saveSuccessMsg() {
+    Toast.show({
+      type: "success",
+      text1: "Workout Saved",
+      visibilityTime: 2000,
+    });
+  }
+  function saveFailMsg(error: Error) {
+    console.error(error);
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to Save Workout, reason: " + error,
+    });
+  }
   async function saveWorkout(workoutForm: Workout) {
     if (mode === FormMode.Create) {
       workoutForm.exercise_id = parseInt(exerciseId);
@@ -75,15 +91,29 @@ const WorkoutDetails = () => {
             duration: element.duration || "00:00:00",
           };
         }
-        await addSetToWorkout(drizzleDb, {
-          ...element,
-          workout_id: workoutID,
-          order: element.order,
-        });
-        router.push("/");
+        try {
+          await addSetToWorkout(drizzleDb, {
+            ...element,
+            workout_id: workoutID,
+            order: element.order,
+          });
+          saveSuccessMsg();
+          router.push("/");
+        } catch (error) {
+          saveFailMsg(error);
+        }
       }
     } else {
-      await updateWorkoutWithSets(drizzleDb, originalWorkout!.id, workoutForm);
+      try {
+        await updateWorkoutWithSets(
+          drizzleDb,
+          originalWorkout!.id,
+          workoutForm
+        );
+        saveSuccessMsg();
+      } catch (error: any) {
+        saveFailMsg(error);
+      }
     }
   }
   return (
