@@ -22,6 +22,7 @@ export const fetchExcercises = async ({
     headers: WGER_CONFIG.header,
   });
   if (!response.ok) {
+    // @ts-ignore
     throw new Error("Failed to fetch exercies", response.statusText);
   }
 
@@ -39,9 +40,10 @@ export const fetchExerciseDetail = async (
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
+      // @ts-ignore
       throw new Error("Failed to fetch exercie details", response.statusText);
     }
-    const data = await response.json();
+    const data: ExerciseInfo = await response.json();
     return data;
   } catch (err) {
     console.log(err);
@@ -61,6 +63,7 @@ export const searchExercise = async ({
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
+      // @ts-ignore
       throw new Error("Failed to fetch exercies search", response.statusText);
     }
     const data = await response.json();

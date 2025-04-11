@@ -34,13 +34,10 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-  const [showMuscles, setShowMuscles] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
   const maxLineCount = 3;
 
-  const { data: exercise, loading }: { data: ExerciseInfo; loading: boolean } =
-    useFetch(() => fetchExerciseDetail(id));
+  const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
 
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
@@ -110,7 +107,7 @@ const ExerciseDetails = () => {
                     overflow: "hidden",
                     backgroundColor: "#2A2E3C",
                   }}
-                  renderFunction={(item: string, index?: number) => {
+                  renderFunction={(item: string) => {
                     return (
                       <View className="flex-1 justify-center items-center">
                         <Image
@@ -185,7 +182,7 @@ const ExerciseDetails = () => {
                         overflow: "hidden",
                         backgroundColor: "#2A2E3C",
                       }}
-                      renderFunction={(item: Muscles[], index?: number) => {
+                      renderFunction={(item: Muscles[]) => {
                         return (
                           <MuscleCard
                             muscleList={item}
