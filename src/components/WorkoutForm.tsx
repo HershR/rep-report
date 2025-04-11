@@ -67,6 +67,14 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
     };
     append(emptySet);
   };
+  function formatTime(duration: string) {
+    const n = duration.length;
+    const format = "00:00:00";
+    const pad = format.slice(0, 8 - duration.length);
+    duration = pad + duration;
+
+    return duration;
+  }
   const validateAndSubmit = (data: Workout) => {
     for (let i = 0; i < data.sets.length; i++) {
       const set = data.sets[i];
@@ -75,6 +83,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
       } else {
         set.reps = null;
         set.weight = null;
+        set.duration = formatTime(set.duration!);
       }
     }
 
@@ -141,9 +150,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
               setValue("mode", 0);
             }}
           >
-            <Text
-              className={`"${mode === 0 ? "text-secondary" : ""} font-medium"`}
-            >
+            <Text className={`${mode === 0 ? "" : "text-primary"} font-medium`}>
               Weight
             </Text>
           </Button>
@@ -158,9 +165,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
               setValue("mode", 1);
             }}
           >
-            <Text
-              className={`"${mode === 1 ? "text-secondary" : ""} font-medium"`}
-            >
+            <Text className={`${mode === 1 ? "" : "text-primary"} font-medium`}>
               Time
             </Text>
           </Button>
@@ -261,8 +266,23 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                   name={`sets.${index}.duration`}
                   rules={{
                     required: true,
+                    minLength: 1,
                     maxLength: 8,
-                    pattern: /([0-9]{2}:){2}[0-9]{2}/,
+                    // pattern: /^([0-9]{2}:)?([0-5]?[0-9]:)?([0-5]?[0-9])/,
+                    validate: (text) => {
+                      const split = text?.split(":");
+                      if (split?.length === 3) {
+                        return (
+                          !isNaN(parseInt(split[0])) &&
+                          parseInt(split[1]) < 60 &&
+                          parseInt(split[2]) < 60
+                        );
+                      } else {
+                        return split?.every(
+                          (x) => !isNaN(parseInt(x)) && parseInt(x) < 60
+                        );
+                      }
+                    },
                   }}
                   render={({ field: { onChange, value } }) => (
                     <View className="flex-1 flex-col">
@@ -273,10 +293,10 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                             : ""
                         }`}
                         placeholder="HH:MM:SS"
-                        value={value ?? ""}
+                        value={value?.replace(/^(00:)+(0)?/, "") ?? ""}
                         onChangeText={(text) => {
                           let formattedText = text.replace(/[^0-9]/g, "");
-
+                          formattedText = formattedText.slice(0, 8);
                           if (formattedText.length > 6) {
                             formattedText = formattedText.slice(0, 6);
                           }
