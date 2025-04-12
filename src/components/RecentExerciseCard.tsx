@@ -13,24 +13,24 @@ const RecentExerciseCard = ({
 }: Exercise) => {
   return (
     <Link href={`/exercise/${wger_id}`} asChild>
-      <TouchableOpacity className="w-36 relative justify-center items-center">
+      <TouchableOpacity className="flex w-36 relative justify-center items-center">
         <Image
           source={{
             uri: !!image ? image : undefined,
           }}
-          className="w-36 h-36 rounded-lg bg-border"
+          className="w-36 h-36 rounded-lg bg-white"
           resizeMode="contain"
         ></Image>
         {!!!image && (
-          <View className="absolute top-1/3 m-0 p-0 justify-center items-center">
-            <Text className="text-primary text-xl text-center">
+          <View className="absolute top-1/3 justify-center items-center">
+            <Text className="text-black text-xl text-center">
               No Image Found
             </Text>
           </View>
         )}
         <Text
           numberOfLines={1}
-          className="text-sm font-bold mt-1 mx-2 text-primary"
+          className="text-md font-semibold mt-1 mx-2 text-primary"
         >
           {toUpperCase(name)}
         </Text>
