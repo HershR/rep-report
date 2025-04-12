@@ -14,8 +14,11 @@ import { Button } from "@/src/components/ui/button";
 import { toUpperCase } from "@/src/services/textFormatter";
 import { eq } from "drizzle-orm";
 import { workouts } from "@/src//db/schema";
+import { useColorScheme as useNativewindColorScheme } from "nativewind";
 
 export default function Index() {
+  const { colorScheme, setColorScheme, toggleColorScheme } =
+    useNativewindColorScheme();
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -55,7 +58,7 @@ export default function Index() {
   return (
     <View className="flex-1 bg-secondary">
       <SafeAreaView className="flex-1 mx-8 mt-10 pb-20">
-        <View className="w-full h-36 mb-3">
+        <View className="flex h-32">
           <DatePickerWithWeek
             currentDate={selectedDate!}
             onDateChange={setSelectedDate}
@@ -68,7 +71,7 @@ export default function Index() {
           ></ActivityIndicator>
         ) : (
           <View className="flex-1">
-            <View className="flex">
+            <View className="flex mt-2">
               {recentExercise ? (
                 <>
                   <Text className="text-primary text-lg font-bold">
@@ -172,6 +175,9 @@ export default function Index() {
             </View>
           </View>
         )}
+        <Button onPress={toggleColorScheme}>
+          <Text>Toggle Color Scheme</Text>
+        </Button>
       </SafeAreaView>
     </View>
   );
