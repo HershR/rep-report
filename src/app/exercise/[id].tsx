@@ -80,16 +80,15 @@ const ExerciseDetails = () => {
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-4 relative">
+        <SafeAreaView className="flex-1 mx-4 my-4 gap-y-4">
+          <Button variant={"ghost"} size={"icon"} onPress={router.back}>
+            <ArrowRight size={32} className="rotate-180 color-primary" />
+          </Button>
           <ScrollView
             ref={scrollViewRef}
-            className="flex-1 px-5 mt-3"
+            className="flex-1 mx-4"
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ minHeight: "100%", paddingBottom: 10 }}
           >
-            <Button variant={"ghost"} size={"icon"} onPress={router.back}>
-              <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-            </Button>
             {exercise?.images !== undefined && exercise.images.length > 0 && (
               <View className="flex items-center">
                 <CustomCarousel
@@ -151,7 +150,7 @@ const ExerciseDetails = () => {
               <Accordion
                 type="single"
                 collapsible
-                className="w-full max-w-sm native:max-w-md mt-4 mb-2"
+                className="w-full max-w-sm native:max-w-md mt-2"
                 onValueChange={(val) => {
                   if (!!val) {
                     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -196,7 +195,7 @@ const ExerciseDetails = () => {
           </ScrollView>
 
           <Button
-            className="w-full bottom-10 items-center justify-center mt-4"
+            className="w-full items-center justify-center"
             onPress={() =>
               router.push({
                 pathname: "../workout/[id]",
