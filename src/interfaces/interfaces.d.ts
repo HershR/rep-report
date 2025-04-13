@@ -54,7 +54,7 @@ interface ExerciseSuggestion {
 //DB
 interface Exercise {
   id: number;
-  wger_id: number; // Wger API ID
+  wger_id: number | null; // Wger API ID
   name: string;
   category: string;
   image: string | null; // URI
@@ -62,11 +62,14 @@ interface Exercise {
 interface Workout {
   id: number;
   date: string; // ISO date
-  mode: 0 | 1; // weight or time
+  mode: number; // weight or time
   collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   notes: string | null;
   sets: WorkoutSet[];
+}
+interface WorkoutWithExercise extends Workout {
+  exercise: Exercise;
 }
 interface WorkoutSet {
   id: number;

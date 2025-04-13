@@ -20,7 +20,7 @@ import { AntDesign, Feather } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Textarea } from "./ui/textarea";
 import { DateTime } from "luxon";
-
+import { CircleX } from "~/lib/icons/CircleX";
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
   exercise: Pick<Exercise, "name" | "image">;
@@ -141,7 +141,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
         <View className="flex-row">
           <Button
             className={`flex-1 py-2 rounded-lg rounded-r-none items-center ${
-              mode === 0 ? "bg-primary" : "bg-border"
+              mode === 0 ? "bg-primary" : "bg-secondary"
             }`}
             onPress={() => {
               if (mode !== 0) {
@@ -156,7 +156,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
           </Button>
           <Button
             className={`flex-1 py-2 rounded-lg rounded-l-none items-center ${
-              mode === 1 ? "bg-primary" : "bg-border"
+              mode === 1 ? "bg-primary" : "bg-secondary"
             }`}
             onPress={() => {
               if (mode !== 1) {
@@ -332,7 +332,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                 className="flex"
                 onPress={() => remove(index)}
               >
-                <Feather name="x-circle" size={24} />
+                <CircleX className="color-primary" size={24} />
               </Button>
             </View>
             {errors.sets?.length && errors.sets[index] != null ? (

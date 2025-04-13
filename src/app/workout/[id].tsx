@@ -151,10 +151,7 @@ const WorkoutDetails = () => {
             <WorkoutForm
               defaultForm={
                 mode === FormMode.Update && !!originalWorkout
-                  ? {
-                      ...originalWorkout,
-                      mode: originalWorkout.mode === 0 ? 0 : 1,
-                    }
+                  ? originalWorkout
                   : {
                       date:
                         selectedDate?.toISODate() ?? new Date().toISOString(),
