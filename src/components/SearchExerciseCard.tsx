@@ -14,7 +14,7 @@ const SearchExerciseCard = ({ value, data }: ExerciseSuggestion) => {
   const { id, base_id, name, category, image, image_thumbnail } = data;
   return (
     <Link href={`/exercise/${base_id}`} asChild>
-      <TouchableOpacity className="flex-1 aspect-square">
+      <TouchableOpacity className="w-[45%]">
         {/* <View>
           <Image
             source={{
@@ -28,7 +28,7 @@ const SearchExerciseCard = ({ value, data }: ExerciseSuggestion) => {
         <Card className="relative flex-1 justify-center items-center overflow-hidden">
           <ExerciseImage
             image_uri={!!image ? `https://wger.de/${image}` : null}
-            imageClassname={`h-full aspect-square rounded-md bg-white`}
+            imageClassname={`w-full aspect-square rounded-md bg-white`}
             textClassname={"text-xl text-black text-center"}
           ></ExerciseImage>
           <View

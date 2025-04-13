@@ -107,9 +107,8 @@ const Search = () => {
             className=""
             numColumns={2}
             columnWrapperStyle={{
-              justifyContent: "center",
-              gap: 16,
-              marginVertical: 8,
+              justifyContent: "space-between",
+              marginVertical: 16,
             }}
             contentContainerStyle={{ paddingBottom: 100 }}
             ListEmptyComponent={
