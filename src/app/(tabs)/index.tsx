@@ -11,10 +11,11 @@ import * as schema from "@/src//db/schema";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
 import { Button } from "@/src/components/ui/button";
-import { eq } from "drizzle-orm";
-import { workouts } from "@/src//db/schema";
+import { desc, eq } from "drizzle-orm";
+import { workouts, exercises } from "@/src//db/schema";
 import { useColorScheme as useNativewindColorScheme } from "nativewind";
 import CompletedWorkout from "@/src/components/CompletedWorkout";
+import { date } from "drizzle-orm/mysql-core";
 
 export default function Index() {
   const { toggleColorScheme } = useNativewindColorScheme();
@@ -27,16 +28,18 @@ export default function Index() {
 
   const { data: recentExercise, updatedAt: recentExerciseLoaded } =
     useLiveQuery(
-      drizzleDb.query.workouts.findMany({
-        orderBy: (workouts, { desc }) => [
-          desc(workouts.date),
-          desc(workouts.id),
-        ],
-        limit: 10,
-        with: {
-          exercise: true,
-        },
-      })
+      drizzleDb
+        .selectDistinct({
+          exercise_id: workouts.exercise_id,
+          exercise_wger_id: exercises.wger_id,
+          exercise_name: exercises.name,
+          exercise_image: exercises.image,
+          exercise_category: exercises.category,
+        })
+        .from(workouts)
+        .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
+        .orderBy(desc(workouts.updated_date), desc(workouts.date))
+        .limit(10)
     );
 
   const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
@@ -86,16 +89,16 @@ export default function Index() {
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     data={recentExercise}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item.exercise_id!.toString()}
                     contentContainerStyle={{ gap: 5 }}
                     renderItem={({ item }) => {
                       return (
                         <RecentExerciseCard
-                          id={item.exercise.id}
-                          wger_id={item.exercise.wger_id!}
-                          name={item.exercise.name}
-                          category={item.exercise.category}
-                          image={item.exercise.image!}
+                          id={item.exercise_id}
+                          wger_id={item.exercise_wger_id!}
+                          name={item.exercise_name}
+                          category={item.exercise_category}
+                          image={item.exercise_image!}
                         />
                       );
                     }}
