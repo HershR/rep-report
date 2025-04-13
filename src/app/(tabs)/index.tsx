@@ -15,10 +15,10 @@ import { toUpperCase } from "@/src/services/textFormatter";
 import { eq } from "drizzle-orm";
 import { workouts } from "@/src//db/schema";
 import { useColorScheme as useNativewindColorScheme } from "nativewind";
+import CompletedWorkout from "@/src/components/CompletedWorkout";
 
 export default function Index() {
-  const { colorScheme, setColorScheme, toggleColorScheme } =
-    useNativewindColorScheme();
+  const { toggleColorScheme } = useNativewindColorScheme();
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -26,25 +26,21 @@ export default function Index() {
 
   const { selectedDate, setSelectedDate } = useDate();
 
-  const {
-    data: recentExercise,
-    updatedAt: recentExerciseLoaded,
-    error: recentExerciseError,
-  } = useLiveQuery(
-    drizzleDb.query.workouts.findMany({
-      orderBy: (workouts, { desc }) => [desc(workouts.date), desc(workouts.id)],
-      limit: 10,
-      with: {
-        exercise: true,
-      },
-    })
-  );
+  const { data: recentExercise, updatedAt: recentExerciseLoaded } =
+    useLiveQuery(
+      drizzleDb.query.workouts.findMany({
+        orderBy: (workouts, { desc }) => [
+          desc(workouts.date),
+          desc(workouts.id),
+        ],
+        limit: 10,
+        with: {
+          exercise: true,
+        },
+      })
+    );
 
-  const {
-    data: todayWorkouts,
-    updatedAt: workoutLoaded,
-    error: workoutError,
-  } = useLiveQuery(
+  const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
     drizzleDb.query.workouts.findMany({
       where: eq(workouts.date, selectedDate?.toISODate()!),
       with: {
@@ -54,7 +50,17 @@ export default function Index() {
     }),
     [selectedDate]
   );
-
+  function goToWorkout(workout: WorkoutWithExercise): void {
+    return router.push({
+      pathname: "../workout/[id]",
+      params: {
+        id: workout.id,
+        exerciseId: workout.exercise_id,
+        exerciseName: workout.exercise.name,
+        exerciseURI: workout.exercise.image,
+      },
+    });
+  }
   return (
     <View className="flex-1 bg-secondary">
       <SafeAreaView className="flex-1 mx-8 mt-10 pb-20">
@@ -84,7 +90,7 @@ export default function Index() {
                     data={recentExercise}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={{ gap: 5 }}
-                    renderItem={({ item, index }) => {
+                    renderItem={({ item }) => {
                       return (
                         <RecentExerciseCard
                           id={item.exercise.id}
@@ -123,50 +129,12 @@ export default function Index() {
                     keyExtractor={(item) => item.id.toString()}
                     ItemSeparatorComponent={() => <View className="h-4"></View>}
                     renderItem={({ item }) => {
-                      const image = item.exercise.image;
-                      const sets = item.sets.map((x) => (
-                        <Text key={x.id} className="font-semibold">
-                          {x.weight}{" "}
-                          <Text className="text-muted-foreground">lb</Text> x{" "}
-                          {x.reps}{" "}
-                          <Text className="text-muted-foreground">reps</Text>
-                        </Text>
-                      ));
                       return (
-                        <View className="flex flex-row w-full justify-between items-center">
-                          <Image
-                            className="w-20 h-20 rounded-md bg-white"
-                            source={{
-                              uri: !!image ? image : undefined,
-                            }}
-                            resizeMode="contain"
-                          />
-                          <View className="flex-1 mx-4">
-                            <Text className="flex text-left text-lg font-bold">
-                              {toUpperCase(item.exercise.name)}{" "}
-                              <Text>({item.exercise.category})</Text>
-                            </Text>
-                            <Text className="text-muted-foreground">
-                              Sets: {item.sets.length}
-                            </Text>
-                            {/* {sets} */}
-                          </View>
-                          <Button
-                            onPress={() =>
-                              router.push({
-                                pathname: "../workout/[id]",
-                                params: {
-                                  id: item.id,
-                                  exerciseId: item.exercise_id,
-                                  exerciseName: item.exercise.name,
-                                  exerciseURI: item.exercise.image,
-                                },
-                              })
-                            }
-                          >
-                            <Text>Update</Text>
-                          </Button>
-                        </View>
+                        <CompletedWorkout
+                          workout={item}
+                          onUpdate={() => goToWorkout(item)}
+                          onDelete={() => {}}
+                        />
                       );
                     }}
                   ></FlatList>
