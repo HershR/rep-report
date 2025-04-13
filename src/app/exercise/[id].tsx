@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
+import ExerciseImage from "@/src/components/ExerciseImage";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -34,7 +35,6 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
@@ -110,12 +110,12 @@ const ExerciseDetails = () => {
                   renderFunction={(item: string) => {
                     return (
                       <View className="flex-1 justify-center items-center">
-                        <Image
-                          source={{
-                            uri: item,
-                          }}
-                          className="rounded-lg aspect-square w-full bg-background"
-                          resizeMode="contain"
+                        <ExerciseImage
+                          image_uri={item}
+                          imageClassname={
+                            "aspect-square w-full rounded-md bg-white"
+                          }
+                          textClassname={""}
                         />
                       </View>
                     );
@@ -127,28 +127,26 @@ const ExerciseDetails = () => {
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
-            <>
-              <Text
-                numberOfLines={showDescription ? undefined : maxLineCount}
-                className="text-primary text-xl"
-                onTextLayout={(e) => {
-                  if (
-                    descriptionLineCount < e.nativeEvent.lines.length &&
-                    descriptionLineCount < maxLineCount
-                  )
-                    setDescriptionLineCount(e.nativeEvent.lines.length);
-                }}
-              >
-                {desciption}
-              </Text>
-              {descriptionLineCount > maxLineCount && (
-                <TouchableOpacity onPress={toggleShowDescription}>
-                  <Text className="text-lg font-bold">
-                    {showDescription ? "Show Less" : "Show More"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </>
+            <Text
+              numberOfLines={showDescription ? undefined : maxLineCount}
+              className="text-primary text-xl mt-2"
+              onTextLayout={(e) => {
+                if (
+                  descriptionLineCount < e.nativeEvent.lines.length &&
+                  descriptionLineCount < maxLineCount
+                )
+                  setDescriptionLineCount(e.nativeEvent.lines.length);
+              }}
+            >
+              {desciption}
+            </Text>
+            {descriptionLineCount > maxLineCount && (
+              <TouchableOpacity onPress={toggleShowDescription}>
+                <Text className="text-lg font-bold">
+                  {showDescription ? "Show Less" : "Show More"}
+                </Text>
+              </TouchableOpacity>
+            )}
             {muscles !== undefined && muscles.length > 0 && (
               <Accordion
                 type="single"
@@ -204,7 +202,7 @@ const ExerciseDetails = () => {
                 params: { id: -1, exerciseId: id, exerciseName: name },
               })
             }
-            className="absolute w-full bottom-10 items-center justify-center"
+            className="w-full bottom-10 items-center justify-center"
           >
             <Text>Start Workout</Text>
           </Button>
