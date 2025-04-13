@@ -46,92 +46,83 @@ const Search = () => {
   return (
     <View className="flex-1 bg-secondary">
       <SafeAreaView className="flex-1 mx-8 my-10">
-        <FlatList
-          data={
-            !!category
-              ? exercies?.filter((x) => x.data.category === category)
-              : exercies
-          }
-          renderItem={({ item }) => <SearchExerciseCard {...item} />}
-          keyExtractor={(item) => item.data.base_id.toString()}
-          className=""
-          numColumns={2}
-          columnWrapperStyle={{
-            justifyContent: "center",
-            gap: 16,
-            marginVertical: 8,
-          }}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          ListHeaderComponent={
-            <>
-              <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
-                <View className="flex-1">
-                  <SearchBar
-                    placeholder="Search exercise..."
-                    value={searchQuery}
-                    onChangeText={(text: string) => {
-                      setSearchQuery(text);
-                    }}
-                    onPress={() => {}}
-                  />
+        <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
+          <View className="flex-1">
+            <SearchBar
+              placeholder="Search exercise..."
+              value={searchQuery}
+              onChangeText={(text: string) => {
+                setSearchQuery(text);
+              }}
+              onPress={() => {}}
+            />
+          </View>
+          <Select
+            className="w-[35%]"
+            defaultValue={{ value: category, label: "None" }}
+            onValueChange={(item) => setCategory(item!.value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue
+                className="text-foreground text-lg"
+                placeholder="Select Muscle Group"
+              />
+            </SelectTrigger>
+            <SelectContent align="center">
+              <SelectGroup>
+                <SelectItem key={"none"} value={""} label={"None"}></SelectItem>
+                {selectItems()}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </View>
+        <>
+          {!loading &&
+          !error &&
+          searchQuery.trim() &&
+          exercies &&
+          exercies?.length > 0 ? (
+            <Text className="text-xl text-muted-foreground font-bold">
+              Search Results for <Text className=" text-xl">{searchQuery}</Text>
+            </Text>
+          ) : null}
+        </>
+        {loading ? (
+          <ActivityIndicator
+            size={"large"}
+            color={"#2A2E3C"}
+            className="my-3"
+          />
+        ) : error ? (
+          <Text className="text-red-500 px-5 my-3">Error: {error.message}</Text>
+        ) : (
+          <FlatList
+            data={
+              !!category
+                ? exercies?.filter((x) => x.data.category === category)
+                : exercies
+            }
+            renderItem={({ item }) => <SearchExerciseCard {...item} />}
+            keyExtractor={(item) => item.data.base_id.toString()}
+            className=""
+            numColumns={2}
+            columnWrapperStyle={{
+              justifyContent: "center",
+              gap: 16,
+              marginVertical: 8,
+            }}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            ListEmptyComponent={
+              !loading && !error ? (
+                <View className="mt-10 px-5">
+                  <Text className="text-center text-primary">
+                    {searchQuery.trim() ? "No Exercise Found" : "Search"}
+                  </Text>
                 </View>
-                <Select
-                  className="w-[35%]"
-                  defaultValue={{ value: category, label: "None" }}
-                  onValueChange={(item) => setCategory(item!.value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      className="text-foreground text-lg"
-                      placeholder="Select Muscle Group"
-                    />
-                  </SelectTrigger>
-                  <SelectContent align="center">
-                    <SelectGroup>
-                      <SelectItem
-                        key={"none"}
-                        value={""}
-                        label={"None"}
-                      ></SelectItem>
-                      {selectItems()}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </View>
-              {loading ? (
-                <ActivityIndicator
-                  size={"large"}
-                  color={"#2A2E3C"}
-                  className="my-3"
-                />
-              ) : null}
-              {error ? (
-                <Text className="text-red-500 px-5 my-3">
-                  Error: {error.message}
-                </Text>
-              ) : null}
-              {!loading &&
-              !error &&
-              searchQuery.trim() &&
-              exercies &&
-              exercies?.length > 0 ? (
-                <Text className="text-xl text-muted-foreground font-bold">
-                  Search Results for{" "}
-                  <Text className=" text-xl">{searchQuery}</Text>
-                </Text>
-              ) : null}
-            </>
-          }
-          ListEmptyComponent={
-            !loading && !error ? (
-              <View className="mt-10 px-5">
-                <Text className="text-center text-primary">
-                  {searchQuery.trim() ? "No Exercise Found" : "Search"}
-                </Text>
-              </View>
-            ) : null
-          }
-        ></FlatList>
+              ) : null
+            }
+          ></FlatList>
+        )}
       </SafeAreaView>
     </View>
   );
