@@ -151,7 +151,7 @@ const ExerciseDetails = () => {
               <Accordion
                 type="single"
                 collapsible
-                className="w-full max-w-sm native:max-w-md mt-4 mb-12"
+                className="w-full max-w-sm native:max-w-md mt-4 mb-2"
                 onValueChange={(val) => {
                   if (!!val) {
                     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -164,10 +164,10 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="justify-center items-center">
+                  <AccordionContent className="flex-1 justify-center items-center">
                     <CustomCarousel
-                      width={width}
-                      height={Math.min(500, width)}
+                      width={300}
+                      height={425}
                       loop={false}
                       data={allMuscles}
                       dotStyle={{
@@ -196,13 +196,13 @@ const ExerciseDetails = () => {
           </ScrollView>
 
           <Button
+            className="w-full bottom-10 items-center justify-center mt-4"
             onPress={() =>
               router.push({
                 pathname: "../workout/[id]",
                 params: { id: -1, exerciseId: id, exerciseName: name },
               })
             }
-            className="w-full bottom-10 items-center justify-center"
           >
             <Text>Start Workout</Text>
           </Button>

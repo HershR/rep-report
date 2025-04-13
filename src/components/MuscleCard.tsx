@@ -31,10 +31,12 @@ const MuscleCard = ({ muscleList, isFront }: MuscleCardProps) => {
     </View>
   ));
   return (
-    <View className="flex-1 relative justify-start items-center">
-      {base}
-      {child}
-      <Text className="text-center text-lg text-wrap w-[80%] border-2">
+    <View className="flex relative justify-start items-center">
+      <View>
+        {base}
+        {child}
+      </View>
+      <Text className="text-center text-lg text-wrap w-[80%]">
         {muscleList.map((x) => x.name).join(", ")}
       </Text>
     </View>
