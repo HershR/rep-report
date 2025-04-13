@@ -77,16 +77,15 @@ export default function Index() {
           ></ActivityIndicator>
         ) : (
           <View className="flex-1">
-            <View className="flex mt-2">
+            <View className="flex mt-6 mb-6 gap-y-2">
               {recentExercise ? (
                 <>
-                  <Text className="text-primary text-lg font-bold">
+                  <Text className="text-xl font-semibold">
                     Recent Exercise:
                   </Text>
                   <FlatList
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    className="mb-4 mt-1"
                     data={recentExercise}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={{ gap: 5 }}
@@ -120,7 +119,7 @@ export default function Index() {
                 />
               ) : (
                 <>
-                  <Text className="text-primary text-lg font-bold my-4">
+                  <Text className="text-xl font-semibold my-4">
                     Today's Workouts
                   </Text>
                   <FlatList
