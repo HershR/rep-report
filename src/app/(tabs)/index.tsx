@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Image, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RecentExerciseCard from "@/src/components/RecentExerciseCard";
@@ -11,7 +11,6 @@ import * as schema from "@/src//db/schema";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
 import { Button } from "@/src/components/ui/button";
-import { toUpperCase } from "@/src/services/textFormatter";
 import { eq } from "drizzle-orm";
 import { workouts } from "@/src//db/schema";
 import { useColorScheme as useNativewindColorScheme } from "nativewind";
