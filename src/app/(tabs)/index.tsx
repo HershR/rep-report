@@ -10,15 +10,11 @@ import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
-import { Button } from "@/src/components/ui/button";
 import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
-import { useColorScheme as useNativewindColorScheme } from "nativewind";
 import CompletedWorkout from "@/src/components/CompletedWorkout";
-import { date } from "drizzle-orm/mysql-core";
 
 export default function Index() {
-  const { toggleColorScheme } = useNativewindColorScheme();
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -144,9 +140,6 @@ export default function Index() {
             </View>
           </View>
         )}
-        <Button onPress={toggleColorScheme}>
-          <Text>Toggle Color Scheme</Text>
-        </Button>
       </SafeAreaView>
     </View>
   );

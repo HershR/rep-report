@@ -2,10 +2,10 @@ import { View } from "react-native";
 import React from "react";
 import { Tabs } from "expo-router";
 import { Text } from "@/src/components/ui/text";
+import { LucideIcon } from "lucide-react-native";
 import { Search } from "~/lib/icons/Search";
 import { House } from "~/lib/icons/House";
-import { LucideIcon } from "lucide-react-native";
-
+import { User } from "~/lib/icons/User";
 import { useColorScheme } from "@/src/lib/useColorScheme";
 import { NAV_THEME } from "~/lib/constants";
 interface TabIconProps {
@@ -70,6 +70,16 @@ const _Layout = () => {
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon title="Search" Icon={Search} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Profile" Icon={User} focused={focused} />
           ),
         }}
       />

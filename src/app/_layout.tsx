@@ -18,6 +18,7 @@ import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
@@ -28,7 +29,6 @@ const DARK_THEME: Theme = {
   ...DarkTheme,
   colors: NAV_THEME.dark,
 };
-
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -44,9 +44,21 @@ export default function RootLayout() {
 
   //rnr ui lib
   const hasMounted = useRef(false);
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
+  useEffect(() => {
+    loadTheme();
+  }, []);
 
+  const loadTheme = async () => {
+    const savedTheme = await AsyncStorage.getItem("theme");
+    if (savedTheme === null) {
+      await AsyncStorage.setItem("theme", colorScheme);
+    } else {
+      setColorScheme(savedTheme || "light"); // Default to system if no saved theme
+    }
+    console.log("Theme loaded: ", savedTheme);
+  };
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {
       return;
