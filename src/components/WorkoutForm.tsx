@@ -1,11 +1,6 @@
 import { ScrollView, View } from "react-native";
-import React, { useRef, useState } from "react";
-import {
-  Controller,
-  FieldErrors,
-  useFieldArray,
-  useForm,
-} from "react-hook-form";
+import React, { ReactNode, useRef, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Text } from "./ui/text";
@@ -16,13 +11,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { AntDesign } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Textarea } from "./ui/textarea";
 import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
 import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
+import { Trash2 } from "../lib/icons/Trash2";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "./ui/alert-dialog";
+
+interface FormActionAlertProps {
+  title: string;
+  description: string;
+  trigger: ReactNode;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const FormActionAlert = ({
+  title,
+  description,
+  trigger,
+  onConfirm,
+  onCancel,
+}: FormActionAlertProps) => {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost">{trigger}</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="gap-y-2">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-row justify-end gap-x-2">
+          <AlertDialogCancel onPress={onCancel}>
+            <Text>Cancel</Text>
+          </AlertDialogCancel>
+          <AlertDialogAction onPress={onConfirm}>
+            <Text>Continue</Text>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
@@ -31,10 +75,12 @@ interface WorkoutWithExercise
 
 interface Props {
   defaultForm: WorkoutWithExercise;
+  formMode: 0 | 1;
   onSubmit: (data: Workout) => void;
+  onDelete: () => void;
 }
 
-const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
+const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const {
@@ -42,8 +88,9 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
     clearErrors,
+    reset,
+    formState: { errors },
   } = useForm<Workout>({
     defaultValues: {
       ...defaultForm,
@@ -93,12 +140,25 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
     onSubmit(data);
   };
 
-  function handleErrors(errors: FieldErrors<Workout>) {}
+  function clearForm(): void {
+    reset(defaultForm);
+  }
 
   return (
     <Card className="flex-1 w-full">
-      <CardHeader>
+      <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
+        <FormActionAlert
+          title={`${formMode === 0 ? "Reset form" : "Delete Workout"}`}
+          description={`${
+            formMode === 0
+              ? "This action cannot be undone."
+              : "This action cannot be undone. This will permanently delete this workout and sets."
+          }`}
+          trigger={<Trash2 className="color-destructive" />}
+          onConfirm={formMode === 1 ? onDelete : clearForm}
+          onCancel={() => {}}
+        />
       </CardHeader>
       {/* DATE */}
       <CardContent>
@@ -109,7 +169,11 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
           render={({ field: { onChange, value } }) => (
             <View className="flex-row items-center gap-x-2">
               <Text className="font-medium text-xl">{date}</Text>
-              <Button variant={"ghost"} size={"icon"}>
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                onPress={() => setDatePickerVisibility(true)}
+              >
                 <CalendarDays className="color-primary" size={25} />
               </Button>
             </View>
@@ -288,7 +352,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                     remove(index);
                   }}
                 >
-                  <CircleX className="color-primary" size={24} />
+                  <CircleX className="color-destructive" size={24} />
                 </Button>
               ) : (
                 <View className="flex w-10 text-lg"></View>
