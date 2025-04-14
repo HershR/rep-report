@@ -126,12 +126,6 @@ const WorkoutDetails = () => {
   };
   return (
     <View className="flex-1 bg-secondary">
-      {/* <Image
-        source={{ uri: originalWorkout?.exercise.image || undefined }}
-        className="absolute w-full aspect-square bg-secondary"
-        resizeMode="cover"
-        resizeMethod="resize"
-      ></Image> */}
       <SafeAreaView className="flex-1 mx-8 my-10">
         <Button
           variant={"ghost"}
