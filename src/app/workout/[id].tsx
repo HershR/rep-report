@@ -16,6 +16,7 @@ import {
   createWorkoutWithExercise,
   updateWorkoutWithSets,
   addSetsToWorkout,
+  deleteWorkout,
 } from "@/src/db/dbHelpers";
 import { router, useLocalSearchParams } from "expo-router";
 import useFetch from "@/src/services/useFetch";
@@ -24,7 +25,6 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import Toast from "react-native-toast-message";
-
 enum FormMode {
   Create = 0,
   Update = 1,
@@ -41,14 +41,16 @@ const WorkoutDetails = () => {
     exerciseName: string;
     exerciseURI: string;
   } = useLocalSearchParams(); //workout id if updating
-  const mode: FormMode = parseInt(id) < 0 ? FormMode.Create : FormMode.Update;
+  const formMode: FormMode =
+    parseInt(id) < 0 ? FormMode.Create : FormMode.Update;
   const db = useSQLiteContext();
+  db.execSync("PRAGMA foreign_keys = ON");
   const drizzleDb = drizzle(db, { schema });
 
   const { selectedDate } = useDate();
 
   const { data: originalWorkout, loading } = useFetch(() =>
-    mode === FormMode.Update
+    formMode === FormMode.Update
       ? getWorkoutById(drizzleDb, parseInt(id))
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
@@ -70,7 +72,7 @@ const WorkoutDetails = () => {
   }
   async function saveWorkout(workoutForm: Workout) {
     console.log("New Workout: ", workoutForm);
-    if (mode === FormMode.Create) {
+    if (formMode === FormMode.Create) {
       try {
         workoutForm.exercise_id = parseInt(exerciseId);
         const workoutID = await createWorkoutWithExercise(
@@ -116,6 +118,13 @@ const WorkoutDetails = () => {
       }
     }
   }
+
+  async function workoutDelete() {
+    if (formMode === FormMode.Update && !!originalWorkout) {
+      await deleteWorkout(drizzleDb, originalWorkout.id);
+      router.back();
+    }
+  }
   const emptySet = {
     id: -1,
     workout_id: -1,
@@ -126,12 +135,6 @@ const WorkoutDetails = () => {
   };
   return (
     <View className="flex-1 bg-secondary">
-      {/* <Image
-        source={{ uri: originalWorkout?.exercise.image || undefined }}
-        className="absolute w-full aspect-square bg-secondary"
-        resizeMode="cover"
-        resizeMethod="resize"
-      ></Image> */}
       <SafeAreaView className="flex-1 mx-8 my-10">
         <Button
           variant={"ghost"}
@@ -145,12 +148,12 @@ const WorkoutDetails = () => {
           className="relative flex-1 justify-start items-center"
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          {mode === FormMode.Update && loading ? (
+          {formMode === FormMode.Update && loading ? (
             <ActivityIndicator></ActivityIndicator>
           ) : (
             <WorkoutForm
               defaultForm={
-                mode === FormMode.Update && !!originalWorkout
+                formMode === FormMode.Update && !!originalWorkout
                   ? originalWorkout
                   : {
                       date:
@@ -162,6 +165,8 @@ const WorkoutDetails = () => {
                     }
               }
               onSubmit={saveWorkout}
+              onDelete={workoutDelete}
+              formMode={formMode}
             />
           )}
         </KeyboardAvoidingView>

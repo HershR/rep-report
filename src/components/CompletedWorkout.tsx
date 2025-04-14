@@ -1,9 +1,11 @@
-import { View, Image } from "react-native";
+import { View, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import { Button } from "./ui/button";
 import { toUpperCase } from "../services/textFormatter";
 import ExerciseImage from "./ExerciseImage";
 import { Text } from "./ui/text";
+import { Card, CardContent } from "./ui/card";
+import { Link } from "expo-router";
 interface Props {
   workout: WorkoutWithExercise;
   onUpdate: () => void;
@@ -13,25 +15,31 @@ interface Props {
 const CompletedWorkout = ({ workout, onUpdate, onDelete }: Props) => {
   const image = workout.exercise.image;
   return (
-    <View className="flex flex-row w-full justify-between items-center">
-      <ExerciseImage
-        image_uri={image}
-        imageClassname={"w-20 h-20 rounded-md bg-white"}
-        textClassname={"text-black text-center"}
-      ></ExerciseImage>
-      <View className="flex-1 mx-4">
-        <Text className="flex text-left text-lg font-semibold">
-          {toUpperCase(workout.exercise.name)}{" "}
-          <Text>({workout.exercise.category})</Text>
-        </Text>
-        <Text className="text-muted-foreground">
-          Sets: {workout.sets.length}
-        </Text>
+    <Card className="flex-1 justify-center items-center p-4">
+      <View className="flex-row w-full h-full justify-center items-center">
+        <Link href={`/exercise/${workout.exercise.wger_id}`} asChild>
+          <TouchableOpacity>
+            <ExerciseImage
+              image_uri={image}
+              imageClassname={"w-20 h-20 rounded-md bg-white"}
+              textClassname={"text-black text-center"}
+            ></ExerciseImage>
+          </TouchableOpacity>
+        </Link>
+        <View className="flex-1 mx-4">
+          <Text numberOfLines={1} className="text-left text-lg font-semibold">
+            {toUpperCase(workout.exercise.name)}{" "}
+            <Text>({workout.exercise.category})</Text>
+          </Text>
+          <Text className="text-muted-foreground">
+            Sets: {workout.sets.length}
+          </Text>
+        </View>
+        <Button onPress={onUpdate}>
+          <Text>Update</Text>
+        </Button>
       </View>
-      <Button onPress={onUpdate}>
-        <Text>Update</Text>
-      </Button>
-    </View>
+    </Card>
   );
 };
 

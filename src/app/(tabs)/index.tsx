@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Image, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RecentExerciseCard from "@/src/components/RecentExerciseCard";
@@ -11,11 +11,11 @@ import * as schema from "@/src//db/schema";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
 import { Button } from "@/src/components/ui/button";
-import { toUpperCase } from "@/src/services/textFormatter";
-import { eq } from "drizzle-orm";
-import { workouts } from "@/src//db/schema";
+import { desc, eq } from "drizzle-orm";
+import { workouts, exercises } from "@/src//db/schema";
 import { useColorScheme as useNativewindColorScheme } from "nativewind";
 import CompletedWorkout from "@/src/components/CompletedWorkout";
+import { date } from "drizzle-orm/mysql-core";
 
 export default function Index() {
   const { toggleColorScheme } = useNativewindColorScheme();
@@ -28,16 +28,18 @@ export default function Index() {
 
   const { data: recentExercise, updatedAt: recentExerciseLoaded } =
     useLiveQuery(
-      drizzleDb.query.workouts.findMany({
-        orderBy: (workouts, { desc }) => [
-          desc(workouts.date),
-          desc(workouts.id),
-        ],
-        limit: 10,
-        with: {
-          exercise: true,
-        },
-      })
+      drizzleDb
+        .selectDistinct({
+          exercise_id: workouts.exercise_id,
+          exercise_wger_id: exercises.wger_id,
+          exercise_name: exercises.name,
+          exercise_image: exercises.image,
+          exercise_category: exercises.category,
+        })
+        .from(workouts)
+        .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
+        .orderBy(desc(workouts.updated_date), desc(workouts.date))
+        .limit(10)
     );
 
   const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
@@ -77,27 +79,26 @@ export default function Index() {
           ></ActivityIndicator>
         ) : (
           <View className="flex-1">
-            <View className="flex mt-2">
+            <View className="flex mt-6 mb-6 gap-y-2">
               {recentExercise ? (
                 <>
-                  <Text className="text-primary text-lg font-bold">
+                  <Text className="text-xl font-semibold">
                     Recent Exercise:
                   </Text>
                   <FlatList
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    className="mb-4 mt-1"
                     data={recentExercise}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item.exercise_id!.toString()}
                     contentContainerStyle={{ gap: 5 }}
                     renderItem={({ item }) => {
                       return (
                         <RecentExerciseCard
-                          id={item.exercise.id}
-                          wger_id={item.exercise.wger_id!}
-                          name={item.exercise.name}
-                          category={item.exercise.category}
-                          image={item.exercise.image!}
+                          id={item.exercise_id}
+                          wger_id={item.exercise_wger_id!}
+                          name={item.exercise_name}
+                          category={item.exercise_category}
+                          image={item.exercise_image!}
                         />
                       );
                     }}
@@ -120,7 +121,7 @@ export default function Index() {
                 />
               ) : (
                 <>
-                  <Text className="text-primary text-lg font-bold my-4">
+                  <Text className="text-xl font-semibold my-4">
                     Today's Workouts
                   </Text>
                   <FlatList

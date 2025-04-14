@@ -17,11 +17,11 @@ const ExerciseImage = ({ image_uri, imageClassname, textClassname }: Props) => {
         className={imageClassname}
         resizeMode="contain"
       ></Image>
-      {!!!image_uri && (
+      {image_uri === null || image_uri.length === 0 ? (
         <View className="absolute">
           <Text className={textClassname}>No Image Found</Text>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };

@@ -142,7 +142,7 @@ export const createWorkout = async (
     notes,
   }: {
     date: string;
-    mode: 0 | 1;
+    mode: number;
     collection_id: number | null;
     exercise_id: number;
     notes: string | null;
