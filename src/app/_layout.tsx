@@ -57,7 +57,6 @@ export default function RootLayout() {
     } else {
       setColorScheme(savedTheme || "light"); // Default to system if no saved theme
     }
-    console.log("Theme loaded: ", savedTheme);
   };
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {

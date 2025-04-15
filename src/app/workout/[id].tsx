@@ -55,7 +55,6 @@ const WorkoutDetails = () => {
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
   function saveSuccessMsg() {
-    console.log("Successful save");
     Toast.show({
       type: "success",
       text1: "Workout Saved",
@@ -63,7 +62,7 @@ const WorkoutDetails = () => {
     });
   }
   function saveFailMsg(error: Error) {
-    console.error(error);
+    console.log(error);
     Toast.show({
       type: "error",
       text1: "Error",
@@ -71,7 +70,6 @@ const WorkoutDetails = () => {
     });
   }
   async function saveWorkout(workoutForm: Workout) {
-    console.log("New Workout: ", workoutForm);
     if (formMode === FormMode.Create) {
       try {
         workoutForm.exercise_id = parseInt(exerciseId);
