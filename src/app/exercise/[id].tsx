@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
+import ExerciseImage from "@/src/components/ExerciseImage";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -34,7 +35,6 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
@@ -80,16 +80,15 @@ const ExerciseDetails = () => {
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-4 relative">
+        <SafeAreaView className="flex-1 mx-4 my-4 gap-y-4">
+          <Button variant={"ghost"} size={"icon"} onPress={router.back}>
+            <ArrowRight size={32} className="rotate-180 color-primary" />
+          </Button>
           <ScrollView
             ref={scrollViewRef}
-            className="flex-1 px-5 mt-3"
+            className="flex-1 mx-4"
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ minHeight: "100%", paddingBottom: 10 }}
           >
-            <Button variant={"ghost"} size={"icon"} onPress={router.back}>
-              <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-            </Button>
             {exercise?.images !== undefined && exercise.images.length > 0 && (
               <View className="flex items-center">
                 <CustomCarousel
@@ -110,12 +109,12 @@ const ExerciseDetails = () => {
                   renderFunction={(item: string) => {
                     return (
                       <View className="flex-1 justify-center items-center">
-                        <Image
-                          source={{
-                            uri: item,
-                          }}
-                          className="rounded-lg aspect-square w-full bg-background"
-                          resizeMode="contain"
+                        <ExerciseImage
+                          image_uri={item}
+                          imageClassname={
+                            "aspect-square w-full rounded-md bg-white"
+                          }
+                          textClassname={""}
                         />
                       </View>
                     );
@@ -127,33 +126,31 @@ const ExerciseDetails = () => {
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
-            <>
-              <Text
-                numberOfLines={showDescription ? undefined : maxLineCount}
-                className="text-primary text-xl"
-                onTextLayout={(e) => {
-                  if (
-                    descriptionLineCount < e.nativeEvent.lines.length &&
-                    descriptionLineCount < maxLineCount
-                  )
-                    setDescriptionLineCount(e.nativeEvent.lines.length);
-                }}
-              >
-                {desciption}
-              </Text>
-              {descriptionLineCount > maxLineCount && (
-                <TouchableOpacity onPress={toggleShowDescription}>
-                  <Text className="text-lg font-bold">
-                    {showDescription ? "Show Less" : "Show More"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </>
+            <Text
+              numberOfLines={showDescription ? undefined : maxLineCount}
+              className="text-primary text-xl mt-2"
+              onTextLayout={(e) => {
+                if (
+                  descriptionLineCount < e.nativeEvent.lines.length &&
+                  descriptionLineCount < maxLineCount
+                )
+                  setDescriptionLineCount(e.nativeEvent.lines.length);
+              }}
+            >
+              {desciption}
+            </Text>
+            {descriptionLineCount > maxLineCount && (
+              <TouchableOpacity onPress={toggleShowDescription}>
+                <Text className="text-lg font-bold">
+                  {showDescription ? "Show Less" : "Show More"}
+                </Text>
+              </TouchableOpacity>
+            )}
             {muscles !== undefined && muscles.length > 0 && (
               <Accordion
                 type="single"
                 collapsible
-                className="w-full max-w-sm native:max-w-md mt-4 mb-12"
+                className="w-full max-w-sm native:max-w-md mt-2"
                 onValueChange={(val) => {
                   if (!!val) {
                     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -166,10 +163,10 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="justify-center items-center">
+                  <AccordionContent className="flex-1 justify-center items-center">
                     <CustomCarousel
-                      width={width}
-                      height={Math.min(500, width)}
+                      width={300}
+                      height={425}
                       loop={false}
                       data={allMuscles}
                       dotStyle={{
@@ -198,13 +195,13 @@ const ExerciseDetails = () => {
           </ScrollView>
 
           <Button
+            className="w-full items-center justify-center"
             onPress={() =>
               router.push({
                 pathname: "../workout/[id]",
                 params: { id: -1, exerciseId: id, exerciseName: name },
               })
             }
-            className="absolute w-full bottom-10 items-center justify-center"
           >
             <Text>Start Workout</Text>
           </Button>

@@ -2,7 +2,7 @@ import { View, Image } from "react-native";
 import React from "react";
 import { icons } from "@/src/constants/icons";
 import { Input } from "~/components/ui/input";
-
+import { Search } from "~/lib/icons/Search";
 interface SearchBarProps {
   placeholder: string;
   value: string;
@@ -25,12 +25,7 @@ const SearchBar = ({
         onChangeText={onChangeText}
         className="flex-1 pl-12"
       ></Input>
-      <Image
-        source={icons.search}
-        className="size-5 absolute left-0 ml-4"
-        resizeMode="contain"
-        tintColor="#2b2e3d"
-      />
+      <Search className="color-primary absolute left-0 ml-3"></Search>
     </View>
   );
 };

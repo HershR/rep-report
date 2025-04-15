@@ -1,11 +1,6 @@
 import { ScrollView, View } from "react-native";
-import React, { useRef, useState } from "react";
-import {
-  Controller,
-  FieldErrors,
-  useFieldArray,
-  useForm,
-} from "react-hook-form";
+import React, { ReactNode, useRef, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Text } from "./ui/text";
@@ -16,10 +11,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { AntDesign, Feather } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Textarea } from "./ui/textarea";
 import { DateTime } from "luxon";
+import { CircleX } from "~/lib/icons/CircleX";
+import WorkoutTimeSelector from "./WorkoutTimeSelector";
+import { CalendarDays } from "../lib/icons/CalendarDays";
+import { Trash2 } from "../lib/icons/Trash2";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "./ui/alert-dialog";
+
+interface FormActionAlertProps {
+  title: string;
+  description: string;
+  trigger: ReactNode;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const FormActionAlert = ({
+  title,
+  description,
+  trigger,
+  onConfirm,
+  onCancel,
+}: FormActionAlertProps) => {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost">{trigger}</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="gap-y-2">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-row justify-end gap-x-2">
+          <AlertDialogCancel onPress={onCancel}>
+            <Text>Cancel</Text>
+          </AlertDialogCancel>
+          <AlertDialogAction onPress={onConfirm}>
+            <Text>Continue</Text>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
@@ -28,20 +75,22 @@ interface WorkoutWithExercise
 
 interface Props {
   defaultForm: WorkoutWithExercise;
+  formMode: 0 | 1;
   onSubmit: (data: Workout) => void;
+  onDelete: () => void;
 }
 
-const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
+const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
   const {
     control,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
     clearErrors,
+    reset,
+    formState: { errors },
   } = useForm<Workout>({
     defaultValues: {
       ...defaultForm,
@@ -52,9 +101,10 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
   const date = watch("date");
   const mode = watch("mode");
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "sets",
+    rules: { required: true, minLength: 1 },
   });
   const addSet = () => {
     const emptySet: WorkoutSet = {
@@ -70,7 +120,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
   function formatTime(duration: string) {
     const n = duration.length;
     const format = "00:00:00";
-    const pad = format.slice(0, 8 - duration.length);
+    const pad = format.slice(0, 8 - n);
     duration = pad + duration;
 
     return duration;
@@ -90,14 +140,25 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
     onSubmit(data);
   };
 
-  function handleErrors(errors: FieldErrors<Workout>) {
-    console.error(errors);
+  function clearForm(): void {
+    reset(defaultForm);
   }
 
   return (
     <Card className="flex-1 w-full">
-      <CardHeader>
+      <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
+        <FormActionAlert
+          title={`${formMode === 0 ? "Reset form" : "Delete Workout"}`}
+          description={`${
+            formMode === 0
+              ? "This action cannot be undone."
+              : "This action cannot be undone. This will permanently delete this workout and sets."
+          }`}
+          trigger={<Trash2 className="color-destructive" />}
+          onConfirm={formMode === 1 ? onDelete : clearForm}
+          onCancel={() => {}}
+        />
       </CardHeader>
       {/* DATE */}
       <CardContent>
@@ -108,14 +169,12 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
           render={({ field: { onChange, value } }) => (
             <View className="flex-row items-center gap-x-2">
               <Text className="font-medium text-xl">{date}</Text>
-              <Button variant={"ghost"} size={"icon"}>
-                <AntDesign
-                  name="calendar"
-                  size={30}
-                  onPress={() => {
-                    setDatePickerVisibility(true);
-                  }}
-                />
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                onPress={() => setDatePickerVisibility(true)}
+              >
+                <CalendarDays className="color-primary" size={25} />
               </Button>
             </View>
           )}
@@ -140,8 +199,8 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
       <CardContent>
         <View className="flex-row">
           <Button
-            className={`flex-1 py-2 rounded-lg rounded-r-none items-center ${
-              mode === 0 ? "bg-primary" : "bg-border"
+            className={`flex-1 py-2 rounded-md rounded-r-none items-center ${
+              mode === 0 ? "bg-primary" : "bg-secondary"
             }`}
             onPress={() => {
               if (mode !== 0) {
@@ -155,8 +214,8 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
             </Text>
           </Button>
           <Button
-            className={`flex-1 py-2 rounded-lg rounded-l-none items-center ${
-              mode === 1 ? "bg-primary" : "bg-border"
+            className={`flex-1 py-2 rounded-md rounded-l-none items-center ${
+              mode === 1 ? "bg-primary" : "bg-secondary"
             }`}
             onPress={() => {
               if (mode !== 1) {
@@ -182,9 +241,15 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
               <Text className="flex-1 text-center text-lg">Weight (lb)</Text>
             </>
           ) : (
-            <Text className="flex-1 text-center text-lg">Time</Text>
+            <View className="flex-1">
+              <View className="w-full flex-row justify-evenly items-center gap-x-4">
+                <Text className="flex-1 text-lg text-center">Hrs</Text>
+                <Text className="flex-1 text-lg text-center">Mins</Text>
+                <Text className="flex-1 text-lg text-center">Sec</Text>
+              </View>
+            </View>
           )}
-          <View className="flex w-10 text-center text-lg"></View>
+          <View className="flex w-10 text-lg"></View>
         </View>
       </CardContent>
       <ScrollView
@@ -194,7 +259,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
       >
         {fields.map((field, index) => (
           <CardContent
-            key={index}
+            key={field.id}
             className="flex w-full justify-center pb-2 mb-2"
           >
             <View className="flex-1 flex-row w-full items-center gap-x-4">
@@ -268,72 +333,30 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
                     required: true,
                     minLength: 1,
                     maxLength: 8,
-                    // pattern: /^([0-9]{2}:)?([0-5]?[0-9]:)?([0-5]?[0-9])/,
-                    validate: (text) => {
-                      const split = text?.split(":");
-                      if (split?.length === 3) {
-                        return (
-                          !isNaN(parseInt(split[0])) &&
-                          parseInt(split[1]) < 60 &&
-                          parseInt(split[2]) < 60
-                        );
-                      } else {
-                        return split?.every(
-                          (x) => !isNaN(parseInt(x)) && parseInt(x) < 60
-                        );
-                      }
-                    },
+                    pattern: /^([0-9]{2}:)([0-5][0-9]:)([0-5][0-9])/,
                   }}
                   render={({ field: { onChange, value } }) => (
-                    <View className="flex-1 flex-col">
-                      <Input
-                        className={`flex-1 ${
-                          errors.sets?.[index]?.duration != null
-                            ? "border-destructive"
-                            : ""
-                        }`}
-                        placeholder="HH:MM:SS"
-                        value={value?.replace(/^(00:)+(0)?/, "") ?? ""}
-                        onChangeText={(text) => {
-                          let formattedText = text.replace(/[^0-9]/g, "");
-                          formattedText = formattedText.slice(0, 8);
-                          if (formattedText.length > 6) {
-                            formattedText = formattedText.slice(0, 6);
-                          }
-                          if (formattedText.length >= 5) {
-                            formattedText =
-                              formattedText.slice(0, formattedText.length - 4) +
-                              ":" +
-                              formattedText.slice(formattedText.length - 4);
-                          }
-                          if (formattedText.length >= 3) {
-                            formattedText =
-                              formattedText.slice(0, formattedText.length - 2) +
-                              ":" +
-                              formattedText.slice(formattedText.length - 2);
-                          }
-                          // if (formattedText.length >= 3) {
-                          //   formattedText =
-                          //     formattedText.slice(0, 2) +
-                          //     ":" +
-                          //     formattedText.slice(2);
-                          // }
-
-                          onChange(formattedText);
-                        }}
-                      />
-                    </View>
+                    <WorkoutTimeSelector
+                      defaultTime={value}
+                      onChange={onChange}
+                    />
                   )}
                 />
               )}
-              <Button
-                variant={"ghost"}
-                size={"icon"}
-                className="flex"
-                onPress={() => remove(index)}
-              >
-                <Feather name="x-circle" size={24} />
-              </Button>
+              {index > 0 ? (
+                <Button
+                  variant={"ghost"}
+                  size={"icon"}
+                  className="flex"
+                  onPress={() => {
+                    remove(index);
+                  }}
+                >
+                  <CircleX className="color-destructive" size={24} />
+                </Button>
+              ) : (
+                <View className="flex w-10 text-lg"></View>
+              )}
             </View>
             {errors.sets?.length && errors.sets[index] != null ? (
               <Text className="text-destructive ml-12">
@@ -344,6 +367,9 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
             ) : null}
           </CardContent>
         ))}
+        {errors.sets?.root && (
+          <Text className="text-destructive ml-12">Please add a set</Text>
+        )}
       </ScrollView>
 
       {/* Footer */}
@@ -352,6 +378,7 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
           className="w-full"
           onPress={() => {
             addSet();
+            clearErrors();
             scrollViewRef.current?.scrollToEnd();
           }}
           disabled={fields.length >= 15}
@@ -359,18 +386,24 @@ const WorkoutForm = ({ defaultForm, onSubmit }: Props) => {
           <Text>Add Set</Text>
         </Button>
         <View className="flex-row w-full justify-center items-center gap-x-2">
-          <Button
-            className="flex-1"
-            onPress={handleSubmit(validateAndSubmit, handleErrors)}
-          >
+          <Button className="flex-1" onPress={handleSubmit(validateAndSubmit)}>
             <Text>Save</Text>
           </Button>
           <Button
             className="flex-1"
             variant={"destructive"}
             onPress={() => {
-              remove();
-              addSet();
+              replace([
+                {
+                  id: -1,
+                  workout_id: 0,
+                  order: fields.length,
+                  reps: null,
+                  weight: null,
+                  duration: null,
+                },
+              ]);
+              clearErrors();
             }}
           >
             <Text>Clear Sets</Text>
