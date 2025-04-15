@@ -6,6 +6,7 @@ import { LucideIcon } from "lucide-react-native";
 import { Search } from "~/lib/icons/Search";
 import { House } from "~/lib/icons/House";
 import { User } from "~/lib/icons/User";
+import { Bookmark } from "~/lib/icons/Bookmark";
 import { useColorScheme } from "@/src/lib/useColorScheme";
 import { NAV_THEME } from "~/lib/constants";
 interface TabIconProps {
@@ -70,6 +71,16 @@ const _Layout = () => {
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon title="Search" Icon={Search} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="saved"
+        options={{
+          title: "Saved",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Saved" Icon={Bookmark} focused={focused} />
           ),
         }}
       />
