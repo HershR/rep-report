@@ -28,6 +28,14 @@ export const getExerciseById = async (
   });
 };
 
+export const getFavoriteExercises = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.exercises.findMany({
+    where: eq(exercises.is_favorite, true),
+    orderBy: (exercises, { desc }) => [desc(exercises.name)],
+  });
+};
 export const getAllRoutines = async (db: ExpoSQLiteDatabase<typeof schema>) => {
   return db.select().from(workoutRoutines);
 };

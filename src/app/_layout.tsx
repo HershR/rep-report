@@ -55,7 +55,7 @@ export default function RootLayout() {
     if (savedTheme === null) {
       await AsyncStorage.setItem("theme", colorScheme);
     } else {
-      setColorScheme(savedTheme || "light"); // Default to system if no saved theme
+      setColorScheme(savedTheme === "dark" ? "dark" : "light"); // Default to system if no saved theme
     }
   };
   useIsomorphicLayoutEffect(() => {
