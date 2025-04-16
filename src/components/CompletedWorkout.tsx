@@ -17,7 +17,7 @@ const CompletedWorkout = ({ workout, onUpdate, onDelete }: Props) => {
   return (
     <Card className="flex-1 justify-center items-center p-4">
       <View className="flex-row w-full h-full justify-center items-center">
-        <Link href={`/exercise/${workout.exercise.wger_id}`} asChild>
+        <Link href={`/exercise/${workout.exercise.id}`} asChild>
           <TouchableOpacity>
             <ExerciseImage
               image_uri={image}

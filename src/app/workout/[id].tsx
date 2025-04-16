@@ -100,6 +100,7 @@ const WorkoutDetails = () => {
         await addSetsToWorkout(drizzleDb, workoutID, workoutForm.sets);
       } catch (error: any) {
         saveFailMsg(error);
+        return;
       }
       saveSuccessMsg();
       router.push("/");
