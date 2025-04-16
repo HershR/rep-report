@@ -57,7 +57,7 @@ interface Exercise {
   name: string;
   category: string;
   image: string | null; // URI
-  is_favorite: boolean; // 0 = false, 1 = true
+  is_favorite: boolean | null; // 0 = false, 1 = true
 }
 interface Workout {
   id: number;

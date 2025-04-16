@@ -5,7 +5,12 @@ import { toUpperCase } from "../services/textFormatter";
 import { Text } from "~/components/ui/text";
 import ExerciseImage from "./ExerciseImage";
 import { Card } from "./ui/card";
-const RecentExerciseCard = ({ id, name, category, image }: Exercise) => {
+const RecentExerciseCard = ({
+  id,
+  name,
+  category,
+  image,
+}: Omit<Exercise, "is_favorite">) => {
   return (
     <Link href={`/exercise/${id}`} asChild>
       <TouchableOpacity className="w-36">
