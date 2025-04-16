@@ -14,6 +14,20 @@ import { fetchExerciseDetail } from "../services/api";
 
 //Get
 
+export const getAllExercises = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.select().from(exercises);
+};
+export const getExerciseById = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  id: number
+) => {
+  return db.query.exercises.findFirst({
+    where: eq(exercises.id, id),
+  });
+};
+
 export const getAllRoutines = async (db: ExpoSQLiteDatabase<typeof schema>) => {
   return db.select().from(workoutRoutines);
 };
@@ -78,7 +92,7 @@ export const getRecentWorkouts = async (
 ) => {
   return db.query.workouts.findMany({
     orderBy: (workouts, { desc }) => [
-      desc(workouts.updated_date),
+      desc(workouts.last_updated),
       desc(workouts.id),
     ],
     limit,
@@ -137,15 +151,17 @@ export const createWorkout = async (
   {
     date,
     mode,
+    unit,
+    notes,
     collection_id,
     exercise_id,
-    notes,
   }: {
     date: string;
     mode: number;
+    unit: string; // e.g., kg, lbs
+    notes: string | null;
     collection_id: number | null;
     exercise_id: number;
-    notes: string | null;
   }
 ) => {
   const now = new Date().toISOString();
@@ -154,11 +170,12 @@ export const createWorkout = async (
     .values({
       date,
       mode,
+      unit,
       collection_id,
       exercise_id,
       notes,
-      created_date: now,
-      updated_date: now,
+      last_updated: now,
+      date_created: now,
     })
     .returning({ id: workouts.id });
 
@@ -166,11 +183,11 @@ export const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  { date, mode, collection_id, exercise_id, notes }: Workout
+  { date, mode, unit, collection_id, exercise_id, notes }: Workout
 ) => {
   // Step 1: Check if exercise is in local DB
   const existing = await db.query.exercises.findFirst({
-    where: eq(exercises.wger_id, exercise_id),
+    where: eq(exercises.id, exercise_id),
   });
   let id = existing?.id;
   // Step 2: If not, fetch from Wger
@@ -182,7 +199,7 @@ export const createWorkoutWithExercise = async (
     const result = await db
       .insert(exercises)
       .values({
-        wger_id: remoteExercise.id,
+        id: remoteExercise.id,
         name: remoteExercise.translations.find((x) => x.language == 2)!.name,
         category: remoteExercise.category.name,
         image:
@@ -197,6 +214,7 @@ export const createWorkoutWithExercise = async (
   return await createWorkout(db, {
     date,
     mode,
+    unit,
     collection_id,
     exercise_id: id!,
     notes,
@@ -219,6 +237,18 @@ export const addSetsToWorkout = async (
 };
 
 //Update
+
+export const setFavoriteExercise = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  exerciseId: number,
+  isFavorite: boolean
+) => {
+  return db
+    .update(exercises)
+    .set({ is_favorite: isFavorite })
+    .where(eq(exercises.id, exerciseId));
+};
+
 export const updateWorkoutWithSets = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   workoutId: number,
@@ -231,7 +261,7 @@ export const updateWorkoutWithSets = async (
       mode: workoutForm.mode,
       collection_id: workoutForm.collection_id,
       notes: workoutForm.notes,
-      updated_date: new Date().toISOString(),
+      last_updated: new Date().toISOString(),
     })
     .where(eq(workouts.id, workoutId));
 
