@@ -1,12 +1,10 @@
 import {
   View,
-  Image,
   ScrollView,
-  useWindowDimensions,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
@@ -17,6 +15,7 @@ import CustomCarousel from "@/src/components/CustomCarousel";
 import { SearchChip } from "@/src/components/SearchChip";
 import { Text } from "@/src/components/ui/text";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
+import { Star } from "@/src/lib/icons/Star";
 import { Button } from "@/src/components/ui/button";
 import {
   Accordion,
@@ -25,12 +24,24 @@ import {
   AccordionTrigger,
 } from "~/components/ui/accordion";
 import ExerciseImage from "@/src/components/ExerciseImage";
+import {
+  createExercise,
+  getExerciseById,
+  setFavoriteExercise,
+} from "@/src/db/dbHelpers";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
+import { useSQLiteContext } from "expo-sqlite";
 
 const ExerciseDetails = () => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [exerciseStored, setExerciseStored] = useState(false);
+
   const router = useRouter();
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
 
   const { id }: { id: string } = useLocalSearchParams();
-  const { width } = useWindowDimensions();
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
@@ -38,6 +49,9 @@ const ExerciseDetails = () => {
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
+  const { data: savedExercise } = useFetch(() =>
+    getExerciseById(drizzleDb, parseInt(id))
+  );
 
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
@@ -69,8 +83,31 @@ const ExerciseDetails = () => {
     ));
   };
 
+  useEffect(() => {
+    if (!!savedExercise) {
+      setIsFavorite(savedExercise?.is_favorite || false);
+      setExerciseStored(true);
+    }
+  }, [savedExercise]);
+
   function toggleShowDescription() {
     setShowDescription((prev) => !prev);
+  }
+
+  async function toggleFavorite() {
+    setIsFavorite((prev) => !prev);
+    if (savedExercise || exerciseStored) {
+      await setFavoriteExercise(drizzleDb, parseInt(id), !isFavorite);
+    } else {
+      await createExercise(drizzleDb, {
+        id: parseInt(id),
+        name,
+        category: exercise?.category.name!,
+        image: exercise?.images[0]?.image || null,
+        is_favorite: !isFavorite,
+      });
+      setExerciseStored(true);
+    }
   }
 
   return (
@@ -122,7 +159,20 @@ const ExerciseDetails = () => {
                 />
               </View>
             )}
-            <Text className="text-2xl font-bold mt-4 mb-2">{name}</Text>
+            <View className="flex-1 flex-row justify-between">
+              <Text className="text-2xl font-bold mt-4 mb-2">{name}</Text>
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                onPress={async () => toggleFavorite()}
+              >
+                <Star className="color-primary" />
+                {isFavorite || false ? (
+                  <Star className="absolute " fill={"yellow"} />
+                ) : null}
+              </Button>
+            </View>
+
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
