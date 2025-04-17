@@ -19,29 +19,29 @@ import * as schema from "@/src//db/schema";
 import { eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
 import { Link } from "expo-router";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
+import { Card, CardTitle } from "@/src/components/ui/card";
 import ExerciseImage from "@/src/components/ExerciseImage";
-import { toUpperCase } from "@/src/services/textFormatter";
 
 const Saved = () => {
   const [tab, setTab] = useState("favorites");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
-  const { data: favorites, updatedAt: favoritesLoaded } = useLiveQuery(
+  const {
+    data: favorites,
+    updatedAt: favoritesLoaded,
+    error,
+  } = useLiveQuery(
     drizzleDb.query.exercises.findMany({
       where: (exercises) => eq(exercises.is_favorite, true),
-      orderBy: (exercises, { desc }) => [desc(exercises.name)],
+      orderBy: (exercises, { asc }) => [asc(exercises.name)],
     })
   );
 
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 mt-10 pb-20">
+      <SafeAreaView className="flex-1 mx-8 mt-10">
         <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-y-4">
           <TabsList className="flex-row w-full">
             <TabsTrigger value="favorites" className="flex-1">
@@ -52,59 +52,81 @@ const Saved = () => {
             </TabsTrigger>
           </TabsList>
 
-          <SearchBar placeholder={""} value={""} />
-          <TabsContent className="flex-1 gap-y-2" value="favorites">
+          <SearchBar
+            placeholder="Search exercises..."
+            value={searchQuery}
+            onChangeText={(text: string) => {
+              setSearchQuery(text);
+            }}
+          />
+          <TabsContent className="flex-1" value="favorites">
             {!favoritesLoaded ? (
               <ActivityIndicator></ActivityIndicator>
             ) : (
-              <Card className="flex-1">
-                <CardHeader>
-                  <CardTitle>Favorites</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 gap-y-4">
-                  <FlatList
-                    numColumns={2}
-                    data={favorites}
-                    keyExtractor={(item) => item.id.toString()}
-                    columnWrapperClassName="gap-x-4 justify-center items-center"
-                    contentContainerClassName="px-4 gap-y-4 border-2"
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={
-                      <Text className="text-center text-lg font-medium text-muted-foreground">
-                        No favorites found.
-                      </Text>
-                    }
-                    renderItem={({ item: exercise }) => {
-                      const { id, name, category, image } = exercise;
+              <View className="flex-1">
+                <CardTitle className="ml-4">Favorites:</CardTitle>
+                <FlatList
+                  numColumns={2}
+                  showsVerticalScrollIndicator={false}
+                  data={
+                    searchQuery.length > 0
+                      ? favorites.filter(
+                          (x) =>
+                            x.name
+                              .toLowerCase()
+                              .indexOf(searchQuery.toLowerCase()) > -1
+                        )
+                      : favorites
+                  }
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item: exercise, index }) => {
+                    const { id, name, category, image } = exercise;
 
-                      return (
-                        <Link href={`/exercise/${id}`} asChild>
-                          <TouchableOpacity className="w-1/2 max-h-1/2">
-                            <Card className="flex justify-center items-center px-2 pt-4">
-                              <ExerciseImage
-                                image_uri={image}
-                                imageClassname={
-                                  "w-full aspect-square rounded-md bg-white"
-                                }
-                                textClassname={"text-black text-xl text-center"}
-                              ></ExerciseImage>
-                              <Text
-                                numberOfLines={1}
-                                className="text-lg font-semibold mt-1"
-                              >
-                                {toUpperCase(name)}
-                              </Text>
-                              <Text className="absolute top-2 right-2 text-sm font-medium text-muted-foreground bg-accent rounded-full px-3">
-                                {category}
-                              </Text>
-                            </Card>
-                          </TouchableOpacity>
-                        </Link>
-                      );
-                    }}
-                  ></FlatList>
-                </CardContent>
-              </Card>
+                    return (
+                      <Link href={`/exercise/${id}`} asChild>
+                        <TouchableOpacity className="w-1/2">
+                          <Card className="relative flex-1 justify-center items-center overflow-hidden">
+                            <ExerciseImage
+                              image_uri={image}
+                              imageClassname={
+                                "w-full aspect-square rounded-md bg-white"
+                              }
+                              textClassname={"text-black text-xl text-center"}
+                            ></ExerciseImage>
+                            <View
+                              className=" absolute bottom-0 h-1/4 w-full justify-end"
+                              style={{ backgroundColor: "#ffffffbb" }}
+                            >
+                              <View className="justify-center items-start ml-2 my-1">
+                                <Text
+                                  className="text-lg font-bold text-black"
+                                  numberOfLines={1}
+                                >
+                                  {name}
+                                </Text>
+                                <Text className="text-md text-black">
+                                  {" "}
+                                  ({category})
+                                </Text>
+                              </View>
+                            </View>
+                          </Card>
+                        </TouchableOpacity>
+                      </Link>
+                    );
+                  }}
+                  columnWrapperClassName="justify-between my-1 gap-x-2 px-2"
+                  ListEmptyComponent={
+                    !favoritesLoaded && !error ? (
+                      <View className="mt-10 px-5">
+                        <Text className="text-center text-primary">
+                          No Exercise Found
+                        </Text>
+                      </View>
+                    ) : null
+                  }
+                ></FlatList>
+              </View>
             )}
           </TabsContent>
         </Tabs>
