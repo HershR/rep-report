@@ -28,6 +28,14 @@ export const getExerciseById = async (
   });
 };
 
+export const getFavoriteExercises = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.exercises.findMany({
+    where: eq(exercises.is_favorite, true),
+    orderBy: (exercises, { desc }) => [desc(exercises.name)],
+  });
+};
 export const getAllRoutines = async (db: ExpoSQLiteDatabase<typeof schema>) => {
   return db.select().from(workoutRoutines);
 };
@@ -116,6 +124,23 @@ export const getRecentWorkout = async (
 };
 
 //Create
+export const createExercise = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  exercise: Exercise
+) => {
+  const result = await db
+    .insert(exercises)
+    .values({
+      id: exercise.id,
+      name: exercise.name,
+      category: exercise.category,
+      image: exercise.image || null,
+      is_favorite: exercise.is_favorite || false,
+    })
+    .returning({ id: exercises.id });
+  return result[0]?.id;
+};
+
 export const createRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   name: string
