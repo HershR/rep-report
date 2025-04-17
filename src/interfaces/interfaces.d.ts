@@ -53,16 +53,17 @@ interface ExerciseSuggestion {
 }
 //DB
 interface Exercise {
-  id: number;
-  wger_id: number | null; // Wger API ID
+  id: number; // Wger API ID
   name: string;
   category: string;
   image: string | null; // URI
+  is_favorite: boolean | null; // 0 = false, 1 = true
 }
 interface Workout {
   id: number;
   date: string; // ISO date
   mode: number; // weight or time
+  unit: string; // e.g., kg, lbs
   collection_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   notes: string | null;

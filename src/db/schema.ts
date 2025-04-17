@@ -4,11 +4,11 @@ import { relations, sql } from "drizzle-orm";
 
 // Exercises (from Wger API or user-defined)
 export const exercises = sqliteTable("exercises", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  wger_id: integer("wger_id").unique(),
+  id: integer("id").primaryKey(), //API key
   name: text("name").notNull(),
   category: text("category").notNull(),
   image: text("image"),
+  is_favorite: integer("is_favorite", { mode: `boolean` }).default(false), // 0 = false, 1 = true
 });
 
 // Workout Routines (collections)
@@ -35,10 +35,11 @@ export const routineExercises = sqliteTable("routine_exercises", {
 // Workouts (log of exercises performed)
 export const workouts = sqliteTable("workouts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  created_date: text("created_date").notNull(),
-  updated_date: text("updated_date").notNull(),
+  date_created: text("date_created").notNull(),
+  last_updated: text("last_updated").notNull(),
   date: text("date").notNull(), // ISO YYYY-MM-DD
   mode: integer("mode").notNull().default(0), // 0 = weight, 1 = time
+  unit: text("unit").notNull().default("lb"), // e.g., kg, lbs
   notes: text("notes"),
   collection_id: integer("collection_id").references(() => workoutRoutines.id, {
     onDelete: "set null",
