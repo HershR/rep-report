@@ -23,7 +23,7 @@ import useFetch from "@/src/services/useFetch";
 
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
-import WorkoutForm from "@/src/components/WorkoutForm";
+import WorkoutForm from "@/src/components/forms/WorkoutForm";
 import Toast from "react-native-toast-message";
 enum FormMode {
   Create = 0,

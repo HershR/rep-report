@@ -18,13 +18,16 @@ import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Card, CardTitle } from "@/src/components/ui/card";
 import ExerciseImage from "@/src/components/ExerciseImage";
-
+import { Button } from "@/src/components/ui/button";
+import { Plus } from "@/src/lib/icons/Plus";
 const Saved = () => {
   const [tab, setTab] = useState("favorites");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const router = useRouter();
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -128,6 +131,17 @@ const Saved = () => {
                 ></FlatList>
               </View>
             )}
+          </TabsContent>
+          <TabsContent className="flex-1" value="routines">
+            <View className="flex-1 justify-center items-center">
+              <Button
+                className="flex-row items-center gap-x-2"
+                onPress={() => router.push("/routine/create")}
+              >
+                <Text>Create Routine</Text>
+                <Plus className="color-secondary" size={20} />
+              </Button>
+            </View>
           </TabsContent>
         </Tabs>
       </SafeAreaView>

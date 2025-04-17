@@ -1,9 +1,9 @@
 import { ScrollView, View } from "react-native";
 import React, { ReactNode, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Text } from "./ui/text";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Text } from "../ui/text";
 import {
   Card,
   CardContent,
@@ -12,12 +12,12 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "../ui/textarea";
 import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
-import WorkoutTimeSelector from "./WorkoutTimeSelector";
-import { CalendarDays } from "../lib/icons/CalendarDays";
-import { Trash2 } from "../lib/icons/Trash2";
+import WorkoutTimeSelector from "../WorkoutTimeSelector";
+import { CalendarDays } from "../../lib/icons/CalendarDays";
+import { Trash2 } from "../../lib/icons/Trash2";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -28,7 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "./ui/alert-dialog";
+} from "../ui/alert-dialog";
 
 interface FormActionAlertProps {
   title: string;
