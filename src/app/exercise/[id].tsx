@@ -32,11 +32,11 @@ import {
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
-
+import { useTheme } from "@react-navigation/native";
 const ExerciseDetails = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [exerciseStored, setExerciseStored] = useState(false);
-
+  const { colors } = useTheme();
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -159,8 +159,8 @@ const ExerciseDetails = () => {
                 />
               </View>
             )}
-            <View className="flex-1 flex-row justify-between">
-              <Text className="text-2xl font-bold mt-4 mb-2">{name}</Text>
+            <View className="flex-1 flex-row justify-between items-center  my-2">
+              <Text className="text-2xl font-bold text-center">{name}</Text>
               <Button
                 variant={"ghost"}
                 size={"icon"}
@@ -168,7 +168,7 @@ const ExerciseDetails = () => {
               >
                 <Star className="color-primary" />
                 {isFavorite || false ? (
-                  <Star className="absolute " fill={"yellow"} />
+                  <Star className="absolute " fill={colors.primary} />
                 ) : null}
               </Button>
             </View>

@@ -41,7 +41,7 @@ const Saved = () => {
 
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 mt-10">
+      <SafeAreaView edges={["bottom"]} className="flex-1 mx-8 mt-10 pb-20">
         <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-y-4">
           <TabsList className="flex-row w-full">
             <TabsTrigger value="favorites" className="flex-1">
@@ -53,7 +53,9 @@ const Saved = () => {
           </TabsList>
 
           <SearchBar
-            placeholder="Search exercises..."
+            placeholder={
+              tab === "favorites" ? "Search favorites..." : "Search routines..."
+            }
             value={searchQuery}
             onChangeText={(text: string) => {
               setSearchQuery(text);
@@ -128,6 +130,13 @@ const Saved = () => {
                 ></FlatList>
               </View>
             )}
+          </TabsContent>
+          <TabsContent className="flex-1" value="routines">
+            <View className="flex-1 justify-center items-center">
+              <Text className="text-lg text-muted-foreground">
+                Routines feature coming soon!
+              </Text>
+            </View>
           </TabsContent>
         </Tabs>
       </SafeAreaView>

@@ -20,12 +20,12 @@ import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const DATABASE_NAME = "workouts";
+const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
   colors: NAV_THEME.light,
 };
-const DARK_THEME: Theme = {
+export const DARK_THEME: Theme = {
   ...DarkTheme,
   colors: NAV_THEME.dark,
 };
