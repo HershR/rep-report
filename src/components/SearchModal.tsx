@@ -138,7 +138,6 @@ const SearchModal = ({
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
               <FlatList
-                className="flex"
                 numColumns={2}
                 showsVerticalScrollIndicator={false}
                 data={exercises?.map((exercise) => exercise.data)}
