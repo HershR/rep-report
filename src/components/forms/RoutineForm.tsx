@@ -1,5 +1,4 @@
-import { View } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,15 +10,32 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 import { Textarea } from "../ui/textarea";
-import { Separator } from "../ui/separator";
 import { Plus } from "@/src/lib/icons/Plus";
 import SearchModal from "../SearchModal";
-import useFetch from "@/src/services/useFetch";
-import { searchExercise } from "@/src/services/api";
-import { SelectItem } from "../ui/select";
-import wgerCategories from "@/src/constants/excerciseCategory";
+import { useFocusEffect, useRouter } from "expo-router";
 const RoutineForm = () => {
+  const router = useRouter();
+  const hasVisited = useRef(false); // <-- Track visit state
   const [searchModalVisble, setSearchModalVisible] = useState(false);
+  const goToExercise = (id: number) => {
+    console.log("Navigating to exercise with ID:", id);
+    setSearchModalVisible(false);
+    setTimeout(() => {
+      router.push(`/exercise/${id}`);
+    }, 300);
+  };
+  useFocusEffect(
+    useCallback(() => {
+      if (hasVisited.current) {
+        // Only show modal again if coming back
+        const timeout = setTimeout(() => setSearchModalVisible(true), 100);
+        return () => clearTimeout(timeout);
+      } else {
+        // First visit, mark as visited but do nothing
+        hasVisited.current = true;
+      }
+    }, [])
+  );
   return (
     <>
       <Card className="flex-1 w-full">
@@ -70,6 +86,7 @@ const RoutineForm = () => {
           console.log(exercise);
           setSearchModalVisible(false);
         }}
+        onShowExercise={goToExercise}
       />
     </>
   );

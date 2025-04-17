@@ -4,7 +4,6 @@ import {
   View,
   FlatList,
   ActivityIndicator,
-  Touchable,
   TouchableOpacity,
 } from "react-native";
 import { Input } from "./ui/input";
@@ -25,18 +24,22 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "../db/schema";
 import ExerciseImage from "./ExerciseImage";
 import { Link, useRouter } from "expo-router";
+import { Plus } from "../lib/icons/Plus";
+import { SafeAreaView } from "react-native-safe-area-context";
+import SearchBar from "./SearchBar";
 interface SearchModalProps {
   visible: boolean;
   onClose: () => void;
   onSelectExercise: (exercise: Exercise) => void;
+  onShowExercise: (id: number) => void;
 }
 
 const SearchModal = ({
   visible,
   onClose,
   onSelectExercise,
+  onShowExercise,
 }: SearchModalProps) => {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -67,8 +70,12 @@ const SearchModal = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true}>
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <Card className="w-11/12 bg-white rounded-lg p-5">
+      <TouchableOpacity
+        className="absolute left-0 top-0 right-0 bottom-0  bg-black/50"
+        onPress={onClose}
+      ></TouchableOpacity>
+      <SafeAreaView className="flex-1 mx-2 my-4 justify-center items-center">
+        <Card className="flex-1 w-11/12">
           <CardHeader>
             <CardTitle>Add Exercise</CardTitle>
           </CardHeader>
@@ -80,75 +87,104 @@ const SearchModal = ({
               contentContainerStyle={{ gap: 5 }}
               className="flex"
               ListEmptyComponent={
-                <Text className="text-gray-500">No favorites found</Text>
+                <Text className="text-muted-foreground">
+                  No favorites found
+                </Text>
               }
               data={favorites}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                <Link href={`/exercise/${item.id}`} asChild>
-                  <TouchableOpacity
-                    className="w-32"
-                    onPress={() => {
-                      //   onClose();
-                      //   router.push(`/exercise/${item.id}`);
-                    }}
-                  >
-                    <Card>
-                      <CardContent className="p-2">
-                        <ExerciseImage
-                          image_uri={!!item.image ? `${item.image}` : null}
-                          imageClassname={`w-full aspect-square rounded-md bg-white`}
-                          textClassname={"text-xl text-black text-center"}
-                        />
-                        <Text numberOfLines={1} className="text-base">
-                          {item.name}
-                        </Text>
-                        <Button
-                          onPress={() => {
-                            onSelectExercise(item);
-                          }}
-                        >
-                          <Text>Add</Text>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </TouchableOpacity>
-                </Link>
+                <TouchableOpacity
+                  className="w-32"
+                  onPress={() => {
+                    onShowExercise(item.id);
+                  }}
+                >
+                  <Card>
+                    <CardContent className="p-2 justify-center items-center gap-y-2">
+                      <ExerciseImage
+                        image_uri={!!item.image ? `${item.image}` : null}
+                        imageClassname={`w-full aspect-square rounded-md bg-white`}
+                        textClassname={"text-xl text-black text-center"}
+                      />
+                      <Text numberOfLines={1} className="w-full text-center">
+                        {item.name}
+                      </Text>
+                      <Button
+                        onPress={() => {
+                          onSelectExercise(item);
+                        }}
+                        size={"icon"}
+                      >
+                        <Plus className="color-secondary" size={20} />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TouchableOpacity>
               )}
               ItemSeparatorComponent={() => <View className="w-4" />}
             ></FlatList>
           </CardContent>
           <CardContent>
             <Text className="text-lg font-bold mb-4">Search Exercises</Text>
-            <Input
-              className="w-full border border-gray-300 rounded-md p-2 mb-4"
-              placeholder="Search for exercises..."
+            <SearchBar
+              placeholder={""}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
+          </CardContent>
+          <CardContent className="flex-1">
             {loading ? (
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
               <FlatList
-                data={exercises}
-                keyExtractor={(item) => item.data.base_id.toString()}
+                className="flex"
+                numColumns={2}
+                showsVerticalScrollIndicator={false}
+                data={exercises?.map((exercise) => exercise.data)}
+                keyExtractor={(item) => item.base_id.toString()}
                 renderItem={({ item }) => (
-                  <Button
-                    className="p-3"
+                  <TouchableOpacity
+                    className="w-1/2 p-2"
                     onPress={() => {
-                      onSelectExercise({ ...item.data, is_favorite: false });
-                      onClose();
+                      onShowExercise(item.base_id);
                     }}
                   >
-                    <Text className="text-base">{item.data.name}</Text>
-                  </Button>
+                    <Card className="flex-1 justify-center items-center overflow-hidden">
+                      <ExerciseImage
+                        image_uri={
+                          !!item.image ? `https://wger.de/${item.image}` : null
+                        }
+                        imageClassname={`w-full aspect-square rounded-md bg-white`}
+                        textClassname={"text-xl text-black text-center"}
+                      />
+                      <Text numberOfLines={1} className="w-full text-center">
+                        {item.name}
+                      </Text>
+                      <Button
+                        onPress={() => {
+                          onSelectExercise({
+                            ...item,
+                            is_favorite: false,
+                            id: item.base_id,
+                          });
+                        }}
+                        size={"icon"}
+                      >
+                        <Plus className="color-secondary" size={20} />
+                      </Button>
+                    </Card>
+                  </TouchableOpacity>
                 )}
               />
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-row justify-end items-end gap-x-2">
+            <Button className="flex-1 mt-4 p-3" onPress={onClose}>
+              <Text className="font-bold text-center">Save</Text>
+            </Button>
             <Button
-              className="mt-4 p-3"
+              className="flex-1 mt-4 p-3"
               variant={"destructive"}
               onPress={onClose}
             >
@@ -156,7 +192,7 @@ const SearchModal = ({
             </Button>
           </CardFooter>
         </Card>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
