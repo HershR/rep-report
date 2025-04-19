@@ -97,7 +97,8 @@ export default function Index() {
                           onPress={() =>
                             router.push(`/exercise/${item.exercise_id!}`)
                           }
-                          containerClassname="w-40 h-40"
+                          containerClassname="aspect-square h-40"
+                          textClassname="font-medium text-lg"
                         />
                       );
                     }}

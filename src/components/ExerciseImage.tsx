@@ -22,17 +22,14 @@ const ExerciseImage = ({
       ref.current.stopAnimating();
     }
   }, [ref]);
-  const imageSource: ImageSource = {
-    uri: !!image_uri ? image_uri : ImageNotFound,
-  };
   return (
     <View
       className={`flex-1 justify-center items-center ${containerClassname}`}
     >
       <Image
         ref={ref}
-        source={imageSource}
-        placeholder={{ blurhash }}
+        source={image_uri}
+        placeholder={ImageNotFound}
         contentFit="fill"
         autoplay={false}
         style={{

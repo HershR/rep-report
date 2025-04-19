@@ -148,10 +148,7 @@ const ExerciseDetails = () => {
                       <View className="flex-1 justify-center items-center">
                         <ExerciseImage
                           image_uri={item}
-                          imageClassname={
-                            "aspect-square w-full rounded-md bg-white"
-                          }
-                          textClassname={""}
+                          containerClassname="w-[350px] aspect-square"
                         />
                       </View>
                     );
