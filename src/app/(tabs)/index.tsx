@@ -1,6 +1,7 @@
 import { ActivityIndicator, FlatList, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import { SafeAreaView } from "react-native-safe-area-context";
+import RecentExerciseCard from "@/src/components/RecentExerciseCard";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import { useDate } from "@/src/context/DateContext";
@@ -12,7 +13,7 @@ import { Text } from "~/components/ui/text";
 import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
 import CompletedWorkout from "@/src/components/CompletedWorkout";
-import ExerciseCard from "@/src/components/ExerciseCard";
+
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -87,18 +88,11 @@ export default function Index() {
                     contentContainerStyle={{ gap: 5 }}
                     renderItem={({ item }) => {
                       return (
-                        <ExerciseCard
-                          exercise={{
-                            id: item.exercise_id!,
-                            name: item.exercise_name!,
-                            category: item.exercise_category!,
-                            image: item.exercise_image || null,
-                          }}
-                          onPress={() =>
-                            router.push(`/exercise/${item.exercise_id!}`)
-                          }
-                          containerClassname="aspect-square h-40"
-                          textClassname="font-medium text-lg"
+                        <RecentExerciseCard
+                          id={item.exercise_id}
+                          name={item.exercise_name}
+                          category={item.exercise_category}
+                          image={item.exercise_image!}
                         />
                       );
                     }}
