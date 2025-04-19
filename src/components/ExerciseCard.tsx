@@ -18,12 +18,10 @@ const ExerciseCard = ({
   containerClassname = "",
 }: Props) => {
   const { id, name, category, image } = exercise;
-  const blurhash =
-    "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
   return (
     <TouchableOpacity
-      className={`flex-1 ${containerClassname}`}
+      className={`flex  ${containerClassname}`}
       onPress={onPress}
     >
       <Card className="relative flex-1 justify-center items-center overflow-hidden">
@@ -32,9 +30,9 @@ const ExerciseCard = ({
           {category}
         </Text>
       </Card>
-      <View className=" absolute bottom-0 h-1/4 w-full justify-center bg-secondary/80  px-2">
+      <View className=" absolute bottom-0 h-1/3 w-full justify-center bg-secondary/80  px-2">
         <Text
-          className={`text-sm md:text-lg font-bold text-black ${textClassname}`}
+          className={`text-lg font-bold text-black ${textClassname}`}
           numberOfLines={1}
         >
           {name}

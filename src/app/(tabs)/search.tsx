@@ -99,6 +99,7 @@ const Search = () => {
           <Text className="text-red-500 px-5 my-3">Error: {error.message}</Text>
         ) : (
           <FlatList
+            showsVerticalScrollIndicator={false}
             data={
               !!category
                 ? exercies?.filter((x) => x.data.category === category)
@@ -115,7 +116,8 @@ const Search = () => {
                   }`,
                 }}
                 onPress={() => router.push(`/exercise/${item.data.base_id!}`)}
-                containerClassname="w-[40%] aspect-square"
+                containerClassname="flex-1 aspect-square"
+                textClassname="text-xl font-semibold"
               />
             )}
             keyExtractor={(item) => item.data.base_id.toString()}
@@ -124,6 +126,7 @@ const Search = () => {
             columnWrapperStyle={{
               justifyContent: "space-between",
               marginVertical: 16,
+              gap: 16,
             }}
             contentContainerStyle={{ paddingBottom: 100 }}
             ListEmptyComponent={
