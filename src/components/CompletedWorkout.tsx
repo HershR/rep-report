@@ -6,7 +6,6 @@ import ExerciseImage from "./ExerciseImage";
 import { Text } from "./ui/text";
 import { Card, CardContent } from "./ui/card";
 import { Link } from "expo-router";
-import ExerciseCard from "./ExerciseCard";
 interface Props {
   workout: WorkoutWithExercise;
   onUpdate: () => void;
@@ -22,7 +21,8 @@ const CompletedWorkout = ({ workout, onUpdate, onDelete }: Props) => {
           <TouchableOpacity>
             <ExerciseImage
               image_uri={image}
-              containerClassname="w-20 h-20 justify-center items-center"
+              imageClassname={"w-20 h-20 rounded-md bg-white"}
+              textClassname={"text-black text-center"}
             ></ExerciseImage>
           </TouchableOpacity>
         </Link>
