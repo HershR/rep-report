@@ -1,45 +1,27 @@
-import { View, Text } from "react-native";
-import React, { useEffect, useRef } from "react";
-import { Image, ImageSource, ImageStyle } from "expo-image";
-import ImageNotFound from "@/src/assets/images/image-not-found.png";
+import { View, Text, Image } from "react-native";
+import React from "react";
+
 interface Props {
   image_uri: string | null;
-  containerClassname?: string;
-  imageStyle?: ImageStyle;
+  imageClassname: string;
+  textClassname: string;
 }
-const blurhash =
-  "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
-const ExerciseImage = ({
-  image_uri,
-  containerClassname = "",
-  imageStyle = {},
-}: Props) => {
-  const ref = useRef<Image>(null);
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.stopAnimating();
-    }
-  }, [ref]);
+const ExerciseImage = ({ image_uri, imageClassname, textClassname }: Props) => {
   return (
-    <View
-      className={`flex-1 justify-center items-center ${containerClassname}`}
-    >
+    <View className="flex relative justify-center items-center">
       <Image
-        ref={ref}
-        source={image_uri}
-        placeholder={ImageNotFound}
-        contentFit="fill"
-        autoplay={false}
-        style={{
-          flex: 1,
-          width: "100%",
-          borderRadius: 8,
-          backgroundColor: "#ffffff",
-          ...imageStyle,
+        source={{
+          uri: image_uri || undefined,
         }}
-      />
+        className={imageClassname}
+        resizeMode="contain"
+      ></Image>
+      {image_uri === null || image_uri.length === 0 ? (
+        <View className="absolute">
+          <Text className={textClassname}>No Image Found</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
