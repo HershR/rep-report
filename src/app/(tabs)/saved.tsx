@@ -18,11 +18,14 @@ import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Card, CardTitle } from "@/src/components/ui/card";
 import ExerciseImage from "@/src/components/ExerciseImage";
+import ExerciseCard from "@/src/components/ExerciseCard";
 
 const Saved = () => {
+  const router = useRouter();
+
   const [tab, setTab] = useState("favorites");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -85,39 +88,18 @@ const Saved = () => {
                     const { id, name, category, image } = exercise;
 
                     return (
-                      <Link href={`/exercise/${id}`} asChild>
-                        <TouchableOpacity className="w-1/2">
-                          <Card className="relative flex-1 justify-center items-center overflow-hidden">
-                            <ExerciseImage
-                              image_uri={image}
-                              imageClassname={
-                                "w-full aspect-square rounded-md bg-white"
-                              }
-                              textClassname={"text-black text-xl text-center"}
-                            ></ExerciseImage>
-                            <View
-                              className=" absolute bottom-0 h-1/4 w-full justify-end"
-                              style={{ backgroundColor: "#ffffffbb" }}
-                            >
-                              <View className="justify-center items-start ml-2 my-1">
-                                <Text
-                                  className="text-lg font-bold text-black"
-                                  numberOfLines={1}
-                                >
-                                  {name}
-                                </Text>
-                                <Text className="text-md text-black">
-                                  {" "}
-                                  ({category})
-                                </Text>
-                              </View>
-                            </View>
-                          </Card>
-                        </TouchableOpacity>
-                      </Link>
+                      <ExerciseCard
+                        exercise={exercise}
+                        containerClassname="flex-1 max-w-[45%] aspect-square"
+                        onPress={() => router.push(`/exercise/${exercise.id}`)}
+                      />
                     );
                   }}
-                  columnWrapperClassName="justify-between my-1 gap-x-2 px-2"
+                  columnWrapperStyle={{
+                    justifyContent: "space-between",
+                    marginVertical: 16,
+                    gap: 16,
+                  }}
                   ListEmptyComponent={
                     !favoritesLoaded && !error ? (
                       <View className="mt-10 px-5">
