@@ -26,7 +26,7 @@ const ExerciseCard = ({
     >
       <Card className="relative flex-1 justify-center items-center overflow-hidden">
         <ExerciseImage image_uri={image} containerClassname="w-full" />
-        <Text className="absolute top-2 right-2 text-sm font-medium text-secondary bg-primary rounded-full px-3">
+        <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3">
           {category}
         </Text>
       </Card>
