@@ -23,28 +23,18 @@ const ExerciseCard = ({
 
   return (
     <TouchableOpacity
-      className={"flex-1 " + containerClassname}
+      className={`flex-1 ${containerClassname}`}
       onPress={onPress}
     >
       <Card className="relative flex-1 justify-center items-center overflow-hidden">
-        <Image
-          source={image}
-          placeholder={{ blurhash }}
-          contentFit="fill"
-          style={{
-            width: "100%",
-            aspectRatio: 1,
-            borderRadius: 8,
-            backgroundColor: "#ffffff",
-          }}
-        />
+        <ExerciseImage image_uri={image} containerClassname="w-full" />
         <Text className="absolute top-2 right-2 text-sm font-medium text-secondary bg-primary rounded-full px-3">
           {category}
         </Text>
       </Card>
       <View className=" absolute bottom-0 h-1/4 w-full justify-center bg-secondary/80  px-2">
         <Text
-          className={"text-sm md:text-lg font-bold text-black" + textClassname}
+          className={`text-sm md:text-lg font-bold text-black ${textClassname}`}
           numberOfLines={1}
         >
           {name}

@@ -4,7 +4,6 @@ import useFetch from "@/src/services/useFetch";
 import { searchExercise } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SearchExerciseCard from "@/src/components/SearchExerciseCard";
 import { wgerCategories } from "@/src/constants/excerciseCategory";
 
 import {
@@ -16,7 +15,10 @@ import {
   SelectValue,
 } from "@/src/components/ui/select";
 import { Text } from "@/src/components/ui/text";
+import ExerciseCard from "@/src/components/ExerciseCard";
+import { useRouter } from "expo-router";
 const Search = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
   const {
@@ -102,7 +104,20 @@ const Search = () => {
                 ? exercies?.filter((x) => x.data.category === category)
                 : exercies
             }
-            renderItem={({ item }) => <SearchExerciseCard {...item} />}
+            renderItem={({ item }) => (
+              <ExerciseCard
+                exercise={{
+                  ...item.data,
+                  image: `${
+                    !!item.data.image
+                      ? "https://wger.de/" + item.data.image
+                      : null
+                  }`,
+                }}
+                onPress={() => router.push(`/exercise/${item.data.base_id!}`)}
+                containerClassname="w-[40%] aspect-square"
+              />
+            )}
             keyExtractor={(item) => item.data.base_id.toString()}
             className=""
             numColumns={2}
