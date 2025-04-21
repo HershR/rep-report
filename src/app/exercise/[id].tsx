@@ -3,6 +3,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -33,19 +34,22 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTheme } from "@react-navigation/native";
+
 const ExerciseDetails = () => {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const { width } = useWindowDimensions();
   const [isFavorite, setIsFavorite] = useState(false);
   const [exerciseStored, setExerciseStored] = useState(false);
-  const { colors } = useTheme();
-  const router = useRouter();
+  const [descriptionLineCount, setDescriptionLineCount] = useState(1);
+  const [showDescription, setShowDescription] = useState(false);
+
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
   const { id }: { id: string } = useLocalSearchParams();
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [descriptionLineCount, setDescriptionLineCount] = useState(1);
-  const [showDescription, setShowDescription] = useState(false);
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
@@ -117,38 +121,28 @@ const ExerciseDetails = () => {
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-4 my-4 gap-y-4">
+        <SafeAreaView className="flex-1 mx-8 mt-4 pb-10 gap-y-4">
           <Button variant={"ghost"} size={"icon"} onPress={router.back}>
             <ArrowRight size={32} className="rotate-180 color-primary" />
           </Button>
           <ScrollView
             ref={scrollViewRef}
-            className="flex-1 mx-4"
+            className="flex-1"
             showsVerticalScrollIndicator={false}
           >
             {exercise?.images !== undefined && exercise.images.length > 0 && (
-              <View className="flex items-center">
+              <View className="flex justify-center items-center">
                 <CustomCarousel
-                  width={350}
-                  height={350}
-                  loop={false}
+                  width={width - 64}
+                  height={width - 64}
                   data={exercise?.images.map((x) => x.image)}
-                  dotStyle={{
-                    backgroundColor: "#9ca3af",
-                    borderRadius: 50,
-                    overflow: "hidden",
-                  }}
-                  activeDotStyle={{
-                    borderRadius: 100,
-                    overflow: "hidden",
-                    backgroundColor: "#2A2E3C",
-                  }}
                   renderFunction={(item: string) => {
                     return (
-                      <View className="flex-1 justify-center items-center">
+                      <View className="flex-1 m-2 justify-center items-center">
                         <ExerciseImage
                           image_uri={item}
-                          containerClassname="w-[350px] aspect-square"
+                          containerClassname="w-full aspect-square"
+                          contextFit="fill"
                         />
                       </View>
                     );
@@ -157,7 +151,9 @@ const ExerciseDetails = () => {
               </View>
             )}
             <View className="flex-1 flex-row justify-between items-center  my-2">
-              <Text className="text-2xl font-bold text-center">{name}</Text>
+              <Text className="flex-1 text-2xl font-bold text-left">
+                {name}
+              </Text>
               <Button
                 variant={"ghost"}
                 size={"icon"}
@@ -173,6 +169,7 @@ const ExerciseDetails = () => {
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
+
             <Text
               numberOfLines={showDescription ? undefined : maxLineCount}
               className="text-primary text-xl mt-2"
@@ -216,16 +213,6 @@ const ExerciseDetails = () => {
                       height={425}
                       loop={false}
                       data={allMuscles}
-                      dotStyle={{
-                        backgroundColor: "#9ca3af",
-                        borderRadius: 50,
-                        overflow: "hidden",
-                      }}
-                      activeDotStyle={{
-                        borderRadius: 100,
-                        overflow: "hidden",
-                        backgroundColor: "#2A2E3C",
-                      }}
                       renderFunction={(item: Muscles[]) => {
                         return (
                           <MuscleCard
