@@ -16,7 +16,8 @@
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#1a1a1aff"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "package": "com.hersh_r.RepReport"
     },
     "web": {
       "bundler": "metro",
