@@ -41,7 +41,6 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [exerciseStored, setExerciseStored] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
 
@@ -53,9 +52,6 @@ const ExerciseDetails = () => {
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
-  const { data: savedExercise } = useFetch(() =>
-    getExerciseById(drizzleDb, parseInt(id))
-  );
 
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
@@ -88,29 +84,38 @@ const ExerciseDetails = () => {
   };
 
   useEffect(() => {
-    if (!!savedExercise) {
-      setIsFavorite(savedExercise?.is_favorite || false);
-      setExerciseStored(true);
+    async function fetchExercise() {
+      if (id !== null && id !== undefined) {
+        await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
+          if (ex !== undefined) {
+            setIsFavorite(ex.is_favorite || false);
+          }
+        });
+      }
     }
-  }, [savedExercise]);
+    fetchExercise();
+  }, [id]);
 
   function toggleShowDescription() {
     setShowDescription((prev) => !prev);
   }
 
   async function toggleFavorite() {
-    setIsFavorite((prev) => !prev);
-    if (savedExercise || exerciseStored) {
-      await setFavoriteExercise(drizzleDb, parseInt(id), !isFavorite);
-    } else {
-      await createExercise(drizzleDb, {
-        id: parseInt(id),
-        name,
-        category: exercise?.category.name!,
-        image: exercise?.images[0]?.image || null,
-        is_favorite: !isFavorite,
+    if (exercise && loading === false) {
+      await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
+        if (ex === undefined) {
+          createExercise(drizzleDb, {
+            id: exercise.id,
+            name: translation?.name || "",
+            category: exercise.category.name,
+            image: exercise.images.length > 0 ? exercise.images[0].image : null,
+            is_favorite: true,
+          });
+        } else {
+          setFavoriteExercise(drizzleDb, ex.id, !isFavorite);
+        }
       });
-      setExerciseStored(true);
+      setIsFavorite((prev) => !prev);
     }
   }
 
