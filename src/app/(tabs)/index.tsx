@@ -27,14 +27,13 @@ export default function Index() {
       drizzleDb
         .selectDistinct({
           exercise_id: workouts.exercise_id,
-          exercise_wger_id: exercises.wger_id,
           exercise_name: exercises.name,
           exercise_image: exercises.image,
           exercise_category: exercises.category,
         })
         .from(workouts)
         .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
-        .orderBy(desc(workouts.updated_date), desc(workouts.date))
+        .orderBy(desc(workouts.last_updated), desc(workouts.date))
         .limit(10)
     );
 
@@ -91,7 +90,6 @@ export default function Index() {
                       return (
                         <RecentExerciseCard
                           id={item.exercise_id}
-                          wger_id={item.exercise_wger_id!}
                           name={item.exercise_name}
                           category={item.exercise_category}
                           image={item.exercise_image!}
