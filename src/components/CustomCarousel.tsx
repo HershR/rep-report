@@ -6,30 +6,34 @@ import Carousel, {
 } from "react-native-reanimated-carousel";
 import { useSharedValue } from "react-native-reanimated";
 import { DotStyle } from "react-native-reanimated-carousel/lib/typescript/components/Pagination/Basic/PaginationItem";
-
+import { useTheme } from "@react-navigation/native";
 interface CarouselProps {
+  data: any[];
   width: number;
   height: number;
-  loop: boolean;
-  style?: StyleProp<ViewStyle>;
-  data: any[];
+  vertical?: boolean;
+  loop?: boolean;
+  carouselStyle?: StyleProp<ViewStyle>;
   dotStyle?: DotStyle;
   activeDotStyle?: DotStyle;
   renderFunction: (item: any, index?: number) => any;
 }
 
 const CustomCarousel = ({
+  data,
   width,
   height,
-  loop,
-  style,
-  data,
+  vertical = false,
+  loop = false,
+  carouselStyle: style,
   dotStyle,
   activeDotStyle,
   renderFunction: renderItem,
 }: CarouselProps) => {
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
+  const { colors } = useTheme();
+
   const onPressPagination = (index: number) => {
     ref.current?.scrollTo({
       count: index - progress.value,
@@ -40,6 +44,7 @@ const CustomCarousel = ({
     <>
       <Carousel
         ref={ref}
+        vertical={vertical}
         loop={loop}
         data={data}
         width={width}
@@ -52,8 +57,17 @@ const CustomCarousel = ({
         <Pagination.Basic
           progress={progress}
           data={data}
-          dotStyle={dotStyle}
-          activeDotStyle={activeDotStyle}
+          dotStyle={{
+            borderRadius: 100,
+            backgroundColor: colors.border,
+            ...dotStyle,
+          }}
+          activeDotStyle={{
+            borderRadius: 100,
+            overflow: "hidden",
+            backgroundColor: colors.primary,
+            ...activeDotStyle,
+          }}
           containerStyle={{ gap: 5, marginTop: 5 }}
           onPress={onPressPagination}
         />
