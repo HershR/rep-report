@@ -287,7 +287,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
                     rules={{
                       required: true,
                       validate: (value) => {
-                        if (value != null && !isNaN(value)) {
+                        if (value != null && !isNaN(value) && value > 0) {
                           return true;
                         }
                         return false;
