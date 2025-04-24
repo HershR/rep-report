@@ -54,6 +54,7 @@ export default function Index() {
         exerciseId: workout.exercise_id,
         exerciseName: workout.exercise.name,
         exerciseURI: workout.exercise.image,
+        formMode: 1,
       },
     });
   }

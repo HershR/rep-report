@@ -238,7 +238,12 @@ const ExerciseDetails = () => {
             onPress={() =>
               router.push({
                 pathname: "../workout/[id]",
-                params: { id: -1, exerciseId: id, exerciseName: name },
+                params: {
+                  id: -1,
+                  exerciseId: id,
+                  exerciseName: name,
+                  formMode: 0,
+                },
               })
             }
           >
