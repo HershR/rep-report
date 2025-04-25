@@ -1,7 +1,7 @@
 import { FlatList, View } from "react-native";
 import React from "react";
-import { Text } from "./ui/text";
-import ExerciseCard from "./ExerciseCard";
+import { Text } from "../ui/text";
+import ExerciseCard from "../ExerciseCard";
 
 interface Props {
   exercise: Omit<Exercise, "is_favorite">[];

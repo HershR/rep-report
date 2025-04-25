@@ -12,9 +12,9 @@ import { Text } from "~/components/ui/text";
 import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
 import ExerciseCard from "@/src/components/ExerciseCard";
-import CompletedWorkoutList from "@/src/components/CompletedWorkoutList";
+import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import RecentExerciseList from "@/src/components/RecentExerciseList";
+import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();

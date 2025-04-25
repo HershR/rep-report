@@ -1,6 +1,6 @@
 import { View, FlatList, useWindowDimensions, Platform } from "react-native";
 import React, { useEffect, useState } from "react";
-import CompletedWorkout from "./CompletedWorkout";
+import CompletedWorkout from "../CompletedWorkout";
 interface Props {
   workouts: WorkoutWithExercise[];
   onUpdate?: (workout: WorkoutWithExercise) => void;
