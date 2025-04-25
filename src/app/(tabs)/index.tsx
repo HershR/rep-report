@@ -11,8 +11,8 @@ import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
 import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
-import CompletedWorkout from "@/src/components/CompletedWorkout";
 import ExerciseCard from "@/src/components/ExerciseCard";
+import CompletedWorkoutList from "@/src/components/CompletedWorkoutList";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -46,21 +46,10 @@ export default function Index() {
     }),
     [selectedDate]
   );
-  function goToWorkout(workout: WorkoutWithExercise): void {
-    return router.push({
-      pathname: "../workout/[id]",
-      params: {
-        id: workout.id,
-        exerciseId: workout.exercise_id,
-        exerciseName: workout.exercise.name,
-        exerciseURI: workout.exercise.image,
-        formMode: 1,
-      },
-    });
-  }
+
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 mt-10 pb-20">
+      <SafeAreaView className="flex-1 mx-8 mt-10 pb-20 md:mx-16">
         <View className="flex h-32">
           <DatePickerWithWeek
             currentDate={selectedDate!}
@@ -122,24 +111,10 @@ export default function Index() {
                 />
               ) : (
                 <>
-                  <Text className="text-xl font-semibold my-4">
-                    Today's Workouts
+                  <Text className="text-xl font-semibold mt-4">
+                    Today's Workouts:
                   </Text>
-                  <FlatList
-                    data={todayWorkouts}
-                    showsVerticalScrollIndicator={false}
-                    keyExtractor={(item) => item.id.toString()}
-                    ItemSeparatorComponent={() => <View className="h-4"></View>}
-                    renderItem={({ item }) => {
-                      return (
-                        <CompletedWorkout
-                          workout={item}
-                          onUpdate={() => goToWorkout(item)}
-                          onDelete={() => {}}
-                        />
-                      );
-                    }}
-                  ></FlatList>
+                  <CompletedWorkoutList workouts={todayWorkouts} />
                 </>
               )}
             </View>
