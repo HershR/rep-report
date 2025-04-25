@@ -105,13 +105,13 @@ const Search = () => {
             <ExerciseCard
               exercise={{
                 ...item.data,
+                id: item.data.base_id,
                 image: `${
                   !!item.data.image
                     ? "https://wger.de/" + item.data.image
                     : null
                 }`,
               }}
-              onPress={() => router.push(`/exercise/${item.data.base_id!}`)}
               containerClassname="flex-1 aspect-square"
               textClassname="text-xl font-semibold"
             />

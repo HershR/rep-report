@@ -25,7 +25,6 @@ const RecentExerciseList = ({ exercise: recentExercise, onPress }: Props) => {
               category: item.category!,
               image: item.image || null,
             }}
-            onPress={() => onPress(item.id)}
             containerClassname="aspect-square h-40 md:h-52"
             textClassname="font-medium text-base"
           />

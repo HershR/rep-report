@@ -4,26 +4,28 @@ import { Card } from "./ui/card";
 import ExerciseImage from "./ExerciseImage";
 import { Image } from "expo-image";
 import { Text } from "./ui/text";
+import { useRouter } from "expo-router";
 
 interface Props {
   exercise: Omit<Exercise, "is_favorite">; // Exclude is_favorite from the props
   textClassname?: string; // Optional classname for text
   containerClassname?: string; // Optional classname for the container
-  onPress?: () => void; // Optional onPress handler
 }
 
 const ExerciseCard = ({
   exercise,
-  onPress,
   textClassname = "",
   containerClassname = "",
 }: Props) => {
   const { id, name, category, image } = exercise;
-
+  const router = useRouter();
+  function goToExercise(): void {
+    router.push(`/exercise/${id}`);
+  }
   return (
     <TouchableOpacity
       className={`relative flex overflow-hidden ${containerClassname}`}
-      onPress={onPress}
+      onPress={goToExercise}
     >
       <Card className="flex-1 justify-center items-center">
         <ExerciseImage
