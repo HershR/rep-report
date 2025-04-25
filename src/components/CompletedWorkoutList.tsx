@@ -15,38 +15,34 @@ const CompletedWorkoutList = ({ workouts, onUpdate }: Props) => {
 
   function getItemWidth() {
     if (numColumns < 2) {
-      return Platform.OS;
+      return "";
     } else {
-      const newWidth = width / numColumns - (columnGap * numColumns - 1);
+      const newWidth = Math.floor(
+        width / numColumns - (columnGap * numColumns - 1)
+      );
       return `max-w-[${newWidth}px]`;
     }
   }
   return (
-    <>
-      <FlatList
-        key={numColumns}
-        numColumns={numColumns}
-        data={workouts}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.id.toString()}
-        columnWrapperStyle={
-          numColumns > 1
-            ? { justifyContent: "flex-start", gap: columnGap }
-            : null
-        }
-        ItemSeparatorComponent={() => (
-          <View style={{ height: columnGap }}></View>
-        )}
-        renderItem={({ item }) => {
-          return (
-            <CompletedWorkout
-              workout={item}
-              containerClassname={getItemWidth()}
-            />
-          );
-        }}
-      />
-    </>
+    <FlatList
+      key={numColumns}
+      numColumns={numColumns}
+      data={workouts}
+      showsVerticalScrollIndicator={false}
+      keyExtractor={(item) => item.id.toString()}
+      columnWrapperStyle={
+        numColumns > 1 ? { justifyContent: "flex-start", gap: columnGap } : null
+      }
+      ItemSeparatorComponent={() => <View style={{ height: columnGap }}></View>}
+      renderItem={({ item }) => {
+        return (
+          <CompletedWorkout
+            workout={item}
+            containerClassname={getItemWidth()}
+          />
+        );
+      }}
+    />
   );
 };
 
