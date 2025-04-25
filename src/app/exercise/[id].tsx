@@ -34,6 +34,7 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTheme } from "@react-navigation/native";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -120,13 +121,13 @@ const ExerciseDetails = () => {
   }
 
   return (
-    <View className="flex-1 bg-secondary">
+    <SafeAreaWrapper>
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <SafeAreaView className="flex-1 mx-8 mt-4 pb-10 gap-y-4">
+        <>
           <Button variant={"ghost"} size={"icon"} onPress={router.back}>
             <ArrowRight size={32} className="rotate-180 color-primary" />
           </Button>
@@ -170,11 +171,9 @@ const ExerciseDetails = () => {
                 ) : null}
               </Button>
             </View>
-
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
-
             <Text
               numberOfLines={showDescription ? undefined : maxLineCount}
               className="text-primary text-xl mt-2"
@@ -232,7 +231,6 @@ const ExerciseDetails = () => {
               </Accordion>
             )}
           </ScrollView>
-
           <Button
             className="w-full items-center justify-center"
             onPress={() =>
@@ -249,9 +247,9 @@ const ExerciseDetails = () => {
           >
             <Text>Start Workout</Text>
           </Button>
-        </SafeAreaView>
+        </>
       )}
-    </View>
+    </SafeAreaWrapper>
   );
 };
 

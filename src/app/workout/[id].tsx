@@ -25,6 +25,7 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import Toast from "react-native-toast-message";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 
 enum FormMode {
   Create = 0,
@@ -132,42 +133,40 @@ const WorkoutDetails = () => {
     duration: null,
   };
   return (
-    <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10">
-        <Button
-          variant={"ghost"}
-          size={"icon"}
-          onPress={router.back}
-          className="z-50"
-        >
-          <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-        </Button>
-        <KeyboardAvoidingView
-          className="relative flex-1 justify-start items-center"
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          {loading ? (
-            <ActivityIndicator></ActivityIndicator>
-          ) : (
-            <WorkoutForm
-              defaultForm={
-                workout || {
-                  date: new Date().toISOString().slice(0, 10),
-                  mode: 0,
-                  notes: null,
-                  exercise: { name: exerciseName, image: null },
-                  sets: [emptySet, emptySet],
-                  unit: "lb",
-                }
+    <SafeAreaWrapper>
+      <Button
+        variant={"ghost"}
+        size={"icon"}
+        onPress={router.back}
+        className="z-50"
+      >
+        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
+      </Button>
+      <KeyboardAvoidingView
+        className="relative flex-1 justify-start items-center"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {loading ? (
+          <ActivityIndicator></ActivityIndicator>
+        ) : (
+          <WorkoutForm
+            defaultForm={
+              workout || {
+                date: new Date().toISOString().slice(0, 10),
+                mode: 0,
+                notes: null,
+                exercise: { name: exerciseName, image: null },
+                sets: [emptySet, emptySet],
+                unit: "lb",
               }
-              onSubmit={saveWorkout}
-              onDelete={workoutDelete}
-              formMode={mode}
-            />
-          )}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+            }
+            onSubmit={saveWorkout}
+            onDelete={workoutDelete}
+            formMode={mode}
+          />
+        )}
+      </KeyboardAvoidingView>
+    </SafeAreaWrapper>
   );
 };
 

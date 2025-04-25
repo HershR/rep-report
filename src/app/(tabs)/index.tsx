@@ -13,6 +13,7 @@ import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
 import ExerciseCard from "@/src/components/ExerciseCard";
 import CompletedWorkoutList from "@/src/components/CompletedWorkoutList";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -48,79 +49,72 @@ export default function Index() {
   );
 
   return (
-    <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 mt-10 pb-20 md:mx-16">
-        <View className="flex h-32">
-          <DatePickerWithWeek
-            currentDate={selectedDate!}
-            onDateChange={setSelectedDate}
-          />
-        </View>
-        {!recentExerciseLoaded || !workoutLoaded ? (
-          <ActivityIndicator
-            size={"large"}
-            className="mt-10 self-center"
-          ></ActivityIndicator>
-        ) : (
-          <View className="flex-1">
-            <View className="flex mt-6 mb-6 gap-y-2">
-              {recentExercise ? (
-                <>
-                  <Text className="text-xl font-semibold">
-                    Recent Exercise:
-                  </Text>
-                  <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    data={recentExercise}
-                    keyExtractor={(item) => item.exercise_id!.toString()}
-                    contentContainerStyle={{ gap: 5 }}
-                    renderItem={({ item }) => {
-                      return (
-                        <ExerciseCard
-                          exercise={{
-                            id: item.exercise_id!,
-                            name: item.exercise_name!,
-                            category: item.exercise_category!,
-                            image: item.exercise_image || null,
-                          }}
-                          onPress={() =>
-                            router.push(`/exercise/${item.exercise_id!}`)
-                          }
-                          containerClassname="aspect-square h-40"
-                          textClassname="font-medium text-lg"
-                        />
-                      );
-                    }}
-                    ItemSeparatorComponent={() => <View className="w-4" />}
-                    initialNumToRender={5}
-                  ></FlatList>
-                </>
-              ) : null}
-            </View>
-            <View className="flex-1">
-              <SearchBar
-                placeholder={"Add exercise"}
-                value={""}
-                onPress={() => router.push("/search")}
-              />
-              {!workoutLoaded ? (
-                <ActivityIndicator
-                  size={"large"}
-                  className="mt-10 self-center"
-                />
-              ) : (
-                <>
-                  <Text className="text-xl font-semibold mt-4">
-                    Today's Workouts:
-                  </Text>
-                  <CompletedWorkoutList workouts={todayWorkouts} />
-                </>
-              )}
-            </View>
+    <SafeAreaWrapper>
+      <View className="flex h-32">
+        <DatePickerWithWeek
+          currentDate={selectedDate!}
+          onDateChange={setSelectedDate}
+        />
+      </View>
+      {!recentExerciseLoaded || !workoutLoaded ? (
+        <ActivityIndicator
+          size={"large"}
+          className="mt-10 self-center"
+        ></ActivityIndicator>
+      ) : (
+        <View className="flex-1">
+          <View className="flex mt-6 mb-6 gap-y-2">
+            {recentExercise ? (
+              <>
+                <Text className="text-xl font-semibold">Recent Exercise:</Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={recentExercise}
+                  keyExtractor={(item) => item.exercise_id!.toString()}
+                  contentContainerStyle={{ gap: 5 }}
+                  renderItem={({ item }) => {
+                    return (
+                      <ExerciseCard
+                        exercise={{
+                          id: item.exercise_id!,
+                          name: item.exercise_name!,
+                          category: item.exercise_category!,
+                          image: item.exercise_image || null,
+                        }}
+                        onPress={() =>
+                          router.push(`/exercise/${item.exercise_id!}`)
+                        }
+                        containerClassname="aspect-square h-40"
+                        textClassname="font-medium text-lg"
+                      />
+                    );
+                  }}
+                  ItemSeparatorComponent={() => <View className="w-4" />}
+                  initialNumToRender={5}
+                ></FlatList>
+              </>
+            ) : null}
           </View>
-        )}
-      </SafeAreaView>
-    </View>
+          <View className="flex-1">
+            <SearchBar
+              placeholder={"Add exercise"}
+              value={""}
+              onPress={() => router.push("/search")}
+            />
+            {!workoutLoaded ? (
+              <ActivityIndicator size={"large"} className="mt-10 self-center" />
+            ) : (
+              <>
+                <Text className="text-xl font-semibold mt-4">
+                  Today's Workouts:
+                </Text>
+                <CompletedWorkoutList workouts={todayWorkouts} />
+              </>
+            )}
+          </View>
+        </View>
+      )}
+    </SafeAreaWrapper>
   );
 }
