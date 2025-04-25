@@ -14,6 +14,7 @@ import { workouts, exercises } from "@/src//db/schema";
 import ExerciseCard from "@/src/components/ExerciseCard";
 import CompletedWorkoutList from "@/src/components/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import RecentExerciseList from "@/src/components/RecentExerciseList";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -26,10 +27,10 @@ export default function Index() {
     useLiveQuery(
       drizzleDb
         .selectDistinct({
-          exercise_id: workouts.exercise_id,
-          exercise_name: exercises.name,
-          exercise_image: exercises.image,
-          exercise_category: exercises.category,
+          id: workouts.exercise_id,
+          name: exercises.name,
+          image: exercises.image,
+          category: exercises.category,
         })
         .from(workouts)
         .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
@@ -66,33 +67,13 @@ export default function Index() {
           <View className="flex mt-6 mb-6 gap-y-2">
             {recentExercise ? (
               <>
-                <Text className="text-xl font-semibold">Recent Exercise:</Text>
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={recentExercise}
-                  keyExtractor={(item) => item.exercise_id!.toString()}
-                  contentContainerStyle={{ gap: 5 }}
-                  renderItem={({ item }) => {
-                    return (
-                      <ExerciseCard
-                        exercise={{
-                          id: item.exercise_id!,
-                          name: item.exercise_name!,
-                          category: item.exercise_category!,
-                          image: item.exercise_image || null,
-                        }}
-                        onPress={() =>
-                          router.push(`/exercise/${item.exercise_id!}`)
-                        }
-                        containerClassname="aspect-square h-40"
-                        textClassname="font-medium text-lg"
-                      />
-                    );
-                  }}
-                  ItemSeparatorComponent={() => <View className="w-4" />}
-                  initialNumToRender={5}
-                ></FlatList>
+                <Text className="text-xl font-semibold mt-4">
+                  Recent Exercise:
+                </Text>
+                <RecentExerciseList
+                  exercise={recentExercise}
+                  onPress={(id: number) => router.push(`/exercise/${id}`)}
+                />
               </>
             ) : null}
           </View>
