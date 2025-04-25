@@ -1,4 +1,4 @@
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, StyleProp, ViewStyle } from "react-native";
 import React from "react";
 import { Button } from "./ui/button";
 import { toUpperCase } from "../services/textFormatter";
@@ -8,10 +8,10 @@ import { Card } from "./ui/card";
 import { Link, useRouter } from "expo-router";
 interface Props {
   workout: WorkoutWithExercise;
-  containerClassname?: string;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-const CompletedWorkout = ({ workout, containerClassname }: Props) => {
+const CompletedWorkout = ({ workout, containerStyle }: Props) => {
   const image = workout.exercise.image;
   const router = useRouter();
   function goToWorkout(workout: WorkoutWithExercise): void {
@@ -28,7 +28,7 @@ const CompletedWorkout = ({ workout, containerClassname }: Props) => {
   }
   return (
     <Card
-      className={`flex-1 max-h-32 justify-center items-center p-4 ${containerClassname}`}
+      className={`flex-1 max-h-32 justify-center items-center p-4 ${containerStyle}`}
     >
       <View className="flex-row w-full h-full justify-center items-center">
         <Link href={`/exercise/${workout.exercise.id}`} asChild>

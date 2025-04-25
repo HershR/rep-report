@@ -1,46 +1,32 @@
-import { View, FlatList, useWindowDimensions, Platform } from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, FlatList } from "react-native";
+import React from "react";
 import CompletedWorkout from "../CompletedWorkout";
+import { useSafeAreaFrame } from "react-native-safe-area-context";
+import { formatList } from "@/src/utils/listFormatter";
+
 interface Props {
   workouts: WorkoutWithExercise[];
   onUpdate?: (workout: WorkoutWithExercise) => void;
 }
 const CompletedWorkoutList = ({ workouts, onUpdate }: Props) => {
-  const [numColumns, setNumColumns] = useState(1);
-  const { width } = useWindowDimensions();
-  const columnGap = 16;
-  useEffect(() => {
-    setNumColumns(width < 600 ? 1 : width < 1000 ? 2 : 3);
-  }, [width]);
+  const { width } = useSafeAreaFrame();
 
-  function getItemWidth() {
-    if (numColumns < 2) {
-      return "";
-    } else {
-      const newWidth = Math.floor(
-        width / numColumns - (columnGap * numColumns - 1)
-      );
-      return `max-w-[${newWidth}px]`;
-    }
-  }
+  const numColumns = width < 600 ? 1 : width < 1000 ? 2 : 3;
+
   return (
     <FlatList
       key={numColumns}
       numColumns={numColumns}
-      data={workouts}
+      data={formatList(workouts, numColumns)}
       showsVerticalScrollIndicator={false}
-      keyExtractor={(item) => item.id.toString()}
-      columnWrapperStyle={
-        numColumns > 1 ? { justifyContent: "flex-start", gap: columnGap } : null
-      }
-      ItemSeparatorComponent={() => <View style={{ height: columnGap }}></View>}
+      keyExtractor={(item) => item?.id?.toString() || item.key}
+      columnWrapperClassName={numColumns > 1 ? "justify-start gap-x-4" : ""}
+      ItemSeparatorComponent={() => <View className="h-4"></View>}
       renderItem={({ item }) => {
-        return (
-          <CompletedWorkout
-            workout={item}
-            containerClassname={getItemWidth()}
-          />
-        );
+        if (item.empty) {
+          return <View className="flex-1 h-32 p-4"></View>;
+        }
+        return <CompletedWorkout workout={item} />;
       }}
     />
   );

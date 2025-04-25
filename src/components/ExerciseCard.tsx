@@ -33,12 +33,12 @@ const ExerciseCard = ({
           containerClassname="w-full"
           contextFit="contain"
         />
-        <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3">
+        <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3 py-2">
           {category}
         </Text>
       </Card>
-      <View className=" absolute bottom-0 h-1/3 w-full justify-center bg-secondary/70 px-2 py-2">
-        <Text className={`font-bold ${textClassname}`} numberOfLines={1}>
+      <View className="absolute bottom-0 h-1/3 w-full justify-center bg-secondary/70 px-2 py-2">
+        <Text className={`font-bold ${textClassname}`} numberOfLines={2}>
           {name}
         </Text>
       </View>
