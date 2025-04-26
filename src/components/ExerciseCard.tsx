@@ -2,21 +2,15 @@ import { View, TouchableOpacity } from "react-native";
 import React from "react";
 import { Card } from "./ui/card";
 import ExerciseImage from "./ExerciseImage";
-import { Image } from "expo-image";
 import { Text } from "./ui/text";
 import { useRouter } from "expo-router";
 
 interface Props {
   exercise: Omit<Exercise, "is_favorite">; // Exclude is_favorite from the props
-  textClassname?: string; // Optional classname for text
   containerClassname?: string; // Optional classname for the container
 }
 
-const ExerciseCard = ({
-  exercise,
-  textClassname = "",
-  containerClassname = "",
-}: Props) => {
+const ExerciseCard = ({ exercise, containerClassname = "" }: Props) => {
   const { id, name, category, image } = exercise;
   const router = useRouter();
   function goToExercise(): void {
@@ -33,14 +27,18 @@ const ExerciseCard = ({
           containerClassname="w-full"
           contextFit="contain"
         />
-        <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3 py-2">
-          {category}
-        </Text>
+        {/* <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3 py-2">
+          
+        </Text> */}
       </Card>
-      <View className="absolute bottom-0 h-1/3 w-full justify-center bg-secondary/70 px-2 py-2">
-        <Text className={`font-bold ${textClassname}`} numberOfLines={2}>
+      <View className="absolute bottom-0 w-full h-16 max-h-[30%] bg-secondary/70 justify-center px-2">
+        <Text
+          className={`w-full text-left text-base md:text-xl lg:text-2xl font-bold`}
+          numberOfLines={1}
+        >
           {name}
         </Text>
+        <Text className="text-base md:text-xl lg:text-2xl">{category}</Text>
       </View>
     </TouchableOpacity>
   );

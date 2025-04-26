@@ -8,7 +8,7 @@ interface Props {
   emptyListComp?: any;
 }
 
-const SearchExerciseList = ({ exercises, emptyListComp }: Props) => {
+const ExerciseList = ({ exercises, emptyListComp }: Props) => {
   const { width, height } = useSafeAreaFrame();
   const numColumns = width < 600 ? 2 : width < 1000 ? 3 : 4;
 
@@ -29,7 +29,6 @@ const SearchExerciseList = ({ exercises, emptyListComp }: Props) => {
         return (
           <ExerciseCard
             exercise={item}
-            textClassname="text-2xl font-semibold"
             containerClassname="flex-1 aspect-square"
           />
         );
@@ -38,4 +37,4 @@ const SearchExerciseList = ({ exercises, emptyListComp }: Props) => {
   );
 };
 
-export default SearchExerciseList;
+export default ExerciseList;

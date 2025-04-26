@@ -15,7 +15,7 @@ import {
 } from "@/src/components/ui/select";
 import { Text } from "@/src/components/ui/text";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import SearchExerciseList from "@/src/components/lists/SearchExerciseList";
+import ExerciseList from "@/src/components/lists/ExerciseList";
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
@@ -113,7 +113,7 @@ const Search = () => {
           Error: {error.message}
         </Text>
       ) : (
-        <SearchExerciseList
+        <ExerciseList
           exercises={suggestionToExercise(exercieSuggestions || [])}
         />
       )}
