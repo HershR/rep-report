@@ -4,12 +4,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   useWindowDimensions,
+  FlatList,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaFrame } from "react-native-safe-area-context";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
@@ -40,11 +41,11 @@ const ExerciseDetails = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
-  const { width } = useWindowDimensions();
+  const { width, height } = useSafeAreaFrame();
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-
+  console.log(width, height);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
@@ -121,7 +122,7 @@ const ExerciseDetails = () => {
   }
 
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper style="mt-5">
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
@@ -139,8 +140,8 @@ const ExerciseDetails = () => {
             {exercise?.images !== undefined && exercise.images.length > 0 && (
               <View className="flex justify-center items-center">
                 <CustomCarousel
-                  width={width - 64}
-                  height={width - 64}
+                  width={Math.min(height * 0.5, width - 64)}
+                  height={Math.min(height * 0.5, width - 64)}
                   data={exercise?.images.map((x) => x.image)}
                   renderFunction={(item: string) => {
                     return (
@@ -148,7 +149,7 @@ const ExerciseDetails = () => {
                         <ExerciseImage
                           image_uri={item}
                           containerClassname="w-full aspect-square"
-                          contextFit="fill"
+                          contextFit="contain"
                         />
                       </View>
                     );
@@ -156,7 +157,8 @@ const ExerciseDetails = () => {
                 />
               </View>
             )}
-            <View className="flex-1 flex-row justify-between items-center  my-2">
+            {/* Name */}
+            <View className="flex-row justify-between items-center  my-2">
               <Text className="flex-1 text-2xl font-bold text-left">
                 {name}
               </Text>
@@ -171,9 +173,11 @@ const ExerciseDetails = () => {
                 ) : null}
               </Button>
             </View>
+            {/* Chip */}
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
+            {/* Description */}
             <Text
               numberOfLines={showDescription ? undefined : maxLineCount}
               className="text-primary text-xl mt-2"
@@ -194,7 +198,8 @@ const ExerciseDetails = () => {
                 </Text>
               </TouchableOpacity>
             )}
-            {muscles !== undefined && muscles.length > 0 && (
+            {/* Muscle Groups */}
+            {muscles !== undefined && muscles.length > 0 && width < 700 ? (
               <Accordion
                 type="single"
                 collapsible
@@ -211,7 +216,7 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="flex-1 justify-center items-center">
+                  <AccordionContent className="items-center">
                     <CustomCarousel
                       width={300}
                       height={425}
@@ -229,6 +234,11 @@ const ExerciseDetails = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            ) : (
+              <View className="flex-row mt-4 mb-4">
+                <MuscleCard muscleList={musclesFront} isFront={true} />
+                <MuscleCard muscleList={musclesBack} isFront={false} />
+              </View>
             )}
           </ScrollView>
           <Button

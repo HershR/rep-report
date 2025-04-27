@@ -3,11 +3,12 @@ import React, { ReactNode } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 interface Props {
   children?: ReactNode;
+  style?: string;
 }
-const SafeAreaWrapper = ({ children }: Props) => {
+const SafeAreaWrapper = ({ children, style }: Props) => {
   return (
     <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 mt-10 mb-5 md:mx-16">
+      <SafeAreaView className={`flex-1 mx-8 mt-10 mb-5 md:mx-16 ${style}`}>
         {children}
       </SafeAreaView>
     </View>
