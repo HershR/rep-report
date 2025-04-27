@@ -16,7 +16,7 @@ const CompletedWorkout = ({ workout, containerStyle }: Props) => {
   const router = useRouter();
   function goToWorkout(workout: WorkoutWithExercise): void {
     return router.push({
-      pathname: "../workout/[id]",
+      pathname: "../workout/update/[id]",
       params: {
         id: workout.id,
         exerciseId: workout.exercise_id,

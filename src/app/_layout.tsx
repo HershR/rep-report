@@ -109,7 +109,11 @@ export default function RootLayout() {
                   options={{ headerShown: false }}
                 ></Stack.Screen>
                 <Stack.Screen
-                  name="workout/[id]"
+                  name="workout/create/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="workout/update/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
               </Stack>

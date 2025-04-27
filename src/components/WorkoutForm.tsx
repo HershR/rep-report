@@ -75,9 +75,8 @@ interface WorkoutWithExercise
 
 interface Props {
   defaultForm: WorkoutWithExercise;
-  formMode: 0 | 1;
   onSubmit: (data: Workout) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }
 
 const emptySet: WorkoutSet = {
@@ -98,7 +97,7 @@ const emptyForm: Workout = {
   notes: null,
   sets: [emptySet],
 };
-const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
+const WorkoutForm = ({ defaultForm, onSubmit, onDelete }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const {
@@ -114,6 +113,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
       ...defaultForm,
       mode: defaultForm?.mode || 0,
       date: defaultForm?.date || new Date().toISOString().slice(0, 10),
+      sets: defaultForm.sets.length > 0 ? defaultForm.sets : [emptySet],
     },
   });
   const date = watch("date");
@@ -161,17 +161,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
     <Card className="flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
-        <FormActionAlert
-          title={`${formMode === 0 ? "Reset form" : "Delete Workout"}`}
-          description={`${
-            formMode === 0
-              ? "This action cannot be undone."
-              : "This action cannot be undone. This will permanently delete this workout and sets."
-          }`}
-          trigger={<Trash2 className="color-destructive" />}
-          onConfirm={formMode === 1 ? onDelete : clearForm}
-          onCancel={() => {}}
-        />
+        <Button variant={"ghost"} size={"icon"} onPress={onDelete}>
+          <Trash2 className="color-destructive" />
+        </Button>
       </CardHeader>
       {/* DATE */}
       <CardContent>

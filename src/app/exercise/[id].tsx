@@ -244,7 +244,7 @@ const ExerciseDetails = () => {
             className="w-full items-center justify-center"
             onPress={() =>
               router.push({
-                pathname: "../workout/[id]",
+                pathname: "../workout/create/[id]",
                 params: {
                   id: -1,
                   exerciseId: id,
