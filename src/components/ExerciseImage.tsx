@@ -33,11 +33,12 @@ const ExerciseImage = ({
         source={image_uri}
         placeholder={ImageNotFound}
         contentFit={contextFit}
+        placeholderContentFit="cover"
         autoplay={false}
         style={{
           flex: 1,
           width: "100%",
-          borderRadius: 8,
+          borderRadius: 6,
           backgroundColor: "#ffffff",
           ...imageStyle,
         }}
