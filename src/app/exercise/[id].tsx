@@ -3,14 +3,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  useWindowDimensions,
-  FlatList,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
-import { SafeAreaView, useSafeAreaFrame } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
@@ -35,24 +33,25 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTheme } from "@react-navigation/native";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-
 const ExerciseDetails = () => {
-  const router = useRouter();
-  const { colors } = useTheme();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const { width, height } = useSafeAreaFrame();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [descriptionLineCount, setDescriptionLineCount] = useState(1);
-  const [showDescription, setShowDescription] = useState(false);
+  const [exerciseStored, setExerciseStored] = useState(false);
+  const { colors } = useTheme();
+  const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
   const { id }: { id: string } = useLocalSearchParams();
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [descriptionLineCount, setDescriptionLineCount] = useState(1);
+  const [showDescription, setShowDescription] = useState(false);
   const maxLineCount = 3;
 
   const { data: exercise, loading } = useFetch(() => fetchExerciseDetail(id));
+  const { data: savedExercise } = useFetch(() =>
+    getExerciseById(drizzleDb, parseInt(id))
+  );
 
   const translation = exercise?.translations.find((x) => x.language === 2);
   const name = toUpperCase(translation?.name);
@@ -85,70 +84,74 @@ const ExerciseDetails = () => {
   };
 
   useEffect(() => {
-    async function fetchExercise() {
-      if (id !== null && id !== undefined) {
-        await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
-          if (ex !== undefined) {
-            setIsFavorite(ex.is_favorite || false);
-          }
-        });
-      }
+    if (!!savedExercise) {
+      setIsFavorite(savedExercise?.is_favorite || false);
+      setExerciseStored(true);
     }
-    fetchExercise();
-  }, [id]);
+  }, [savedExercise]);
 
   function toggleShowDescription() {
     setShowDescription((prev) => !prev);
   }
 
   async function toggleFavorite() {
-    if (exercise && loading === false) {
-      await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
-        if (ex === undefined) {
-          createExercise(drizzleDb, {
-            id: exercise.id,
-            name: translation?.name || "",
-            category: exercise.category.name,
-            image: exercise.images.length > 0 ? exercise.images[0].image : null,
-            is_favorite: true,
-          });
-        } else {
-          setFavoriteExercise(drizzleDb, ex.id, !isFavorite);
-        }
+    setIsFavorite((prev) => !prev);
+    if (savedExercise || exerciseStored) {
+      await setFavoriteExercise(drizzleDb, parseInt(id), !isFavorite);
+    } else {
+      await createExercise(drizzleDb, {
+        id: parseInt(id),
+        name,
+        category: exercise?.category.name!,
+        image: exercise?.images[0]?.image || null,
+        is_favorite: !isFavorite,
       });
-      setIsFavorite((prev) => !prev);
+      setExerciseStored(true);
     }
   }
 
   return (
-    <SafeAreaWrapper style="mt-5">
+    <View className="flex-1 bg-secondary">
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size={"large"} className="mt-10 self-center" />
         </View>
       ) : (
-        <>
+        <SafeAreaView className="flex-1 mx-4 my-4 gap-y-4">
           <Button variant={"ghost"} size={"icon"} onPress={router.back}>
             <ArrowRight size={32} className="rotate-180 color-primary" />
           </Button>
           <ScrollView
             ref={scrollViewRef}
-            className="flex-1"
+            className="flex-1 mx-4"
             showsVerticalScrollIndicator={false}
           >
             {exercise?.images !== undefined && exercise.images.length > 0 && (
-              <View className="flex justify-center items-center">
+              <View className="flex items-center">
                 <CustomCarousel
-                  width={Math.min(height * 0.5, width - 64)}
-                  height={Math.min(height * 0.5, width - 64)}
+                  width={350}
+                  height={350}
+                  loop={false}
                   data={exercise?.images.map((x) => x.image)}
+                  dotStyle={{
+                    backgroundColor: "#9ca3af",
+                    borderRadius: 50,
+                    overflow: "hidden",
+                  }}
+                  activeDotStyle={{
+                    borderRadius: 100,
+                    overflow: "hidden",
+                    backgroundColor: "#2A2E3C",
+                  }}
                   renderFunction={(item: string) => {
                     return (
-                      <View className="flex-1 m-2 justify-center items-center">
+                      <View className="flex-1 justify-center items-center">
                         <ExerciseImage
                           image_uri={item}
-                          containerClassname="w-full aspect-square"
-                          contextFit="contain"
+                          imageClassname={
+                            "aspect-square w-full rounded-md bg-white"
+                          }
+                          textClassname={""}
                         />
                       </View>
                     );
@@ -156,11 +159,8 @@ const ExerciseDetails = () => {
                 />
               </View>
             )}
-            {/* Name */}
-            <View className="flex-row justify-between items-center  my-2">
-              <Text className="flex-1 text-2xl font-bold text-left">
-                {name}
-              </Text>
+            <View className="flex-1 flex-row justify-between items-center  my-2">
+              <Text className="text-2xl font-bold text-center">{name}</Text>
               <Button
                 variant={"ghost"}
                 size={"icon"}
@@ -172,11 +172,10 @@ const ExerciseDetails = () => {
                 ) : null}
               </Button>
             </View>
-            {/* Chip */}
+
             <View className="flex-row flex-wrap items-center gap-2">
               {chipItems()}
             </View>
-            {/* Description */}
             <Text
               numberOfLines={showDescription ? undefined : maxLineCount}
               className="text-primary text-xl mt-2"
@@ -197,8 +196,7 @@ const ExerciseDetails = () => {
                 </Text>
               </TouchableOpacity>
             )}
-            {/* Muscle Groups */}
-            {muscles !== undefined && muscles.length > 0 && width < 700 ? (
+            {muscles !== undefined && muscles.length > 0 && (
               <Accordion
                 type="single"
                 collapsible
@@ -215,12 +213,22 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="items-center">
+                  <AccordionContent className="flex-1 justify-center items-center">
                     <CustomCarousel
                       width={300}
                       height={425}
                       loop={false}
                       data={allMuscles}
+                      dotStyle={{
+                        backgroundColor: "#9ca3af",
+                        borderRadius: 50,
+                        overflow: "hidden",
+                      }}
+                      activeDotStyle={{
+                        borderRadius: 100,
+                        overflow: "hidden",
+                        backgroundColor: "#2A2E3C",
+                      }}
                       renderFunction={(item: Muscles[]) => {
                         return (
                           <MuscleCard
@@ -233,32 +241,23 @@ const ExerciseDetails = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            ) : (
-              <View className="flex-row mt-4 mb-4">
-                <MuscleCard muscleList={musclesFront} isFront={true} />
-                <MuscleCard muscleList={musclesBack} isFront={false} />
-              </View>
             )}
           </ScrollView>
+
           <Button
             className="w-full items-center justify-center"
             onPress={() =>
               router.push({
                 pathname: "../workout/[id]",
-                params: {
-                  id: -1,
-                  exerciseId: id,
-                  exerciseName: name,
-                  formMode: 0,
-                },
+                params: { id: -1, exerciseId: id, exerciseName: name },
               })
             }
           >
             <Text>Start Workout</Text>
           </Button>
-        </>
+        </SafeAreaView>
       )}
-    </SafeAreaWrapper>
+    </View>
   );
 };
 

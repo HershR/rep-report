@@ -2,7 +2,6 @@ import React from "react";
 import { View } from "react-native";
 import { SvgUri } from "react-native-svg";
 import { Text } from "~/components/ui/text";
-import ExerciseImage from "./ExerciseImage";
 
 interface MuscleCardProps {
   muscleList: Muscles[] | undefined;
@@ -14,35 +13,28 @@ const MuscleCard = ({ muscleList, isFront }: MuscleCardProps) => {
     return null;
   }
   const base = isFront ? (
-    <ExerciseImage
-      image_uri={`https://wger.de/static/react/muscles/muscular_system_front.svg`}
-      containerClassname="w-[200px] h-[400px]"
-      imageStyle={{ backgroundColor: "transparent" }}
-    ></ExerciseImage>
+    <SvgUri
+      uri={`https://wger.de/static/react/muscles/muscular_system_front.svg`}
+    ></SvgUri>
   ) : (
-    <ExerciseImage
-      image_uri={
-        "https://wger.de/static/react/muscles/muscular_system_back.svg"
-      }
-      containerClassname="w-[200px] h-[400px]"
-      imageStyle={{ backgroundColor: "transparent" }}
-    ></ExerciseImage>
+    <SvgUri
+      uri={"https://wger.de/static/react/muscles/muscular_system_back.svg"}
+    ></SvgUri>
   );
-  const muscles = muscleList.map((x, index) => (
-    <ExerciseImage
-      key={x.name}
-      image_uri={`https://wger.de${
-        index == 0 ? x.image_url_main : x.image_url_secondary
-      }`}
-      containerClassname="absolute w-[200px] h-[400px]"
-      imageStyle={{ backgroundColor: "transparent" }}
-    ></ExerciseImage>
+  const child = muscleList.map((x, index) => (
+    <View key={x.name} className="absolute">
+      <SvgUri
+        uri={`https://wger.de${
+          index == 0 ? x.image_url_main : x.image_url_secondary
+        }`}
+      ></SvgUri>
+    </View>
   ));
   return (
-    <View className="flex-1 justify-center items-center">
-      <View className="relative flex-1 justify-center items-center">
+    <View className="flex relative justify-start items-center">
+      <View>
         {base}
-        {muscles}
+        {child}
       </View>
       <Text className="text-center text-lg text-wrap w-[80%]">
         {muscleList.map((x) => x.name).join(", ")}

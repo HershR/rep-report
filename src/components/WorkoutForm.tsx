@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -69,7 +69,7 @@ const FormActionAlert = ({
 };
 
 interface WorkoutWithExercise
-  extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
   exercise: Pick<Exercise, "name" | "image">;
 }
 
@@ -80,24 +80,6 @@ interface Props {
   onDelete: () => void;
 }
 
-const emptySet: WorkoutSet = {
-  id: -1,
-  workout_id: 0,
-  order: 0,
-  reps: null,
-  weight: null,
-  duration: null,
-};
-const emptyForm: Workout = {
-  id: -1,
-  date: "",
-  mode: 0,
-  unit: "lb",
-  collection_id: null,
-  exercise_id: 0,
-  notes: null,
-  sets: [emptySet],
-};
 const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -124,11 +106,17 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
     name: "sets",
     rules: { required: true, minLength: 1 },
   });
-
-  function addSet() {
-    append({ ...emptySet, order: fields.length });
-  }
-
+  const addSet = () => {
+    const emptySet: WorkoutSet = {
+      id: -1,
+      workout_id: 0,
+      order: fields.length,
+      reps: null,
+      weight: null,
+      duration: null,
+    };
+    append(emptySet);
+  };
   function formatTime(duration: string) {
     const n = duration.length;
     const format = "00:00:00";
@@ -137,7 +125,6 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
 
     return duration;
   }
-
   const validateAndSubmit = (data: Workout) => {
     for (let i = 0; i < data.sets.length; i++) {
       const set = data.sets[i];
@@ -154,11 +141,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
   };
 
   function clearForm(): void {
-    reset({ ...emptyForm, date: defaultForm.date, unit: defaultForm.unit });
+    reset(defaultForm);
   }
 
   return (
-    <Card className="flex-1 w-full md:max-w-[640px]">
+    <Card className="flex-1 w-full">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
         <FormActionAlert
@@ -287,7 +274,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
                     rules={{
                       required: true,
                       validate: (value) => {
-                        if (value != null && !isNaN(value) && value > 0) {
+                        if (value != null && !isNaN(value)) {
                           return true;
                         }
                         return false;
@@ -380,6 +367,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
             ) : null}
           </CardContent>
         ))}
+        {errors.sets?.root && (
+          <Text className="text-destructive ml-12">Please add a set</Text>
+        )}
       </ScrollView>
 
       {/* Footer */}

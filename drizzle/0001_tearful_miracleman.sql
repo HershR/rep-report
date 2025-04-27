@@ -1,1 +1,0 @@
-ALTER TABLE `exercises` ADD `favorite` integer DEFAULT false;
