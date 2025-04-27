@@ -1,6 +1,5 @@
-import { ActivityIndicator, FlatList, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
-import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
 import { useDate } from "@/src/context/DateContext";
@@ -11,7 +10,6 @@ import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
 import { desc, eq } from "drizzle-orm";
 import { workouts, exercises } from "@/src//db/schema";
-import ExerciseCard from "@/src/components/ExerciseCard";
 import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
@@ -64,7 +62,7 @@ export default function Index() {
         ></ActivityIndicator>
       ) : (
         <View className="flex-1">
-          <View className="flex mt-6 mb-6 gap-y-2">
+          <View className="flex mt-2 mb-6">
             {recentExercise ? (
               <>
                 <Text className="text-xl font-semibold mt-4">
