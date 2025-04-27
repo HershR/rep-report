@@ -133,7 +133,7 @@ const WorkoutDetails = () => {
     duration: null,
   };
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper style="mt-5">
       <Button
         variant={"ghost"}
         size={"icon"}

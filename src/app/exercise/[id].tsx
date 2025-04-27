@@ -45,7 +45,6 @@ const ExerciseDetails = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-  console.log(width, height);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
