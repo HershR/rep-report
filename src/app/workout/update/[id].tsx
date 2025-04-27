@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  View,
 } from "react-native";
 import React from "react";
 import { useSQLiteContext } from "expo-sqlite";
@@ -21,6 +22,8 @@ import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import ConfirmAlert from "@/src/components/ConfirmAlert";
+import { Trash2 } from "@/src/lib/icons/Trash2";
 
 const UpdateWorkout = () => {
   const {
@@ -87,18 +90,28 @@ const UpdateWorkout = () => {
         {loading ? (
           <ActivityIndicator></ActivityIndicator>
         ) : (
-          <WorkoutForm
-            defaultForm={{
-              date: selectedDate?.toISODate()!,
-              mode: 0,
-              notes: null,
-              exercise: { name: exerciseName, image: null },
-              sets: workout?.sets || [],
-              unit: "lb",
-            }}
-            onSubmit={saveWorkout}
-            onDelete={workoutDelete}
-          />
+          <>
+            <WorkoutForm
+              defaultForm={{
+                date: selectedDate?.toISODate()!,
+                mode: 0,
+                notes: null,
+                exercise: { name: exerciseName, image: null },
+                sets: workout?.sets || [],
+                unit: "lb",
+              }}
+              onSubmit={saveWorkout}
+              action={() => (
+                <ConfirmAlert
+                  title={"Delete Workout"}
+                  description={"This action can not be undone"}
+                  trigger={<Trash2 className="color-destructive" />}
+                  onConfirm={workoutDelete}
+                  onCancel={() => {}}
+                />
+              )}
+            />
+          </>
         )}
       </KeyboardAvoidingView>
     </SafeAreaWrapper>
