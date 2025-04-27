@@ -1,10 +1,8 @@
-import { View, FlatList, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { searchExercise } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
-import { SafeAreaView } from "react-native-safe-area-context";
-import SearchExerciseCard from "@/src/components/SearchExerciseCard";
 import { wgerCategories } from "@/src/constants/excerciseCategory";
 
 import {
@@ -16,16 +14,19 @@ import {
   SelectValue,
 } from "@/src/components/ui/select";
 import { Text } from "@/src/components/ui/text";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import ExerciseList from "@/src/components/lists/ExerciseList";
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
   const {
-    data: exercies,
+    data: exercieSuggestions,
     loading: loading,
     error: error,
     refetch: loadExercise,
     reset,
   } = useFetch(() => searchExercise({ query: searchQuery }), false);
+
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (searchQuery.trim()) {
@@ -43,87 +44,80 @@ const Search = () => {
     });
     return items;
   };
+
+  function suggestionToExercise(
+    suggestions: ExerciseSuggestion[]
+  ): Omit<Exercise, "is_favorite">[] {
+    const exercies = suggestions.map((x) => {
+      return {
+        ...x.data,
+        id: x.data.base_id,
+        image: "https://wger.de/" + x.data.image,
+      };
+    });
+
+    if (!!category) {
+      return exercies.filter((x) => x.category === category);
+    }
+
+    return exercies;
+  }
+
   return (
-    <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10">
-        <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
-          <View className="flex-1">
-            <SearchBar
-              placeholder="Search exercise..."
-              value={searchQuery}
-              onChangeText={(text: string) => {
-                setSearchQuery(text);
-              }}
-              onPress={() => {}}
-            />
-          </View>
-          <Select
-            className="w-[35%]"
-            defaultValue={{ value: category, label: "None" }}
-            onValueChange={(item) => setCategory(item!.value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue
-                className="text-foreground text-lg"
-                placeholder="Select Muscle Group"
-              />
-            </SelectTrigger>
-            <SelectContent align="center">
-              <SelectGroup>
-                <SelectItem key={"none"} value={""} label={"None"}></SelectItem>
-                {selectItems()}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </View>
-        <>
-          {!loading &&
-          !error &&
-          searchQuery.trim() &&
-          exercies &&
-          exercies?.length > 0 ? (
-            <Text className="text-xl text-muted-foreground font-bold">
-              Search Results for <Text className=" text-xl">{searchQuery}</Text>
-            </Text>
-          ) : null}
-        </>
-        {loading ? (
-          <ActivityIndicator
-            size={"large"}
-            color={"#2A2E3C"}
-            className="my-3"
-          />
-        ) : error ? (
-          <Text className="text-red-500 px-5 my-3">Error: {error.message}</Text>
-        ) : (
-          <FlatList
-            data={
-              !!category
-                ? exercies?.filter((x) => x.data.category === category)
-                : exercies
-            }
-            renderItem={({ item }) => <SearchExerciseCard {...item} />}
-            keyExtractor={(item) => item.data.base_id.toString()}
-            className=""
-            numColumns={2}
-            columnWrapperStyle={{
-              justifyContent: "space-between",
-              marginVertical: 16,
+    <SafeAreaWrapper>
+      <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
+        <View className="flex-1">
+          <SearchBar
+            placeholder="Search exercise..."
+            value={searchQuery}
+            onChangeText={(text: string) => {
+              setSearchQuery(text);
             }}
-            contentContainerStyle={{ paddingBottom: 100 }}
-            ListEmptyComponent={
-              !loading && !error ? (
-                <View className="mt-10 px-5">
-                  <Text className="text-center text-primary">
-                    {searchQuery.trim() ? "No Exercise Found" : "Search"}
-                  </Text>
-                </View>
-              ) : null
-            }
-          ></FlatList>
-        )}
-      </SafeAreaView>
-    </View>
+            onPress={() => {}}
+          />
+        </View>
+        <Select
+          className="w-[35%] md:w-[25%]"
+          defaultValue={{ value: category, label: "None" }}
+          onValueChange={(item) => setCategory(item!.value)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue
+              className="text-foreground text-lg"
+              placeholder="Select Muscle Group"
+            />
+          </SelectTrigger>
+          <SelectContent align="center">
+            <SelectGroup>
+              <SelectItem key={"none"} value={""} label={"None"}></SelectItem>
+              {selectItems()}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </View>
+      <>
+        {!loading &&
+        !error &&
+        searchQuery.trim() &&
+        exercieSuggestions &&
+        exercieSuggestions?.length > 0 ? (
+          <Text className="text-xl text-muted-foreground font-bold">
+            Search Results for <Text className=" text-xl">{searchQuery}</Text>
+          </Text>
+        ) : null}
+      </>
+      {loading ? (
+        <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
+      ) : error ? (
+        <Text className="text-destructive px-5 my-3">
+          Error: {error.message}
+        </Text>
+      ) : (
+        <ExerciseList
+          exercises={suggestionToExercise(exercieSuggestions || [])}
+        />
+      )}
+    </SafeAreaWrapper>
   );
 };
 

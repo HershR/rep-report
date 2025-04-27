@@ -38,8 +38,4 @@ yarn-error.*
 app-example
 nativewind-env.d.ts
 
-drizzle/.migrations
-*.sqlite
-/drizzle
-
 .vscode/

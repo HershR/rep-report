@@ -4,7 +4,7 @@ import {
   Platform,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -25,6 +25,8 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import WorkoutForm from "@/src/components/WorkoutForm";
 import Toast from "react-native-toast-message";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+
 enum FormMode {
   Create = 0,
   Update = 1,
@@ -35,22 +37,22 @@ const WorkoutDetails = () => {
     id,
     exerciseId,
     exerciseName,
+    formMode,
   }: {
     id: string;
     exerciseId: string;
     exerciseName: string;
-    exerciseURI: string;
-  } = useLocalSearchParams(); //workout id if updating
-  const formMode: FormMode =
-    parseInt(id) < 0 ? FormMode.Create : FormMode.Update;
-  const db = useSQLiteContext();
-  db.execSync("PRAGMA foreign_keys = ON");
-  const drizzleDb = drizzle(db, { schema });
+    formMode: string;
+  } = useLocalSearchParams();
 
   const { selectedDate } = useDate();
+  const mode = parseInt(formMode) === 0 ? FormMode.Create : FormMode.Update;
 
-  const { data: originalWorkout, loading } = useFetch(() =>
-    formMode === FormMode.Update
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+  db.execSync("PRAGMA foreign_keys = ON");
+  const { data: workout, loading } = useFetch(() =>
+    mode === FormMode.Update
       ? getWorkoutById(drizzleDb, parseInt(id))
       : getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
@@ -61,6 +63,7 @@ const WorkoutDetails = () => {
       visibilityTime: 2000,
     });
   }
+
   function saveFailMsg(error: Error) {
     console.log(error);
     Toast.show({
@@ -69,8 +72,9 @@ const WorkoutDetails = () => {
       text2: "Failed to Save Workout, reason: " + error,
     });
   }
+
   async function saveWorkout(workoutForm: Workout) {
-    if (formMode === FormMode.Create) {
+    if (mode === FormMode.Create) {
       try {
         workoutForm.exercise_id = parseInt(exerciseId);
         const workoutID = await createWorkoutWithExercise(
@@ -106,11 +110,7 @@ const WorkoutDetails = () => {
       router.push("/");
     } else {
       try {
-        await updateWorkoutWithSets(
-          drizzleDb,
-          originalWorkout!.id,
-          workoutForm
-        );
+        await updateWorkoutWithSets(drizzleDb, workout!.id, workoutForm);
         saveSuccessMsg();
       } catch (error: any) {
         saveFailMsg(error);
@@ -119,8 +119,8 @@ const WorkoutDetails = () => {
   }
 
   async function workoutDelete() {
-    if (formMode === FormMode.Update && !!originalWorkout) {
-      await deleteWorkout(drizzleDb, originalWorkout.id);
+    if (mode === FormMode.Update && !!workout) {
+      await deleteWorkout(drizzleDb, workout.id);
       router.back();
     }
   }
@@ -133,44 +133,40 @@ const WorkoutDetails = () => {
     duration: null,
   };
   return (
-    <View className="flex-1 bg-secondary">
-      <SafeAreaView className="flex-1 mx-8 my-10">
-        <Button
-          variant={"ghost"}
-          size={"icon"}
-          onPress={router.back}
-          className="z-50"
-        >
-          <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-        </Button>
-        <KeyboardAvoidingView
-          className="relative flex-1 justify-start items-center"
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          {formMode === FormMode.Update && loading ? (
-            <ActivityIndicator></ActivityIndicator>
-          ) : (
-            <WorkoutForm
-              defaultForm={
-                formMode === FormMode.Update && !!originalWorkout
-                  ? originalWorkout
-                  : {
-                      date:
-                        selectedDate?.toISODate() ?? new Date().toISOString(),
-                      mode: 0,
-                      notes: null,
-                      exercise: { name: exerciseName, image: null },
-                      sets: [emptySet, emptySet],
-                    }
+    <SafeAreaWrapper style="mt-5">
+      <Button
+        variant={"ghost"}
+        size={"icon"}
+        onPress={router.back}
+        className="z-50"
+      >
+        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
+      </Button>
+      <KeyboardAvoidingView
+        className="relative flex-1 justify-start items-center"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {loading ? (
+          <ActivityIndicator></ActivityIndicator>
+        ) : (
+          <WorkoutForm
+            defaultForm={
+              workout || {
+                date: new Date().toISOString().slice(0, 10),
+                mode: 0,
+                notes: null,
+                exercise: { name: exerciseName, image: null },
+                sets: [emptySet, emptySet],
+                unit: "lb",
               }
-              onSubmit={saveWorkout}
-              onDelete={workoutDelete}
-              formMode={formMode}
-            />
-          )}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+            }
+            onSubmit={saveWorkout}
+            onDelete={workoutDelete}
+            formMode={mode}
+          />
+        )}
+      </KeyboardAvoidingView>
+    </SafeAreaWrapper>
   );
 };
 
