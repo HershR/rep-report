@@ -158,7 +158,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
   }
 
   return (
-    <Card className="flex-1 w-full">
+    <Card className="flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
         <FormActionAlert
