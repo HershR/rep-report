@@ -33,12 +33,12 @@ const CustomAlert = ({
       <AlertDialogTrigger asChild>
         <Button variant="ghost">{trigger}</Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="gap-y-2 w-2/3 max-w-[500px]">
+      <AlertDialogContent className="gap-y-2 w-2/3 max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="justify-end gap-x-2">
+        <AlertDialogFooter className="flex-row justify-end gap-x-2 mt-8">
           <AlertDialogCancel onPress={onCancel}>
             <Text>Cancel</Text>
           </AlertDialogCancel>
