@@ -6,17 +6,22 @@ export const WGER_CONFIG = {
 };
 
 export const fetchExcercises = async ({
-  offset,
-  category,
-  equipment,
+  category = "",
+  equipment = "",
+  offset = 0,
+  limit = 10,
 }: {
-  offset: string;
   category: string;
   equipment: string;
+  offset: number;
+  limit: number;
 }) => {
-  const endpoint = `${WGER_CONFIG.BASE_URL}/api/v2/exerciseinfo?${
-    category ? `category=${category}&` : ""
-  }${equipment ? `equipment=${equipment}` : ""}&offset=${offset || 0}`;
+  const endpoint =
+    `${WGER_CONFIG.BASE_URL}/api/v2/exerciseinfo/?` + category
+      ? `category=${category}&`
+      : "" + equipment
+      ? `equipment=${equipment}&`
+      : "" + `&offset=${offset}&limit=${limit}`;
   const response = await fetch(endpoint, {
     method: "GET",
     headers: WGER_CONFIG.header,

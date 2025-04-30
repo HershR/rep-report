@@ -39,7 +39,7 @@ const Saved = () => {
   return (
     <SafeAreaWrapper>
       <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-y-4">
-        <TabsList className="flex-row w-full">
+        <TabsList className="flex-row w-full max-w-[400px] self-center">
           <TabsTrigger value="favorites" className="flex-1">
             <Text>Favorites</Text>
           </TabsTrigger>

@@ -1,21 +1,7 @@
-import { View, ActivityIndicator } from "react-native";
-import React, { useEffect, useState } from "react";
-import useFetch from "@/src/services/useFetch";
-import { searchExercise } from "@/src/services/api";
-import SearchBar from "@/src/components/SearchBar";
-import { wgerCategories } from "@/src/constants/excerciseCategory";
+import React from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/src/components/ui/select";
 import { Text } from "@/src/components/ui/text";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import ExerciseList from "@/src/components/lists/ExerciseList";
 import {
   Tabs,
   TabsContent,
@@ -23,17 +9,14 @@ import {
   TabsTrigger,
 } from "@/src/components/ui/tabs";
 import ExerciseNameSearch from "@/src/components/search/ExerciseNameSearch";
+import AllExerciseSearch from "@/src/components/search/AllExerciseSearch";
 const Search = () => {
   const [value, setValue] = React.useState("search");
 
   return (
     <SafeAreaWrapper>
-      <Tabs
-        value={value}
-        onValueChange={setValue}
-        className="w-full mx-auto flex-col gap-1.5 items-center"
-      >
-        <TabsList className="flex-row w-full max-w-[400px] ">
+      <Tabs value={value} onValueChange={setValue} className="flex-1 mb-10">
+        <TabsList className="flex-row w-full max-w-[400px] self-center">
           <TabsTrigger value="search" className="flex-1">
             <Text>Search</Text>
           </TabsTrigger>
@@ -41,10 +24,25 @@ const Search = () => {
             <Text>Advanced</Text>
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="search">
+        <TabsContent
+          value="search"
+          forceMount={true}
+          style={{
+            display: value === "search" ? undefined : "none",
+            flex: value === "search" ? 1 : 0,
+          }}
+        >
           <ExerciseNameSearch />
         </TabsContent>
-        <TabsContent value="advanced"></TabsContent>
+        <TabsContent
+          value="advanced"
+          style={{
+            display: value === "advanced" ? undefined : "none",
+            flex: value === "advanced" ? 1 : 0,
+          }}
+        >
+          <AllExerciseSearch />
+        </TabsContent>
       </Tabs>
     </SafeAreaWrapper>
   );
