@@ -18,7 +18,7 @@ const ExerciseNameSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
   const {
-    data: exercieSuggestions,
+    data: exerciseSuggestions,
     loading: loading,
     error: error,
     refetch: loadExercise,
@@ -96,8 +96,8 @@ const ExerciseNameSearch = () => {
         {!loading &&
         !error &&
         searchQuery.trim() &&
-        exercieSuggestions &&
-        exercieSuggestions?.length > 0 ? (
+        exerciseSuggestions &&
+        exerciseSuggestions?.length > 0 ? (
           <Text className="text-xl text-muted-foreground font-bold">
             Search Results for <Text className=" text-xl">{searchQuery}</Text>
           </Text>
@@ -111,7 +111,7 @@ const ExerciseNameSearch = () => {
         </Text>
       ) : (
         <ExerciseList
-          exercises={suggestionToExercise(exercieSuggestions || [])}
+          exercises={suggestionToExercise(exerciseSuggestions || [])}
         />
       )}
     </>

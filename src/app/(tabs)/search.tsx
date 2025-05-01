@@ -36,6 +36,7 @@ const Search = () => {
         </TabsContent>
         <TabsContent
           value="advanced"
+          forceMount={true}
           style={{
             display: value === "advanced" ? undefined : "none",
             flex: value === "advanced" ? 1 : 0,
