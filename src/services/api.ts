@@ -16,7 +16,6 @@ export const fetchExcercises = async (
     `offset=${offset}&limit=${limit}` +
     (category ? `category=${category}&` : "") +
     (equipment ? `equipment=${equipment}&` : "");
-  console.log(endpoint);
   const response = await fetch(endpoint, {
     method: "GET",
     headers: WGER_CONFIG.header,
