@@ -9,7 +9,7 @@ import { wgerEquipment } from "@/src/constants/excerciseEquipment";
 import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
-import MultiSelectDropdown from "../MultiSelectDropdown";
+import SectionedDropdown from "../SectionedDropdown";
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
 });
@@ -65,55 +65,62 @@ const AllExerciseSearch = () => {
         </View>
 
         <View className="w-[35%] md:w-[25%]">
-          <MultiSelectDropdown
-            placeholder="Select Category"
-            options={categories}
-            selectedItems={selectedCategory ? [selectedCategory] : []}
-            onSelect={(value) => setCategory(value)}
+          <SectionedDropdown
+            sections={[
+              {
+                name: "Categories",
+                type: "single",
+                items: categories,
+                onSelect: (value) => setCategory(value),
+              },
+              {
+                name: "Equipment",
+                type: "single",
+                items: equipment,
+                onSelect: (value) => {
+                  if (value === null) {
+                    setSelectedEquipment([]);
+                    return;
+                  }
+                  const index = selectedEquipment?.indexOf(value);
+                  if (index < 0) {
+                    setSelectedEquipment([...selectedEquipment, value]);
+                  } else {
+                    setSelectedEquipment((prev) =>
+                      prev.filter((x) => x !== value)
+                    );
+                  }
+                },
+              },
+              {
+                name: "Muscle Groups",
+                type: "single",
+                items: muscles,
+                onSelect: (value) => {
+                  if (value === null) {
+                    setSelectedMucles([]);
+                    return;
+                  }
+                  const index = selectedMucles?.indexOf(value);
+                  if (index < 0) {
+                    setSelectedMucles([...selectedMucles, value]);
+                  } else {
+                    setSelectedMucles((prev) =>
+                      prev.filter((x) => x !== value)
+                    );
+                  }
+                },
+              },
+            ]}
+            selectedItems={[
+              selectedCategory ? [selectedCategory] : [],
+              selectedEquipment,
+              selectedMucles,
+            ]}
           />
         </View>
       </View>
-      <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
-        <View className="flex-1">
-          <MultiSelectDropdown
-            placeholder="Select Equipment"
-            options={equipment}
-            selectedItems={selectedEquipment}
-            onSelect={(value) => {
-              if (value === null) {
-                setSelectedEquipment([]);
-                return;
-              }
-              const index = selectedEquipment?.indexOf(value);
-              if (index < 0) {
-                setSelectedEquipment([...selectedEquipment, value]);
-              } else {
-                setSelectedEquipment((prev) => prev.filter((x) => x !== value));
-              }
-            }}
-          />
-        </View>
-        <View className="flex-1">
-          <MultiSelectDropdown
-            placeholder="Select Muscles"
-            options={muscles}
-            selectedItems={selectedMucles}
-            onSelect={(value) => {
-              if (value === null) {
-                setSelectedMucles([]);
-                return;
-              }
-              const index = selectedMucles?.indexOf(value);
-              if (index < 0) {
-                setSelectedMucles([...selectedMucles, value]);
-              } else {
-                setSelectedMucles((prev) => prev.filter((x) => x !== value));
-              }
-            }}
-          />
-        </View>
-      </View>
-      <View className="flex-row">
+      <View className="flex-row flex-wrap gap-2">
         {selectedCategory !== null ? (
           <FilterChip
             value={selectedCategory}
@@ -124,6 +131,24 @@ const AllExerciseSearch = () => {
             onPress={() => setCategory(null)}
           />
         ) : null}
+        {selectedEquipment.map((value) => (
+          <FilterChip
+            value={value}
+            label={equipment.find((y) => y.value == value)?.label!}
+            onPress={() =>
+              setSelectedEquipment((prev) => prev.filter((x) => x !== value))
+            }
+          />
+        ))}
+        {selectedMucles.map((value) => (
+          <FilterChip
+            value={value}
+            label={muscles.find((y) => y.value == value)?.label!}
+            onPress={() =>
+              setSelectedMucles((prev) => prev.filter((x) => x !== value))
+            }
+          />
+        ))}
       </View>
       {!!loading &&
         exerciseInfo &&
