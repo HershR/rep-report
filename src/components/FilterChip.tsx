@@ -13,12 +13,12 @@ interface Props {
 const FilterChip = ({ value, label, onPress }: Props) => {
   return (
     <Badge
-      className="flex-row bg-transparent border-2 border-primary justify-center items-center py-2 px-4 gap-x-2"
+      className="flex-row bg-transparent border-2 border-primary/80 justify-center items-center py-2 px-4 gap-x-2"
       variant={"default"}
       key={value}
     >
-      <Text className="text-base color-primary">{label}</Text>
-      <CircleX className="color-primary" onPress={() => onPress()} />
+      <Text className="text-base color-primary/80">{label}</Text>
+      <CircleX className="color-primary/80" onPress={() => onPress()} />
     </Badge>
   );
 };
