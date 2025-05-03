@@ -1,7 +1,14 @@
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Pressable,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { ChevronDown } from "../lib/icons/ChevronDown";
-import { Check } from "lucide-react-native";
+import { Check, Search } from "lucide-react-native";
 import {
   Accordion,
   AccordionContent,
@@ -10,7 +17,9 @@ import {
 } from "./ui/accordion";
 import { Button } from "./ui/button";
 import { Text } from "./ui/text";
-
+import { Input } from "./ui/input";
+import { SelectSeparator } from "./ui/select";
+import { ListFilter } from "../lib/icons/ListFilter";
 interface Item {
   value: string;
   label: string;
@@ -21,6 +30,7 @@ interface DropdownProps {
   options: Item[];
   selectedItems: string[];
   placeholder?: string;
+  searchQuery?: string;
   onSelect: (value: string | null) => void;
 }
 
@@ -29,12 +39,18 @@ const AccordianDropdown = ({
   options,
   selectedItems,
   placeholder = "Select items",
+  searchQuery,
   onSelect,
 }: DropdownProps) => {
+  if (searchQuery) {
+    options = options.filter((x) =>
+      x.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
   return (
-    <AccordionItem value={id}>
+    <AccordionItem value={id} className="flex items-start justify-between">
       <AccordionTrigger>
-        <Text>{placeholder}</Text>
+        <Text className="ml-2">{placeholder}</Text>
       </AccordionTrigger>
       <AccordionContent className="items-start w-full">
         <TouchableOpacity
@@ -48,18 +64,18 @@ const AccordianDropdown = ({
         {options.map((item) => (
           <TouchableOpacity
             key={item.label}
-            className={`p-2 flex-row justify-between ${
-              selectedItems.includes(item.value) ? "bg-gray-300" : ""
-            }`}
+            className={"p-2 w-full flex-row justify-start items-center"}
             onPress={() => onSelect(item.value)}
           >
             <Text>{item.label}</Text>
             {selectedItems.includes(item.value) && (
-              <Check
-                size={16}
-                strokeWidth={3}
-                className="text-popover-foreground"
-              />
+              <View className="justify-center items-center ml-2">
+                <Check
+                  size={16}
+                  strokeWidth={3}
+                  className="text-popover-foreground"
+                />
+              </View>
             )}
           </TouchableOpacity>
         ))}
@@ -84,6 +100,7 @@ export default function SectionedDropdown({
   selectedItems,
 }: SelectionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   return (
     <View className="flex relative">
       <TouchableOpacity
@@ -91,31 +108,56 @@ export default function SectionedDropdown({
         onPress={() => setIsOpen(!isOpen)}
       >
         <Text numberOfLines={1}>Filters</Text>
-        <ChevronDown
-          size={16}
-          aria-hidden={true}
-          className="text-foreground opacity-50 ml-1"
-        />
+        <ListFilter className="color-primary ml-2" size={18} />
       </TouchableOpacity>
-      {isOpen && (
-        <View className="absolute top-10 right-0 native:top-12 z-50 min-w-60 rounded-md border border-border bg-popover shadow-md shadow-foreground/10 py-2 px-1">
-          <Accordion type="multiple" collapsible defaultValue={[]}>
-            {sections.map((item, index) => (
-              <AccordianDropdown
-                key={`item-${index}`}
-                id={`item-${index}`}
-                placeholder={item.name}
-                options={item.items}
-                selectedItems={selectedItems[index]}
-                onSelect={item.onSelect}
-              />
-            ))}
-            <Button>
-              <Text>Confirm</Text>
-            </Button>
-          </Accordion>
+      <Modal
+        animationType="slide"
+        visible={isOpen}
+        transparent={true}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <View className="flex-1 bg-gray-500/30">
+          <View className="flex-1 my-4 mx-6 rounded-md bg-background">
+            <>
+              <View className="flex-row items-center mx-2">
+                <Input
+                  placeholder={"Search for Filter"}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  className="flex-1 pl-12 border-none border-0"
+                ></Input>
+                <Search className="color-primary absolute left-0 ml-2"></Search>
+              </View>
+              <SelectSeparator className="mx-2" />
+              <ScrollView className="flex-1 px-2 pb-6">
+                <Accordion
+                  type="multiple"
+                  collapsible
+                  defaultValue={[sections[0].name]}
+                >
+                  {sections.map((item, index) => (
+                    <AccordianDropdown
+                      key={item.name}
+                      id={item.name}
+                      placeholder={item.name}
+                      options={item.items}
+                      selectedItems={selectedItems[index]}
+                      onSelect={item.onSelect}
+                      searchQuery={searchQuery}
+                    />
+                  ))}
+                </Accordion>
+              </ScrollView>
+              <Button
+                className="rounded-t-none"
+                onPress={() => setIsOpen(false)}
+              >
+                <Text>Close</Text>
+              </Button>
+            </>
+          </View>
         </View>
-      )}
+      </Modal>
     </View>
   );
 }

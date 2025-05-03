@@ -10,6 +10,7 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown from "../SectionedDropdown";
+
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
 });
@@ -24,7 +25,7 @@ const muscles = wgerMuscles.map((x) => {
 
 const AllExerciseSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
@@ -64,61 +65,57 @@ const AllExerciseSearch = () => {
           />
         </View>
 
-        <View className="w-[35%] md:w-[25%]">
-          <SectionedDropdown
-            sections={[
-              {
-                name: "Categories",
-                type: "single",
-                items: categories,
-                onSelect: (value) => setCategory(value),
+        <SectionedDropdown
+          sections={[
+            {
+              name: "Categories",
+              type: "single",
+              items: categories,
+              onSelect: (value) => setSelectedCategory(value),
+            },
+            {
+              name: "Equipment",
+              type: "single",
+              items: equipment,
+              onSelect: (value) => {
+                if (value === null) {
+                  setSelectedEquipment([]);
+                  return;
+                }
+                const index = selectedEquipment?.indexOf(value);
+                if (index < 0) {
+                  setSelectedEquipment([...selectedEquipment, value]);
+                } else {
+                  setSelectedEquipment((prev) =>
+                    prev.filter((x) => x !== value)
+                  );
+                }
               },
-              {
-                name: "Equipment",
-                type: "single",
-                items: equipment,
-                onSelect: (value) => {
-                  if (value === null) {
-                    setSelectedEquipment([]);
-                    return;
-                  }
-                  const index = selectedEquipment?.indexOf(value);
-                  if (index < 0) {
-                    setSelectedEquipment([...selectedEquipment, value]);
-                  } else {
-                    setSelectedEquipment((prev) =>
-                      prev.filter((x) => x !== value)
-                    );
-                  }
-                },
+            },
+            {
+              name: "Muscle Groups",
+              type: "single",
+              items: muscles,
+              onSelect: (value) => {
+                if (value === null) {
+                  setSelectedMucles([]);
+                  return;
+                }
+                const index = selectedMucles?.indexOf(value);
+                if (index < 0) {
+                  setSelectedMucles([...selectedMucles, value]);
+                } else {
+                  setSelectedMucles((prev) => prev.filter((x) => x !== value));
+                }
               },
-              {
-                name: "Muscle Groups",
-                type: "single",
-                items: muscles,
-                onSelect: (value) => {
-                  if (value === null) {
-                    setSelectedMucles([]);
-                    return;
-                  }
-                  const index = selectedMucles?.indexOf(value);
-                  if (index < 0) {
-                    setSelectedMucles([...selectedMucles, value]);
-                  } else {
-                    setSelectedMucles((prev) =>
-                      prev.filter((x) => x !== value)
-                    );
-                  }
-                },
-              },
-            ]}
-            selectedItems={[
-              selectedCategory ? [selectedCategory] : [],
-              selectedEquipment,
-              selectedMucles,
-            ]}
-          />
-        </View>
+            },
+          ]}
+          selectedItems={[
+            selectedCategory ? [selectedCategory] : [],
+            selectedEquipment,
+            selectedMucles,
+          ]}
+        />
       </View>
       <View className="flex-row flex-wrap gap-2">
         {selectedCategory !== null ? (
@@ -128,13 +125,14 @@ const AllExerciseSearch = () => {
               categories.find((x) => x.value === selectedCategory.toString())
                 ?.label!
             }
-            onPress={() => setCategory(null)}
+            onPress={() => setSelectedCategory(null)}
           />
         ) : null}
         {selectedEquipment.map((value) => (
           <FilterChip
+            key={value}
             value={value}
-            label={equipment.find((y) => y.value == value)?.label!}
+            label={equipment.find((y) => y.value === value.toString())?.label!}
             onPress={() =>
               setSelectedEquipment((prev) => prev.filter((x) => x !== value))
             }
@@ -142,8 +140,9 @@ const AllExerciseSearch = () => {
         ))}
         {selectedMucles.map((value) => (
           <FilterChip
+            key={value}
             value={value}
-            label={muscles.find((y) => y.value == value)?.label!}
+            label={muscles.find((y) => y.value === value.toString())?.label!}
             onPress={() =>
               setSelectedMucles((prev) => prev.filter((x) => x !== value))
             }
