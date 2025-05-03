@@ -93,11 +93,13 @@ interface SectionItem {
 interface SelectionDropdownProps {
   sections: SectionItem[];
   selectedItems: string[][];
+  onClose?: () => void;
 }
 
 export default function SectionedDropdown({
   sections,
   selectedItems,
+  onClose,
 }: SelectionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,7 +125,7 @@ export default function SectionedDropdown({
                 <Input
                   placeholder={"Search for Filter"}
                   value={searchQuery}
-                  onChangeText={setSearchQuery}
+                  onChangeText={(value) => setSearchQuery(value.trim())}
                   className="flex-1 pl-12 border-none border-0"
                 ></Input>
                 <Search className="color-primary absolute left-0 ml-2"></Search>
@@ -150,7 +152,10 @@ export default function SectionedDropdown({
               </ScrollView>
               <Button
                 className="rounded-t-none"
-                onPress={() => setIsOpen(false)}
+                onPress={() => {
+                  setIsOpen(false);
+                  onClose?.();
+                }}
               >
                 <Text>Close</Text>
               </Button>

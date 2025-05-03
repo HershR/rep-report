@@ -6,9 +6,16 @@ import { formatList } from "@/src/utils/listFormatter";
 interface Props {
   exercises: Omit<Exercise, "is_favorite">[] | null;
   emptyListComp?: any;
+  footerComp?: any;
+  onEndReach?: () => void;
 }
 
-const ExerciseList = ({ exercises, emptyListComp }: Props) => {
+const ExerciseList = ({
+  exercises,
+  emptyListComp,
+  footerComp,
+  onEndReach,
+}: Props) => {
   const { width, height } = useSafeAreaFrame();
   const numColumns = width < 600 ? 2 : width < 1000 ? 3 : 4;
 
@@ -22,6 +29,9 @@ const ExerciseList = ({ exercises, emptyListComp }: Props) => {
       columnWrapperClassName="justify-start gap-x-4 my-2"
       contentContainerStyle={{ paddingBottom: 100 }}
       ListEmptyComponent={emptyListComp}
+      onEndReachedThreshold={0.2}
+      onEndReached={onEndReach}
+      ListFooterComponent={footerComp}
       renderItem={({ item }) => {
         if (item.empty) {
           return <View className="flex-1"></View>;

@@ -22,7 +22,7 @@ const SearchBar = ({
         onPress={onPress}
         placeholder={placeholder}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={(value) => onChangeText?.(value.trim())}
         className="flex-1 pl-12"
       ></Input>
       <Search className="color-primary absolute left-0 ml-3"></Search>

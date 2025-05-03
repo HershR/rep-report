@@ -1,5 +1,5 @@
 import { View, ActivityIndicator } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
@@ -10,6 +10,7 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown from "../SectionedDropdown";
+import { Button } from "../ui/button";
 
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
@@ -20,7 +21,10 @@ const equipment = Object.entries(wgerEquipment).map((x) => {
 });
 
 const muscles = wgerMuscles.map((x) => {
-  return { value: x.id.toString(), label: x.name };
+  return {
+    value: x.id.toString(),
+    label: x.name_en ? `${x.name_en}(${x.name})` : x.name,
+  };
 });
 
 const AllExerciseSearch = () => {
@@ -29,13 +33,35 @@ const AllExerciseSearch = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
+  const fetchAmount = 20;
   const {
     data: exerciseInfo,
     loading,
     error,
     refetch: loadExercise,
     reset,
-  } = useFetch(() => fetchExcercises(), false);
+  } = useFetch(
+    () =>
+      fetchExcercises({
+        category: selectedCategory || "",
+        equipment: selectedEquipment,
+        muscles: selectedMucles,
+        offset: page,
+        limit: fetchAmount,
+      }),
+    false
+  );
+
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      await loadExercise();
+      // if (searchQuery.trim()) {
+      // } else {
+      //   reset();
+      // }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [selectedCategory, selectedEquipment, selectedMucles, page]);
 
   function infoToExercise(
     info: ExerciseInfo[]
@@ -51,6 +77,7 @@ const AllExerciseSearch = () => {
 
     return exercies;
   }
+
   return (
     <>
       <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
@@ -138,31 +165,80 @@ const AllExerciseSearch = () => {
             }
           />
         ))}
-        {selectedMucles.map((value) => (
+        {selectedMucles.map((value) => {
+          const muscle = wgerMuscles.find(
+            (y) => y.id.toString() === value.toString()
+          );
+
+          return (
+            <FilterChip
+              key={value}
+              value={value}
+              label={muscle?.name!}
+              onPress={() =>
+                setSelectedMucles((prev) => prev.filter((x) => x !== value))
+              }
+            />
+          );
+        })}
+        {selectedCategory ||
+        selectedEquipment.length > 0 ||
+        selectedMucles.length > 0 ? (
           <FilterChip
-            key={value}
-            value={value}
-            label={muscles.find((y) => y.value === value.toString())?.label!}
-            onPress={() =>
-              setSelectedMucles((prev) => prev.filter((x) => x !== value))
-            }
+            value={"-1"}
+            label={"Clear All"}
+            onPress={function (): void {
+              setSelectedCategory(null);
+              setSelectedEquipment([]);
+              setSelectedMucles([]);
+            }}
           />
-        ))}
+        ) : null}
       </View>
-      {!!loading &&
-        exerciseInfo &&
-        // <ExerciseList exercises={infoToExercise(exerciseInfo) || []} />
-        infoToExercise(exerciseInfo.results).map((x) => (
-          <Text key={x.id}>{x.name}</Text>
-        ))}
-      {loading ? (
-        <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
-      ) : error ? (
+      {error ? (
         <Text className="text-destructive px-5 my-3">
           Error: {error.message}
         </Text>
       ) : (
-        <ExerciseList exercises={infoToExercise(exerciseInfo?.results || [])} />
+        <>
+          {/* <View className="flex-row">{paginationChips()}</View> */}
+          <ExerciseList
+            exercises={infoToExercise(exerciseInfo?.results || []).filter(
+              (x) => {
+                if (searchQuery) {
+                  return x.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLocaleLowerCase());
+                } else {
+                  return true;
+                }
+              }
+            )}
+            footerComp={
+              <View>
+                {loading && (
+                  <ActivityIndicator
+                    size={"large"}
+                    color={"#2A2E3C"}
+                    className="my-3"
+                  />
+                )}
+              </View>
+            }
+            onEndReach={() => {
+              const maxPages = Math.ceil(
+                exerciseInfo?.count || 1 / fetchAmount
+              );
+              if (
+                !loading &&
+                page < maxPages - 1 &&
+                exerciseInfo?.results.length == fetchAmount
+              ) {
+                setPage((prev) => prev + 1);
+              }
+            }}
+          />
+        </>
       )}
     </>
   );
