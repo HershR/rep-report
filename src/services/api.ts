@@ -12,9 +12,9 @@ export const fetchExcercises = async ({
   offset = 0,
   limit = 20,
 }: {
-  category: string;
-  equipment: string[];
-  muscles: string[];
+  category?: string;
+  equipment?: string[];
+  muscles?: string[];
   offset: number;
   limit: number;
 }): Promise<{ results: ExerciseInfo[]; count: number }> => {

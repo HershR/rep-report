@@ -12,6 +12,7 @@ import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
 import { Button } from "../ui/button";
 import PaginationButtons from "../PaginationButtons";
+import { date } from "drizzle-orm/mysql-core";
 
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
@@ -29,56 +30,63 @@ const muscles = wgerMuscles.map((x) => {
 });
 
 const AllExerciseSearch = () => {
-  const [data, setData] = useState<{ [key: number]: ExerciseInfo[] }>({});
+  const [fileredData, setFilteredData] = useState<ExerciseInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
-  const fetchAmount = 20;
-
+  const fetchAmount = 999;
+  const pageAmount = 20;
   const {
     data: exerciseInfo,
-    loading,
+    loading: exerciseLoading,
     error,
-    refetch: loadExercise,
-    reset,
   } = useFetch(
     () =>
       fetchExcercises({
-        category: selectedCategory || "",
-        equipment: selectedEquipment,
-        muscles: selectedMucles,
-        offset: page * fetchAmount,
+        // category: selectedCategory || "",
+        // equipment: selectedEquipment,
+        // muscles: selectedMucles,
+        offset: 0,
         limit: fetchAmount,
       }),
-    false
+    true
   );
 
-  const maxPages = Math.ceil((exerciseInfo?.count ?? 1) / fetchAmount);
+  const maxPages = Math.ceil((fileredData.length ?? 1) / pageAmount);
   useEffect(() => {
-    if (loading || exerciseInfo?.results === undefined) {
+    if (exerciseLoading || exerciseInfo?.results === undefined) {
       return;
     }
-
-    setData((prev) => {
-      const newData = { ...prev };
-      newData[page] = exerciseInfo.results || [];
-      return newData;
-    });
-  }, [loading, exerciseInfo?.results]);
-
-  useEffect(() => {
-    setData({});
-    setPage(0);
-  }, [selectedCategory, selectedEquipment, selectedMucles]);
+    const newData = filterExercise(
+      exerciseInfo?.results || [],
+      searchQuery,
+      selectedCategory || "",
+      selectedEquipment,
+      selectedMucles
+    );
+    setFilteredData(newData);
+  }, [exerciseLoading, exerciseInfo?.results]);
 
   useEffect(() => {
-    if (loading || page in data) {
+    if (exerciseLoading) {
       return;
     }
-    loadExercise();
-  }, [page]);
+    const timeoutId = setTimeout(async () => {
+      const newData = filterExercise(
+        exerciseInfo?.results || [],
+        searchQuery,
+        selectedCategory || "",
+        selectedEquipment,
+        selectedMucles
+      );
+      setFilteredData(newData);
+      setPage(0);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, selectedCategory, selectedEquipment, selectedMucles]);
+
   function infoToExercise(
     info: ExerciseInfo[]
   ): Omit<Exercise, "is_favorite">[] {
@@ -94,12 +102,58 @@ const AllExerciseSearch = () => {
     return exercies;
   }
 
+  function filterExercise(
+    data: ExerciseInfo[],
+    searchQuery: string = "",
+    category: string = "",
+    equipment: string[] = [],
+    muscles: string[] = []
+  ) {
+    console.log("Filter with: ", searchQuery, category, equipment, muscles);
+    return data.filter((x) => {
+      if (category !== "" && x.category.id.toString() !== category) {
+        return false;
+      }
+      if (
+        equipment.length > 0 &&
+        x.equipment.some((r) => equipment.includes(r.id.toString())) === false
+      ) {
+        return false;
+      }
+      if (
+        muscles.length > 0 &&
+        (x.muscles.some((r) => muscles.includes(r.id.toString())) ||
+          x.muscles_secondary.some((r) =>
+            muscles.includes(r.id.toString())
+          )) === false
+      ) {
+        return false;
+      }
+
+      const description = x.translations.find((y) => y.language === 2);
+      if (
+        !!searchQuery &&
+        description?.name.toLowerCase().includes(searchQuery.toLowerCase()) ===
+          false
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   const filterSection: SectionItem[] = [
     {
       name: "Categories",
       type: "single",
       items: categories,
-      onSelect: (value) => setSelectedCategory(value),
+      onSelect: (value) => {
+        if (value === selectedCategory) {
+          setSelectedCategory(null);
+          return;
+        }
+        setSelectedCategory(value);
+      },
     },
     {
       name: "Equipment",
@@ -150,16 +204,6 @@ const AllExerciseSearch = () => {
         }}
       />
     ) : null;
-  const fetchNextPage = () => {
-    const maxPages = Math.ceil(exerciseInfo?.count || 1 / fetchAmount);
-    if (
-      loading === false &&
-      page < maxPages - 1 &&
-      exerciseInfo?.results.length == fetchAmount
-    ) {
-      setPage((prev) => prev + 1);
-    }
-  };
   return (
     <>
       <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
@@ -222,7 +266,7 @@ const AllExerciseSearch = () => {
         })}
         {clearAllChip}
       </View>
-      {loading ? (
+      {exerciseLoading ? (
         <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
       ) : error ? (
         <Text className="text-destructive px-5 my-3">
@@ -231,18 +275,14 @@ const AllExerciseSearch = () => {
       ) : (
         <>
           <ExerciseList
-            exercises={infoToExercise(data[page] || []).filter((x) => {
-              if (searchQuery) {
-                return x.name
-                  .toLowerCase()
-                  .includes(searchQuery.toLocaleLowerCase());
-              } else {
-                return true;
-              }
-            })}
+            exercises={infoToExercise(fileredData || [])
+              .sort((a, b) =>
+                a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+              )
+              .slice(page * pageAmount, (page + 1) * pageAmount)}
             headerComp={
-              !loading &&
-              data?.[page]?.length > 0 && (
+              !exerciseLoading &&
+              fileredData?.length > 0 && (
                 <PaginationButtons
                   currentPage={page}
                   totalPages={maxPages}
@@ -251,8 +291,8 @@ const AllExerciseSearch = () => {
               )
             }
             footerComp={
-              !loading &&
-              data?.[page]?.length > 0 && (
+              !exerciseLoading &&
+              fileredData?.length > 0 && (
                 <PaginationButtons
                   currentPage={page}
                   totalPages={maxPages}

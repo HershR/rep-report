@@ -31,9 +31,9 @@ const PaginationButtons = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <View className="flex-row w-full max-w-sm justify-center items-center gap-x-2">
+    <View className="flex-row w-full max-w-sm justify-between items-center gap-x-2">
       <Button
-        className="flex-1 p-2 "
+        className="flex-1 p-2 max-w-6"
         onPress={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 0}
         size={"icon"}
@@ -41,19 +41,20 @@ const PaginationButtons = ({
         <ChevronRight className="color-secondary rotate-180" />
       </Button>
 
-      {pageNumbers.map((page) => (
-        <Button
-          className="flex-1 "
-          key={page}
-          onPress={() => onPageChange(page)}
-          variant={currentPage !== page ? "outline" : "default"}
-        >
-          <Text>{page + 1}</Text>
-        </Button>
-      ))}
+      <View className="flex-row">
+        {pageNumbers.map((page) => (
+          <Button
+            key={page}
+            onPress={() => onPageChange(page)}
+            variant={currentPage !== page ? "ghost" : "default"}
+          >
+            <Text>{page + 1}</Text>
+          </Button>
+        ))}
+      </View>
 
       <Button
-        className="flex-1 p-2 "
+        className="flex-1 p-2  max-w-6"
         onPress={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages - 1}
         size={"icon"}
