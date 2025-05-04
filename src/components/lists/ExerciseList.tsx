@@ -6,6 +6,7 @@ import { formatList } from "@/src/utils/listFormatter";
 interface Props {
   exercises: Omit<Exercise, "is_favorite">[] | null;
   emptyListComp?: any;
+  headerComp?: any;
   footerComp?: any;
   onEndReach?: () => void;
 }
@@ -13,6 +14,7 @@ interface Props {
 const ExerciseList = ({
   exercises,
   emptyListComp,
+  headerComp,
   footerComp,
   onEndReach,
 }: Props) => {
@@ -31,6 +33,7 @@ const ExerciseList = ({
       ListEmptyComponent={emptyListComp}
       onEndReachedThreshold={0.2}
       onEndReached={onEndReach}
+      ListHeaderComponent={headerComp}
       ListFooterComponent={footerComp}
       renderItem={({ item }) => {
         if (item.empty) {

@@ -9,8 +9,9 @@ import { wgerEquipment } from "@/src/constants/excerciseEquipment";
 import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
-import SectionedDropdown from "../SectionedDropdown";
+import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
 import { Button } from "../ui/button";
+import PaginationButtons from "../PaginationButtons";
 
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
@@ -28,12 +29,14 @@ const muscles = wgerMuscles.map((x) => {
 });
 
 const AllExerciseSearch = () => {
+  const [data, setData] = useState<{ [key: number]: ExerciseInfo[] }>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const fetchAmount = 20;
+
   const {
     data: exerciseInfo,
     loading,
@@ -46,23 +49,36 @@ const AllExerciseSearch = () => {
         category: selectedCategory || "",
         equipment: selectedEquipment,
         muscles: selectedMucles,
-        offset: page,
+        offset: page * fetchAmount,
         limit: fetchAmount,
       }),
     false
   );
 
+  const maxPages = Math.ceil((exerciseInfo?.count ?? 1) / fetchAmount);
   useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      await loadExercise();
-      // if (searchQuery.trim()) {
-      // } else {
-      //   reset();
-      // }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [selectedCategory, selectedEquipment, selectedMucles, page]);
+    if (loading || exerciseInfo?.results === undefined) {
+      return;
+    }
 
+    setData((prev) => {
+      const newData = { ...prev };
+      newData[page] = exerciseInfo.results || [];
+      return newData;
+    });
+  }, [loading, exerciseInfo?.results]);
+
+  useEffect(() => {
+    setData({});
+    setPage(0);
+  }, [selectedCategory, selectedEquipment, selectedMucles]);
+
+  useEffect(() => {
+    if (loading || page in data) {
+      return;
+    }
+    loadExercise();
+  }, [page]);
   function infoToExercise(
     info: ExerciseInfo[]
   ): Omit<Exercise, "is_favorite">[] {
@@ -78,6 +94,72 @@ const AllExerciseSearch = () => {
     return exercies;
   }
 
+  const filterSection: SectionItem[] = [
+    {
+      name: "Categories",
+      type: "single",
+      items: categories,
+      onSelect: (value) => setSelectedCategory(value),
+    },
+    {
+      name: "Equipment",
+      type: "single",
+      items: equipment,
+      onSelect: (value) => {
+        if (value === null) {
+          setSelectedEquipment([]);
+          return;
+        }
+        const index = selectedEquipment?.indexOf(value);
+        if (index < 0) {
+          setSelectedEquipment([...selectedEquipment, value]);
+        } else {
+          setSelectedEquipment((prev) => prev.filter((x) => x !== value));
+        }
+      },
+    },
+    {
+      name: "Muscle Groups",
+      type: "single",
+      items: muscles,
+      onSelect: (value) => {
+        if (value === null) {
+          setSelectedMucles([]);
+          return;
+        }
+        const index = selectedMucles?.indexOf(value);
+        if (index < 0) {
+          setSelectedMucles([...selectedMucles, value]);
+        } else {
+          setSelectedMucles((prev) => prev.filter((x) => x !== value));
+        }
+      },
+    },
+  ];
+  const clearAllChip =
+    selectedCategory ||
+    selectedEquipment.length > 0 ||
+    selectedMucles.length > 0 ? (
+      <FilterChip
+        value={"-1"}
+        label={"Clear All"}
+        onPress={function (): void {
+          setSelectedCategory(null);
+          setSelectedEquipment([]);
+          setSelectedMucles([]);
+        }}
+      />
+    ) : null;
+  const fetchNextPage = () => {
+    const maxPages = Math.ceil(exerciseInfo?.count || 1 / fetchAmount);
+    if (
+      loading === false &&
+      page < maxPages - 1 &&
+      exerciseInfo?.results.length == fetchAmount
+    ) {
+      setPage((prev) => prev + 1);
+    }
+  };
   return (
     <>
       <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
@@ -93,50 +175,7 @@ const AllExerciseSearch = () => {
         </View>
 
         <SectionedDropdown
-          sections={[
-            {
-              name: "Categories",
-              type: "single",
-              items: categories,
-              onSelect: (value) => setSelectedCategory(value),
-            },
-            {
-              name: "Equipment",
-              type: "single",
-              items: equipment,
-              onSelect: (value) => {
-                if (value === null) {
-                  setSelectedEquipment([]);
-                  return;
-                }
-                const index = selectedEquipment?.indexOf(value);
-                if (index < 0) {
-                  setSelectedEquipment([...selectedEquipment, value]);
-                } else {
-                  setSelectedEquipment((prev) =>
-                    prev.filter((x) => x !== value)
-                  );
-                }
-              },
-            },
-            {
-              name: "Muscle Groups",
-              type: "single",
-              items: muscles,
-              onSelect: (value) => {
-                if (value === null) {
-                  setSelectedMucles([]);
-                  return;
-                }
-                const index = selectedMucles?.indexOf(value);
-                if (index < 0) {
-                  setSelectedMucles([...selectedMucles, value]);
-                } else {
-                  setSelectedMucles((prev) => prev.filter((x) => x !== value));
-                }
-              },
-            },
-          ]}
+          sections={filterSection}
           selectedItems={[
             selectedCategory ? [selectedCategory] : [],
             selectedEquipment,
@@ -172,7 +211,7 @@ const AllExerciseSearch = () => {
 
           return (
             <FilterChip
-              key={value}
+              key={muscle?.name}
               value={value}
               label={muscle?.name!}
               onPress={() =>
@@ -181,62 +220,47 @@ const AllExerciseSearch = () => {
             />
           );
         })}
-        {selectedCategory ||
-        selectedEquipment.length > 0 ||
-        selectedMucles.length > 0 ? (
-          <FilterChip
-            value={"-1"}
-            label={"Clear All"}
-            onPress={function (): void {
-              setSelectedCategory(null);
-              setSelectedEquipment([]);
-              setSelectedMucles([]);
-            }}
-          />
-        ) : null}
+        {clearAllChip}
       </View>
-      {error ? (
+      {loading ? (
+        <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
+      ) : error ? (
         <Text className="text-destructive px-5 my-3">
           Error: {error.message}
         </Text>
       ) : (
         <>
-          {/* <View className="flex-row">{paginationChips()}</View> */}
           <ExerciseList
-            exercises={infoToExercise(exerciseInfo?.results || []).filter(
-              (x) => {
-                if (searchQuery) {
-                  return x.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLocaleLowerCase());
-                } else {
-                  return true;
-                }
+            exercises={infoToExercise(data[page] || []).filter((x) => {
+              if (searchQuery) {
+                return x.name
+                  .toLowerCase()
+                  .includes(searchQuery.toLocaleLowerCase());
+              } else {
+                return true;
               }
-            )}
-            footerComp={
-              <View>
-                {loading && (
-                  <ActivityIndicator
-                    size={"large"}
-                    color={"#2A2E3C"}
-                    className="my-3"
-                  />
-                )}
-              </View>
+            })}
+            headerComp={
+              !loading &&
+              data?.[page]?.length > 0 && (
+                <PaginationButtons
+                  currentPage={page}
+                  totalPages={maxPages}
+                  onPageChange={(page) => setPage(page)}
+                />
+              )
             }
-            onEndReach={() => {
-              const maxPages = Math.ceil(
-                exerciseInfo?.count || 1 / fetchAmount
-              );
-              if (
-                !loading &&
-                page < maxPages - 1 &&
-                exerciseInfo?.results.length == fetchAmount
-              ) {
-                setPage((prev) => prev + 1);
-              }
-            }}
+            footerComp={
+              !loading &&
+              data?.[page]?.length > 0 && (
+                <PaginationButtons
+                  currentPage={page}
+                  totalPages={maxPages}
+                  onPageChange={(page) => setPage(page)}
+                />
+              )
+            }
+            // onEndReach={fetchNextPage}
           />
         </>
       )}

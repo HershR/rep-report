@@ -84,7 +84,7 @@ const AccordianDropdown = ({
   );
 };
 
-interface SectionItem {
+export interface SectionItem {
   name: string;
   type: "single" | "multi";
   items: Item[];
