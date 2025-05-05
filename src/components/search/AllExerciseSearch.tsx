@@ -10,9 +10,6 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
-import { Button } from "../ui/button";
-import PaginationButtons from "../PaginationButtons";
-import { date } from "drizzle-orm/mysql-core";
 
 const categories = Object.entries(wgerCategories).map((x) => {
   return { value: x[0], label: x[1] };
@@ -32,12 +29,11 @@ const muscles = wgerMuscles.map((x) => {
 const AllExerciseSearch = () => {
   const [fileredData, setFilteredData] = useState<ExerciseInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const fetchAmount = 999;
-  const pageAmount = 20;
   const {
     data: exerciseInfo,
     loading: exerciseLoading,
@@ -45,16 +41,12 @@ const AllExerciseSearch = () => {
   } = useFetch(
     () =>
       fetchExcercises({
-        // category: selectedCategory || "",
-        // equipment: selectedEquipment,
-        // muscles: selectedMucles,
         offset: 0,
         limit: fetchAmount,
       }),
     true
   );
 
-  const maxPages = Math.ceil((fileredData.length ?? 1) / pageAmount);
   useEffect(() => {
     if (exerciseLoading || exerciseInfo?.results === undefined) {
       return;
@@ -62,7 +54,7 @@ const AllExerciseSearch = () => {
     const newData = filterExercise(
       exerciseInfo?.results || [],
       searchQuery,
-      selectedCategory || "",
+      selectedCategory,
       selectedEquipment,
       selectedMucles
     );
@@ -73,11 +65,20 @@ const AllExerciseSearch = () => {
     if (exerciseLoading) {
       return;
     }
+    if (
+      searchQuery === "" &&
+      selectedCategory.length === 0 &&
+      selectedEquipment.length === 0 &&
+      selectedMucles.length === 0
+    ) {
+      setFilteredData(exerciseInfo?.results ?? []);
+      return;
+    }
     const timeoutId = setTimeout(async () => {
       const newData = filterExercise(
         exerciseInfo?.results || [],
         searchQuery,
-        selectedCategory || "",
+        selectedCategory,
         selectedEquipment,
         selectedMucles
       );
@@ -105,13 +106,16 @@ const AllExerciseSearch = () => {
   function filterExercise(
     data: ExerciseInfo[],
     searchQuery: string = "",
-    category: string = "",
+    category: string[] = [],
     equipment: string[] = [],
     muscles: string[] = []
   ) {
     console.log("Filter with: ", searchQuery, category, equipment, muscles);
     return data.filter((x) => {
-      if (category !== "" && x.category.id.toString() !== category) {
+      if (
+        category.length > 0 &&
+        category.includes(x.category.id.toString()) === false
+      ) {
         return false;
       }
       if (
@@ -148,11 +152,16 @@ const AllExerciseSearch = () => {
       type: "single",
       items: categories,
       onSelect: (value) => {
-        if (value === selectedCategory) {
-          setSelectedCategory(null);
+        if (value === null) {
+          setSelectedCategory([]);
           return;
         }
-        setSelectedCategory(value);
+        const index = selectedCategory?.indexOf(value);
+        if (index < 0) {
+          setSelectedCategory([...selectedCategory, value]);
+        } else {
+          setSelectedCategory((prev) => prev.filter((x) => x !== value));
+        }
       },
     },
     {
@@ -191,14 +200,14 @@ const AllExerciseSearch = () => {
     },
   ];
   const clearAllChip =
-    selectedCategory ||
+    selectedCategory.length > 0 ||
     selectedEquipment.length > 0 ||
     selectedMucles.length > 0 ? (
       <FilterChip
         value={"-1"}
         label={"Clear All"}
         onPress={function (): void {
-          setSelectedCategory(null);
+          setSelectedCategory([]);
           setSelectedEquipment([]);
           setSelectedMucles([]);
         }}
@@ -220,24 +229,20 @@ const AllExerciseSearch = () => {
 
         <SectionedDropdown
           sections={filterSection}
-          selectedItems={[
-            selectedCategory ? [selectedCategory] : [],
-            selectedEquipment,
-            selectedMucles,
-          ]}
+          selectedItems={[selectedCategory, selectedEquipment, selectedMucles]}
         />
       </View>
-      <View className="flex-row flex-wrap gap-2">
-        {selectedCategory !== null ? (
+      <View className="flex-row flex-wrap gap-2 mb-4">
+        {selectedCategory.map((value) => (
           <FilterChip
-            value={selectedCategory}
-            label={
-              categories.find((x) => x.value === selectedCategory.toString())
-                ?.label!
+            key={value}
+            value={value}
+            label={categories.find((y) => y.value === value.toString())?.label!}
+            onPress={() =>
+              setSelectedCategory((prev) => prev.filter((x) => x !== value))
             }
-            onPress={() => setSelectedCategory(null)}
           />
-        ) : null}
+        ))}
         {selectedEquipment.map((value) => (
           <FilterChip
             key={value}
@@ -275,32 +280,13 @@ const AllExerciseSearch = () => {
       ) : (
         <>
           <ExerciseList
-            exercises={infoToExercise(fileredData || [])
-              .sort((a, b) =>
-                a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-              )
-              .slice(page * pageAmount, (page + 1) * pageAmount)}
-            headerComp={
-              !exerciseLoading &&
-              fileredData?.length > 0 && (
-                <PaginationButtons
-                  currentPage={page}
-                  totalPages={maxPages}
-                  onPageChange={(page) => setPage(page)}
-                />
-              )
-            }
-            footerComp={
-              !exerciseLoading &&
-              fileredData?.length > 0 && (
-                <PaginationButtons
-                  currentPage={page}
-                  totalPages={maxPages}
-                  onPageChange={(page) => setPage(page)}
-                />
-              )
-            }
-            // onEndReach={fetchNextPage}
+            exercises={infoToExercise(fileredData || []).sort((a, b) =>
+              a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+            )}
+            currentPage={page}
+            pageSize={20}
+            onPageChange={(page) => setPage(page)}
+            emptyListComp={<Text>No Exercise Found</Text>}
           />
         </>
       )}

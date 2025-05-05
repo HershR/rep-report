@@ -17,6 +17,8 @@ import SearchBar from "@/src/components/SearchBar";
 const ExerciseNameSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
+  const [page, setPage] = useState(0);
+
   const {
     data: exerciseSuggestions,
     loading: loading,
@@ -111,7 +113,13 @@ const ExerciseNameSearch = () => {
         </Text>
       ) : (
         <ExerciseList
-          exercises={suggestionToExercise(exerciseSuggestions || [])}
+          exercises={suggestionToExercise(exerciseSuggestions || []).sort(
+            (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+          )}
+          currentPage={page}
+          pageSize={20}
+          onPageChange={(page) => setPage(page)}
+          emptyListComp={<Text>No Exercise Found</Text>}
         />
       )}
     </>
