@@ -4,10 +4,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Pressable,
   TouchableWithoutFeedback,
 } from "react-native";
-import { ChevronDown } from "../lib/icons/ChevronDown";
 import { Check, Search } from "lucide-react-native";
 import {
   Accordion,
@@ -118,50 +116,54 @@ export default function SectionedDropdown({
         transparent={true}
         onRequestClose={() => setIsOpen(false)}
       >
-        <View className="flex-1 bg-gray-500/30">
-          <View className="flex-1 my-4 mx-6 rounded-md bg-background">
-            <>
-              <View className="flex-row items-center mx-2">
-                <Input
-                  placeholder={"Search for Filter"}
-                  value={searchQuery}
-                  onChangeText={(value) => setSearchQuery(value.trim())}
-                  className="flex-1 pl-12 border-none border-0"
-                ></Input>
-                <Search className="color-primary absolute left-0 ml-2"></Search>
+        <TouchableWithoutFeedback onPressOut={() => setIsOpen(false)}>
+          <View className="flex-1 bg-gray-500/30 justify-center items-center p-8">
+            <TouchableWithoutFeedback>
+              <View className="flex-1 w-full max-w-sm rounded-md bg-background">
+                <>
+                  <View className="flex-row items-center mx-2">
+                    <Input
+                      placeholder={"Search for Filter"}
+                      value={searchQuery}
+                      onChangeText={(value) => setSearchQuery(value.trim())}
+                      className="flex-1 pl-12 border-none border-0"
+                    ></Input>
+                    <Search className="color-primary absolute left-0 ml-2"></Search>
+                  </View>
+                  <SelectSeparator className="mx-2" />
+                  <ScrollView className="flex-1 px-2 pb-6">
+                    <Accordion
+                      type="multiple"
+                      collapsible
+                      defaultValue={[sections[0].name]}
+                    >
+                      {sections.map((item, index) => (
+                        <AccordianDropdown
+                          key={item.name}
+                          id={item.name}
+                          placeholder={item.name}
+                          options={item.items}
+                          selectedItems={selectedItems[index]}
+                          onSelect={item.onSelect}
+                          searchQuery={searchQuery}
+                        />
+                      ))}
+                    </Accordion>
+                  </ScrollView>
+                  <Button
+                    className="m-4 max-w-sm"
+                    onPress={() => {
+                      setIsOpen(false);
+                      onClose?.();
+                    }}
+                  >
+                    <Text>Close</Text>
+                  </Button>
+                </>
               </View>
-              <SelectSeparator className="mx-2" />
-              <ScrollView className="flex-1 px-2 pb-6">
-                <Accordion
-                  type="multiple"
-                  collapsible
-                  defaultValue={[sections[0].name]}
-                >
-                  {sections.map((item, index) => (
-                    <AccordianDropdown
-                      key={item.name}
-                      id={item.name}
-                      placeholder={item.name}
-                      options={item.items}
-                      selectedItems={selectedItems[index]}
-                      onSelect={item.onSelect}
-                      searchQuery={searchQuery}
-                    />
-                  ))}
-                </Accordion>
-              </ScrollView>
-              <Button
-                className="rounded-t-none"
-                onPress={() => {
-                  setIsOpen(false);
-                  onClose?.();
-                }}
-              >
-                <Text>Close</Text>
-              </Button>
-            </>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
