@@ -61,7 +61,7 @@ const PaginationButtons = ({
           {pageNumbers.map((page, index) =>
             typeof page === "number" ? (
               <Button
-                key={index}
+                key={page}
                 onPress={() => onPageChange(page)}
                 variant={currentPage !== page ? "ghost" : "default"}
                 size={"icon"}
@@ -69,7 +69,7 @@ const PaginationButtons = ({
                 <Text>{page + 1}</Text>
               </Button>
             ) : (
-              <View className="justify-center">
+              <View key={`${page}_${index}`} className="justify-center">
                 <Text className="font-bold">{page}</Text>
               </View>
             )
