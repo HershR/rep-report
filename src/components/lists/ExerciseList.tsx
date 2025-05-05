@@ -23,6 +23,8 @@ const ExerciseList = ({
 
   return (
     <FlatList
+      className="w-full"
+      contentContainerClassName=" justify-center item-center"
       key={numColumns}
       numColumns={numColumns}
       data={formatList(exercises || [], numColumns)}
