@@ -1,25 +1,27 @@
 import { FlatList, View } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import ExerciseCard from "../ExerciseCard";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 import { formatList } from "@/src/utils/listFormatter";
+import PaginationButtons from "../PaginationButtons";
 interface Props {
-  exercises: Omit<Exercise, "is_favorite">[] | null;
+  exercises: Omit<Exercise, "is_favorite">[];
   emptyListComp?: any;
-  headerComp?: any;
-  footerComp?: any;
-  onEndReach?: () => void;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
 }
 
 const ExerciseList = ({
-  exercises,
+  exercises = [],
+  currentPage = 0,
+  pageSize = 999,
   emptyListComp,
-  headerComp,
-  footerComp,
-  onEndReach,
+  onPageChange,
 }: Props) => {
   const { width, height } = useSafeAreaFrame();
   const numColumns = width < 600 ? 2 : width < 1000 ? 3 : 4;
+  const maxPages = Math.ceil((exercises?.length ?? 1) / pageSize);
 
   return (
     <FlatList
@@ -27,16 +29,36 @@ const ExerciseList = ({
       contentContainerClassName=" justify-center item-center"
       key={numColumns}
       numColumns={numColumns}
-      data={formatList(exercises || [], numColumns)}
+      data={formatList(exercises || [], numColumns).slice(
+        currentPage * pageSize,
+        (currentPage + 1) * pageSize
+      )}
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => (item.id ? item.id.toString() : item.key)}
       columnWrapperClassName="justify-start gap-x-4 my-2"
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 10 }}
       ListEmptyComponent={emptyListComp}
-      onEndReachedThreshold={0.2}
-      onEndReached={onEndReach}
-      ListHeaderComponent={headerComp}
-      ListFooterComponent={footerComp}
+      ListHeaderComponent={
+        exercises?.length > pageSize ? (
+          <PaginationButtons
+            currentPage={currentPage}
+            totalPages={maxPages}
+            onPageChange={(page) => onPageChange?.(page)}
+          />
+        ) : null
+      }
+      ListFooterComponent={
+        exercises?.length > pageSize ? (
+          <PaginationButtons
+            currentPage={currentPage}
+            totalPages={maxPages}
+            onPageChange={(page) => {
+              console.log("change page to ", page);
+              onPageChange?.(page);
+            }}
+          />
+        ) : null
+      }
       renderItem={({ item }) => {
         if (item.empty) {
           return <View className="flex-1"></View>;
