@@ -35,21 +35,18 @@ const AllExerciseSearch = () => {
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const fetchAmount = 999;
-  // const {
-  //   data: exerciseInfo,
-  //   loading: exerciseLoading,
-  //   error,
-  // } = useFetch(
-  //   () =>
-  //     fetchExcercises({
-  //       offset: 0,
-  //       limit: fetchAmount,
-  //     }),
-  //   true
-  // );
-  const exerciseInfo = apiData;
-  const exerciseLoading = false;
-  const error = null;
+  const {
+    data: exerciseInfo,
+    loading: exerciseLoading,
+    error,
+  } = useFetch(
+    () =>
+      fetchExcercises({
+        offset: 0,
+        limit: fetchAmount,
+      }),
+    true
+  );
 
   useEffect(() => {
     if (exerciseLoading || exerciseInfo?.results === undefined) {
