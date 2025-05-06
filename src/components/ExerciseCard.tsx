@@ -4,6 +4,7 @@ import { Card } from "./ui/card";
 import ExerciseImage from "./ExerciseImage";
 import { Text } from "./ui/text";
 import { useRouter } from "expo-router";
+import { Badge } from "./ui/badge";
 
 interface Props {
   exercise: Omit<Exercise, "is_favorite">; // Exclude is_favorite from the props
@@ -31,15 +32,17 @@ const ExerciseCard = ({ exercise, containerClassname = "" }: Props) => {
           
         </Text> */}
       </Card>
-      <View className="absolute bottom-0 w-full h-16 max-h-[30%] bg-secondary/70 justify-center px-2">
+      <View className="absolute bottom-0 w-full h-16 max-h-[30%] bg-secondary/80 justify-center px-2">
         <Text
           className={`w-full text-left text-base md:text-xl lg:text-2xl font-bold`}
-          numberOfLines={1}
+          numberOfLines={2}
         >
           {name}
         </Text>
-        <Text className="text-base md:text-xl lg:text-2xl">{category}</Text>
       </View>
+      <Badge variant={"secondary"} className="absolute top-2 right-2">
+        <Text className="text-base md:text-xl lg:text-2xl">{category}</Text>
+      </Badge>
     </TouchableOpacity>
   );
 };
