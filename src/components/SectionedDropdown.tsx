@@ -19,8 +19,8 @@ import { Input } from "./ui/input";
 import { SelectSeparator } from "./ui/select";
 import { ListFilter } from "../lib/icons/ListFilter";
 interface Item {
-  value: string;
-  label: string;
+  id: string;
+  name: string;
 }
 
 interface DropdownProps {
@@ -42,7 +42,7 @@ const AccordianDropdown = ({
 }: DropdownProps) => {
   if (searchQuery) {
     options = options.filter((x) =>
-      x.label.toLowerCase().includes(searchQuery.toLowerCase())
+      x.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
   return (
@@ -61,12 +61,12 @@ const AccordianDropdown = ({
         </TouchableOpacity>
         {options.map((item) => (
           <TouchableOpacity
-            key={item.label}
+            key={item.name}
             className={"p-2 w-full flex-row justify-start items-center"}
-            onPress={() => onSelect(item.value)}
+            onPress={() => onSelect(item.id)}
           >
-            <Text>{item.label}</Text>
-            {selectedItems.includes(item.value) && (
+            <Text>{item.name}</Text>
+            {selectedItems.includes(item.id) && (
               <View className="justify-center items-center ml-2">
                 <Check
                   size={16}
@@ -83,20 +83,23 @@ const AccordianDropdown = ({
 };
 
 export interface SectionItem {
+  id: number;
   name: string;
   type: "single" | "multi";
   items: Item[];
-  onSelect: (value: string | null) => void;
 }
 interface SelectionDropdownProps {
   sections: SectionItem[];
   selectedItems: string[][];
+  onSelect: (id: number, value: string | null) => void;
+
   onClose?: () => void;
 }
 
 export default function SectionedDropdown({
   sections,
   selectedItems,
+  onSelect,
   onClose,
 }: SelectionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -144,7 +147,7 @@ export default function SectionedDropdown({
                           placeholder={item.name}
                           options={item.items}
                           selectedItems={selectedItems[index]}
-                          onSelect={item.onSelect}
+                          onSelect={(value) => onSelect(item.id, value)}
                           searchQuery={searchQuery}
                         />
                       ))}

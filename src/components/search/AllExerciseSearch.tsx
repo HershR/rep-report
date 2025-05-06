@@ -10,19 +10,20 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
+import apiData from "@/src/data/exerciseInfo";
 
 const categories = Object.entries(wgerCategories).map((x) => {
-  return { value: x[0], label: x[1] };
+  return { id: x[0], name: x[1] };
 });
 
 const equipment = Object.entries(wgerEquipment).map((x) => {
-  return { value: x[0], label: x[1] };
+  return { id: x[0], name: x[1] };
 });
 
 const muscles = wgerMuscles.map((x) => {
   return {
-    value: x.id.toString(),
-    label: x.name_en ? `${x.name_en}(${x.name})` : x.name,
+    id: x.id.toString(),
+    name: x.name_en ? `${x.name_en}(${x.name})` : x.name,
   };
 });
 
@@ -34,18 +35,21 @@ const AllExerciseSearch = () => {
   const [selectedMucles, setSelectedMucles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const fetchAmount = 999;
-  const {
-    data: exerciseInfo,
-    loading: exerciseLoading,
-    error,
-  } = useFetch(
-    () =>
-      fetchExcercises({
-        offset: 0,
-        limit: fetchAmount,
-      }),
-    true
-  );
+  // const {
+  //   data: exerciseInfo,
+  //   loading: exerciseLoading,
+  //   error,
+  // } = useFetch(
+  //   () =>
+  //     fetchExcercises({
+  //       offset: 0,
+  //       limit: fetchAmount,
+  //     }),
+  //   true
+  // );
+  const exerciseInfo = apiData;
+  const exerciseLoading = false;
+  const error = null;
 
   useEffect(() => {
     if (exerciseLoading || exerciseInfo?.results === undefined) {
@@ -148,55 +152,22 @@ const AllExerciseSearch = () => {
 
   const filterSection: SectionItem[] = [
     {
+      id: 0,
       name: "Categories",
       type: "single",
       items: categories,
-      onSelect: (value) => {
-        if (value === null) {
-          setSelectedCategory([]);
-          return;
-        }
-        const index = selectedCategory?.indexOf(value);
-        if (index < 0) {
-          setSelectedCategory([...selectedCategory, value]);
-        } else {
-          setSelectedCategory((prev) => prev.filter((x) => x !== value));
-        }
-      },
     },
     {
+      id: 1,
       name: "Equipment",
       type: "single",
       items: equipment,
-      onSelect: (value) => {
-        if (value === null) {
-          setSelectedEquipment([]);
-          return;
-        }
-        const index = selectedEquipment?.indexOf(value);
-        if (index < 0) {
-          setSelectedEquipment([...selectedEquipment, value]);
-        } else {
-          setSelectedEquipment((prev) => prev.filter((x) => x !== value));
-        }
-      },
     },
     {
+      id: 2,
       name: "Muscle Groups",
       type: "single",
       items: muscles,
-      onSelect: (value) => {
-        if (value === null) {
-          setSelectedMucles([]);
-          return;
-        }
-        const index = selectedMucles?.indexOf(value);
-        if (index < 0) {
-          setSelectedMucles([...selectedMucles, value]);
-        } else {
-          setSelectedMucles((prev) => prev.filter((x) => x !== value));
-        }
-      },
     },
   ];
   const clearAllChip =
@@ -213,6 +184,44 @@ const AllExerciseSearch = () => {
         }}
       />
     ) : null;
+  function onFilterChange(id: number, value: string | null): void {
+    switch (id) {
+      case 0:
+        if (value === null) {
+          setSelectedCategory([]);
+          return;
+        }
+        if (!selectedCategory.includes(value)) {
+          setSelectedCategory([...selectedCategory, value]);
+        } else {
+          setSelectedCategory((prev) => prev.filter((x) => x !== value));
+        }
+        break;
+      case 1:
+        if (value === null) {
+          setSelectedEquipment([]);
+          return;
+        }
+        if (!selectedEquipment.includes(value)) {
+          setSelectedEquipment([...selectedEquipment, value]);
+        } else {
+          setSelectedEquipment((prev) => prev.filter((x) => x !== value));
+        }
+        break;
+      case 2:
+        if (value === null) {
+          setSelectedMucles([]);
+          return;
+        }
+        if (!selectedMucles.includes(value)) {
+          setSelectedMucles([...selectedMucles, value]);
+        } else {
+          setSelectedMucles((prev) => prev.filter((x) => x !== value));
+        }
+        break;
+    }
+  }
+
   return (
     <>
       <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
@@ -230,6 +239,7 @@ const AllExerciseSearch = () => {
         <SectionedDropdown
           sections={filterSection}
           selectedItems={[selectedCategory, selectedEquipment, selectedMucles]}
+          onSelect={onFilterChange}
         />
       </View>
       <View className="flex-row flex-wrap gap-2 mb-4">
@@ -237,7 +247,7 @@ const AllExerciseSearch = () => {
           <FilterChip
             key={value}
             value={value}
-            label={categories.find((y) => y.value === value.toString())?.label!}
+            label={categories.find((y) => y.id === value.toString())?.name!}
             onPress={() =>
               setSelectedCategory((prev) => prev.filter((x) => x !== value))
             }
@@ -247,7 +257,7 @@ const AllExerciseSearch = () => {
           <FilterChip
             key={value}
             value={value}
-            label={equipment.find((y) => y.value === value.toString())?.label!}
+            label={equipment.find((y) => y.id === value.toString())?.name!}
             onPress={() =>
               setSelectedEquipment((prev) => prev.filter((x) => x !== value))
             }
@@ -286,7 +296,11 @@ const AllExerciseSearch = () => {
             currentPage={page}
             pageSize={20}
             onPageChange={(page) => setPage(page)}
-            emptyListComp={<Text>No Exercise Found</Text>}
+            emptyListComp={
+              <View className="flex-1 items-center justify-center">
+                <Text>No Exercise Found</Text>
+              </View>
+            }
           />
         </>
       )}

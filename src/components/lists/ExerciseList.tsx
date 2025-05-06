@@ -39,13 +39,11 @@ const ExerciseList = ({
       contentContainerStyle={{ paddingBottom: 10 }}
       ListEmptyComponent={emptyListComp}
       ListHeaderComponent={
-        exercises?.length > pageSize ? (
-          <PaginationButtons
-            currentPage={currentPage}
-            totalPages={maxPages}
-            onPageChange={(page) => onPageChange?.(page)}
-          />
-        ) : null
+        <PaginationButtons
+          currentPage={currentPage}
+          totalPages={maxPages}
+          onPageChange={(page) => onPageChange?.(page)}
+        />
       }
       ListFooterComponent={
         exercises?.length > pageSize ? (

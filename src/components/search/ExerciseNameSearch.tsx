@@ -119,7 +119,11 @@ const ExerciseNameSearch = () => {
           currentPage={page}
           pageSize={20}
           onPageChange={(page) => setPage(page)}
-          emptyListComp={<Text>No Exercise Found</Text>}
+          emptyListComp={
+            <View className="flex-1 items-center justify-center">
+              <Text>No Exercise Found</Text>
+            </View>
+          }
         />
       )}
     </>
