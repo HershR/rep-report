@@ -1,14 +1,6 @@
 import { View, FlatList } from "react-native";
 import React, { useState } from "react";
-import {
-  Controller,
-  ControllerFieldState,
-  ControllerRenderProps,
-  FieldValues,
-  useFieldArray,
-  useForm,
-  UseFormStateReturn,
-} from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -20,8 +12,13 @@ import { router } from "expo-router";
 import { CircleX } from "../lib/icons/CircleX";
 
 interface Props {
-  defaultForm?: WorkoutRoutine;
-  onSubmit: (data: WorkoutRoutine) => void;
+  defaultForm?: RoutineFormField;
+  onSubmit: (data: RoutineFormField) => void;
+}
+export interface RoutineFormField {
+  name: string;
+  description: string;
+  exercises: { id: number; name: string }[];
 }
 
 const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
@@ -41,9 +38,8 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
     clearErrors,
     reset,
     formState: { errors },
-  } = useForm<WorkoutRoutine>({
+  } = useForm<RoutineFormField>({
     defaultValues: defaultForm ?? {
-      id: 0,
       name: "",
       description: "",
       exercises: [],
@@ -178,7 +174,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         onClose={() => setSearchModalVisible(false)}
         onSelectExercise={(exercise: Exercise) => {
           setSearchModalVisible(false);
-          append(exercise);
+          append({ id: exercise.id, name: exercise.name });
         }}
         onShowExercise={goToExercise}
       />

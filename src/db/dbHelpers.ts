@@ -11,6 +11,7 @@ import {
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
+import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
 
 //Get
 
@@ -143,7 +144,7 @@ export const createExercise = async (
 
 export const createRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  name: string
+  { name, description }: { name: string; description: string | null }
 ) => {
   const now = new Date().toISOString();
   const result = await db
@@ -261,6 +262,21 @@ export const addSetsToWorkout = async (
   return db.insert(workoutSets).values(newSets);
 };
 
+export const addExercisesToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  exercises: { id: number }[]
+) => {
+  const newSets: Omit<RoutineExercise, "id">[] = exercises.map((x, index) => {
+    return {
+      routine_id: routineId,
+      exercise_id: x.id,
+      order: index,
+    };
+  });
+  return db.insert(routineExercises).values(newSets);
+};
+
 //Update
 
 export const setFavoriteExercise = async (
@@ -295,6 +311,28 @@ export const updateWorkoutWithSets = async (
   addSetsToWorkout(db, workoutId, workoutForm.sets);
 
   return workoutId;
+};
+export const updateRoutineWithExercises = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  routineForm: RoutineFormFields
+) => {
+  await db
+    .update(workoutRoutines)
+    .set({
+      name: routineForm.name,
+      description: routineForm.description,
+      last_updated: new Date().toISOString(),
+    })
+    .where(eq(workoutRoutines.id, routineId));
+
+  // Step 2: Delete old routines
+  await db
+    .delete(routineExercises)
+    .where(eq(routineExercises.routine_id, routineId));
+  addExercisesToRoutine(db, routineId, routineForm.exercises);
+
+  return routineId;
 };
 
 export const updateRoutineName = async (
