@@ -89,6 +89,7 @@ interface WorkoutRoutine {
   last_updated: string;
   workout_count: number; // maybe computed later instead?
   description?: string; // optional
+  exercises?: Exercise[];
 }
 
 //Exercise belonging to a routine
