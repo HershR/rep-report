@@ -24,7 +24,6 @@ export const fetchExcercises = async ({
     (category ? `&category=${category}` : "") +
     equipment.map((x) => `&equipment=${x}`).join("") +
     muscles.map((x) => `&muscles=${x}`).join("");
-  console.log(endpoint);
   const response = await fetch(endpoint, {
     method: "GET",
     headers: WGER_CONFIG.header,

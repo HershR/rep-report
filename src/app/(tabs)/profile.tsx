@@ -14,7 +14,6 @@ import { Button } from "@/src/components/ui/button";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 
 const setTheme = async (theme: string) => {
-  console.log("set theme:", theme);
   await AsyncStorage.setItem("theme", theme);
 };
 const Profile = () => {

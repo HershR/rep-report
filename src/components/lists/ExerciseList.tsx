@@ -44,7 +44,6 @@ const ExerciseList = ({
             currentPage={currentPage}
             totalPages={maxPages}
             onPageChange={(page) => {
-              console.log("change page to ", page);
               onPageChange?.(page);
             }}
           />
@@ -56,7 +55,6 @@ const ExerciseList = ({
             currentPage={currentPage}
             totalPages={maxPages}
             onPageChange={(page) => {
-              console.log("change page to ", page);
               onPageChange?.(page);
             }}
           />
