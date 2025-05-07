@@ -21,7 +21,11 @@ const ViewRoutine = () => {
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <RoutineForm />
+        <RoutineForm
+          onSubmit={function (data: WorkoutRoutine): void {
+            console.log(data);
+          }}
+        />
       </KeyboardAvoidingView>
     </SafeAreaWrapper>
   );

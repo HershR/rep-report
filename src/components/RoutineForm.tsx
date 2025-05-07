@@ -18,7 +18,13 @@ import { Text } from "./ui/text";
 import SearchModal from "./SearchModal";
 import { router } from "expo-router";
 import { CircleX } from "../lib/icons/CircleX";
-const RoutineForm = () => {
+
+interface Props {
+  defaultForm?: WorkoutRoutine;
+  onSubmit: (data: WorkoutRoutine) => void;
+}
+
+const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   const [searchModalVisble, setSearchModalVisible] = useState(false);
   const goToExercise = (id: number) => {
     console.log("Navigating to exercise with ID:", id);
@@ -36,7 +42,7 @@ const RoutineForm = () => {
     reset,
     formState: { errors },
   } = useForm<WorkoutRoutine>({
-    defaultValues: {
+    defaultValues: defaultForm ?? {
       id: 0,
       name: "",
       description: "",
@@ -46,8 +52,11 @@ const RoutineForm = () => {
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "exercises",
-    rules: { required: true, minLength: 1 },
+    rules: {
+      required: "At Least One Exercise is Required",
+    },
   });
+
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
@@ -58,13 +67,22 @@ const RoutineForm = () => {
           <Controller
             control={control}
             name="name"
+            rules={{ required: "Name can not be Empty" }}
             render={({ field: { onChange, value } }) => (
-              <View className="flex-row justify-center items-center gap-x-2">
+              <View className="justify-center items-center gap-x-2">
                 <Input
-                  className="flex-1"
-                  placeholder="Enter name"
+                  className="flex-row w-full"
+                  placeholder="Enter Name"
+                  value={value}
                   onChangeText={onChange}
                 ></Input>
+                {errors.name && (
+                  <View className="w-full items-start ml-4">
+                    <Text className="text-destructive font-normal">
+                      *{errors.name.message}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
           />
@@ -76,7 +94,7 @@ const RoutineForm = () => {
             render={({ field: { onChange, value } }) => (
               <Textarea
                 placeholder="Enter Description"
-                value={value ?? ""}
+                value={value}
                 onChangeText={onChange}
               ></Textarea>
             )}
@@ -90,7 +108,19 @@ const RoutineForm = () => {
           <FlatList
             data={fields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
-            contentContainerStyle={{ gap: 5 }}
+            // contentContainerStyle={{ gap: 5 }}
+            ItemSeparatorComponent={() => (
+              <View className="h-2">
+                <Separator />
+              </View>
+            )}
+            ListHeaderComponent={
+              errors.exercises?.root && (
+                <Text className="text-destructive">
+                  *{errors.exercises.root.message}
+                </Text>
+              )
+            }
             renderItem={({ item, index }) => {
               return (
                 <Controller
@@ -122,6 +152,7 @@ const RoutineForm = () => {
               );
             }}
           />
+
           <Button onPress={() => setSearchModalVisible(true)}>
             <Text>Add Exercise</Text>
           </Button>
@@ -129,8 +160,15 @@ const RoutineForm = () => {
         <CardContent>
           <Separator />
         </CardContent>
-        <CardContent className="gap-y-2">
-          <Button>
+        <CardContent className="flex-row gap-x-2">
+          <Button
+            className="flex-1"
+            variant={"destructive"}
+            onPress={() => reset(undefined)}
+          >
+            <Text>Clear</Text>
+          </Button>
+          <Button className="flex-1" onPress={handleSubmit(onSubmit)}>
             <Text>Save</Text>
           </Button>
         </CardContent>
