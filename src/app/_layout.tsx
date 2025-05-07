@@ -118,11 +118,11 @@ export default function RootLayout() {
                   options={{ headerShown: false }}
                 ></Stack.Screen>
                 <Stack.Screen
-                  name="routine/create/[id]"
+                  name="routine/create"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
                 <Stack.Screen
-                  name="routine/update/[id]"
+                  name="routine/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
               </Stack>

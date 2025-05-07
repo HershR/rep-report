@@ -17,6 +17,7 @@ import { CardTitle } from "@/src/components/ui/card";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { Button } from "@/src/components/ui/button";
 
 const Saved = () => {
   const router = useRouter();
@@ -78,9 +79,18 @@ const Saved = () => {
         </TabsContent>
         <TabsContent className="flex-1" value="routines">
           <View className="flex-1 justify-center items-center">
-            <Text className="text-lg text-muted-foreground">
+            {/* <Text className="text-lg text-muted-foreground">
               Routines feature coming soon!
-            </Text>
+            </Text> */}
+            <Button
+              onPress={() =>
+                router.push({
+                  pathname: "../routine/create",
+                })
+              }
+            >
+              <Text>Create new Workout</Text>
+            </Button>
           </View>
         </TabsContent>
       </Tabs>
