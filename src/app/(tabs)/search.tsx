@@ -15,7 +15,7 @@ const Search = () => {
 
   return (
     <SafeAreaWrapper>
-      <Tabs value={value} onValueChange={setValue} className="flex-1 mb-10">
+      <Tabs value={value} onValueChange={setValue} className="flex-1">
         <TabsList className="flex-row w-full max-w-[400px] self-center">
           <TabsTrigger value="search" className="flex-1">
             <Text>Search</Text>

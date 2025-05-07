@@ -38,7 +38,7 @@ const Saved = () => {
 
   return (
     <SafeAreaWrapper>
-      <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="flex-1">
         <TabsList className="flex-row w-full max-w-[400px] self-center">
           <TabsTrigger value="favorites" className="flex-1">
             <Text>Favorites</Text>
@@ -47,23 +47,32 @@ const Saved = () => {
             <Text>Routines</Text>
           </TabsTrigger>
         </TabsList>
-        <SearchBar
-          placeholder={
-            tab === "favorites" ? "Search favorites..." : "Search routines..."
-          }
-          value={searchQuery}
-          onChangeText={(text: string) => {
-            setSearchQuery(text);
-          }}
-        />
-        <TabsContent className="flex-1" value="favorites">
+        <View className="mb-4">
+          <SearchBar
+            placeholder={
+              tab === "favorites" ? "Search favorites..." : "Search routines..."
+            }
+            value={searchQuery}
+            onChangeText={(text: string) => {
+              setSearchQuery(text);
+            }}
+          />
+        </View>
+        <TabsContent style={{ flex: 1 }} value="favorites">
           {!favoritesLoaded ? (
             <ActivityIndicator></ActivityIndicator>
           ) : (
-            <View className="flex-1">
-              <CardTitle className="ml-4">Favorites:</CardTitle>
-              <ExerciseList exercises={favorites} />
-            </View>
+            <>
+              {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
+              <ExerciseList
+                exercises={favorites}
+                emptyListComp={
+                  <View className="flex-1 items-center justify-center">
+                    <Text>No Favorites Added</Text>
+                  </View>
+                }
+              />
+            </>
           )}
         </TabsContent>
         <TabsContent className="flex-1" value="routines">

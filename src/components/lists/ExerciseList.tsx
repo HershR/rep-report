@@ -36,14 +36,19 @@ const ExerciseList = ({
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => (item.id ? item.id.toString() : item.key)}
       columnWrapperClassName="justify-start gap-x-4 my-2"
-      contentContainerStyle={{ paddingBottom: 10 }}
+      // contentContainerStyle={{ paddingBottom: 10 }}
       ListEmptyComponent={emptyListComp}
       ListHeaderComponent={
-        <PaginationButtons
-          currentPage={currentPage}
-          totalPages={maxPages}
-          onPageChange={(page) => onPageChange?.(page)}
-        />
+        exercises?.length > pageSize ? (
+          <PaginationButtons
+            currentPage={currentPage}
+            totalPages={maxPages}
+            onPageChange={(page) => {
+              console.log("change page to ", page);
+              onPageChange?.(page);
+            }}
+          />
+        ) : null
       }
       ListFooterComponent={
         exercises?.length > pageSize ? (

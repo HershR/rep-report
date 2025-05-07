@@ -111,7 +111,14 @@ const AllExerciseSearch = () => {
     equipment: string[] = [],
     muscles: string[] = []
   ) {
-    console.log("Filter with: ", searchQuery, category, equipment, muscles);
+    if (
+      searchQuery === "" &&
+      selectedCategory.length === 0 &&
+      selectedEquipment.length === 0 &&
+      selectedMucles.length === 0
+    ) {
+      return data;
+    }
     return data.filter((x) => {
       if (
         category.length > 0 &&
@@ -167,20 +174,7 @@ const AllExerciseSearch = () => {
       items: muscles,
     },
   ];
-  const clearAllChip =
-    selectedCategory.length > 0 ||
-    selectedEquipment.length > 0 ||
-    selectedMucles.length > 0 ? (
-      <FilterChip
-        value={"-1"}
-        label={"Clear All"}
-        onPress={function (): void {
-          setSelectedCategory([]);
-          setSelectedEquipment([]);
-          setSelectedMucles([]);
-        }}
-      />
-    ) : null;
+
   function onFilterChange(id: number, value: string | null): void {
     switch (id) {
       case 0:
@@ -239,45 +233,59 @@ const AllExerciseSearch = () => {
           onSelect={onFilterChange}
         />
       </View>
-      <View className="flex-row flex-wrap gap-2 mb-4">
-        {selectedCategory.map((value) => (
-          <FilterChip
-            key={value}
-            value={value}
-            label={categories.find((y) => y.id === value.toString())?.name!}
-            onPress={() =>
-              setSelectedCategory((prev) => prev.filter((x) => x !== value))
-            }
-          />
-        ))}
-        {selectedEquipment.map((value) => (
-          <FilterChip
-            key={value}
-            value={value}
-            label={equipment.find((y) => y.id === value.toString())?.name!}
-            onPress={() =>
-              setSelectedEquipment((prev) => prev.filter((x) => x !== value))
-            }
-          />
-        ))}
-        {selectedMucles.map((value) => {
-          const muscle = wgerMuscles.find(
-            (y) => y.id.toString() === value.toString()
-          );
-
-          return (
+      {(selectedCategory.length > 0 ||
+        selectedEquipment.length > 0 ||
+        selectedMucles.length > 0) && (
+        <View className="flex-row flex-wrap gap-2 mb-4">
+          {selectedCategory.map((value) => (
             <FilterChip
-              key={muscle?.name}
+              key={value}
               value={value}
-              label={muscle?.name!}
+              label={categories.find((y) => y.id === value.toString())?.name!}
               onPress={() =>
-                setSelectedMucles((prev) => prev.filter((x) => x !== value))
+                setSelectedCategory((prev) => prev.filter((x) => x !== value))
               }
             />
-          );
-        })}
-        {clearAllChip}
-      </View>
+          ))}
+          {selectedEquipment.map((value) => (
+            <FilterChip
+              key={value}
+              value={value}
+              label={equipment.find((y) => y.id === value.toString())?.name!}
+              onPress={() =>
+                setSelectedEquipment((prev) => prev.filter((x) => x !== value))
+              }
+            />
+          ))}
+          {selectedMucles.map((value) => {
+            const muscle = wgerMuscles.find(
+              (y) => y.id.toString() === value.toString()
+            );
+
+            return (
+              <FilterChip
+                key={muscle?.name}
+                value={value}
+                label={muscle?.name!}
+                onPress={() =>
+                  setSelectedMucles((prev) => prev.filter((x) => x !== value))
+                }
+              />
+            );
+          })}
+          {
+            <FilterChip
+              value={"-1"}
+              label={"Clear All"}
+              onPress={function (): void {
+                setSelectedCategory([]);
+                setSelectedEquipment([]);
+                setSelectedMucles([]);
+              }}
+            />
+          }
+        </View>
+      )}
       {exerciseLoading ? (
         <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
       ) : error ? (
