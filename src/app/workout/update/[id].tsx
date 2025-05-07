@@ -1,9 +1,4 @@
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform } from "react-native";
 import React from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -24,6 +19,7 @@ import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
 import { Trash2 } from "@/src/lib/icons/Trash2";
+import ActivityLoader from "@/src/components/ActivityLoader";
 
 const UpdateWorkout = () => {
   const {
@@ -88,7 +84,7 @@ const UpdateWorkout = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {loading ? (
-          <ActivityIndicator></ActivityIndicator>
+          <ActivityLoader />
         ) : (
           <>
             <WorkoutForm

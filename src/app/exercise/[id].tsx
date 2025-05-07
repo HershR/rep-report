@@ -2,7 +2,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   useWindowDimensions,
   FlatList,
 } from "react-native";
@@ -36,6 +35,7 @@ import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTheme } from "@react-navigation/native";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import ActivityLoader from "@/src/components/ActivityLoader";
 
 const ExerciseDetails = () => {
   const router = useRouter();
@@ -124,7 +124,7 @@ const ExerciseDetails = () => {
     <SafeAreaWrapper style="mt-5">
       {loading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size={"large"} className="mt-10 self-center" />
+          <ActivityLoader />
         </View>
       ) : (
         <>
