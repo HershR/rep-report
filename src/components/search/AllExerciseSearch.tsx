@@ -1,4 +1,4 @@
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import React, { useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
@@ -11,6 +11,7 @@ import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
 import apiData from "@/src/data/exerciseInfo";
+import ActivityLoader from "../ActivityLoader";
 
 const categories = Object.entries(wgerCategories).map((x) => {
   return { id: x[0], name: x[1] };
@@ -287,7 +288,7 @@ const AllExerciseSearch = () => {
         </View>
       )}
       {exerciseLoading ? (
-        <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
+        <ActivityLoader />
       ) : error ? (
         <Text className="text-destructive px-5 my-3">
           Error: {error.message}

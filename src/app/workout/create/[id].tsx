@@ -1,8 +1,4 @@
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { KeyboardAvoidingView, Platform } from "react-native";
 import React, { useEffect } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -21,6 +17,7 @@ import WorkoutForm from "@/src/components/WorkoutForm";
 import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import useFetch from "@/src/services/useFetch";
+import ActivityLoader from "@/src/components/ActivityLoader";
 
 const CreateWorkout = () => {
   const {
@@ -106,7 +103,7 @@ const CreateWorkout = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {loading ? (
-          <ActivityIndicator></ActivityIndicator>
+          <ActivityLoader />
         ) : (
           <WorkoutForm
             defaultForm={{

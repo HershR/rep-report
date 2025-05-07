@@ -1,4 +1,4 @@
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
@@ -13,6 +13,7 @@ import { workouts, exercises } from "@/src//db/schema";
 import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
+import ActivityLoader from "@/src/components/ActivityLoader";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -56,10 +57,7 @@ export default function Index() {
         />
       </View>
       {!recentExerciseLoaded || !workoutLoaded ? (
-        <ActivityIndicator
-          size={"large"}
-          className="mt-10 self-center"
-        ></ActivityIndicator>
+        <ActivityLoader />
       ) : (
         <View className="flex-1">
           <View className="flex mt-2 mb-6">
@@ -82,7 +80,7 @@ export default function Index() {
               onPress={() => router.push("/search")}
             />
             {!workoutLoaded ? (
-              <ActivityIndicator size={"large"} className="mt-10 self-center" />
+              <ActivityLoader />
             ) : (
               <>
                 <Text className="text-xl font-semibold mt-4">

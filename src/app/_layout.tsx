@@ -1,6 +1,6 @@
 import "../global.css";
 import { Stack } from "expo-router";
-import { ActivityIndicator, StatusBar, View, Text } from "react-native";
+import { StatusBar, View, Text } from "react-native";
 import { DateProvider } from "../context/DateContext";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
@@ -19,6 +19,7 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ActivityLoader from "../components/ActivityLoader";
 
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
@@ -90,7 +91,7 @@ export default function RootLayout() {
   }
   return (
     <>
-      <Suspense fallback={<ActivityIndicator size="large" />}>
+      <Suspense fallback={<ActivityLoader />}>
         <SQLiteProvider
           databaseName={DATABASE_NAME}
           options={{ enableChangeListener: true }}

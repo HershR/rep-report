@@ -1,4 +1,4 @@
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import React, { useEffect, useState } from "react";
 import ExerciseList from "../lists/ExerciseList";
 import {
@@ -14,6 +14,7 @@ import wgerCategories from "@/src/constants/excerciseCategory";
 import { searchExercise } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
 import SearchBar from "@/src/components/SearchBar";
+import ActivityLoader from "../ActivityLoader";
 const ExerciseNameSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("");
@@ -106,7 +107,7 @@ const ExerciseNameSearch = () => {
         ) : null}
       </>
       {loading ? (
-        <ActivityIndicator size={"large"} color={"#2A2E3C"} className="my-3" />
+        <ActivityLoader />
       ) : error ? (
         <Text className="text-destructive px-5 my-3">
           Error: {error.message}

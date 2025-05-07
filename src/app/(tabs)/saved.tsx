@@ -1,4 +1,4 @@
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import React, { useState } from "react";
 import {
   Tabs,
@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import { CardTitle } from "@/src/components/ui/card";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
+import ActivityLoader from "@/src/components/ActivityLoader";
 
 const Saved = () => {
   const router = useRouter();
@@ -60,7 +61,7 @@ const Saved = () => {
         </View>
         <TabsContent style={{ flex: 1 }} value="favorites">
           {!favoritesLoaded ? (
-            <ActivityIndicator></ActivityIndicator>
+            <ActivityLoader />
           ) : (
             <>
               {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
