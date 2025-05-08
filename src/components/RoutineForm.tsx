@@ -110,11 +110,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
             data={fields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
             showsVerticalScrollIndicator={false}
-            ItemSeparatorComponent={() => (
-              <View className="h-2">
-                <Separator />
-              </View>
-            )}
+            contentContainerClassName="gap-y-4"
             ListHeaderComponent={
               errors.exercises?.root && (
                 <Text className="text-destructive">

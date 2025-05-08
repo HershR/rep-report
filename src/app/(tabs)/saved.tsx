@@ -24,6 +24,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
+import { CircleX } from "~/lib/icons/CircleX";
 
 const Saved = () => {
   const router = useRouter();
@@ -112,37 +113,41 @@ const Saved = () => {
                 className="w-full"
                 data={routines}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerClassName="gap-y-2"
+                contentContainerClassName="gap-y-4"
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    onPress={() => router.push(`/routine/update/${item.id}`)}
+                    onPress={() => router.push(`/routine/${item.id}`)}
                   >
                     <Card className="w-full flex-row justify-between items-center">
                       <CardHeader>
                         <CardTitle>{item.name}</CardTitle>
-                        <CardDescription className="flex-row flex-wrap">
+                        <CardDescription>
                           Exercises: {item?.routineExercises?.length}
                         </CardDescription>
+                        <CardDescription>
+                          {item.description
+                            ? item.description
+                            : "No Description"}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="items-center  py-0">
-                        <Button
-                          onPress={() => router.push(`/routine/${item.id}`)}
-                        >
-                          <Text>View</Text>
-                        </Button>
-                      </CardContent>
+                      <CardContent></CardContent>
                     </Card>
                   </TouchableOpacity>
                 )}
               ></FlatList>
               <Button
+                className="absolute bottom-0 right-2 rounded-full h-14 w-14"
+                size={"icon"}
                 onPress={() =>
                   router.push({
                     pathname: "../routine/create",
                   })
                 }
               >
-                <Text>Create new Workout</Text>
+                <CircleX
+                  size={40}
+                  className="color-background rotate-45"
+                ></CircleX>
               </Button>
             </View>
           )}

@@ -67,9 +67,7 @@ const StartWorkout = () => {
               data={routine?.routineExercises.map((x) => x.exercise)}
               keyExtractor={(item, index) => `${index}_${item.id}`}
               showsVerticalScrollIndicator={false}
-              ItemSeparatorComponent={() => (
-                <View className="h-4 items-center justify-center"></View>
-              )}
+              contentContainerClassName="gap-y-4"
               renderItem={({ item }) => {
                 return (
                   <Card
@@ -123,7 +121,10 @@ const StartWorkout = () => {
             <Button className="flex-1">
               <Text>Back</Text>
             </Button>
-            <Button className="flex-1">
+            <Button
+              className="flex-1"
+              onPress={() => router.push(`/routine/update/${routine?.id}`)}
+            >
               <Text>Edit</Text>
             </Button>
           </CardFooter>

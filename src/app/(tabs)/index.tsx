@@ -75,15 +75,6 @@ export default function Index() {
             ) : null}
           </View>
           <View className="flex-1">
-            <Button
-              onPress={() =>
-                router.push({
-                  pathname: "../routine/create",
-                })
-              }
-            >
-              <Text>Create new Workout</Text>
-            </Button>
             <SearchBar
               placeholder={"Add exercise"}
               value={""}

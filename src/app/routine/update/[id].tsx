@@ -56,7 +56,7 @@ const ViewUpateRoutine = () => {
       <Button
         variant={"ghost"}
         size={"icon"}
-        onPress={router.back}
+        onPress={() => router.replace(`/routine/${routineId}`)}
         className="z-50"
       >
         <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
