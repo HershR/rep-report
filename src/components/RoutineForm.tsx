@@ -1,5 +1,5 @@
 import { View, FlatList, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -25,8 +25,8 @@ export interface RoutineFormField {
 
 const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   const [searchModalVisble, setSearchModalVisible] = useState(false);
+  const listRef = useRef<FlatList>(null);
   const goToExercise = (id: number) => {
-    console.log("Navigating to exercise with ID:", id);
     setSearchModalVisible(false);
     setTimeout(() => {
       router.push(`/exercise/${id}`);
@@ -54,7 +54,9 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
       required: "At Least One Exercise is Required",
     },
   });
-
+  useEffect(() => {
+    listRef.current?.scrollToEnd();
+  }, [fields]);
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
@@ -101,12 +103,13 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         <CardContent>
           <Separator />
         </CardContent>
-        <CardContent className="flex-1">
-          <CardTitle className="font-semibold mb-2">Exercise</CardTitle>
+        <CardContent className="flex-1 gap-y-4">
+          <CardTitle className="font-semibold">Exercise</CardTitle>
           <FlatList
+            ref={listRef}
             data={fields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
-            // contentContainerStyle={{ gap: 5 }}
+            showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => (
               <View className="h-2">
                 <Separator />
@@ -178,7 +181,12 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           <Button
             className="flex-1"
             variant={"destructive"}
-            onPress={() => reset(undefined)}
+            onPress={() =>
+              reset(
+                { name: "", description: "", exercises: [] },
+                { keepDefaultValues: false }
+              )
+            }
           >
             <Text>Clear</Text>
           </Button>
@@ -192,6 +200,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         onClose={() => setSearchModalVisible(false)}
         onSelectExercise={(exercise: Exercise) => {
           setSearchModalVisible(false);
+
           append({
             id: exercise.id,
             name: exercise.name,
