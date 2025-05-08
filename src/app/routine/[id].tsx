@@ -4,7 +4,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { getRoutineById } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import { drizzle } from "drizzle-orm/expo-sqlite";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import * as schema from "@/src/db/schema";
 import ActivityLoader from "@/src/components/ActivityLoader";
@@ -12,6 +12,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
@@ -22,6 +23,7 @@ import { index } from "drizzle-orm/gel-core";
 import { CircleX } from "lucide-react-native";
 import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
+import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 const StartWorkout = () => {
   const {
     id: routineId,
@@ -38,6 +40,14 @@ const StartWorkout = () => {
 
   return (
     <SafeAreaWrapper>
+      <Button
+        variant={"ghost"}
+        size={"icon"}
+        onPress={router.back}
+        className="z-50"
+      >
+        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
+      </Button>
       {loading ? (
         <ActivityLoader />
       ) : (
@@ -51,16 +61,14 @@ const StartWorkout = () => {
           <CardContent>
             <Separator />
           </CardContent>
-          <CardContent>
+          <CardContent className="flex-1">
             <FlatList
               // ref={listRef}
               data={routine?.routineExercises.map((x) => x.exercise)}
               keyExtractor={(item, index) => `${index}_${item.id}`}
               showsVerticalScrollIndicator={false}
               ItemSeparatorComponent={() => (
-                <View className="h-2">
-                  <Separator />
-                </View>
+                <View className="h-4 items-center justify-center"></View>
               )}
               renderItem={({ item }) => {
                 return (
@@ -86,7 +94,20 @@ const StartWorkout = () => {
                         </Text>
                         {item.category && <Text>({item.category})</Text>}
                       </View>
-                      <Button className="flex">
+                      <Button
+                        className="flex"
+                        onPress={() =>
+                          router.push({
+                            pathname: "../workout/create/[id]",
+                            params: {
+                              id: 0,
+                              exerciseId: item.id,
+                              exerciseName: item.name,
+                              collectionId: routine?.id,
+                            },
+                          })
+                        }
+                      >
                         <Text>Start</Text>
                       </Button>
                     </View>
@@ -95,6 +116,17 @@ const StartWorkout = () => {
               }}
             />
           </CardContent>
+          <CardContent>
+            <Separator />
+          </CardContent>
+          <CardFooter className="flex-row gap-x-2">
+            <Button className="flex-1">
+              <Text>Back</Text>
+            </Button>
+            <Button className="flex-1">
+              <Text>Edit</Text>
+            </Button>
+          </CardFooter>
         </Card>
       )}
     </SafeAreaWrapper>

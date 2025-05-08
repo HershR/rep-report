@@ -128,7 +128,7 @@ const Saved = () => {
                         <Button
                           onPress={() => router.push(`/routine/${item.id}`)}
                         >
-                          <Text>Start</Text>
+                          <Text>View</Text>
                         </Button>
                       </CardContent>
                     </Card>

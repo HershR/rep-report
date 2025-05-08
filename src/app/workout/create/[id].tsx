@@ -24,10 +24,12 @@ const CreateWorkout = () => {
     id: workoutId,
     exerciseId,
     exerciseName,
+    collectionId,
   }: {
     id: string;
     exerciseId: string;
     exerciseName: string;
+    collectionId?: string;
   } = useLocalSearchParams();
 
   const { selectedDate } = useDate();
@@ -59,6 +61,7 @@ const CreateWorkout = () => {
   async function createWorkout(workoutForm: Workout) {
     try {
       workoutForm.exercise_id = parseInt(exerciseId);
+      workoutForm.collection_id = collectionId ? parseInt(collectionId) : null;
       const workoutID = await createWorkoutWithExercise(drizzleDb, workoutForm);
       for (let index = 0; index < workoutForm.sets.length; index++) {
         let element = workoutForm.sets[index];
@@ -86,7 +89,7 @@ const CreateWorkout = () => {
       return;
     }
     saveSuccessMsg();
-    router.push("/");
+    router.back();
   }
   return (
     <SafeAreaWrapper style="mt-5">
