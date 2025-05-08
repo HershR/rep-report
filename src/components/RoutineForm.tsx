@@ -1,4 +1,4 @@
-import { View, FlatList } from "react-native";
+import { View, FlatList, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -8,8 +8,10 @@ import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { Text } from "./ui/text";
 import SearchModal from "./SearchModal";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { CircleX } from "../lib/icons/CircleX";
+import ExerciseImage from "./ExerciseImage";
+import { toUpperCase } from "../services/textFormatter";
 
 interface Props {
   defaultForm?: RoutineFormField;
@@ -18,7 +20,7 @@ interface Props {
 export interface RoutineFormField {
   name: string;
   description: string;
-  exercises: { id: number; name: string }[];
+  exercises: { id: number; name: string; category?: string; image?: string }[];
 }
 
 const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
@@ -123,26 +125,42 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                   control={control}
                   name={`exercises.${index}`}
                   render={({ field: { onChange, value } }) => (
-                    <View className="flex-row justify-between">
-                      <View className="flex-row gap-x-4 items-center">
-                        <View className="w-8 h-8 justify-center items-center bg-primary rounded-full">
-                          <Text className="text-center text-secondary">
-                            {index + 1}
-                          </Text>
-                        </View>
-                        <Text className="text-lg font-medium">{item.name}</Text>
-                      </View>
-                      <Button
-                        variant={"ghost"}
-                        size={"icon"}
-                        className="flex"
-                        onPress={() => {
-                          remove(index);
-                        }}
+                    <>
+                      <Card
+                        className={`flex-1 max-h-24 md:max-h-32 justify-center items-center py-1 px-2`}
                       >
-                        <CircleX className="color-destructive" size={24} />
-                      </Button>
-                    </View>
+                        <View className="flex-row w-full h-full justify-center items-center">
+                          <Link href={`/exercise/${item.id}`} asChild>
+                            <TouchableOpacity>
+                              <ExerciseImage
+                                image_uri={item.image || null}
+                                containerClassname="h-full aspect-square justify-center items-center"
+                                contextFit="contain"
+                              ></ExerciseImage>
+                            </TouchableOpacity>
+                          </Link>
+                          <View className="flex-1 mx-4">
+                            <Text
+                              numberOfLines={1}
+                              className="text-left text-lg font-semibold"
+                            >
+                              {toUpperCase(item.name)}
+                            </Text>
+                            {item.category && <Text>({item.category})</Text>}
+                          </View>
+                          <Button
+                            variant={"ghost"}
+                            size={"icon"}
+                            className="flex"
+                            onPress={() => {
+                              remove(index);
+                            }}
+                          >
+                            <CircleX className="color-destructive" size={24} />
+                          </Button>
+                        </View>
+                      </Card>
+                    </>
                   )}
                 />
               );
@@ -174,7 +192,12 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         onClose={() => setSearchModalVisible(false)}
         onSelectExercise={(exercise: Exercise) => {
           setSearchModalVisible(false);
-          append({ id: exercise.id, name: exercise.name });
+          append({
+            id: exercise.id,
+            name: exercise.name,
+            image: exercise.image || undefined,
+            category: exercise.category || undefined,
+          });
         }}
         onShowExercise={goToExercise}
       />
