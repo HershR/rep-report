@@ -1,5 +1,5 @@
-import { View } from "react-native";
-import React, { useState } from "react";
+import { FlatList, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
 import {
   Tabs,
   TabsContent,
@@ -10,10 +10,16 @@ import { Text } from "@/src/components/ui/text";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
-import { CardTitle } from "@/src/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
@@ -30,13 +36,29 @@ const Saved = () => {
   const {
     data: favorites,
     updatedAt: favoritesLoaded,
-    error,
+    error: favoritesError,
   } = useLiveQuery(
     drizzleDb.query.exercises.findMany({
       where: (exercises) => eq(exercises.is_favorite, true),
       orderBy: (exercises, { asc }) => [asc(exercises.name)],
     })
   );
+
+  const {
+    data: routines,
+    updatedAt: routinesLoaded,
+    error: routineError,
+  } = useLiveQuery(
+    drizzleDb.query.workoutRoutines.findMany({
+      orderBy: (routines, { desc }) => [desc(routines.last_updated)],
+      with: { routineExercises: true },
+    })
+  );
+  useEffect(() => {
+    if (routineError) {
+      console.log(routineError);
+    }
+  }, [routineError]);
 
   return (
     <SafeAreaWrapper>
@@ -78,20 +100,52 @@ const Saved = () => {
           )}
         </TabsContent>
         <TabsContent className="flex-1" value="routines">
-          <View className="flex-1 justify-center items-center">
-            {/* <Text className="text-lg text-muted-foreground">
+          {!routinesLoaded ? (
+            <ActivityLoader />
+          ) : (
+            <View className="flex-1 justify-center items-center">
+              {/* <Text className="text-lg text-muted-foreground">
               Routines feature coming soon!
             </Text> */}
-            <Button
-              onPress={() =>
-                router.push({
-                  pathname: "../routine/create",
-                })
-              }
-            >
-              <Text>Create new Workout</Text>
-            </Button>
-          </View>
+
+              <FlatList
+                className="w-full"
+                data={routines}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerClassName="gap-y-2"
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/routine/update/${item.id}`)}
+                  >
+                    <Card className="w-full flex-row justify-between items-center">
+                      <CardHeader>
+                        <CardTitle>{item.name}</CardTitle>
+                        <CardDescription className="flex-row flex-wrap">
+                          Exercises: {item?.routineExercises?.length}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="items-center  py-0">
+                        <Button
+                          onPress={() => router.push(`/routine/${item.id}`)}
+                        >
+                          <Text>Start</Text>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </TouchableOpacity>
+                )}
+              ></FlatList>
+              <Button
+                onPress={() =>
+                  router.push({
+                    pathname: "../routine/create",
+                  })
+                }
+              >
+                <Text>Create new Workout</Text>
+              </Button>
+            </View>
+          )}
         </TabsContent>
       </Tabs>
     </SafeAreaWrapper>

@@ -85,6 +85,10 @@ export const routineExerciseRelations = relations(
       fields: [routineExercises.exercise_id],
       references: [exercises.id],
     }),
+    routine: one(workoutRoutines, {
+      fields: [routineExercises.routine_id],
+      references: [workoutRoutines.id],
+    }),
   })
 );
 
