@@ -163,6 +163,9 @@ const SearchModal = ({
                         onPress={() => {
                           onSelectExercise({
                             ...item,
+                            image: item.image
+                              ? "https://wger.de/" + item.image
+                              : null,
                             is_favorite: false,
                             id: item.base_id,
                           });

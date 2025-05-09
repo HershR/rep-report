@@ -42,7 +42,9 @@ const ViewRoutine = () => {
       return;
     }
     saveSuccessMsg();
-    router.dismissTo("/saved");
+    setTimeout(() => {
+      router.dismissTo("/saved");
+    }, 300);
   }
   return (
     <SafeAreaWrapper>

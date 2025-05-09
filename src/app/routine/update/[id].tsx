@@ -29,7 +29,7 @@ const ViewUpateRoutine = () => {
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
-      text1: "Routine Created",
+      text1: "Routine Saved",
       visibilityTime: 1000,
     });
   }
@@ -43,13 +43,20 @@ const ViewUpateRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      updateRoutineWithExercises(drizzleDb, parseInt(routineId), routineForm);
+      await updateRoutineWithExercises(
+        drizzleDb,
+        parseInt(routineId),
+        routineForm
+      );
     } catch (error: any) {
       saveFailMsg(error);
       return;
     }
     saveSuccessMsg();
-    // router.push("/");
+
+    setTimeout(() => {
+      router.back();
+    }, 300);
   }
   return (
     <SafeAreaWrapper>

@@ -115,7 +115,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                 </Text>
               )
             }
-            renderItem={({ item, index }) => {
+            renderItem={({ index }) => {
               return (
                 <Controller
                   control={control}
@@ -126,10 +126,10 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                         className={`flex-1 max-h-24 md:max-h-32 justify-center items-center py-1 px-2`}
                       >
                         <View className="flex-row w-full h-full justify-center items-center">
-                          <Link href={`/exercise/${item.id}`} asChild>
+                          <Link href={`/exercise/${value.id}`} asChild>
                             <TouchableOpacity>
                               <ExerciseImage
-                                image_uri={item.image || null}
+                                image_uri={value.image || null}
                                 containerClassname="h-full aspect-square justify-center items-center"
                                 contextFit="contain"
                               ></ExerciseImage>
@@ -140,9 +140,9 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                               numberOfLines={1}
                               className="text-left text-lg font-semibold"
                             >
-                              {toUpperCase(item.name)}
+                              {toUpperCase(value.name)}
                             </Text>
-                            {item.category && <Text>({item.category})</Text>}
+                            {value.category && <Text>({value.category})</Text>}
                           </View>
                           <Button
                             variant={"ghost"}
