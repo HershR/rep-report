@@ -63,7 +63,14 @@ const Saved = () => {
 
   return (
     <SafeAreaWrapper>
-      <Tabs value={tab} onValueChange={setTab} className="flex-1">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          setSearchQuery("");
+          setTab(value);
+        }}
+        className="flex-1"
+      >
         <TabsList className="flex-row w-full max-w-[400px] self-center">
           <TabsTrigger value="favorites" className="flex-1">
             <Text>Favorites</Text>
@@ -90,7 +97,13 @@ const Saved = () => {
             <>
               {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
               <ExerciseList
-                exercises={favorites}
+                exercises={
+                  searchQuery
+                    ? favorites.filter((x) =>
+                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : favorites
+                }
                 emptyListComp={
                   <View className="flex-1 items-center justify-center">
                     <Text>No Favorites Added</Text>
@@ -111,7 +124,13 @@ const Saved = () => {
 
               <FlatList
                 className="w-full"
-                data={routines}
+                data={
+                  searchQuery
+                    ? routines.filter((x) =>
+                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : routines
+                }
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerClassName="gap-y-4"
                 renderItem={({ item }) => (
