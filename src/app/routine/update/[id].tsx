@@ -1,5 +1,5 @@
 import { KeyboardAvoidingView, Platform } from "react-native";
-import React, { useState } from "react";
+import React from "react";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";

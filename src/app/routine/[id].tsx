@@ -24,8 +24,6 @@ import {
 import { Separator } from "@/src/components/ui/separator";
 import ExerciseImage from "@/src/components/ExerciseImage";
 import { toUpperCase } from "@/src/services/textFormatter";
-import { index } from "drizzle-orm/gel-core";
-import { CircleX } from "lucide-react-native";
 import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";

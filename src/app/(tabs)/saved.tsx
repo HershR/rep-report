@@ -118,10 +118,6 @@ const Saved = () => {
             <ActivityLoader />
           ) : (
             <View className="flex-1 justify-center items-center">
-              {/* <Text className="text-lg text-muted-foreground">
-              Routines feature coming soon!
-            </Text> */}
-
               <FlatList
                 className="w-full"
                 data={
