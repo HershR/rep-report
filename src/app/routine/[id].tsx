@@ -1,7 +1,7 @@
 import { FlatList, TouchableOpacity, View } from "react-native";
 import React from "react";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import { getRoutineById } from "@/src/db/dbHelpers";
+import { deleteRoutine, getRoutineById } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import {
@@ -27,6 +27,7 @@ import { toUpperCase } from "@/src/services/textFormatter";
 import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
+import ConfirmAlert from "@/src/components/ConfirmAlert";
 const StartWorkout = () => {
   const {
     id: routineId,
@@ -50,6 +51,11 @@ const StartWorkout = () => {
       }
     }, [routineId])
   );
+
+  const onDelete = async () => {
+    await deleteRoutine(drizzleDb, parseInt(routineId));
+    router.back();
+  };
 
   return (
     <SafeAreaWrapper>
@@ -131,19 +137,23 @@ const StartWorkout = () => {
             <Separator />
           </CardContent>
           <CardFooter className="flex-row gap-x-2">
-            <Button
-              className="flex-1"
-              variant={"outline"}
-              onPress={router.back}
-            >
-              <Text>Back</Text>
-            </Button>
-            <Button
-              className="flex-1"
-              onPress={() => router.push(`/routine/update/${routine?.id}`)}
-            >
-              <Text>Edit</Text>
-            </Button>
+            <View className="flex-1">
+              <ConfirmAlert
+                title="Delete Routine"
+                trigger={<Text>Delete</Text>}
+                triggerProps={{ variant: "destructive" }}
+                description={"This action can not be undone"}
+                onConfirm={onDelete}
+                onCancel={() => {}}
+              />
+            </View>
+            <View className="flex-1">
+              <Button
+                onPress={() => router.push(`/routine/update/${routine?.id}`)}
+              >
+                <Text>Edit</Text>
+              </Button>
+            </View>
           </CardFooter>
         </Card>
       )}
