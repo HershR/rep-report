@@ -25,7 +25,7 @@ export interface RoutineFormField {
 
 const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   const [searchModalVisble, setSearchModalVisible] = useState(false);
-  const listRef = useRef<FlatList>(null);
+  const flatlistRef = useRef<FlatList>(null);
   const goToExercise = (id: number) => {
     setSearchModalVisible(false);
     setTimeout(() => {
@@ -54,9 +54,6 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
       required: "At Least One Exercise is Required",
     },
   });
-  useEffect(() => {
-    listRef.current?.scrollToEnd();
-  }, [fields]);
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
@@ -106,7 +103,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         <CardContent className="flex-1 gap-y-4">
           <CardTitle className="font-semibold">Exercise</CardTitle>
           <FlatList
-            ref={listRef}
+            ref={flatlistRef}
             data={fields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
             showsVerticalScrollIndicator={false}
@@ -203,6 +200,9 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
             image: exercise.image || undefined,
             category: exercise.category || undefined,
           });
+          setTimeout(() => {
+            flatlistRef.current?.scrollToEnd({ animated: true });
+          }, 500);
         }}
         onShowExercise={goToExercise}
       />
