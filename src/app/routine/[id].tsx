@@ -4,7 +4,12 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { getRoutineById } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import { drizzle } from "drizzle-orm/expo-sqlite";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import {
+  Link,
+  router,
+  useFocusEffect,
+  useLocalSearchParams,
+} from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import * as schema from "@/src/db/schema";
 import ActivityLoader from "@/src/components/ActivityLoader";
@@ -34,8 +39,18 @@ const StartWorkout = () => {
   const drizzleDb = drizzle(db, { schema });
   db.execSync("PRAGMA foreign_keys = ON");
 
-  const { data: routine, loading } = useFetch(() =>
-    getRoutineById(drizzleDb, parseInt(routineId))
+  const {
+    data: routine,
+    loading,
+    refetch,
+  } = useFetch(() => getRoutineById(drizzleDb, parseInt(routineId)), false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (routineId != null) {
+        refetch();
+      }
+    }, [routineId])
   );
 
   return (
@@ -118,7 +133,11 @@ const StartWorkout = () => {
             <Separator />
           </CardContent>
           <CardFooter className="flex-row gap-x-2">
-            <Button className="flex-1">
+            <Button
+              className="flex-1"
+              variant={"outline"}
+              onPress={router.back}
+            >
               <Text>Back</Text>
             </Button>
             <Button
