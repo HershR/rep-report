@@ -21,7 +21,24 @@ export interface RoutineFormField {
   name: string;
   description: string;
   exercises: { id: number; name: string; category?: string; image?: string }[];
+  days: Day[];
 }
+
+export interface Day {
+  id: number;
+  label: string;
+  selected: boolean;
+}
+
+export const DayFields: Day[] = [
+  { id: 0, label: "S", selected: false },
+  { id: 1, label: "M", selected: false },
+  { id: 2, label: "T", selected: false },
+  { id: 3, label: "W", selected: false },
+  { id: 4, label: "T", selected: false },
+  { id: 5, label: "F", selected: false },
+  { id: 6, label: "S", selected: false },
+];
 
 const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   const [searchModalVisble, setSearchModalVisible] = useState(false);
@@ -45,15 +62,31 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
       name: "",
       description: "",
       exercises: [],
+      days: DayFields,
     },
   });
-  const { fields, append, remove, replace } = useFieldArray({
+  const {
+    fields: exerciseFields,
+    append: appendExercise,
+    remove: removeExercise,
+  } = useFieldArray({
     control,
     name: "exercises",
     rules: {
       required: "At Least One Exercise is Required",
     },
   });
+
+  const {
+    fields: dayFields,
+    append,
+    remove,
+    replace,
+  } = useFieldArray<RoutineFormField, "days">({
+    control,
+    name: "days",
+  });
+
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
@@ -98,13 +131,44 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           />
         </CardContent>
         <CardContent>
+          <View className="flex-row max-w-sm justify-center items-center gap-x-2">
+            {[0, 1, 2, 3, 4, 5, 6].map((day_no) => {
+              return (
+                <Controller
+                  key={day_no}
+                  control={control}
+                  name={`days.${day_no}`}
+                  render={({ field: { onChange, value } }) => {
+                    return (
+                      <Button
+                        className="rounded-full flex-1"
+                        size={"icon"}
+                        variant={value.selected ? "default" : "outline"}
+                        onPress={() => {
+                          const toggledDay = {
+                            ...value,
+                            selected: !value.selected,
+                          };
+                          onChange(toggledDay);
+                        }}
+                      >
+                        <Text>{value.label}</Text>
+                      </Button>
+                    );
+                  }}
+                />
+              );
+            })}
+          </View>
+        </CardContent>
+        <CardContent>
           <Separator />
         </CardContent>
         <CardContent className="flex-1 gap-y-4">
           <CardTitle className="font-semibold">Exercise</CardTitle>
           <FlatList
             ref={flatlistRef}
-            data={fields}
+            data={exerciseFields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
             showsVerticalScrollIndicator={false}
             contentContainerClassName="gap-y-4"
@@ -149,7 +213,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                             size={"icon"}
                             className="flex"
                             onPress={() => {
-                              remove(index);
+                              removeExercise(index);
                             }}
                           >
                             <CircleX className="color-destructive" size={24} />
@@ -194,7 +258,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
         onSelectExercise={(exercise: Exercise) => {
           setSearchModalVisible(false);
 
-          append({
+          appendExercise({
             id: exercise.id,
             name: exercise.name,
             image: exercise.image || undefined,

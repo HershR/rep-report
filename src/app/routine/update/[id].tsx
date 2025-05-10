@@ -4,12 +4,15 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import { router, useLocalSearchParams } from "expo-router";
-import RoutineForm, { RoutineFormField } from "@/src/components/RoutineForm";
+import RoutineForm, {
+  DayFields,
+  RoutineFormField,
+} from "@/src/components/RoutineForm";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
 import Toast from "react-native-toast-message";
-import { getRoutineById, updateRoutineWithExercises } from "@/src/db/dbHelpers";
+import { getRoutineById, updateRoutine } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
 const ViewUpateRoutine = () => {
@@ -43,11 +46,7 @@ const ViewUpateRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      await updateRoutineWithExercises(
-        drizzleDb,
-        parseInt(routineId),
-        routineForm
-      );
+      await updateRoutine(drizzleDb, parseInt(routineId), routineForm);
     } catch (error: any) {
       saveFailMsg(error);
       return;
@@ -88,6 +87,12 @@ const ViewUpateRoutine = () => {
                     image: x.exercise.image || "",
                   };
                 }) || [],
+              days: DayFields.map((x) => {
+                if (routine?.routineSchedule.find((y) => y.day === x.id)) {
+                  return { ...x, selected: true };
+                }
+                return x;
+              }),
             }}
             onSubmit={saveRoutine}
           />

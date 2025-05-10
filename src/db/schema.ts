@@ -75,6 +75,7 @@ export const workoutRoutineRelations = relations(
   ({ many }) => ({
     workouts: many(workouts),
     routineExercises: many(routineExercises),
+    routineSchedule: many(routineSchedule),
   })
 );
 

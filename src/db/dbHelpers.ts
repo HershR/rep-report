@@ -53,6 +53,7 @@ export const getRoutineById = async (
           exercise: true,
         },
       },
+      routineSchedule: true,
     },
   });
 };
@@ -277,6 +278,18 @@ export const addExercisesToRoutine = async (
   return db.insert(routineExercises).values(newSets);
 };
 
+export const addDaysToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  days: number[]
+) => {
+  const routineDays: Omit<RoutineDay, "id">[] = days.map((x) => {
+    return { routine_id: routineId, day: x };
+  });
+
+  return db.insert(schema.routineSchedule).values(routineDays);
+};
+
 //Update
 
 export const setFavoriteExercise = async (
@@ -312,7 +325,7 @@ export const updateWorkoutWithSets = async (
 
   return workoutId;
 };
-export const updateRoutineWithExercises = async (
+export const updateRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   routineId: number,
   routineForm: RoutineFormFields
@@ -332,18 +345,15 @@ export const updateRoutineWithExercises = async (
     .where(eq(routineExercises.routine_id, routineId));
   addExercisesToRoutine(db, routineId, routineForm.exercises);
 
+  await db
+    .delete(schema.routineSchedule)
+    .where(eq(schema.routineSchedule.routine_id, routineId));
+  addDaysToRoutine(
+    db,
+    routineId,
+    routineForm.days.filter((x) => x.selected).map((y) => y.id)
+  );
   return routineId;
-};
-
-export const updateRoutineName = async (
-  db: ExpoSQLiteDatabase<typeof schema>,
-  id: number,
-  newName: string
-) => {
-  return db
-    .update(workoutRoutines)
-    .set({ name: newName, last_updated: new Date().toISOString() })
-    .where(eq(workoutRoutines.id, id));
 };
 
 //Delete

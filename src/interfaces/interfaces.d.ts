@@ -99,3 +99,9 @@ interface RoutineExercise {
   exercise_id: number; // foreign key -> Exercise
   order: number; // optional, for drag & drop later
 }
+
+interface RoutineDay {
+  id: number;
+  routine_id: number;
+  day: number;
+}
