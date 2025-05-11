@@ -9,12 +9,15 @@ import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
 import Toast from "react-native-toast-message";
-import { addExercisesToRoutine, createRoutine } from "@/src/db/dbHelpers";
+import {
+  addDaysToRoutine,
+  addExercisesToRoutine,
+  createRoutine,
+} from "@/src/db/dbHelpers";
+import { db, expo_sqlite } from "@/src/db/client";
 
 const ViewRoutine = () => {
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  db.execSync("PRAGMA foreign_keys = ON");
+  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -32,11 +35,16 @@ const ViewRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      const routineId = await createRoutine(drizzleDb, {
+      console.log(routineForm);
+      const routineId = await createRoutine({
         name: routineForm.name,
         description: routineForm.description || null,
       });
-      addExercisesToRoutine(drizzleDb, routineId, routineForm.exercises);
+      addExercisesToRoutine(routineId, routineForm.exercises);
+      addDaysToRoutine(
+        routineId,
+        routineForm.days.filter((day) => day.selected).map((x) => x.id)
+      );
     } catch (error: any) {
       saveFailMsg(error);
       return;

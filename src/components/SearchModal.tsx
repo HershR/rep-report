@@ -41,8 +41,6 @@ const SearchModal = ({
   onShowExercise,
 }: SearchModalProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
   const {
     data: exercises,
     loading: loading,
@@ -55,7 +53,7 @@ const SearchModal = ({
     data: favorites,
     loading: favoritesLoading,
     error: favoritesError,
-  } = useFetch(() => getFavoriteExercises(drizzleDb));
+  } = useFetch(() => getFavoriteExercises());
 
   useEffect(() => {
     const timeoutId = setTimeout(async () => {

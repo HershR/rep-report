@@ -26,6 +26,7 @@ import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
 import { CircleX } from "~/lib/icons/CircleX";
 import { dateNameLong } from "@/src/utils/dateUtils";
+import { db } from "@/src/db/client";
 
 const Saved = () => {
   const router = useRouter();
@@ -33,14 +34,12 @@ const Saved = () => {
   const [tab, setTab] = useState("favorites");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
   const {
     data: favorites,
     updatedAt: favoritesLoaded,
     error: favoritesError,
   } = useLiveQuery(
-    drizzleDb.query.exercises.findMany({
+    db.query.exercises.findMany({
       where: (exercises) => eq(exercises.is_favorite, true),
       orderBy: (exercises, { asc }) => [asc(exercises.name)],
     })
@@ -51,7 +50,7 @@ const Saved = () => {
     updatedAt: routinesLoaded,
     error: routineError,
   } = useLiveQuery(
-    drizzleDb.query.workoutRoutines.findMany({
+    db.query.routines.findMany({
       orderBy: (routines, { desc }) => [desc(routines.last_updated)],
       with: { routineExercises: true, routineSchedule: true },
     })

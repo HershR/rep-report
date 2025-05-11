@@ -18,6 +18,7 @@ import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { expo_sqlite } from "@/src/db/client";
 
 const CreateWorkout = () => {
   const {
@@ -34,11 +35,9 @@ const CreateWorkout = () => {
 
   const { selectedDate } = useDate();
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  db.execSync("PRAGMA foreign_keys = ON");
+  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   const { data: workout, loading } = useFetch(() =>
-    getRecentWorkout(drizzleDb, parseInt(exerciseId))
+    getRecentWorkout(parseInt(exerciseId))
   );
 
   function saveSuccessMsg() {
@@ -61,8 +60,8 @@ const CreateWorkout = () => {
   async function createWorkout(workoutForm: Workout) {
     try {
       workoutForm.exercise_id = parseInt(exerciseId);
-      workoutForm.collection_id = collectionId ? parseInt(collectionId) : null;
-      const workoutID = await createWorkoutWithExercise(drizzleDb, workoutForm);
+      workoutForm.routine_id = collectionId ? parseInt(collectionId) : null;
+      const workoutID = await createWorkoutWithExercise(workoutForm);
       for (let index = 0; index < workoutForm.sets.length; index++) {
         let element = workoutForm.sets[index];
         if (workoutForm.mode === 0) {
@@ -83,7 +82,7 @@ const CreateWorkout = () => {
           };
         }
       }
-      await addSetsToWorkout(drizzleDb, workoutID, workoutForm.sets);
+      await addSetsToWorkout(workoutID, workoutForm.sets);
     } catch (error: any) {
       saveFailMsg(error);
       return;

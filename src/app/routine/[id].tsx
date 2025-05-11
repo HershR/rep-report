@@ -29,21 +29,20 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
 import { dateNameLong } from "@/src/utils/dateUtils";
+import { expo_sqlite } from "@/src/db/client";
 const StartWorkout = () => {
   const {
     id: routineId,
   }: {
     id: string;
   } = useLocalSearchParams();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  db.execSync("PRAGMA foreign_keys = ON");
+  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
 
   const {
     data: routine,
     loading,
     refetch,
-  } = useFetch(() => getRoutineById(drizzleDb, parseInt(routineId)), false);
+  } = useFetch(() => getRoutineById(parseInt(routineId)), false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -54,7 +53,7 @@ const StartWorkout = () => {
   );
 
   const onDelete = async () => {
-    await deleteRoutine(drizzleDb, parseInt(routineId));
+    await deleteRoutine(parseInt(routineId));
     router.back();
   };
 

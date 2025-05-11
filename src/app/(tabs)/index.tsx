@@ -15,17 +15,15 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
+import { db } from "@/src/db/client";
+
 export default function Index() {
   const router = useRouter();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  useDrizzleStudio(db);
-
   const { selectedDate, setSelectedDate } = useDate();
 
   const { data: recentExercise, updatedAt: recentExerciseLoaded } =
     useLiveQuery(
-      drizzleDb
+      db
         .selectDistinct({
           id: workouts.exercise_id,
           name: exercises.name,
@@ -39,7 +37,7 @@ export default function Index() {
     );
 
   const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
-    drizzleDb.query.workouts.findMany({
+    db.query.workouts.findMany({
       where: eq(workouts.date, selectedDate?.toISODate()!),
       with: {
         exercise: true,
