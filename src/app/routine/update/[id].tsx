@@ -15,18 +15,17 @@ import Toast from "react-native-toast-message";
 import { getRoutineById, updateRoutine } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { expo_sqlite } from "@/src/db/client";
 const ViewUpateRoutine = () => {
   const {
     id: routineId,
   }: {
     id: string;
   } = useLocalSearchParams();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  db.execSync("PRAGMA foreign_keys = ON");
+  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
 
   const { data: routine, loading } = useFetch(() =>
-    getRoutineById(drizzleDb, parseInt(routineId))
+    getRoutineById(parseInt(routineId))
   );
 
   function saveSuccessMsg() {
@@ -46,7 +45,7 @@ const ViewUpateRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      await updateRoutine(drizzleDb, parseInt(routineId), routineForm);
+      await updateRoutine(parseInt(routineId), routineForm);
     } catch (error: any) {
       saveFailMsg(error);
       return;

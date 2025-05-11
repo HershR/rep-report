@@ -20,6 +20,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
 import { Trash2 } from "@/src/lib/icons/Trash2";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { expo_sqlite } from "@/src/db/client";
 
 const UpdateWorkout = () => {
   const {
@@ -34,11 +35,9 @@ const UpdateWorkout = () => {
 
   const { selectedDate } = useDate();
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  db.execSync("PRAGMA foreign_keys = ON");
+  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   const { data: workout, loading } = useFetch(() =>
-    getWorkoutById(drizzleDb, parseInt(workoutId))
+    getWorkoutById(parseInt(workoutId))
   );
   function saveSuccessMsg() {
     Toast.show({
@@ -58,14 +57,14 @@ const UpdateWorkout = () => {
   }
   async function saveWorkout(workoutForm: Workout) {
     try {
-      await updateWorkoutWithSets(drizzleDb, workout!.id, workoutForm);
+      await updateWorkoutWithSets(workout!.id, workoutForm);
       saveSuccessMsg();
     } catch (error: any) {
       saveFailMsg(error);
     }
   }
   async function workoutDelete() {
-    await deleteWorkout(drizzleDb, parseInt(workoutId));
+    await deleteWorkout(parseInt(workoutId));
     router.back();
   }
 

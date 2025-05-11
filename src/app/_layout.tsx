@@ -20,7 +20,8 @@ import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
-
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { db, expo_sqlite } from "@/src/db/client";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -37,12 +38,8 @@ export {
 
 export default function RootLayout() {
   //db
-  const expoDb = openDatabaseSync(DATABASE_NAME, {
-    enableChangeListener: true,
-  });
-  const db = drizzle(expoDb);
   const { success, error } = useMigrations(db, migrations);
-
+  useDrizzleStudio(expo_sqlite);
   //rnr ui lib
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();

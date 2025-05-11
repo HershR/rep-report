@@ -45,8 +45,6 @@ const ExerciseDetails = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
 
   const { id }: { id: string } = useLocalSearchParams();
 
@@ -87,7 +85,7 @@ const ExerciseDetails = () => {
   useEffect(() => {
     async function fetchExercise() {
       if (id !== null && id !== undefined) {
-        await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
+        await getExerciseById(parseInt(id)).then((ex) => {
           if (ex !== undefined) {
             setIsFavorite(ex.is_favorite || false);
           }
@@ -103,9 +101,9 @@ const ExerciseDetails = () => {
 
   async function toggleFavorite() {
     if (exercise && loading === false) {
-      await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
+      await getExerciseById(parseInt(id)).then((ex) => {
         if (ex === undefined) {
-          createExercise(drizzleDb, {
+          createExercise({
             id: exercise.id,
             name: translation?.name || "",
             category: exercise.category.name,
@@ -113,7 +111,7 @@ const ExerciseDetails = () => {
             is_favorite: true,
           });
         } else {
-          setFavoriteExercise(drizzleDb, ex.id, !isFavorite);
+          setFavoriteExercise(ex.id, !isFavorite);
         }
       });
       setIsFavorite((prev) => !prev);
