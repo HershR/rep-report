@@ -61,7 +61,7 @@ const CreateWorkout = () => {
   async function createWorkout(workoutForm: Workout) {
     try {
       workoutForm.exercise_id = parseInt(exerciseId);
-      workoutForm.collection_id = collectionId ? parseInt(collectionId) : null;
+      workoutForm.routine_id = collectionId ? parseInt(collectionId) : null;
       const workoutID = await createWorkoutWithExercise(drizzleDb, workoutForm);
       for (let index = 0; index < workoutForm.sets.length; index++) {
         let element = workoutForm.sets[index];

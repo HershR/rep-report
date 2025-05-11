@@ -3,7 +3,7 @@ import { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import * as schema from "./schema";
 
 import {
-  workoutRoutines,
+  routines,
   routineExercises,
   workouts,
   workoutSets,
@@ -38,15 +38,15 @@ export const getFavoriteExercises = async (
   });
 };
 export const getAllRoutines = async (db: ExpoSQLiteDatabase<typeof schema>) => {
-  return db.select().from(workoutRoutines);
+  return db.select().from(routines);
 };
 
 export const getRoutineById = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number
 ) => {
-  return db.query.workoutRoutines.findFirst({
-    where: eq(workoutRoutines.id, id),
+  return db.query.routines.findFirst({
+    where: eq(routines.id, id),
     with: {
       routineExercises: {
         with: {
@@ -63,7 +63,7 @@ export const getWorkoutsForRoutine = async (
   routineId: number
 ) => {
   return db.query.workouts.findMany({
-    where: eq(workouts.collection_id, routineId),
+    where: eq(workouts.routine_id, routineId),
     with: {
       sets: true,
       exercise: true,
@@ -149,13 +149,13 @@ export const createRoutine = async (
 ) => {
   const now = new Date().toISOString();
   const result = await db
-    .insert(workoutRoutines)
+    .insert(routines)
     .values({
       name,
       date_created: now,
       last_updated: now,
     })
-    .returning({ id: workoutRoutines.id });
+    .returning({ id: routines.id });
 
   return result[0]?.id;
 };
@@ -180,14 +180,14 @@ export const createWorkout = async (
     mode,
     unit,
     notes,
-    collection_id,
+    routine_id,
     exercise_id,
   }: {
     date: string;
     mode: number;
     unit: string; // e.g., kg, lbs
     notes: string | null;
-    collection_id: number | null;
+    routine_id: number | null;
     exercise_id: number;
   }
 ) => {
@@ -198,7 +198,7 @@ export const createWorkout = async (
       date,
       mode,
       unit,
-      collection_id,
+      routine_id,
       exercise_id,
       notes,
       last_updated: now,
@@ -210,7 +210,7 @@ export const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  { date, mode, unit, collection_id, exercise_id, notes }: Workout
+  { date, mode, unit, routine_id, exercise_id, notes }: Workout
 ) => {
   // Step 1: Check if exercise is in local DB
   const existing = await db.query.exercises.findFirst({
@@ -242,7 +242,7 @@ export const createWorkoutWithExercise = async (
     date,
     mode,
     unit,
-    collection_id,
+    routine_id,
     exercise_id: id!,
     notes,
   });
@@ -313,7 +313,7 @@ export const updateWorkoutWithSets = async (
     .set({
       date: workoutForm.date,
       mode: workoutForm.mode,
-      collection_id: workoutForm.collection_id,
+      routine_id: workoutForm.routine_id,
       notes: workoutForm.notes,
       last_updated: new Date().toISOString(),
     })
@@ -331,13 +331,13 @@ export const updateRoutine = async (
   routineForm: RoutineFormFields
 ) => {
   await db
-    .update(workoutRoutines)
+    .update(routines)
     .set({
       name: routineForm.name,
       description: routineForm.description,
       last_updated: new Date().toISOString(),
     })
-    .where(eq(workoutRoutines.id, routineId));
+    .where(eq(routines.id, routineId));
 
   // Step 2: Delete old routines
   await db
@@ -362,7 +362,7 @@ export const deleteRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number
 ) => {
-  return db.delete(workoutRoutines).where(eq(workoutRoutines.id, id));
+  return db.delete(routines).where(eq(routines.id, id));
 };
 
 export const deleteWorkout = async (

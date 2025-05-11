@@ -53,7 +53,7 @@ const emptyForm: Workout = {
   date: "",
   mode: 0,
   unit: "lb",
-  collection_id: null,
+  routine_id: null,
   exercise_id: 0,
   notes: null,
   sets: [emptySet],

@@ -51,7 +51,7 @@ const Saved = () => {
     updatedAt: routinesLoaded,
     error: routineError,
   } = useLiveQuery(
-    drizzleDb.query.workoutRoutines.findMany({
+    drizzleDb.query.routines.findMany({
       orderBy: (routines, { desc }) => [desc(routines.last_updated)],
       with: { routineExercises: true, routineSchedule: true },
     })
