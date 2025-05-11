@@ -35,7 +35,7 @@ const UpdateWorkout = () => {
 
   const { selectedDate } = useDate();
 
-  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
+  // expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   const { data: workout, loading } = useFetch(() =>
     getWorkoutById(parseInt(workoutId))
   );

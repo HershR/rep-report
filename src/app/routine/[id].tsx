@@ -36,7 +36,7 @@ const StartWorkout = () => {
   }: {
     id: string;
   } = useLocalSearchParams();
-  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
+  // expo_sqlite.execSync("PRAGMA foreign_keys = ON");
 
   const {
     data: routine,

@@ -12,9 +12,9 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
 import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
-import { db } from "@/src/db/client";
+import { db, expo_sqlite } from "@/src/db/client";
 //Get
-
+expo_sqlite.execSync("PRAGMA foreign_keys = ON");
 export const getAllExercises = async (
   db: ExpoSQLiteDatabase<typeof schema>
 ) => {
@@ -118,7 +118,33 @@ export const createExercise = async (exercise: Exercise) => {
     .returning({ id: exercises.id });
   return result[0]?.id;
 };
+async function getOrCreateExercise(exercise_id: number) {
+  const existing = await db.query.exercises.findFirst({
+    where: eq(exercises.id, exercise_id),
+  });
+  let id = existing?.id;
+  // Step 2: If not, fetch from Wger
+  if (!existing) {
+    const remoteExercise = await fetchExerciseDetail(exercise_id.toString());
+    if (!remoteExercise) throw new Error("Exercise not found from Wger");
 
+    // Step 3: Insert into local DB
+    const result = await db
+      .insert(exercises)
+      .values({
+        id: remoteExercise.id,
+        name: remoteExercise.translations.find((x) => x.language == 2)!.name,
+        category: remoteExercise.category.name,
+        image:
+          remoteExercise.images.length == 0
+            ? null
+            : remoteExercise.images[0].image,
+      })
+      .returning({ id: exercises.id });
+    id = result[0]?.id;
+  }
+  return id;
+}
 export const createRoutine = async ({
   name,
   description,
@@ -145,9 +171,10 @@ export const addExerciseToRoutine = async (
   exerciseId: number,
   order: number
 ) => {
+  const eId = await getOrCreateExercise(exerciseId);
   return db.insert(routineExercises).values({
     routine_id: routineId,
-    exercise_id: exerciseId,
+    exercise_id: eId!,
     order,
   });
 };
@@ -193,30 +220,7 @@ export const createWorkoutWithExercise = async ({
   notes,
 }: Workout) => {
   // Step 1: Check if exercise is in local DB
-  const existing = await db.query.exercises.findFirst({
-    where: eq(exercises.id, exercise_id),
-  });
-  let id = existing?.id;
-  // Step 2: If not, fetch from Wger
-  if (!existing) {
-    const remoteExercise = await fetchExerciseDetail(exercise_id.toString());
-    if (!remoteExercise) throw new Error("Exercise not found from Wger");
-
-    // Step 3: Insert into local DB
-    const result = await db
-      .insert(exercises)
-      .values({
-        id: remoteExercise.id,
-        name: remoteExercise.translations.find((x) => x.language == 2)!.name,
-        category: remoteExercise.category.name,
-        image:
-          remoteExercise.images.length == 0
-            ? null
-            : remoteExercise.images[0].image,
-      })
-      .returning({ id: exercises.id });
-    id = result[0]?.id;
-  }
+  let id = await getOrCreateExercise(exercise_id);
   // Step 4: Insert workout
   return await createWorkout({
     date,
@@ -246,17 +250,21 @@ export const addExercisesToRoutine = async (
   routineId: number,
   exercises: { id: number }[]
 ) => {
-  const newSets: Omit<RoutineExercise, "id">[] = exercises.map((x, index) => {
-    return {
-      routine_id: routineId,
-      exercise_id: x.id,
-      order: index,
-    };
-  });
-  return db.insert(routineExercises).values(newSets);
+  // const newExercises = exercises.map((x, index) => {
+  //   return {
+  //     routineId: routineId,
+  //     exerciseId: x.id,
+  //     order: index,
+  //   };
+  // });
+  exercises.forEach((x, index) => addExerciseToRoutine(routineId, x.id, index));
+  // return db.insert(routineExercises).values(newExercises);
 };
 
 export const addDaysToRoutine = async (routineId: number, days: number[]) => {
+  if (days.length == 0) {
+    return;
+  }
   const routineDays: Omit<RoutineDay, "id">[] = days.map((x) => {
     return { routine_id: routineId, day: x };
   });
