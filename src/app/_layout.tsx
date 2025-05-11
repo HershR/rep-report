@@ -117,6 +117,18 @@ export default function RootLayout() {
                   name="workout/update/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/create"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/update/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
               </Stack>
               <PortalHost />
               <Toast />

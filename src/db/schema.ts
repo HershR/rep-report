@@ -61,12 +61,21 @@ export const workoutSets = sqliteTable("workout_sets", {
   duration: text("duration"), // HH:mm:ss
 });
 
+export const routineSchedule = sqliteTable("routine_schedule", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  routine_id: integer("routine_id")
+    .notNull()
+    .references(() => workoutRoutines.id, { onDelete: "cascade" }),
+  day: integer("day").notNull(), //sunday=0 ... saterday = 6
+});
+
 // Optional, for easier querying
 export const workoutRoutineRelations = relations(
   workoutRoutines,
   ({ many }) => ({
     workouts: many(workouts),
     routineExercises: many(routineExercises),
+    routineSchedule: many(routineSchedule),
   })
 );
 
@@ -85,6 +94,10 @@ export const routineExerciseRelations = relations(
       fields: [routineExercises.exercise_id],
       references: [exercises.id],
     }),
+    routine: one(workoutRoutines, {
+      fields: [routineExercises.routine_id],
+      references: [workoutRoutines.id],
+    }),
   })
 );
 
@@ -94,3 +107,13 @@ export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
     references: [workouts.id],
   }),
 }));
+
+export const routineScheduleRelations = relations(
+  routineSchedule,
+  ({ one }) => ({
+    routine: one(workoutRoutines, {
+      fields: [routineSchedule.routine_id],
+      references: [workoutRoutines.id],
+    }),
+  })
+);

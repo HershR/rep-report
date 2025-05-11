@@ -14,6 +14,7 @@ import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { Button } from "@/src/components/ui/button";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();

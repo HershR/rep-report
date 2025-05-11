@@ -11,6 +11,7 @@ import {
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
+import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
 
 //Get
 
@@ -52,6 +53,7 @@ export const getRoutineById = async (
           exercise: true,
         },
       },
+      routineSchedule: true,
     },
   });
 };
@@ -143,7 +145,7 @@ export const createExercise = async (
 
 export const createRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  name: string
+  { name, description }: { name: string; description: string | null }
 ) => {
   const now = new Date().toISOString();
   const result = await db
@@ -261,6 +263,33 @@ export const addSetsToWorkout = async (
   return db.insert(workoutSets).values(newSets);
 };
 
+export const addExercisesToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  exercises: { id: number }[]
+) => {
+  const newSets: Omit<RoutineExercise, "id">[] = exercises.map((x, index) => {
+    return {
+      routine_id: routineId,
+      exercise_id: x.id,
+      order: index,
+    };
+  });
+  return db.insert(routineExercises).values(newSets);
+};
+
+export const addDaysToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  days: number[]
+) => {
+  const routineDays: Omit<RoutineDay, "id">[] = days.map((x) => {
+    return { routine_id: routineId, day: x };
+  });
+
+  return db.insert(schema.routineSchedule).values(routineDays);
+};
+
 //Update
 
 export const setFavoriteExercise = async (
@@ -296,16 +325,35 @@ export const updateWorkoutWithSets = async (
 
   return workoutId;
 };
-
-export const updateRoutineName = async (
+export const updateRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  id: number,
-  newName: string
+  routineId: number,
+  routineForm: RoutineFormFields
 ) => {
-  return db
+  await db
     .update(workoutRoutines)
-    .set({ name: newName, last_updated: new Date().toISOString() })
-    .where(eq(workoutRoutines.id, id));
+    .set({
+      name: routineForm.name,
+      description: routineForm.description,
+      last_updated: new Date().toISOString(),
+    })
+    .where(eq(workoutRoutines.id, routineId));
+
+  // Step 2: Delete old routines
+  await db
+    .delete(routineExercises)
+    .where(eq(routineExercises.routine_id, routineId));
+  addExercisesToRoutine(db, routineId, routineForm.exercises);
+
+  await db
+    .delete(schema.routineSchedule)
+    .where(eq(schema.routineSchedule.routine_id, routineId));
+  addDaysToRoutine(
+    db,
+    routineId,
+    routineForm.days.filter((x) => x.selected).map((y) => y.id)
+  );
+  return routineId;
 };
 
 //Delete

@@ -10,13 +10,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "./ui/alert-dialog";
-import { Button } from "./ui/button";
+import { Button, ButtonProps } from "./ui/button";
 import { Text } from "./ui/text";
 
 interface FormActionAlertProps {
   title: string;
   description: string;
   trigger: ReactNode;
+  triggerProps?: ButtonProps;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -25,13 +26,14 @@ const CustomAlert = ({
   title,
   description,
   trigger,
+  triggerProps,
   onConfirm,
   onCancel,
 }: FormActionAlertProps) => {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost">{trigger}</Button>
+        <Button variant={triggerProps?.variant || "ghost"}>{trigger}</Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="gap-y-2 w-2/3 max-w-md">
         <AlertDialogHeader>
