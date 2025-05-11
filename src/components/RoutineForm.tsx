@@ -90,7 +90,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
-        <CardHeader className="flex-row w-full justify-between items-center">
+        <CardHeader className="flex-row w-full justify-between items-center pb-4">
           <CardTitle>Routine</CardTitle>
         </CardHeader>
         <CardContent>
@@ -131,6 +131,10 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           />
         </CardContent>
         <CardContent>
+          <Separator />
+        </CardContent>
+        <CardContent className="gap-y-2">
+          <CardTitle>Schedule</CardTitle>
           <View className="flex-row max-w-sm justify-center items-center gap-x-2">
             {[0, 1, 2, 3, 4, 5, 6].map((day_no) => {
               return (
@@ -141,7 +145,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                   render={({ field: { onChange, value } }) => {
                     return (
                       <Button
-                        className="rounded-full flex-1"
+                        className="rounded-full flex-1 aspect-square"
                         size={"icon"}
                         variant={value.selected ? "default" : "outline"}
                         onPress={() => {

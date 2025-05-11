@@ -28,6 +28,7 @@ import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
+import { dateNameLong } from "@/src/utils/dateUtils";
 const StartWorkout = () => {
   const {
     id: routineId,
@@ -73,6 +74,17 @@ const StartWorkout = () => {
         <Card className="flex-1">
           <CardHeader>
             <CardTitle>{routine?.name}</CardTitle>
+
+            {routine?.routineSchedule ? (
+              <View className="flex-row flex-wrap">
+                {routine.routineSchedule.map((x, index) => (
+                  <CardDescription key={x.id} className="font-medium">
+                    {dateNameLong[x.day]}
+                    {index < routine.routineSchedule.length - 1 ? " | " : ""}
+                  </CardDescription>
+                ))}
+              </View>
+            ) : null}
             {routine?.description && (
               <CardDescription>{routine?.description}</CardDescription>
             )}

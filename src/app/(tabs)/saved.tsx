@@ -25,6 +25,7 @@ import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
 import { CircleX } from "~/lib/icons/CircleX";
+import { dateNameLong } from "@/src/utils/dateUtils";
 
 const Saved = () => {
   const router = useRouter();
@@ -52,7 +53,7 @@ const Saved = () => {
   } = useLiveQuery(
     drizzleDb.query.workoutRoutines.findMany({
       orderBy: (routines, { desc }) => [desc(routines.last_updated)],
-      with: { routineExercises: true },
+      with: { routineExercises: true, routineSchedule: true },
     })
   );
   useEffect(() => {
@@ -136,14 +137,25 @@ const Saved = () => {
                     <Card className="w-full flex-row justify-between items-center">
                       <CardHeader>
                         <CardTitle>{item.name}</CardTitle>
+                        {item?.routineSchedule?.length > 0 && (
+                          <CardDescription className="flex-row font-medium">
+                            {item.routineSchedule.map((x, index) => (
+                              <>
+                                {dateNameLong[x.day]}
+                                {index < item.routineSchedule.length - 1
+                                  ? " | "
+                                  : ""}
+                              </>
+                            ))}
+                          </CardDescription>
+                        )}
+
                         <CardDescription>
                           Exercises: {item?.routineExercises?.length}
                         </CardDescription>
-                        <CardDescription>
-                          {item.description
-                            ? item.description
-                            : "No Description"}
-                        </CardDescription>
+                        {item.description && (
+                          <CardDescription>{item.description}</CardDescription>
+                        )}
                       </CardHeader>
                       <CardContent></CardContent>
                     </Card>
