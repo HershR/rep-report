@@ -55,42 +55,40 @@ export default function Index() {
           onDateChange={setSelectedDate}
         />
       </View>
-      {!recentExerciseLoaded || !workoutLoaded ? (
-        <ActivityLoader />
-      ) : (
-        <View className="flex-1">
-          <View className="flex mt-2 mb-6">
-            {recentExercise ? (
-              <>
-                <Text className="text-xl font-semibold mt-4">
-                  Recent Exercise:
-                </Text>
-                <RecentExerciseList
-                  exercise={recentExercise}
-                  onPress={(id: number) => router.push(`/exercise/${id}`)}
-                />
-              </>
-            ) : null}
-          </View>
-          <View className="flex-1">
-            <SearchBar
-              placeholder={"Add exercise"}
-              value={""}
-              onPress={() => router.push("/search")}
-            />
-            {!workoutLoaded ? (
-              <ActivityLoader />
-            ) : (
-              <>
-                <Text className="text-xl font-semibold mt-4">
-                  Today's Workouts:
-                </Text>
-                <CompletedWorkoutList workouts={todayWorkouts} />
-              </>
-            )}
-          </View>
+      <View className="flex-1">
+        <View className="flex mt-2 mb-6">
+          {!recentExerciseLoaded ? (
+            <ActivityLoader />
+          ) : (
+            <>
+              <Text className="text-xl font-semibold mt-4">
+                Recent Exercise:
+              </Text>
+              <RecentExerciseList
+                exercise={recentExercise}
+                onPress={(id: number) => router.push(`/exercise/${id}`)}
+              />
+            </>
+          )}
         </View>
-      )}
+        <View className="flex-1">
+          <SearchBar
+            placeholder={"Add exercise"}
+            value={""}
+            onPress={() => router.push("/search")}
+          />
+          {!workoutLoaded ? (
+            <ActivityLoader />
+          ) : (
+            <>
+              <Text className="text-xl font-semibold mt-4">
+                Today's Workouts:
+              </Text>
+              <CompletedWorkoutList workouts={todayWorkouts} />
+            </>
+          )}
+        </View>
+      </View>
     </SafeAreaWrapper>
   );
 }

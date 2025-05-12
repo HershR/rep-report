@@ -21,8 +21,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { db, expo_sqlite } from "@/src/db/client";
-const DATABASE_NAME = "workouts";
+import { DATABASE_NAME, db, expo_sqlite } from "@/src/db/client";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
   colors: NAV_THEME.light,

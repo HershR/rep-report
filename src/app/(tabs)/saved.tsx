@@ -57,7 +57,7 @@ const Saved = () => {
   );
   useEffect(() => {
     if (routineError) {
-      console.log(routineError);
+      console.log("Routine Error: ", routineError);
     }
   }, [routineError]);
 
@@ -137,16 +137,19 @@ const Saved = () => {
                       <CardHeader>
                         <CardTitle>{item.name}</CardTitle>
                         {item?.routineSchedule?.length > 0 && (
-                          <CardDescription className="flex-row font-medium">
+                          <View className="flex-row">
                             {item.routineSchedule.map((x, index) => (
-                              <>
+                              <CardDescription
+                                className="font-medium"
+                                key={x.day}
+                              >
                                 {dateNameLong[x.day]}
                                 {index < item.routineSchedule.length - 1
                                   ? " | "
                                   : ""}
-                              </>
+                              </CardDescription>
                             ))}
-                          </CardDescription>
+                          </View>
                         )}
 
                         <CardDescription>

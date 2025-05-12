@@ -5,19 +5,15 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import { router } from "expo-router";
 import RoutineForm, { RoutineFormField } from "@/src/components/RoutineForm";
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src/db/schema";
 import Toast from "react-native-toast-message";
 import {
   addDaysToRoutine,
   addExercisesToRoutine,
   createRoutine,
 } from "@/src/db/dbHelpers";
-import { db, expo_sqlite } from "@/src/db/client";
+import { expo_sqlite } from "@/src/db/client";
 
 const ViewRoutine = () => {
-  expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -26,7 +22,6 @@ const ViewRoutine = () => {
     });
   }
   function saveFailMsg(error: Error) {
-    console.log(error);
     Toast.show({
       type: "error",
       text1: "Error",
@@ -35,17 +30,17 @@ const ViewRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      console.log(routineForm);
       const routineId = await createRoutine({
         name: routineForm.name,
         description: routineForm.description || null,
       });
-      addExercisesToRoutine(routineId, routineForm.exercises);
-      addDaysToRoutine(
+      await addExercisesToRoutine(routineId, routineForm.exercises);
+      await addDaysToRoutine(
         routineId,
         routineForm.days.filter((day) => day.selected).map((x) => x.id)
       );
     } catch (error: any) {
+      console.error(error);
       saveFailMsg(error);
       return;
     }
