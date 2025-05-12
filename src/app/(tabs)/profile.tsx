@@ -1,4 +1,4 @@
-import { ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Text } from "@/src/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,7 +11,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "@/src/components/ui/button";
+
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+
+import { Trash2 } from "@/src/lib/icons/Trash2";
+import { resetDatebase } from "@/src/db/dbHelpers";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
+
 
 const setTheme = async (theme: string) => {
   await AsyncStorage.setItem("theme", theme);
@@ -21,6 +29,10 @@ const Profile = () => {
   const [age, setAge] = useState<string | null>();
   const [weight, setWeight] = useState<string | null>();
   const [height, setHeight] = useState<string | null>();
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+
+  const [clearDB, setClearDB] = useState(false);
 
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
@@ -38,13 +50,37 @@ const Profile = () => {
     const _height = await AsyncStorage.getItem("height");
     setHeight(_height || "0");
   };
+  const clearDBAlert = () =>
+    Alert.alert("Clear Data", "All data will be lost", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "OK",
+        onPress: async () => {
+          setClearDB(true);
+        },
+      },
+    ]);
 
+  const restartAppAlert = () => {
+    Alert.alert("Restart App", "Please restart app", []);
+  };
   useEffect(() => {
     isMountingRef.current = true;
     getAge();
     getWeight();
     getHeight();
   }, []);
+
+  useEffect(() => {
+    if (clearDB) {
+      resetDatebase(drizzleDb).then(() => {
+        restartAppAlert();
+      });
+    }
+  }, [clearDB, drizzleDb]);
   useEffect(() => {
     if (!isMountingRef.current) {
       setTheme(colorScheme);
@@ -100,10 +136,23 @@ const Profile = () => {
               </View>
             </View>
             <Separator className="" />
+        <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-lg font-medium">Clear Data</Text>
+                <Button
+                  variant={"destructive"}
+                  size={"icon"}
+                  onPress={() => {
+                    clearDBAlert();
+                  }}
+                >
+                  <Trash2 className="color-secondary" size={20} />
+                </Button>
+              </View>
           </ScrollView>
         </CardContent>
       </Card>
     </SafeAreaWrapper>
+
   );
 };
 

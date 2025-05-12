@@ -9,6 +9,7 @@ import m0004 from './0004_cheerful_mephistopheles.sql';
 import m0005 from './0005_mean_black_widow.sql';
 import m0006 from './0006_wooden_shriek.sql';
 
+
   export default {
     journal,
     migrations: {

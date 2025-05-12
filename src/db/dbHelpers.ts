@@ -352,12 +352,12 @@ export const deleteWorkoutSet = async (id: number) => {
 
 export async function resetDatebase(db: ExpoSQLiteDatabase<typeof schema>) {
   try {
+    db.run(sql`DROP TABLE IF EXISTS __drizzle_migrations`);
     db.run(sql`DROP TABLE IF EXISTS routine_exercises`);
     db.run(sql`DROP TABLE IF EXISTS workout_routines`);
     db.run(sql`DROP TABLE IF EXISTS workout_sets`);
     db.run(sql`DROP TABLE IF EXISTS workouts`);
     db.run(sql`DROP TABLE IF EXISTS exercises`);
-    db.run(sql`DROP TABLE IF EXISTS _drizzle_migrations`);
     console.log("Database cleared!");
   } catch (error) {
     console.error("Error clearing database:", error);

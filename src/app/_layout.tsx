@@ -85,6 +85,7 @@ export default function RootLayout() {
   if (!isColorSchemeLoaded) {
     return null;
   }
+  console.log(success, error, "Database migrations completed successfully");
   return (
     <>
       <Suspense fallback={<ActivityLoader />}>
