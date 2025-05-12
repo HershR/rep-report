@@ -57,7 +57,7 @@ const Saved = () => {
   );
   useEffect(() => {
     if (routineError) {
-      console.log(routineError);
+      console.log("Routine Error: ", routineError);
     }
   }, [routineError]);
 

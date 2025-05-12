@@ -13,8 +13,8 @@ import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
 import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
 import { db, expo_sqlite } from "@/src/db/client";
+
 //Get
-expo_sqlite.execSync("PRAGMA foreign_keys = ON");
 export const getAllExercises = async (
   db: ExpoSQLiteDatabase<typeof schema>
 ) => {

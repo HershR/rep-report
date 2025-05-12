@@ -14,7 +14,6 @@ import {
 import { expo_sqlite } from "@/src/db/client";
 
 const ViewRoutine = () => {
-  // expo_sqlite.execSync("PRAGMA foreign_keys = ON");
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -31,7 +30,6 @@ const ViewRoutine = () => {
   }
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
-      console.log(routineForm);
       const routineId = await createRoutine({
         name: routineForm.name,
         description: routineForm.description || null,
