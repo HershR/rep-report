@@ -12,7 +12,7 @@ export const exercises = sqliteTable("exercises", {
 });
 
 // Workout Routines (collections)
-export const workoutRoutines = sqliteTable("workout_routines", {
+export const routines = sqliteTable("routines", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description"),
@@ -25,7 +25,7 @@ export const routineExercises = sqliteTable("routine_exercises", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   routine_id: integer("routine_id")
     .notNull()
-    .references(() => workoutRoutines.id, { onDelete: "cascade" }),
+    .references(() => routines.id, { onDelete: "cascade" }),
   exercise_id: integer("exercise_id")
     .notNull()
     .references(() => exercises.id, { onDelete: "restrict" }),
@@ -41,7 +41,7 @@ export const workouts = sqliteTable("workouts", {
   mode: integer("mode").notNull().default(0), // 0 = weight, 1 = time
   unit: text("unit").notNull().default("lb"), // e.g., kg, lbs
   notes: text("notes"),
-  collection_id: integer("collection_id").references(() => workoutRoutines.id, {
+  routine_id: integer("routine_id").references(() => routines.id, {
     onDelete: "set null",
   }),
   exercise_id: integer("exercise_id")
@@ -61,14 +61,20 @@ export const workoutSets = sqliteTable("workout_sets", {
   duration: text("duration"), // HH:mm:ss
 });
 
+export const routineSchedule = sqliteTable("routine_schedule", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  routine_id: integer("routine_id")
+    .notNull()
+    .references(() => routines.id, { onDelete: "cascade" }),
+  day: integer("day").notNull(), //sunday=0 ... saterday = 6
+});
+
 // Optional, for easier querying
-export const workoutRoutineRelations = relations(
-  workoutRoutines,
-  ({ many }) => ({
-    workouts: many(workouts),
-    routineExercises: many(routineExercises),
-  })
-);
+export const workoutRoutineRelations = relations(routines, ({ many }) => ({
+  workouts: many(workouts),
+  routineExercises: many(routineExercises),
+  routineSchedule: many(routineSchedule),
+}));
 
 export const workoutRelations = relations(workouts, ({ many, one }) => ({
   sets: many(workoutSets),
@@ -85,6 +91,10 @@ export const routineExerciseRelations = relations(
       fields: [routineExercises.exercise_id],
       references: [exercises.id],
     }),
+    routine: one(routines, {
+      fields: [routineExercises.routine_id],
+      references: [routines.id],
+    }),
   })
 );
 
@@ -94,3 +104,13 @@ export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
     references: [workouts.id],
   }),
 }));
+
+export const routineScheduleRelations = relations(
+  routineSchedule,
+  ({ one }) => ({
+    routine: one(routines, {
+      fields: [routineSchedule.routine_id],
+      references: [routines.id],
+    }),
+  })
+);

@@ -1,11 +1,5 @@
-import {
-  ActivityIndicator,
-  FlatList,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
 import {
   Tabs,
   TabsContent,
@@ -16,42 +10,76 @@ import { Text } from "@/src/components/ui/text";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
-import { Link } from "expo-router";
-import { Card, CardTitle } from "@/src/components/ui/card";
-import ExerciseImage from "@/src/components/ExerciseImage";
+import { useRouter } from "expo-router";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import ExerciseList from "@/src/components/lists/ExerciseList";
+import ActivityLoader from "@/src/components/ActivityLoader";
+import { Button } from "@/src/components/ui/button";
+import { CircleX } from "~/lib/icons/CircleX";
+import { dateNameLong } from "@/src/utils/dateUtils";
+import { db } from "@/src/db/client";
 
 const Saved = () => {
+  const router = useRouter();
+
   const [tab, setTab] = useState("favorites");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
   const {
     data: favorites,
     updatedAt: favoritesLoaded,
-    error,
+    error: favoritesError,
   } = useLiveQuery(
-    drizzleDb.query.exercises.findMany({
+    db.query.exercises.findMany({
       where: (exercises) => eq(exercises.is_favorite, true),
       orderBy: (exercises, { asc }) => [asc(exercises.name)],
     })
   );
 
-  return (
-    <View className="flex-1 bg-secondary">
-      <SafeAreaView edges={["bottom"]} className="flex-1 mx-8 mt-10 pb-20">
-        <Tabs value={tab} onValueChange={setTab} className="flex-1 gap-y-4">
-          <TabsList className="flex-row w-full">
-            <TabsTrigger value="favorites" className="flex-1">
-              <Text>Favorites</Text>
-            </TabsTrigger>
-            <TabsTrigger value="routines" className="flex-1">
-              <Text>Routines</Text>
-            </TabsTrigger>
-          </TabsList>
+  const {
+    data: routines,
+    updatedAt: routinesLoaded,
+    error: routineError,
+  } = useLiveQuery(
+    db.query.routines.findMany({
+      orderBy: (routines, { desc }) => [desc(routines.last_updated)],
+      with: { routineExercises: true, routineSchedule: true },
+    })
+  );
+  useEffect(() => {
+    if (routineError) {
+      console.log("Routine Error: ", routineError);
+    }
+  }, [routineError]);
 
+  return (
+    <SafeAreaWrapper>
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          setSearchQuery("");
+          setTab(value);
+        }}
+        className="flex-1"
+      >
+        <TabsList className="flex-row w-full max-w-[400px] self-center">
+          <TabsTrigger value="favorites" className="flex-1">
+            <Text>Favorites</Text>
+          </TabsTrigger>
+          <TabsTrigger value="routines" className="flex-1">
+            <Text>Routines</Text>
+          </TabsTrigger>
+        </TabsList>
+        <View className="mb-4">
           <SearchBar
             placeholder={
               tab === "favorites" ? "Search favorites..." : "Search routines..."
@@ -61,86 +89,100 @@ const Saved = () => {
               setSearchQuery(text);
             }}
           />
-          <TabsContent className="flex-1" value="favorites">
-            {!favoritesLoaded ? (
-              <ActivityIndicator></ActivityIndicator>
-            ) : (
-              <View className="flex-1">
-                <CardTitle className="ml-4">Favorites:</CardTitle>
-                <FlatList
-                  numColumns={2}
-                  showsVerticalScrollIndicator={false}
-                  data={
-                    searchQuery.length > 0
-                      ? favorites.filter(
-                          (x) =>
-                            x.name
-                              .toLowerCase()
-                              .indexOf(searchQuery.toLowerCase()) > -1
-                        )
-                      : favorites
-                  }
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item: exercise, index }) => {
-                    const { id, name, category, image } = exercise;
-
-                    return (
-                      <Link href={`/exercise/${id}`} asChild>
-                        <TouchableOpacity className="w-1/2">
-                          <Card className="relative flex-1 justify-center items-center overflow-hidden">
-                            <ExerciseImage
-                              image_uri={image}
-                              imageClassname={
-                                "w-full aspect-square rounded-md bg-white"
-                              }
-                              textClassname={"text-black text-xl text-center"}
-                            ></ExerciseImage>
-                            <View
-                              className=" absolute bottom-0 h-1/4 w-full justify-end"
-                              style={{ backgroundColor: "#ffffffbb" }}
-                            >
-                              <View className="justify-center items-start ml-2 my-1">
-                                <Text
-                                  className="text-lg font-bold text-black"
-                                  numberOfLines={1}
-                                >
-                                  {name}
-                                </Text>
-                                <Text className="text-md text-black">
-                                  {" "}
-                                  ({category})
-                                </Text>
-                              </View>
-                            </View>
-                          </Card>
-                        </TouchableOpacity>
-                      </Link>
-                    );
-                  }}
-                  columnWrapperClassName="justify-between my-1 gap-x-2 px-2"
-                  ListEmptyComponent={
-                    !favoritesLoaded && !error ? (
-                      <View className="mt-10 px-5">
-                        <Text className="text-center text-primary">
-                          No Exercise Found
-                        </Text>
-                      </View>
-                    ) : null
-                  }
-                ></FlatList>
-              </View>
-            )}
-          </TabsContent>
-          <TabsContent className="flex-1" value="routines">
+        </View>
+        <TabsContent style={{ flex: 1 }} value="favorites">
+          {!favoritesLoaded ? (
+            <ActivityLoader />
+          ) : (
+            <>
+              {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
+              <ExerciseList
+                exercises={
+                  searchQuery
+                    ? favorites.filter((x) =>
+                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : favorites
+                }
+                emptyListComp={
+                  <View className="flex-1 items-center justify-center">
+                    <Text>No Favorites Added</Text>
+                  </View>
+                }
+              />
+            </>
+          )}
+        </TabsContent>
+        <TabsContent className="flex-1" value="routines">
+          {!routinesLoaded ? (
+            <ActivityLoader />
+          ) : (
             <View className="flex-1 justify-center items-center">
-              <Text className="text-lg text-muted-foreground">
-                Routines feature coming soon!
-              </Text>
+              <FlatList
+                className="w-full"
+                data={
+                  searchQuery
+                    ? routines.filter((x) =>
+                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : routines
+                }
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerClassName="gap-y-4"
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/routine/${item.id}`)}
+                  >
+                    <Card className="w-full flex-row justify-between items-center">
+                      <CardHeader>
+                        <CardTitle>{item.name}</CardTitle>
+                        {item?.routineSchedule?.length > 0 && (
+                          <View className="flex-row">
+                            {item.routineSchedule.map((x, index) => (
+                              <CardDescription
+                                className="font-medium"
+                                key={x.day}
+                              >
+                                {dateNameLong[x.day]}
+                                {index < item.routineSchedule.length - 1
+                                  ? " | "
+                                  : ""}
+                              </CardDescription>
+                            ))}
+                          </View>
+                        )}
+
+                        <CardDescription>
+                          Exercises: {item?.routineExercises?.length}
+                        </CardDescription>
+                        {item.description && (
+                          <CardDescription>{item.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent></CardContent>
+                    </Card>
+                  </TouchableOpacity>
+                )}
+              ></FlatList>
+              <Button
+                className="absolute bottom-0 right-2 rounded-full h-14 w-14"
+                size={"icon"}
+                onPress={() =>
+                  router.push({
+                    pathname: "../routine/create",
+                  })
+                }
+              >
+                <CircleX
+                  size={40}
+                  className="color-background rotate-45"
+                ></CircleX>
+              </Button>
             </View>
-          </TabsContent>
-        </Tabs>
-      </SafeAreaView>
-    </View>
+          )}
+        </TabsContent>
+      </Tabs>
+    </SafeAreaWrapper>
   );
 };
 

@@ -1,6 +1,6 @@
 import "../global.css";
 import { Stack } from "expo-router";
-import { ActivityIndicator, StatusBar, View, Text } from "react-native";
+import { StatusBar, View, Text } from "react-native";
 import { DateProvider } from "../context/DateContext";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
@@ -19,8 +19,9 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const DATABASE_NAME = "workouts";
+import ActivityLoader from "../components/ActivityLoader";
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { DATABASE_NAME, db, expo_sqlite } from "@/src/db/client";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
   colors: NAV_THEME.light,
@@ -36,12 +37,8 @@ export {
 
 export default function RootLayout() {
   //db
-  const expoDb = openDatabaseSync(DATABASE_NAME, {
-    enableChangeListener: true,
-  });
-  const db = drizzle(expoDb);
   const { success, error } = useMigrations(db, migrations);
-
+  useDrizzleStudio(expo_sqlite);
   //rnr ui lib
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();
@@ -91,7 +88,7 @@ export default function RootLayout() {
   console.log(success, error, "Database migrations completed successfully");
   return (
     <>
-      <Suspense fallback={<ActivityIndicator size="large" />}>
+      <Suspense fallback={<ActivityLoader />}>
         <SQLiteProvider
           databaseName={DATABASE_NAME}
           options={{ enableChangeListener: true }}
@@ -110,7 +107,23 @@ export default function RootLayout() {
                   options={{ headerShown: false }}
                 ></Stack.Screen>
                 <Stack.Screen
-                  name="workout/[id]"
+                  name="workout/create/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="workout/update/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/create"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/[id]"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="routine/update/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
               </Stack>

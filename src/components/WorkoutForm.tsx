@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -17,7 +17,6 @@ import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
 import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
-import { Trash2 } from "../lib/icons/Trash2";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -30,57 +29,36 @@ import {
   AlertDialogAction,
 } from "./ui/alert-dialog";
 
-interface FormActionAlertProps {
-  title: string;
-  description: string;
-  trigger: ReactNode;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-const FormActionAlert = ({
-  title,
-  description,
-  trigger,
-  onConfirm,
-  onCancel,
-}: FormActionAlertProps) => {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost">{trigger}</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent className="gap-y-2">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row justify-end gap-x-2">
-          <AlertDialogCancel onPress={onCancel}>
-            <Text>Cancel</Text>
-          </AlertDialogCancel>
-          <AlertDialogAction onPress={onConfirm}>
-            <Text>Continue</Text>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
-
 interface WorkoutWithExercise
-  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
   exercise: Pick<Exercise, "name" | "image">;
 }
 
 interface Props {
   defaultForm: WorkoutWithExercise;
-  formMode: 0 | 1;
   onSubmit: (data: Workout) => void;
-  onDelete: () => void;
+  action?: () => ReactNode;
 }
 
-const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
+const emptySet: WorkoutSet = {
+  id: -1,
+  workout_id: 0,
+  order: 0,
+  reps: null,
+  weight: null,
+  duration: null,
+};
+const emptyForm: Workout = {
+  id: -1,
+  date: "",
+  mode: 0,
+  unit: "lb",
+  routine_id: null,
+  exercise_id: 0,
+  notes: null,
+  sets: [emptySet],
+};
+const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const {
@@ -96,6 +74,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
       ...defaultForm,
       mode: defaultForm?.mode || 0,
       date: defaultForm?.date || new Date().toISOString().slice(0, 10),
+      sets: defaultForm.sets.length > 0 ? defaultForm.sets : [emptySet],
     },
   });
   const date = watch("date");
@@ -106,17 +85,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
     name: "sets",
     rules: { required: true, minLength: 1 },
   });
-  const addSet = () => {
-    const emptySet: WorkoutSet = {
-      id: -1,
-      workout_id: 0,
-      order: fields.length,
-      reps: null,
-      weight: null,
-      duration: null,
-    };
-    append(emptySet);
-  };
+
+  function addSet() {
+    append({ ...emptySet, order: fields.length });
+  }
+
   function formatTime(duration: string) {
     const n = duration.length;
     const format = "00:00:00";
@@ -125,6 +98,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
 
     return duration;
   }
+
   const validateAndSubmit = (data: Workout) => {
     for (let i = 0; i < data.sets.length; i++) {
       const set = data.sets[i];
@@ -140,25 +114,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
     onSubmit(data);
   };
 
-  function clearForm(): void {
-    reset(defaultForm);
-  }
-
   return (
-    <Card className="flex-1 w-full">
+    <Card className="flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
-        <FormActionAlert
-          title={`${formMode === 0 ? "Reset form" : "Delete Workout"}`}
-          description={`${
-            formMode === 0
-              ? "This action cannot be undone."
-              : "This action cannot be undone. This will permanently delete this workout and sets."
-          }`}
-          trigger={<Trash2 className="color-destructive" />}
-          onConfirm={formMode === 1 ? onDelete : clearForm}
-          onCancel={() => {}}
-        />
+        {action && action()}
       </CardHeader>
       {/* DATE */}
       <CardContent>
@@ -274,7 +234,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
                     rules={{
                       required: true,
                       validate: (value) => {
-                        if (value != null && !isNaN(value)) {
+                        if (value != null && !isNaN(value) && value > 0) {
                           return true;
                         }
                         return false;
@@ -367,9 +327,6 @@ const WorkoutForm = ({ defaultForm, onSubmit, formMode, onDelete }: Props) => {
             ) : null}
           </CardContent>
         ))}
-        {errors.sets?.root && (
-          <Text className="text-destructive ml-12">Please add a set</Text>
-        )}
       </ScrollView>
 
       {/* Footer */}
