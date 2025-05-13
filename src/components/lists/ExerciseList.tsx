@@ -29,12 +29,12 @@ const ExerciseList = ({
       contentContainerClassName=" justify-center item-center"
       key={numColumns}
       numColumns={numColumns}
-      data={formatList(exercises || [], numColumns).slice(
+      data={formatList(exercises, numColumns).slice(
         currentPage * pageSize,
         (currentPage + 1) * pageSize
       )}
       showsVerticalScrollIndicator={false}
-      keyExtractor={(item) => (item.id ? item.id.toString() : item.key)}
+      keyExtractor={(item) => item.id}
       columnWrapperClassName="justify-start gap-x-4 my-2"
       // contentContainerStyle={{ paddingBottom: 10 }}
       ListEmptyComponent={emptyListComp}

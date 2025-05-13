@@ -133,12 +133,10 @@ const SearchModal = ({
                     ?.map((exercise) => exercise.data)
                     .sort((a, b) =>
                       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                    ) || [],
+                    ),
                   2
                 )}
-                keyExtractor={(item) =>
-                  item.id ? item.id.toString() : item.key
-                }
+                keyExtractor={(item) => item.id}
                 columnWrapperClassName="justify-start gap-x-4 my-2"
                 renderItem={({ item }) => {
                   if (item.empty) {
