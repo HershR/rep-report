@@ -15,6 +15,7 @@ const ViewRoutine = () => {
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
   db.execSync("PRAGMA foreign_keys = ON");
+
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -23,20 +24,21 @@ const ViewRoutine = () => {
     });
   }
   function saveFailMsg(error: Error) {
-    console.log(error);
+    console.log("Create Routine Error: ", error);
     Toast.show({
       type: "error",
       text1: "Error",
       text2: "Failed to Save Workout, reason: " + error,
     });
   }
+
   async function saveRoutine(routineForm: RoutineFormField) {
     try {
       const routineId = await createRoutine(drizzleDb, {
         name: routineForm.name,
         description: routineForm.description || null,
       });
-      addExercisesToRoutine(drizzleDb, routineId, routineForm.exercises);
+      await addExercisesToRoutine(drizzleDb, routineId, routineForm.exercises);
     } catch (error: any) {
       saveFailMsg(error);
       return;

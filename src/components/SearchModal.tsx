@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  View,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-} from "react-native";
-import { Input } from "./ui/input";
+import { Modal, View, FlatList, TouchableOpacity } from "react-native";
 import { Text } from "./ui/text";
 import { Button } from "./ui/button";
 import { searchExercise } from "../services/api";
@@ -23,10 +16,10 @@ import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "../db/schema";
 import ExerciseImage from "./ExerciseImage";
-import { Link, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "./SearchBar";
 import ActivityLoader from "./ActivityLoader";
+import { formatList } from "../utils/listFormatter";
 interface SearchModalProps {
   visible: boolean;
   onClose: () => void;
@@ -135,49 +128,62 @@ const SearchModal = ({
               <FlatList
                 numColumns={2}
                 showsVerticalScrollIndicator={false}
-                data={exercises
-                  ?.map((exercise) => exercise.data)
-                  .sort((a, b) =>
-                    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                  )}
-                keyExtractor={(item) => item.base_id.toString()}
-                columnWrapperClassName="justify-start gap-x-4 my-2"
-                renderItem={({ item }) => (
-                  <Card className="flex-1 aspect-square p-2">
-                    <TouchableOpacity
-                      className="flex-1"
-                      onPress={() => {
-                        onShowExercise(item.base_id);
-                      }}
-                    >
-                      <ExerciseImage
-                        image_uri={
-                          !!item.image ? `https://wger.de/${item.image}` : null
-                        }
-                        contextFit="contain"
-                      />
-                      <Text numberOfLines={1} className="w-full text-center">
-                        {item.name}
-                      </Text>
-                      <Button
-                        onPress={() => {
-                          onSelectExercise({
-                            ...item,
-                            image: item.image
-                              ? "https://wger.de/" + item.image
-                              : null,
-                            is_favorite: false,
-                            id: item.base_id,
-                          });
-                        }}
-                        size={"icon"}
-                        className="w-full"
-                      >
-                        <Text>+</Text>
-                      </Button>
-                    </TouchableOpacity>
-                  </Card>
+                data={formatList(
+                  exercises
+                    ?.map((exercise) => exercise.data)
+                    .sort((a, b) =>
+                      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+                    ) || [],
+                  2
                 )}
+                keyExtractor={(item) =>
+                  item.id ? item.id.toString() : item.key
+                }
+                columnWrapperClassName="justify-start gap-x-4 my-2"
+                renderItem={({ item }) => {
+                  if (item.empty) {
+                    return <View className="flex-1"></View>;
+                  }
+
+                  return (
+                    <Card className="flex-1 aspect-square p-2">
+                      <TouchableOpacity
+                        className="flex-1"
+                        onPress={() => {
+                          onShowExercise(item.base_id);
+                        }}
+                      >
+                        <ExerciseImage
+                          image_uri={
+                            !!item.image
+                              ? `https://wger.de/${item.image}`
+                              : null
+                          }
+                          contextFit="contain"
+                        />
+                        <Text numberOfLines={1} className="w-full text-center">
+                          {item.name}
+                        </Text>
+                        <Button
+                          onPress={() => {
+                            onSelectExercise({
+                              ...item,
+                              image: item.image
+                                ? "https://wger.de/" + item.image
+                                : null,
+                              is_favorite: false,
+                              id: item.base_id,
+                            });
+                          }}
+                          size={"icon"}
+                          className="w-full"
+                        >
+                          <Text>+</Text>
+                        </Button>
+                      </TouchableOpacity>
+                    </Card>
+                  );
+                }}
               />
             )}
           </CardContent>

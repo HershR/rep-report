@@ -58,7 +58,7 @@ const Saved = () => {
   );
   useEffect(() => {
     if (routineError) {
-      console.log(routineError);
+      console.log("Saved Routine Fetch Error: ", routineError);
     }
   }, [routineError]);
 
@@ -139,14 +139,9 @@ const Saved = () => {
                         <CardTitle>{item.name}</CardTitle>
                         {item?.routineSchedule?.length > 0 && (
                           <CardDescription className="flex-row font-medium">
-                            {item.routineSchedule.map((x, index) => (
-                              <>
-                                {dateNameLong[x.day]}
-                                {index < item.routineSchedule.length - 1
-                                  ? " | "
-                                  : ""}
-                              </>
-                            ))}
+                            {item.routineSchedule
+                              .map((x, index) => dateNameLong[x.day])
+                              .join(" | ")}
                           </CardDescription>
                         )}
 
