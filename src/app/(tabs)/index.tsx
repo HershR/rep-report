@@ -15,6 +15,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
+import { DateTime } from "luxon";
 export default function Index() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -45,6 +46,7 @@ export default function Index() {
         exercise: true,
         sets: true,
       },
+      orderBy: desc(workouts.last_updated),
     }),
     [selectedDate]
   );
@@ -85,7 +87,10 @@ export default function Index() {
             ) : (
               <>
                 <Text className="text-xl font-semibold mt-4">
-                  Today's Workouts:
+                  {selectedDate?.toISODate() === DateTime.now().toISODate()
+                    ? "Today's Workouts"
+                    : selectedDate?.toFormat("LLL dd, yyyy")}
+                  :
                 </Text>
                 <CompletedWorkoutList workouts={todayWorkouts} />
               </>
