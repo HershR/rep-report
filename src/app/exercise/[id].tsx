@@ -26,9 +26,9 @@ import {
 } from "~/components/ui/accordion";
 import ExerciseImage from "@/src/components/ExerciseImage";
 import {
-  createExercise,
   getExerciseById,
   setFavoriteExercise,
+  getOrCreateExercise,
 } from "@/src/db/dbHelpers";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
@@ -103,20 +103,13 @@ const ExerciseDetails = () => {
 
   async function toggleFavorite() {
     if (exercise && loading === false) {
-      await getExerciseById(drizzleDb, parseInt(id)).then((ex) => {
-        if (ex === undefined) {
-          createExercise(drizzleDb, {
-            id: exercise.id,
-            name: translation?.name || "",
-            category: exercise.category.name,
-            image: exercise.images.length > 0 ? exercise.images[0].image : null,
-            is_favorite: true,
-          });
-        } else {
-          setFavoriteExercise(drizzleDb, ex.id, !isFavorite);
-        }
-      });
-      setIsFavorite((prev) => !prev);
+      try {
+        const exercise_id = await getOrCreateExercise(drizzleDb, parseInt(id));
+        await setFavoriteExercise(drizzleDb, exercise_id, !isFavorite);
+        setIsFavorite((prev) => !prev);
+      } catch (err) {
+        console.log("Failed to update favorite: ", err);
+      }
     }
   }
 
