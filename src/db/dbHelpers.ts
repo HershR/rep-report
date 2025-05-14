@@ -8,6 +8,7 @@ import {
   workouts,
   workoutSets,
   exercises,
+  weightHistory,
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
@@ -155,7 +156,35 @@ export const getRecentWorkout = async (
   });
 };
 
+export const getRecentWeight = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.weightHistory.findFirst({
+    orderBy: (weight_history, { desc }) => [desc(weight_history.date_created)],
+  });
+};
+
+export const getWeightHistory = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.weightHistory.findMany({
+    orderBy: (weight_history, { desc }) => [desc(weight_history.date_created)],
+  });
+};
+
 //Create
+
+export const createWeightEntry = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  weight: number
+) => {
+  const now = new Date().toISOString();
+  return db.insert(weightHistory).values({
+    date_created: now,
+    weight: weight,
+  });
+};
+
 const createExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   exercise: Exercise
