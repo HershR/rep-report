@@ -1,7 +1,6 @@
 import { ScrollView, View } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Text } from "@/src/components/ui/text";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { User } from "@/src/lib/icons/User";
 import { MoonStar } from "@/src/lib/icons/MoonStar";
 import { Sun } from "@/src/lib/icons/Sun";
@@ -10,39 +9,55 @@ import { useColorScheme } from "@/src/lib/useColorScheme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import { Button } from "@/src/components/ui/button";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { useSQLiteContext } from "expo-sqlite";
+import * as schema from "@/src//db/schema";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { NAV_THEME } from "@/src/lib/constants";
+import { Button } from "@/src/components/ui/button";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { useRouter } from "expo-router";
 
-const setTheme = async (theme: string) => {
-  await AsyncStorage.setItem("theme", theme);
-};
 const Profile = () => {
   const isMountingRef = useRef(false);
   const [age, setAge] = useState<string | null>();
-  const [weight, setWeight] = useState<string | null>();
   const [height, setHeight] = useState<string | null>();
-
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
+
+  const router = useRouter();
 
   const getAge = async () => {
     const _age = await AsyncStorage.getItem("age");
     setAge(_age || "0");
   };
-  const getWeight = async () => {
-    const _weight = await AsyncStorage.getItem("weight");
-    setWeight(_weight || "0");
-  };
+
+  const {
+    data: weight,
+    error: weightError,
+    updatedAt: weightLoaded,
+  } = useLiveQuery(
+    drizzleDb.query.weightHistory.findFirst({
+      orderBy: (weight_history, { desc }) => [
+        desc(weight_history.date_created),
+      ],
+    })
+  );
 
   const getHeight = async () => {
     const _height = await AsyncStorage.getItem("height");
     setHeight(_height || "0");
   };
 
+  const setTheme = async (theme: string) => {
+    await AsyncStorage.setItem("theme", theme);
+  };
   useEffect(() => {
     isMountingRef.current = true;
     getAge();
-    getWeight();
     getHeight();
   }, []);
   useEffect(() => {
@@ -56,7 +71,7 @@ const Profile = () => {
   return (
     <SafeAreaWrapper>
       <Text className="text-3xl text-left w-full">Profile</Text>
-      <Card className="flex-row w-full h-1/4 pt-6">
+      <Card className="flex-row w-full h-1/4 pt-6 mt-16">
         <CardContent className="flex justify-center items-center">
           <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
             <User className="color-primary" size={80}></User>
@@ -64,23 +79,29 @@ const Profile = () => {
         </CardContent>
         <CardContent className="flex-1 justify-center">
           <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Age</Text>
+            <Text className="text-xl font-medium text-left">Age</Text>
             <Text className="text-xl font-medium text-right">{age} yr</Text>
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Weight</Text>
-            <Text className="text-xl font-medium text-right">{weight} lb</Text>
+            <Text className="text-xl font-medium text-left">Weight</Text>
+            {weight ? (
+              <Text className="text-xl font-medium text-right">
+                {weight.weight} lb
+              </Text>
+            ) : (
+              <Text className="text-xl font-medium text-right">NA</Text>
+            )}
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Height</Text>
+            <Text className="text-xl font-medium text-left">Height</Text>
             <Text className="text-xl font-medium text-right">{height} ft</Text>
           </View>
         </CardContent>
       </Card>
 
-      <Card className="flex-1">
+      <Card className="flex-1 mt-4">
         <CardContent className="flex-1">
           <ScrollView
             className="flex-1 w-full mt-8"
@@ -88,18 +109,38 @@ const Profile = () => {
             contentContainerClassName="gap-y-4"
           >
             <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-              <Text className="text-lg font-medium">App Theme</Text>
+              <Text className="text-xl font-medium">App Theme</Text>
               <View className="flex-row items-center gap-x-2">
-                <Sun className="color-primary" size={20} />
+                <Sun className="color-primary" size={24} />
                 <Switch
                   checked={isDarkColorScheme}
                   onCheckedChange={() => toggleColorScheme()}
                   nativeID="airplane-mode"
                 />
-                <MoonStar className="color-primary" size={20} />
+                <MoonStar className="color-primary" size={24} />
               </View>
             </View>
-            <Separator className="" />
+            <Separator />
+            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+              <Text className="text-xl font-medium">My Weight</Text>
+              <Button
+                variant={"ghost"}
+                size="icon"
+                className="flex-row w-14"
+                onPress={() => router.push("/weight")}
+              >
+                <Ionicons
+                  name="scale"
+                  size={24}
+                  color={
+                    colorScheme === "light"
+                      ? NAV_THEME.light.primary
+                      : NAV_THEME.dark.primary
+                  }
+                />
+                <ChevronRight size={24} className="color-primary" />
+              </Button>
+            </View>
           </ScrollView>
         </CardContent>
       </Card>
