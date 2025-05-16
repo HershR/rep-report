@@ -1,4 +1,4 @@
-import { ScrollView, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Text } from "@/src/components/ui/text";
 import { User } from "@/src/lib/icons/User";
@@ -85,13 +85,15 @@ const Profile = () => {
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
             <Text className="text-xl font-medium text-left">Weight</Text>
-            {weight ? (
-              <Text className="text-xl font-medium text-right">
-                {weight.weight} lb
-              </Text>
-            ) : (
-              <Text className="text-xl font-medium text-right">NA</Text>
-            )}
+            <TouchableOpacity onPress={() => router.push("/weight")}>
+              {weight ? (
+                <Text className="text-xl font-medium text-right">
+                  {weight.weight} lb
+                </Text>
+              ) : (
+                <Text className="text-xl font-medium text-right">NA</Text>
+              )}
+            </TouchableOpacity>
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
