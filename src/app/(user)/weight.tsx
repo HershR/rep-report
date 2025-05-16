@@ -21,7 +21,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
 
 const WeightHistory = () => {
-  const [weight, setWeight] = useState(0);
+  const [weight, setWeight] = useState<number | null>(0);
   const [date, setDate] = useState(new Date());
   const [dateModalVisible, setDateModalVisible] = useState(false);
 
@@ -38,12 +38,6 @@ const WeightHistory = () => {
       ],
     })
   );
-
-  useEffect(() => {
-    if (weightHistory && weightHistory.length > 0) {
-      setWeight(weightHistory[0].weight);
-    }
-  }, [weightHistory]);
 
   const addWeightEntry = async (weight: number) => {
     try {
@@ -92,7 +86,10 @@ const WeightHistory = () => {
               size="icon"
               className="rounded-full w-12 h-12"
               onPress={() => {
-                addWeightEntry(weight);
+                if (weight !== null) {
+                  addWeightEntry(weight);
+                }
+                setWeight(null);
               }}
             >
               <Plus className="color-primary" size={40} />
