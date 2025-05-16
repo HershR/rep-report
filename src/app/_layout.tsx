@@ -129,6 +129,10 @@ export default function RootLayout() {
                   name="routine/update/[id]"
                   options={{ headerShown: false }}
                 ></Stack.Screen>
+                <Stack.Screen
+                  name="(user)"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
               </Stack>
               <PortalHost />
               <Toast />

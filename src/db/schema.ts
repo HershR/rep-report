@@ -1,5 +1,5 @@
 // schema.ts
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 
 // Exercises (from Wger API or user-defined)
@@ -57,7 +57,7 @@ export const workoutSets = sqliteTable("workout_sets", {
     .references(() => workouts.id, { onDelete: "cascade" }),
   order: integer("order").notNull(), // Set index
   reps: integer("reps"),
-  weight: integer("weight"),
+  weight: real("weight"),
   duration: text("duration"), // HH:mm:ss
 });
 
@@ -67,6 +67,12 @@ export const routineSchedule = sqliteTable("routine_schedule", {
     .notNull()
     .references(() => routines.id, { onDelete: "cascade" }),
   day: integer("day").notNull(), //sunday=0 ... saterday = 6
+});
+
+export const weightHistory = sqliteTable("weight_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  weight: real("weight").notNull(),
+  date_created: text("date_created").notNull(),
 });
 
 // Optional, for easier querying
