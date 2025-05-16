@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import {
   Card,
@@ -15,75 +15,21 @@ import { Separator } from "@/src/components/ui/separator";
 import {
   FlatList,
   Modal,
+  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { Button } from "@/src/components/ui/button";
-import { createWeightEntry } from "@/src/db/dbHelpers";
+import { createWeightEntry, deleteWeightEntry } from "@/src/db/dbHelpers";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Plus } from "@/src/lib/icons/Plus";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Input } from "@/src/components/ui/input";
-
-interface WeightModalProps {
-  visible: boolean;
-  currentWeight: number;
-  onClose: () => void;
-  onSelectWeight: (weight: number) => void;
-}
-
-const WeightModal = ({
-  visible,
-  currentWeight,
-  onClose,
-  onSelectWeight,
-}: WeightModalProps) => {
-  const [weight, setWeight] = useState(currentWeight);
-
-  return (
-    <Modal visible={visible} animationType="fade" transparent={true}>
-      <TouchableOpacity
-        className="absolute left-0 top-0 right-0 bottom-0  bg-black/50"
-        onPress={onClose}
-      >
-        <View className="flex-1 justify-center items-center">
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <Card className="w-full max-w-sm md:max-w-md">
-              <CardHeader className="gap-y-4"></CardHeader>
-              <CardContent className="justify-center gap-x-2">
-                {/* <Text className="text-6xl font-bold self-center">
-                  {currentWeight.toString() + " lb"}
-                </Text> */}
-                <View className="h-28">
-                  <Input
-                    className="flex-1 text-4xl font-bold"
-                    placeholder="Enter weight"
-                    keyboardType="numeric"
-                    textAlign="center"
-                    value={weight.toString()}
-                    onChangeText={(text) => setWeight(parseFloat(text))}
-                  ></Input>
-                </View>
-              </CardContent>
-              <CardFooter className="flex-row justify-center gap-x-2">
-                <Button onPress={onClose}>
-                  <Text>Close</Text>
-                </Button>
-                <Button>
-                  <Text>Save</Text>
-                </Button>
-              </CardFooter>
-            </Card>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-};
+import { CircleX } from "@/src/lib/icons/CircleX";
 
 const WeightHistory = () => {
-  const [modalVisible, setModalVisible] = React.useState(false);
+  const [weight, setWeight] = useState(0);
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -98,6 +44,12 @@ const WeightHistory = () => {
       ],
     })
   );
+
+  useEffect(() => {
+    if (weightHistory && weightHistory.length > 0) {
+      setWeight(weightHistory[0].weight);
+    }
+  }, [weightHistory]);
 
   const addWeightEntry = async (weight: number) => {
     try {
@@ -118,18 +70,22 @@ const WeightHistory = () => {
         <CardHeader className="gap-y-4">
           <CardTitle>Current Weight</CardTitle>
         </CardHeader>
-        <CardContent className="flex-row justify-center gap-x-2">
-          <Text className="text-6xl font-bold self-center">
-            {weightHistory.length > 0
-              ? weightHistory[0].weight.toString() + " lb"
-              : "NA"}
-          </Text>
+        <CardContent className="flex-row w-full max-w-sm justify-center items-center gap-x-2">
+          <TextInput
+            className="flex-1 justify-center items-center rounded-md border border-input bg-background px-3 pb-0 text-6xl font-bold text-center"
+            placeholderClassName="text-sm"
+            keyboardType="numeric"
+            textAlign="center"
+            value={weight ? weight.toString() : ""}
+            onChangeText={(text) => setWeight(parseFloat(text))}
+          />
+          <Text className="text-6xl font-semibold self-end"> Lb </Text>
           <Button
             variant={"outline"}
             size="icon"
             className="rounded-full w-12 h-12"
             onPress={() => {
-              setModalVisible(true);
+              addWeightEntry(weight);
             }}
           >
             <Plus className="color-primary" size={40} />
@@ -161,6 +117,16 @@ const WeightHistory = () => {
                       dateOptions
                     )}
                   </Text>
+                  <Button
+                    className="rounded-full w-10 h-10"
+                    variant={"ghost"}
+                    size="icon"
+                    onPress={async () => {
+                      deleteWeightEntry(drizzleDb, weight.id);
+                    }}
+                  >
+                    <CircleX className="color-destructive" size={30} />
+                  </Button>
                 </View>
               )}
               ItemSeparatorComponent={() => <Separator className="my-2" />}
@@ -172,25 +138,7 @@ const WeightHistory = () => {
             <ActivityLoader />
           )}
         </CardContent>
-        <CardContent>
-          <Button
-            onPress={() => {
-              addWeightEntry(Math.floor(Math.random() * 100) + 100);
-            }}
-          >
-            <Text>Add Random Weight</Text>
-          </Button>
-        </CardContent>
       </Card>
-      <WeightModal
-        visible={modalVisible}
-        currentWeight={weightHistory.length > 0 ? weightHistory[0].weight : 0}
-        onClose={() => setModalVisible(false)}
-        onSelectWeight={(weight) => {
-          addWeightEntry(weight);
-          setModalVisible(false);
-        }}
-      />
     </SafeAreaWrapper>
   );
 };

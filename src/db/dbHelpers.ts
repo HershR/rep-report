@@ -413,6 +413,13 @@ export const deleteWorkoutSet = async (
   return db.delete(workoutSets).where(eq(workoutSets.id, id));
 };
 
+export const deleteWeightEntry = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  id: number
+) => {
+  return db.delete(weightHistory).where(eq(weightHistory.id, id));
+};
+
 //Reset
 
 export async function resetDatebase(db: ExpoSQLiteDatabase<typeof schema>) {
