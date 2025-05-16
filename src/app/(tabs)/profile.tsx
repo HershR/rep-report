@@ -143,6 +143,9 @@ const Profile = () => {
                 <ChevronRight size={24} className="color-primary" />
               </Button>
             </View>
+            <Button onPress={() => router.replace("../index")}>
+              <Text>To Onboarding</Text>
+            </Button>
           </ScrollView>
         </CardContent>
       </Card>
