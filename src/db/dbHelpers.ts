@@ -176,11 +176,11 @@ export const getWeightHistory = async (
 
 export const createWeightEntry = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  weight: number
+  weight: number,
+  date: Date = new Date()
 ) => {
-  const now = new Date().toISOString();
   return db.insert(weightHistory).values({
-    date_created: now,
+    date_created: date.toISOString(),
     weight: weight,
   });
 };

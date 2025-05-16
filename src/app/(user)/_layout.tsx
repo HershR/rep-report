@@ -12,8 +12,16 @@ const UserLayout = () => {
       <Stack.Screen
         name="weight"
         options={{
-          title: "Weight",
-          headerShown: false,
+          title: "Weight History",
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: NAV_THEME[colorScheme].background,
+          },
+          headerTintColor: NAV_THEME[colorScheme].text,
+          headerTitleStyle: {
+            color: NAV_THEME[colorScheme].text,
+          },
+          headerShadowVisible: false,
         }}
       />
     </Stack>

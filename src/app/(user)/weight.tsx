@@ -3,7 +3,6 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
@@ -12,24 +11,19 @@ import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { Separator } from "@/src/components/ui/separator";
-import {
-  FlatList,
-  Modal,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import { FlatList, TextInput, View } from "react-native";
 import { Button } from "@/src/components/ui/button";
 import { createWeightEntry, deleteWeightEntry } from "@/src/db/dbHelpers";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Plus } from "@/src/lib/icons/Plus";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Input } from "@/src/components/ui/input";
 import { CircleX } from "@/src/lib/icons/CircleX";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { CalendarDays } from "@/src/lib/icons/CalendarDays";
 
 const WeightHistory = () => {
   const [weight, setWeight] = useState(0);
+  const [date, setDate] = useState(new Date());
+  const [dateModalVisible, setDateModalVisible] = useState(false);
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -53,7 +47,7 @@ const WeightHistory = () => {
 
   const addWeightEntry = async (weight: number) => {
     try {
-      await createWeightEntry(drizzleDb, weight);
+      await createWeightEntry(drizzleDb, weight, date);
     } catch (error) {
       console.error("Error creating weight entry:", error);
     }
@@ -67,29 +61,43 @@ const WeightHistory = () => {
   return (
     <SafeAreaWrapper>
       <Card className="flex-1">
-        <CardHeader className="gap-y-4">
-          <CardTitle>Current Weight</CardTitle>
+        <CardHeader className="flex gap-x-2">
+          <CardTitle>Add Entry</CardTitle>
+          <View className="flex-row items-center">
+            <Text className="text-xl font-semibold">
+              {date.toLocaleDateString(undefined, dateOptions)}
+            </Text>
+            <Button
+              variant={"ghost"}
+              size={"icon"}
+              onPress={() => setDateModalVisible(true)}
+            >
+              <CalendarDays className="color-primary" size={30} />
+            </Button>
+          </View>
         </CardHeader>
-        <CardContent className="flex-row w-full max-w-sm justify-center items-center gap-x-2">
-          <TextInput
-            className="flex-1 justify-center items-center rounded-md border border-input bg-background px-3 pb-0 text-6xl font-bold text-center"
-            placeholderClassName="text-sm"
-            keyboardType="numeric"
-            textAlign="center"
-            value={weight ? weight.toString() : ""}
-            onChangeText={(text) => setWeight(parseFloat(text))}
-          />
-          <Text className="text-6xl font-semibold self-end"> Lb </Text>
-          <Button
-            variant={"outline"}
-            size="icon"
-            className="rounded-full w-12 h-12"
-            onPress={() => {
-              addWeightEntry(weight);
-            }}
-          >
-            <Plus className="color-primary" size={40} />
-          </Button>
+        <CardContent>
+          <View className="flex-row justify-center items-center gap-x-2">
+            <TextInput
+              className="flex-1 justify-center items-center rounded-md border border-input bg-background px-3 pb-0 text-6xl font-bold text-center"
+              placeholderClassName="text-sm"
+              keyboardType="numeric"
+              textAlign="center"
+              value={weight ? weight.toString() : ""}
+              onChangeText={(text) => setWeight(parseFloat(text))}
+            />
+            <Text className="text-6xl font-semibold self-end"> Lb </Text>
+            <Button
+              variant={"outline"}
+              size="icon"
+              className="rounded-full w-12 h-12"
+              onPress={() => {
+                addWeightEntry(weight);
+              }}
+            >
+              <Plus className="color-primary" size={40} />
+            </Button>
+          </View>
         </CardContent>
         <CardContent>
           <Separator />
@@ -139,6 +147,16 @@ const WeightHistory = () => {
           )}
         </CardContent>
       </Card>
+      <DateTimePickerModal
+        isVisible={dateModalVisible}
+        mode="date"
+        date={date}
+        onConfirm={(date) => {
+          setDate(date);
+          setDateModalVisible(false);
+        }}
+        onCancel={() => setDateModalVisible(false)}
+      />
     </SafeAreaWrapper>
   );
 };
