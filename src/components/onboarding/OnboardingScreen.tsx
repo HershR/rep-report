@@ -9,6 +9,7 @@ import { QUESTIONS } from "@/src/components/onboarding/questions";
 import ActivityLoader from "../ActivityLoader";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
+import Welcome from "./pages/Welcome";
 const TOTAL_STEPS = QUESTIONS.length + 1;
 
 interface Option {
@@ -45,32 +46,10 @@ export function OnboardingScreen() {
   const renderContent = () => {
     if (currentStep === 0) {
       return (
-        <Animated.View
-          entering={FadeIn.duration(600)}
-          className="flex-1 justify-center items-center p-8"
-        >
-          <Text className="text-4xl font-bold text-center mb-6">
-            Welcome to Rep Report
-          </Text>
-          <Text className="text-lg text-center text-muted-foreground mb-10">
-            Your fitness journey starts here. Let's get to know you better!
-          </Text>
-          <Animated.Image
-            entering={FadeInDown.duration(600).delay(300)}
-            source={require("@/src/assets/images/icon.png")}
-            className="w-full h-64 mt-5"
-            resizeMode="contain"
-          />
-          <Button className="mt-6" onPress={handleContinue}>
-            <Text className="text-lg font-semibold">Get Started</Text>
-          </Button>
-          <Button
-            className="mt-6"
-            onPress={() => router.replace("/(tabs)/home")}
-          >
-            <Text className="text-lg font-semibold">Skip</Text>
-          </Button>
-        </Animated.View>
+        <Welcome
+          onContinue={handleContinue}
+          onSkip={() => router.replace("/(tabs)/home")}
+        />
       );
     }
 

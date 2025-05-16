@@ -6,10 +6,15 @@ import { twMerge } from "tailwind-merge";
 interface Props {
   children?: ReactNode;
   style?: string;
+  backgroundColor?: string;
 }
-const SafeAreaWrapper = ({ children, style }: Props) => {
+const SafeAreaWrapper = ({
+  children,
+  style,
+  backgroundColor = "bg-secondary",
+}: Props) => {
   return (
-    <View className="relative flex-1 bg-secondary">
+    <View className={"relative flex-1 " + backgroundColor}>
       <SafeAreaView
         className={twMerge("flex-1 mx-8 my-5 md:mx-16", style)}
         //
