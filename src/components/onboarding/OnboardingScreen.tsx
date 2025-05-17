@@ -5,12 +5,11 @@ import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import React from "react";
-import { QUESTIONS } from "@/src/components/onboarding/questions";
 import ActivityLoader from "../ActivityLoader";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 import Welcome from "./pages/Welcome";
-const TOTAL_STEPS = QUESTIONS.length + 1;
+import AskAge from "./pages/AskAge";
 
 interface Option {
   id: string;
@@ -20,20 +19,21 @@ interface Option {
 export function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
+
   const router = useRouter();
-
-  const handleOptionSelect = (optionId: string) => {
-    Haptics.selectionAsync();
-    setAnswers((prev) => ({ ...prev, [currentStep]: optionId }));
-  };
-
+  const pages = [Welcome, AskAge];
+  const total_pages = pages.length;
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (currentStep + 1 === TOTAL_STEPS) {
+    if (currentStep + 1 === total_pages) {
       router.replace("/(tabs)/home");
       return;
     }
     setCurrentStep(currentStep + 1);
+  };
+  const handleSkip = () => {
+    Haptics.selectionAsync();
+    router.replace("/(tabs)/home");
   };
 
   const handleBack = () => {
@@ -44,29 +44,19 @@ export function OnboardingScreen() {
   };
 
   const renderContent = () => {
-    if (currentStep === 0) {
-      return (
-        <Welcome
-          onContinue={handleContinue}
-          onSkip={() => router.replace("/(tabs)/home")}
-        />
-      );
-    }
-
-    const currentQuestion = QUESTIONS[currentStep - 1];
-    if (!currentQuestion) return null;
-
+    const CurrentPage = pages[currentStep];
     return (
-      <View style={styles.questionContainer}>
-        <Animated.Text entering={FadeIn.duration(600)} style={styles.question}>
-          {currentQuestion.question}
-        </Animated.Text>
-        {currentQuestion.mode === "date"}
-      </View>
+      <CurrentPage
+        onContinue={handleContinue}
+        onSkip={() => router.replace("/(tabs)/home")}
+        updateAnswer={(answer: string) => {
+          setAnswers((prev) => ({ ...prev, [currentStep]: answer }));
+        }}
+      />
     );
   };
 
-  const shouldShowProgress = currentStep > 0 && currentStep <= QUESTIONS.length;
+  const shouldShowProgress = currentStep > 0 && currentStep <= pages.length;
   const isWelcomeScreen = currentStep === 0;
 
   return (
@@ -74,32 +64,39 @@ export function OnboardingScreen() {
       {shouldShowProgress && (
         <OnboardingProgress
           currentStep={currentStep}
-          totalSteps={QUESTIONS.length}
+          totalSteps={pages.length}
           onBack={handleBack}
         />
       )}
       {renderContent()}
-      {currentStep <= QUESTIONS.length + 2 && (
+      {currentStep <= pages.length && (
         <Animated.View entering={FadeIn.duration(600)}>
           <TouchableOpacity
+            className="items-center border-md m-2 p-4"
             style={[
-              styles.continueButton,
               currentStep > 0 &&
-              currentStep <= QUESTIONS.length &&
+              currentStep <= pages.length &&
               !answers[currentStep]
                 ? styles.disabledButton
                 : null,
             ]}
             onPress={handleContinue}
+            disabled={currentStep > 0 && currentStep <= pages.length}
+          >
+            <Text className="text-lg font-semibold text-primary">
+              {isWelcomeScreen ? "Get Started" : "Continue"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="items-center border-md m-2 "
+            onPress={handleSkip}
             disabled={
               currentStep > 0 &&
-              currentStep <= QUESTIONS.length &&
+              currentStep <= pages.length &&
               !answers[currentStep]
             }
           >
-            <Text style={styles.continueButtonText}>
-              {isWelcomeScreen ? "Get Started" : "Continue"}
-            </Text>
+            <Text className="text-lg font-semibold text-primary">Skip</Text>
           </TouchableOpacity>
         </Animated.View>
       )}

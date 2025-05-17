@@ -4,12 +4,13 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Button } from "../../ui/button";
 import { Text } from "@/src/components/ui/text";
 
-interface WelcomeProps {
+export interface OnboardingPageProps {
   onContinue: () => void;
-  onSkip: () => void;
+  onSkip?: () => void;
+  updateAnswer?: (answer: string) => void;
 }
 
-const Welcome = ({ onContinue, onSkip }: WelcomeProps) => {
+const Welcome = ({ onContinue, onSkip }: OnboardingPageProps) => {
   return (
     <Animated.View
       entering={FadeIn.duration(600)}
@@ -27,12 +28,6 @@ const Welcome = ({ onContinue, onSkip }: WelcomeProps) => {
         className="w-full h-64 mt-5"
         resizeMode="contain"
       />
-      <Button className="w-2/3" onPress={onContinue}>
-        <Text className="text-lg font-semibold">Get Started</Text>
-      </Button>
-      <Button className="w-2/3 mx-4" variant={"outline"} onPress={onSkip}>
-        <Text className="text-lg font-semibold">Skip</Text>
-      </Button>
     </Animated.View>
   );
 };
