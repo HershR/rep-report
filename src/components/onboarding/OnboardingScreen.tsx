@@ -9,11 +9,8 @@ import { Text } from "../ui/text";
 import Welcome from "./pages/Welcome";
 import AskAge from "./pages/AskAge";
 import AskHeight from "./pages/AskHeight";
+import AskWeight from "./pages/AskWeight";
 
-interface Option {
-  id: string;
-  label: string;
-}
 export interface OnboardingPageProps {
   selectedAnswer: any;
   updateAnswer: (key: string, answer: any | null) => void;
@@ -25,7 +22,7 @@ export function OnboardingScreen() {
   );
 
   const router = useRouter();
-  const pages = [Welcome, AskAge, AskHeight];
+  const pages = [AskWeight];
   const totalPages = pages.length;
   console.log("answers", answers);
   const handleContinue = async () => {
