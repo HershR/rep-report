@@ -1,31 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { OnboardingProgress } from "@/src/components/onboarding/OnboardingProgress";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import React from "react";
-import ActivityLoader from "../ActivityLoader";
-import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 import Welcome from "./pages/Welcome";
 import AskAge from "./pages/AskAge";
+import AskHeight from "./pages/AskHeight";
 
 interface Option {
   id: string;
   label: string;
 }
-
+export interface OnboardingPageProps {
+  selectedAnswer: any;
+  updateAnswer: (key: string, answer: any | null) => void;
+}
 export function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, [string, any | null]>>(
+    {}
+  );
 
   const router = useRouter();
-  const pages = [Welcome, AskAge];
-  const total_pages = pages.length;
+  const pages = [Welcome, AskAge, AskHeight];
+  const totalPages = pages.length;
+  console.log("answers", answers);
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (currentStep + 1 === total_pages) {
+    if (currentStep + 1 === totalPages) {
       router.replace("/(tabs)/home");
       return;
     }
@@ -47,10 +52,9 @@ export function OnboardingScreen() {
     const CurrentPage = pages[currentStep];
     return (
       <CurrentPage
-        onContinue={handleContinue}
-        onSkip={() => router.replace("/(tabs)/home")}
-        updateAnswer={(answer: string) => {
-          setAnswers((prev) => ({ ...prev, [currentStep]: answer }));
+        selectedAnswer={answers[currentStep]?.[1] || null}
+        updateAnswer={(key: string, answer: any) => {
+          setAnswers((prev) => ({ ...prev, [currentStep]: [key, answer] }));
         }}
       />
     );
@@ -73,31 +77,22 @@ export function OnboardingScreen() {
         <Animated.View entering={FadeIn.duration(600)}>
           <TouchableOpacity
             className="items-center border-md m-2 p-4"
-            style={[
-              currentStep > 0 &&
-              currentStep <= pages.length &&
-              !answers[currentStep]
-                ? styles.disabledButton
-                : null,
-            ]}
+            style={[!answers[currentStep] ? styles.disabledButton : null]}
             onPress={handleContinue}
-            disabled={currentStep > 0 && currentStep <= pages.length}
+            disabled={!answers[currentStep]}
           >
             <Text className="text-lg font-semibold text-primary">
               {isWelcomeScreen ? "Get Started" : "Continue"}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            className="items-center border-md m-2 "
-            onPress={handleSkip}
-            disabled={
-              currentStep > 0 &&
-              currentStep <= pages.length &&
-              !answers[currentStep]
-            }
-          >
-            <Text className="text-lg font-semibold text-primary">Skip</Text>
-          </TouchableOpacity>
+          {currentStep < totalPages && (
+            <TouchableOpacity
+              className="items-center border-md m-2 "
+              onPress={handleSkip}
+            >
+              <Text className="text-lg font-semibold text-primary">Skip</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       )}
     </View>

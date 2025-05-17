@@ -1,16 +1,14 @@
 import { View } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Button } from "../../ui/button";
 import { Text } from "@/src/components/ui/text";
+import { OnboardingPageProps } from "../OnboardingScreen";
 
-export interface OnboardingPageProps {
-  onContinue: () => void;
-  onSkip?: () => void;
-  updateAnswer?: (answer: string) => void;
-}
-
-const Welcome = ({ onContinue, onSkip }: OnboardingPageProps) => {
+const Welcome = ({ updateAnswer }: OnboardingPageProps) => {
+  useEffect(() => {
+    updateAnswer("welcome", null);
+  }, []);
   return (
     <Animated.View
       entering={FadeIn.duration(600)}

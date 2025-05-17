@@ -5,19 +5,18 @@ import Animated, {
 } from "react-native-reanimated";
 import { Button } from "../../ui/button";
 import { Text } from "../../ui/text";
-import { View } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useState } from "react";
-import { OnboardingPageProps } from "./Welcome";
-import { CalendarDays } from "@/src/lib/icons/CalendarDays";
 import SafeAreaWrapper from "../../SafeAreaWrapper";
-const AskAge = ({ onContinue }: OnboardingPageProps) => {
+import { OnboardingPageProps } from "../OnboardingScreen";
+const AskAge = ({ selectedAnswer, updateAnswer }: OnboardingPageProps) => {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(selectedAnswer);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const handleDateConfirm = (date: Date) => {
     console.log("Selected date: ", date);
     setDatePickerVisibility(false);
     setSelectedDate(date);
+    updateAnswer("dateOfBirth", date);
     // onContinue();
   };
   return (
