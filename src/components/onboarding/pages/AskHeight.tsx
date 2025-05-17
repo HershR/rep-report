@@ -11,63 +11,86 @@ import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
-  const [height, setHeight] = useState<number | null>(null);
-  const [feet, setFeet] = useState<number | null>(null);
-  const [inches, setInches] = useState<number | null>(null);
+  const [height, setHeight] = useState<string | null>(null);
+  const [feet, setFeet] = useState<string | null>(null);
+  const [inches, setInches] = useState<string | null>(null);
   const [mode, setMode] = useState<"metric" | "imperial">("imperial");
 
   const handleHeightChangeMetric = (value: string) => {
-    const parsedValue = parseFloat(value);
-    if (!isNaN(parsedValue)) {
-      const cm = Math.round(parsedValue);
-      setHeight(cm);
-      const { feet, inches } = cmToFeet(cm);
-      setFeet(feet);
-      setInches(inches);
-      updateAnswer("height", cm);
-    } else {
+    if (!value) {
       setHeight(null);
+    }
+    const nums = value.split(".");
+    if (nums.length > 2) {
+      return;
+    }
+    if (nums.length == 1) {
+      const num = parseInt(value);
+      if (!isNaN(num)) {
+        setHeight(num.toString());
+        const cm = parseFloat(value);
+        const { feet, inches } = cmToFeet(cm);
+        setFeet(feet.toString());
+        setInches(inches.toString());
+        updateAnswer("height", cm);
+      }
+    } else {
+      const num = nums[0] + "." + nums[1].slice(0, 1);
+      setHeight(num);
+      const cm = parseFloat(value);
+      const { feet, inches } = cmToFeet(cm);
+      setFeet(feet.toString());
+      setInches(inches.toString());
+      updateAnswer("height", cm);
     }
   };
   const handleFeetChange = (value: string) => {
-    const parsedValue = parseFloat(value.slice(0, 2));
+    const parsedValue = parseInt(value);
     if (!isNaN(parsedValue)) {
-      setFeet(parsedValue);
-      const totalInches = parsedValue * 12 + (inches || 0);
+      setFeet(parsedValue.toString());
+      const totalInches = parsedValue * 12 + parseInt(inches || "0");
       const cm = inchesToCm(totalInches);
-      setHeight(cm);
+      setHeight(cm.toString());
       updateAnswer("height", cm);
     } else {
       setFeet(null);
+      const totalInches = parseInt(inches || "0");
+      const cm = inchesToCm(totalInches);
+      setHeight(cm.toString());
+      updateAnswer("height", cm);
     }
   };
 
   const handleInchesChange = (value: string) => {
-    const parsedValue = parseFloat(value.slice(0, 2));
+    const parsedValue = parseInt(value);
 
     if (!isNaN(parsedValue)) {
       const inches = Math.min(11, parsedValue);
-      setInches(inches);
-      const totalInches = (feet || 0) * 12 + inches;
+      setInches(inches.toString());
+      const totalInches = parseInt(feet || "0") * 12 + inches;
       const cm = inchesToCm(totalInches);
-      setHeight(cm);
+      setHeight(cm.toString());
       updateAnswer("height", cm);
     } else {
       setInches(null);
+      const totalInches = parseInt(feet ?? "0");
+      const cm = inchesToCm(totalInches);
+      setHeight(cm.toString());
+      updateAnswer("height", cm);
     }
   };
 
   const inchesToCm = (inches: number) => {
-    return Math.round(inches * 2.54);
+    return parseFloat((inches * 2.54).toFixed(1));
   };
 
   const cmToInches = (cm: number) => {
-    return Math.round(cm / 2.54);
+    return parseFloat((cm / 2.54).toFixed(1));
   };
   const cmToFeet = (cm: number) => {
     const totalInches = cmToInches(cm);
     const feet = Math.floor(totalInches / 12);
-    const inches = Math.round(totalInches % 12);
+    const inches = totalInches % 12;
     return { feet, inches };
   };
 
@@ -121,6 +144,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                   textAlign="right"
                   value={feet?.toString() || ""}
                   onChangeText={handleFeetChange}
+                  maxLength={1}
                 />
                 <Text className="text-2xl font-semibold ml-1">'</Text>
                 <Input
@@ -131,6 +155,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                   autoComplete="off"
                   value={inches?.toString() || ""}
                   onChangeText={handleInchesChange}
+                  maxLength={2}
                 />
                 <Text className="text-2xl font-semibold m1-1">''</Text>
               </>
@@ -144,6 +169,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                   autoComplete="off"
                   value={height?.toString() || ""}
                   onChangeText={handleHeightChangeMetric}
+                  maxLength={height?.split(".").length === 1 ? 4 : 5}
                 ></Input>
                 <Text className="text-2xl ml-2 self-center mb-1.5">cm</Text>
               </>
