@@ -30,11 +30,6 @@ const Profile = () => {
 
   const router = useRouter();
 
-  const getAge = async () => {
-    const _age = await AsyncStorage.getItem("age");
-    setAge(_age || "0");
-  };
-
   const {
     data: weight,
     error: weightError,
@@ -46,7 +41,25 @@ const Profile = () => {
       ],
     })
   );
-
+  const getAge = async () => {
+    const dob = await AsyncStorage.getItem("dateOfBirth");
+    if (dob) {
+      const date = new Date(dob);
+      const today = new Date();
+      const age = today.getFullYear() - date.getFullYear();
+      const monthDiff = today.getMonth() - date.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < date.getDate())
+      ) {
+        setAge((age - 1).toString());
+      } else {
+        setAge(age.toString());
+      }
+    } else {
+      setAge("0");
+    }
+  };
   const getHeight = async () => {
     const _height = await AsyncStorage.getItem("height");
     setHeight(_height || "0");
@@ -84,21 +97,21 @@ const Profile = () => {
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
+            <Text className="text-xl font-medium text-left">Height</Text>
+            <Text className="text-xl font-medium text-right">{height} cm</Text>
+          </View>
+          <Separator className="" />
+          <View className="flex-1 flex-row justify-between items-center">
             <Text className="text-xl font-medium text-left">Weight</Text>
             <TouchableOpacity onPress={() => router.push("/weight")}>
               {weight ? (
                 <Text className="text-xl font-medium text-right">
-                  {weight.weight} lb
+                  {weight.weight} kg
                 </Text>
               ) : (
                 <Text className="text-xl font-medium text-right">NA</Text>
               )}
             </TouchableOpacity>
-          </View>
-          <Separator className="" />
-          <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-xl font-medium text-left">Height</Text>
-            <Text className="text-xl font-medium text-right">{height} ft</Text>
           </View>
         </CardContent>
       </Card>

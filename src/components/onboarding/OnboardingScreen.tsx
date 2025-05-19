@@ -10,6 +10,10 @@ import Welcome from "./pages/Welcome";
 import AskAge from "./pages/AskAge";
 import AskHeight from "./pages/AskHeight";
 import AskWeight from "./pages/AskWeight";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
 
 export interface OnboardingPageProps {
   selectedAnswer: any;
@@ -22,12 +26,27 @@ export function OnboardingScreen() {
   );
 
   const router = useRouter();
-  const pages = [Welcome, AskHeight, AskWeight];
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+
+  const pages = [Welcome, AskAge, AskHeight, AskWeight];
   const totalPages = pages.length;
-  console.log("answers", answers);
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentStep + 1 === totalPages) {
+      // Save the answers to AsyncStorage or any other storage
+      for (const [key, value] of Object.entries(answers)) {
+        const [question, answer] = value;
+        if (answer === null) continue;
+        if (question === "weight") {
+          await drizzleDb.insert(schema.weightHistory).values({
+            weight: answer,
+            date_created: new Date().toISOString(),
+          });
+          continue;
+        }
+        await AsyncStorage.setItem(question, answer.toString());
+      }
       router.replace("/(tabs)/home");
       return;
     }
