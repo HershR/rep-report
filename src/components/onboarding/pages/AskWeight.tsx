@@ -11,6 +11,7 @@ import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 import { set } from "react-hook-form";
+import { lbsToKg, kgToLbs } from "@/src/utils/measurementConversion";
 const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
   const [mode, setMode] = useState<"metric" | "imperial">("imperial");
@@ -58,12 +59,6 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
       const kgs = lbsToKg(parseFloat(weight));
       setWeight(kgs.toString());
     }
-  };
-  const lbsToKg = (lbs: number) => {
-    return parseFloat((lbs * 0.453592).toFixed(1));
-  };
-  const kgToLbs = (kg: number) => {
-    return parseFloat((kg / 0.453592).toFixed(1));
   };
 
   return (

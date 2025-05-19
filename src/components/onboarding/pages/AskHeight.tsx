@@ -11,6 +11,7 @@ import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 import { set } from "react-hook-form";
+import { cmToFeetInches, inchesToCm } from "@/src/utils/measurementConversion";
 const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
   const [height, setHeight] = useState<string | null>(null);
   const [feet, setFeet] = useState<string | null>(null);
@@ -35,7 +36,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
       setHeight(trimmed);
     }
 
-    const { feet, inches } = cmToFeet(num);
+    const { feet, inches } = cmToFeetInches(num);
     setFeet(feet.toString());
     setInches(inches.toString());
     updateAnswer("height", num);
@@ -98,20 +99,6 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
     setHeight(cm.toString());
     updateAnswer("height", cm);
     return;
-  };
-
-  const inchesToCm = (inches: number) => {
-    return parseFloat((inches * 2.54).toFixed(1));
-  };
-
-  const cmToInches = (cm: number) => {
-    return parseFloat((cm / 2.54).toFixed(1));
-  };
-  const cmToFeet = (cm: number) => {
-    const totalInches = cmToInches(cm);
-    const feet = Math.floor(totalInches / 12);
-    const inches = parseFloat((totalInches % 12).toFixed(1));
-    return { feet, inches };
   };
 
   return (
