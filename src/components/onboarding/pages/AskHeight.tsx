@@ -10,39 +10,36 @@ import { useState } from "react";
 import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
+import { set } from "react-hook-form";
 const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
   const [height, setHeight] = useState<string | null>(null);
   const [feet, setFeet] = useState<string | null>(null);
   const [inches, setInches] = useState<string | null>(null);
   const [mode, setMode] = useState<"metric" | "imperial">("imperial");
+  const cmRegex = /^\d{0,4}(\.\d?)?$/;
+  const inchRegex = /^\d{0,3}(\.\d?)?$/;
 
   const handleHeightChangeMetric = (value: string) => {
-    if (!value) {
+    const trimmed = value.trim();
+    if (trimmed === "") {
       setHeight(null);
-    }
-    const nums = value.split(".");
-    if (nums.length > 2) {
+      updateAnswer("height", null);
       return;
     }
-    if (nums.length == 1) {
-      const num = parseInt(value);
-      if (!isNaN(num)) {
-        setHeight(num.toString());
-        const cm = parseFloat(value);
-        const { feet, inches } = cmToFeet(cm);
-        setFeet(feet.toString());
-        setInches(inches.toString());
-        updateAnswer("height", cm);
-      }
+    if (!cmRegex.test(trimmed)) return;
+    let num = parseFloat(trimmed);
+    if (num > 999.9) {
+      num = num / 10;
+      setHeight(num.toFixed(1));
     } else {
-      const num = nums[0] + "." + nums[1].slice(0, 1);
-      setHeight(num);
-      const cm = parseFloat(value);
-      const { feet, inches } = cmToFeet(cm);
-      setFeet(feet.toString());
-      setInches(inches.toString());
-      updateAnswer("height", cm);
+      setHeight(trimmed);
     }
+
+    const { feet, inches } = cmToFeet(num);
+    setFeet(feet.toString());
+    setInches(inches.toString());
+    updateAnswer("height", num);
+    return;
   };
   const handleFeetChange = (value: string) => {
     const parsedValue = parseInt(value);
@@ -54,6 +51,11 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
       updateAnswer("height", cm);
     } else {
       setFeet(null);
+      if (inches === null) {
+        setHeight(null);
+        updateAnswer("height", null);
+        return;
+      }
       const totalInches = parseInt(inches || "0");
       const cm = inchesToCm(totalInches);
       setHeight(cm.toString());
@@ -62,22 +64,40 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
   };
 
   const handleInchesChange = (value: string) => {
-    const parsedValue = parseInt(value);
-
-    if (!isNaN(parsedValue)) {
-      const inches = Math.min(11, parsedValue);
-      setInches(inches.toString());
-      const totalInches = parseInt(feet || "0") * 12 + inches;
-      const cm = inchesToCm(totalInches);
-      setHeight(cm.toString());
-      updateAnswer("height", cm);
-    } else {
+    const trimmed = value.trim();
+    if (trimmed === "") {
+      setHeight(null);
       setInches(null);
-      const totalInches = parseInt(feet ?? "0");
+      updateAnswer("height", null);
+      return;
+    }
+    if (!inchRegex.test(trimmed)) {
+      setInches(null);
+      if (feet === null) {
+        setHeight(null);
+
+        updateAnswer("height", null);
+        return;
+      }
+      const totalInches = parseInt(feet) * 12;
       const cm = inchesToCm(totalInches);
       setHeight(cm.toString());
       updateAnswer("height", cm);
+      return;
     }
+
+    let num = parseFloat(value);
+    if (num > 11.9) {
+      num = num / 10;
+      setInches(num.toFixed(1));
+    } else {
+      setInches(trimmed);
+    }
+    const totalInches = parseInt(feet || "0") * 12 + num;
+    const cm = inchesToCm(totalInches);
+    setHeight(cm.toString());
+    updateAnswer("height", cm);
+    return;
   };
 
   const inchesToCm = (inches: number) => {
@@ -90,7 +110,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
   const cmToFeet = (cm: number) => {
     const totalInches = cmToInches(cm);
     const feet = Math.floor(totalInches / 12);
-    const inches = totalInches % 12;
+    const inches = parseFloat((totalInches % 12).toFixed(1));
     return { feet, inches };
   };
 
@@ -139,7 +159,7 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                 <Input
                   className="flex-1"
                   placeholder="ft"
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   autoComplete="off"
                   textAlign="right"
                   value={feet?.toString() || ""}
@@ -151,11 +171,11 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                   className="flex-1 ml-4"
                   textAlign="right"
                   placeholder="in"
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   autoComplete="off"
                   value={inches?.toString() || ""}
                   onChangeText={handleInchesChange}
-                  maxLength={2}
+                  maxLength={4}
                 />
                 <Text className="text-2xl font-semibold m1-1">''</Text>
               </>
@@ -164,12 +184,12 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
                 <Input
                   className="min-w-[50%]"
                   textAlign="right"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   placeholder="cm"
                   autoComplete="off"
                   value={height?.toString() || ""}
                   onChangeText={handleHeightChangeMetric}
-                  maxLength={height?.split(".").length === 1 ? 4 : 5}
+                  maxLength={5}
                 ></Input>
                 <Text className="text-2xl ml-2 self-center mb-1.5">cm</Text>
               </>

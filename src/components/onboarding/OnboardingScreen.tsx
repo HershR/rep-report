@@ -22,7 +22,7 @@ export function OnboardingScreen() {
   );
 
   const router = useRouter();
-  const pages = [AskWeight];
+  const pages = [Welcome, AskHeight, AskWeight];
   const totalPages = pages.length;
   console.log("answers", answers);
   const handleContinue = async () => {

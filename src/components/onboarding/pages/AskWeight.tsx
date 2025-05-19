@@ -14,28 +14,49 @@ import { set } from "react-hook-form";
 const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
   const [mode, setMode] = useState<"metric" | "imperial">("imperial");
+  const regex = /^\d{0,4}(\.\d?)?$/;
 
   const handleWeightChange = (value: string) => {
+    const trimmed = value.trim();
+    if (value === "") {
+      setWeight(null);
+      updateAnswer("weight", null);
+      return;
+    }
+    if (!regex.test(trimmed)) return;
+    let num = parseFloat(trimmed);
+    if (isNaN(num)) {
+      setWeight(null);
+      updateAnswer("weight", null);
+      return;
+    }
+    if (num > 999.9) {
+      num = num / 10;
+    }
+    if (mode === "metric") {
+      num = Math.min(num, 453.5);
+      setWeight(num.toString());
+      updateAnswer("weight", num);
+      return;
+    }
+    const kgs = lbsToKg(num);
+    setWeight(num.toString());
+    updateAnswer("weight", kgs);
+    return;
+  };
+
+  const modeChange = (mode: "imperial" | "metric") => {
+    setMode(mode);
+    if (weight === null) {
+      updateAnswer("weight", null);
+      return;
+    }
     if (mode === "imperial") {
-      //convert to kg
-      const lbs = parseFloat(value);
-      if (!isNaN(lbs)) {
-        setWeight(lbs.toString());
-        updateAnswer("weight", lbs);
-      } else {
-        setWeight(null);
-        updateAnswer("weight", 0);
-      }
+      const lbs = kgToLbs(parseFloat(weight));
+      setWeight(lbs.toString());
     } else {
-      const kgs = parseFloat(value);
-      if (!isNaN(kgs)) {
-        const lbs = kgToLbs(kgs);
-        setWeight(lbs.toString());
-        updateAnswer("weight", lbs);
-      } else {
-        setWeight(null);
-        updateAnswer("weight", 0);
-      }
+      const kgs = lbsToKg(parseFloat(weight));
+      setWeight(kgs.toString());
     }
   };
   const lbsToKg = (lbs: number) => {
@@ -61,13 +82,13 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
           entering={FadeIn.duration(600)}
           className="text-2xl font-bold mb-6 text-center"
         >
-          How tall are you?
+          What is your weight?
         </Animated.Text>
         <View className="max-w-60 items-center justify-center">
           <View className="flex-row">
             <Button
               onPress={() => {
-                setMode("imperial");
+                modeChange("imperial");
               }}
               variant={mode === "imperial" ? "default" : "outline"}
               className="flex-1 rounded-r-none"
@@ -76,7 +97,7 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
             </Button>
             <Button
               onPress={() => {
-                setMode("metric");
+                modeChange("metric");
               }}
               variant={mode === "metric" ? "default" : "outline"}
               className="flex-1 rounded-l-none"
@@ -85,33 +106,16 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
             </Button>
           </View>
           <View className="flex-row h-11 native:h-14 mt-4">
-            {mode === "imperial" ? (
-              <>
-                <Input
-                  className="flex-1 ml-4"
-                  textAlign="right"
-                  placeholder="lbs"
-                  keyboardType="numeric"
-                  autoComplete="off"
-                  value={weight || ""}
-                  onChangeText={handleWeightChange}
-                  maxLength={2}
-                />
-              </>
-            ) : (
-              <>
-                <Input
-                  className="min-w-[50%]"
-                  textAlign="right"
-                  keyboardType="numeric"
-                  placeholder="kg"
-                  autoComplete="off"
-                  value={lbsToKg(parseFloat(weight || "")).toString() || ""}
-                  onChangeText={handleWeightChange}
-                  maxLength={weight?.split(".").length === 1 ? 4 : 5}
-                ></Input>
-              </>
-            )}
+            <Input
+              className="flex-1 ml-4"
+              textAlign="right"
+              placeholder={mode === "imperial" ? "lbs" : "kg"}
+              keyboardType="numeric"
+              autoComplete="off"
+              value={weight || ""}
+              onChangeText={handleWeightChange}
+              maxLength={5}
+            />
           </View>
         </View>
       </Animated.View>
