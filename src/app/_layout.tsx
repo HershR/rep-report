@@ -20,7 +20,7 @@ import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
-
+import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -47,10 +47,23 @@ export default function RootLayout() {
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
+  const [measurementUnit, setMeasurementUnit] = useState<
+    "metric" | "imperial" | null
+  >(null);
   useEffect(() => {
     loadTheme();
+    loadMeasurementUnit();
   }, []);
 
+  const loadMeasurementUnit = async () => {
+    const savedMeasurementUnit = await AsyncStorage.getItem("measurementUnit");
+    if (savedMeasurementUnit === null) {
+      await AsyncStorage.setItem("measurementUnit", "metric");
+    }
+    setMeasurementUnit(
+      savedMeasurementUnit === "imperial" ? "imperial" : "metric"
+    );
+  };
   const loadTheme = async () => {
     const savedTheme = await AsyncStorage.getItem("theme");
     if (savedTheme === null) {
@@ -86,7 +99,11 @@ export default function RootLayout() {
       </View>
     );
   }
-  if (!isColorSchemeLoaded) {
+  if (
+    !isColorSchemeLoaded ||
+    measurementUnit === null ||
+    measurementUnit === undefined
+  ) {
     return null;
   }
   return (
@@ -97,51 +114,55 @@ export default function RootLayout() {
           options={{ enableChangeListener: true }}
           useSuspense
         >
-          <DateProvider>
-            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-              <StatusBar hidden={true} />
-              <Stack>
-                <Stack.Screen
-                  name="index"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="(tabs)"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="exercise/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="workout/create/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="workout/update/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="routine/create"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="routine/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="routine/update/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="(user)"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-              </Stack>
-              <PortalHost />
-              <Toast />
-            </ThemeProvider>
-          </DateProvider>
+          <MeasurementUnitProvider defaultUnit={measurementUnit}>
+            <DateProvider>
+              <ThemeProvider
+                value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
+              >
+                <StatusBar hidden={true} />
+                <Stack>
+                  <Stack.Screen
+                    name="index"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="exercise/[id]"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="workout/create/[id]"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="workout/update/[id]"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="routine/create"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="routine/[id]"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="routine/update/[id]"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                  <Stack.Screen
+                    name="(user)"
+                    options={{ headerShown: false }}
+                  ></Stack.Screen>
+                </Stack>
+                <PortalHost />
+                <Toast />
+              </ThemeProvider>
+            </DateProvider>
+          </MeasurementUnitProvider>
         </SQLiteProvider>
       </Suspense>
     </>

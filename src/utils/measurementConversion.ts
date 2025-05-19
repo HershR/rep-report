@@ -25,7 +25,7 @@ export function convertHeightString(
   targetUnit: Unit
 ) {
   if (currentUnit === targetUnit) {
-    return height;
+    return height + (targetUnit === "imperial" ? " inches" : " cm");
   }
   if (targetUnit === "imperial") {
     const { feet, inches } = cmToFeetInches(height);
@@ -41,7 +41,7 @@ export function convertWeightString(
   targetUnit: Unit
 ) {
   if (currentUnit === targetUnit) {
-    return weight;
+    return weight + (targetUnit === "imperial" ? " lbs" : " kg");
   }
   if (targetUnit === "imperial") {
     return kgToLbs(weight) + " lbs";
