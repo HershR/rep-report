@@ -39,7 +39,7 @@ export const workouts = sqliteTable("workouts", {
   last_updated: text("last_updated").notNull(),
   date: text("date").notNull(), // ISO YYYY-MM-DD
   mode: integer("mode").notNull().default(0), // 0 = weight, 1 = time
-  unit: text("unit").notNull().default("lb"), // e.g., kg, lbs
+  unit: text("unit").notNull().default("kg"), // e.g., kg, lbs
   notes: text("notes"),
   routine_id: integer("routine_id").references(() => routines.id, {
     onDelete: "set null",
@@ -72,6 +72,7 @@ export const routineSchedule = sqliteTable("routine_schedule", {
 export const weightHistory = sqliteTable("weight_history", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   weight: real("weight").notNull(),
+  unit: text("unit").notNull().default("kg"), // e.g., kg, lbs
   date_created: text("date_created").notNull(),
 });
 
