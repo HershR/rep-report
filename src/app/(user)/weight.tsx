@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import {
   Card,
@@ -19,11 +19,19 @@ import { Plus } from "@/src/lib/icons/Plus";
 import { CircleX } from "@/src/lib/icons/CircleX";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import {
+  convertWeightString,
+  lbsToKg,
+} from "@/src/utils/measurementConversion";
+import { UNIT_LABELS } from "@/src/constants/measurementLables";
 
 const WeightHistory = () => {
-  const [weight, setWeight] = useState<number | null>(0);
+  const [weight, setWeight] = useState<string | null>(null);
   const [date, setDate] = useState(new Date());
   const [dateModalVisible, setDateModalVisible] = useState(false);
+  const { unit } = useMeasurementUnit();
+  const regex = /^\d{0,4}(\.\d?)?$/;
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -41,11 +49,32 @@ const WeightHistory = () => {
 
   const addWeightEntry = async (weight: number) => {
     try {
-      await createWeightEntry(drizzleDb, weight, date);
+      const kg = unit === "imperial" ? lbsToKg(weight) : weight;
+      await createWeightEntry(drizzleDb, kg, date);
     } catch (error) {
       console.error("Error creating weight entry:", error);
     }
   };
+
+  const handleWeightChange = (value: string) => {
+    const trimmed = value.trim();
+    if (value === "") {
+      setWeight(null);
+      return;
+    }
+    if (!regex.test(trimmed)) return;
+    let num = parseFloat(trimmed);
+    if (unit === "imperial" && num > 999.9) {
+      num = num / 10;
+      setWeight(num.toFixed(1));
+    } else if (unit === "metric" && num > 453.5) {
+      num = Math.min(num, 453.5);
+      setWeight(num.toString());
+    } else {
+      setWeight(trimmed);
+    }
+  };
+
   const dateOptions: Intl.DateTimeFormatOptions = {
     weekday: undefined,
     year: "numeric",
@@ -77,17 +106,20 @@ const WeightHistory = () => {
               placeholderClassName="text-sm"
               keyboardType="numeric"
               textAlign="center"
-              value={weight ? weight.toString() : ""}
-              onChangeText={(text) => setWeight(parseFloat(text))}
+              value={weight || ""}
+              onChangeText={(text) => handleWeightChange(text)}
             />
-            <Text className="text-6xl font-semibold self-end"> Lb </Text>
+            <Text className="text-6xl font-semibold self-end">
+              {" "}
+              {UNIT_LABELS[unit].weight}{" "}
+            </Text>
             <Button
               variant={"outline"}
               size="icon"
               className="rounded-full w-12 h-12"
               onPress={() => {
                 if (weight !== null) {
-                  addWeightEntry(weight);
+                  addWeightEntry(parseFloat(weight));
                 }
                 setWeight(null);
               }}
@@ -114,7 +146,11 @@ const WeightHistory = () => {
                   className="flex-row items-center justify-between"
                 >
                   <Text key={weight.id} className="text-xl font-bold">
-                    {weight.weight.toString() + " lb"}
+                    {convertWeightString(
+                      weight.weight,
+                      weight.unit === "imperial" ? "imperial" : "metric",
+                      unit
+                    )}
                   </Text>
                   <Text className="text-sm text-muted-foreground">
                     {new Date(weight.date_created).toLocaleDateString(

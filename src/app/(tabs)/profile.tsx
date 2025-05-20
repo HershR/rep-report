@@ -19,7 +19,6 @@ import { Button } from "@/src/components/ui/button";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 import { useRouter } from "expo-router";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
-import { UNIT_LABELS } from "@/src/constants/measurementLables";
 import {
   convertHeightString,
   convertWeightString,
@@ -196,7 +195,6 @@ const Profile = () => {
             <Button onPress={() => router.replace("../index")}>
               <Text>To Onboarding</Text>
             </Button>
-            <Text>{unit}</Text>
           </ScrollView>
         </CardContent>
       </Card>

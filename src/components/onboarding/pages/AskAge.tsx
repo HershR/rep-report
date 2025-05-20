@@ -13,11 +13,9 @@ const AskAge = ({ selectedAnswer, updateAnswer }: OnboardingPageProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(selectedAnswer);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const handleDateConfirm = (date: Date) => {
-    console.log("Selected date: ", date);
     setDatePickerVisibility(false);
     setSelectedDate(date);
     updateAnswer("dateOfBirth", date);
-    // onContinue();
   };
   return (
     <SafeAreaWrapper backgroundColor="bg-background">

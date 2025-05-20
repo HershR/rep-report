@@ -26,24 +26,24 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
     }
     if (!regex.test(trimmed)) return;
     let num = parseFloat(trimmed);
-    if (isNaN(num)) {
-      setWeight(null);
-      updateAnswer("weight", null);
-      return;
-    }
-    if (num > 999.9) {
+    if (mode === "imperial" && num > 999.9) {
       num = num / 10;
-    }
-    if (mode === "metric") {
+      setWeight(num.toFixed(1));
+      const kgs = lbsToKg(num);
+      updateAnswer("weight", kgs);
+    } else if (mode === "metric" && num > 453.5) {
       num = Math.min(num, 453.5);
       setWeight(num.toString());
       updateAnswer("weight", num);
-      return;
+    } else {
+      setWeight(trimmed);
+      if (mode === "imperial") {
+        const kgs = lbsToKg(num);
+        updateAnswer("weight", kgs);
+      } else {
+        updateAnswer("weight", num);
+      }
     }
-    const kgs = lbsToKg(num);
-    setWeight(num.toString());
-    updateAnswer("weight", kgs);
-    return;
   };
 
   const modeChange = (mode: "imperial" | "metric") => {
