@@ -12,7 +12,8 @@ import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 import { set } from "react-hook-form";
 import { cmToFeetInches, inchesToCm } from "@/src/utils/measurementConversion";
-const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const AskAge = ({ onContinue }: OnboardingPageProps) => {
   const [height, setHeight] = useState<string | null>(null);
   const [feet, setFeet] = useState<string | null>(null);
   const [inches, setInches] = useState<string | null>(null);
@@ -24,7 +25,6 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
     const trimmed = value.trim();
     if (trimmed === "") {
       setHeight(null);
-      updateAnswer("height", null);
       return;
     }
     if (!cmRegex.test(trimmed)) return;
@@ -39,7 +39,6 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
     const { feet, inches } = cmToFeetInches(num);
     setFeet(feet.toString());
     setInches(inches.toString());
-    updateAnswer("height", num);
     return;
   };
   const handleFeetChange = (value: string) => {
@@ -49,18 +48,15 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
       const totalInches = parsedValue * 12 + parseInt(inches || "0");
       const cm = inchesToCm(totalInches);
       setHeight(cm.toString());
-      updateAnswer("height", cm);
     } else {
       setFeet(null);
       if (inches === null) {
         setHeight(null);
-        updateAnswer("height", null);
         return;
       }
       const totalInches = parseInt(inches || "0");
       const cm = inchesToCm(totalInches);
       setHeight(cm.toString());
-      updateAnswer("height", cm);
     }
   };
 
@@ -69,7 +65,6 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
     if (trimmed === "") {
       setHeight(null);
       setInches(null);
-      updateAnswer("height", null);
       return;
     }
     if (!inchRegex.test(trimmed)) {
@@ -77,13 +72,11 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
       if (feet === null) {
         setHeight(null);
 
-        updateAnswer("height", null);
         return;
       }
       const totalInches = parseInt(feet) * 12;
       const cm = inchesToCm(totalInches);
       setHeight(cm.toString());
-      updateAnswer("height", cm);
       return;
     }
 
@@ -97,12 +90,11 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
     const totalInches = parseInt(feet || "0") * 12 + num;
     const cm = inchesToCm(totalInches);
     setHeight(cm.toString());
-    updateAnswer("height", cm);
     return;
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="bg-background">
+    <View className="flex-1">
       <Animated.View
         entering={FadeInDown.duration(600)}
         className="flex-1 justify-center items-center"
@@ -184,7 +176,26 @@ const AskAge = ({ updateAnswer }: OnboardingPageProps) => {
           </View>
         </View>
       </Animated.View>
-    </SafeAreaWrapper>
+      <View className="items-center">
+        <Button
+          className="min-w-52 mb-4"
+          size={"lg"}
+          disabled={height === null}
+          onPress={async () => {
+            if (height === null) {
+              return;
+            }
+            await AsyncStorage.setItem("height", height);
+            onContinue();
+          }}
+        >
+          <Text>Continue</Text>
+        </Button>
+        <Button variant={"ghost"} size={"lg"} onPress={onContinue}>
+          <Text>Skip</Text>
+        </Button>
+      </View>
+    </View>
   );
 };
 

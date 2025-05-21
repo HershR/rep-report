@@ -13,6 +13,7 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
 import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
+import { DateTime } from "luxon";
 
 //Get
 
@@ -177,10 +178,15 @@ export const getWeightHistory = async (
 export const createWeightEntry = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   weight: number,
-  date: Date = new Date()
+  unit: "metric" | "imperial" = "imperial",
+  date: string = DateTime.now()
+    .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+    .toUTC()
+    .toISO()
 ) => {
   return db.insert(weightHistory).values({
-    date_created: date.toISOString(),
+    date_created: date,
+    unit: unit,
     weight: weight,
   });
 };

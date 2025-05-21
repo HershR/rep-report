@@ -12,7 +12,12 @@ export const DateProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [selectedDate, setSelectedDate] = useState<DateTime | null>(
-    DateTime.now()
+    DateTime.now().set({
+      hour: 0,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+    })
   );
 
   return (

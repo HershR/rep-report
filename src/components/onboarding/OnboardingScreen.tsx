@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { OnboardingProgress } from "@/src/components/onboarding/OnboardingProgress";
 import * as Haptics from "expo-haptics";
@@ -14,16 +14,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
+import SafeAreaWrapper from "../SafeAreaWrapper";
+import ActivityLoader from "../ActivityLoader";
+import { createWeightEntry } from "@/src/db/dbHelpers";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export interface OnboardingPageProps {
-  selectedAnswer: any;
-  updateAnswer: (key: string, answer: any | null) => void;
+  onContinue: () => void;
 }
 export function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, [string, any | null]>>(
     {}
   );
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
   const db = useSQLiteContext();
@@ -31,29 +35,49 @@ export function OnboardingScreen() {
 
   const pages = [Welcome, AskAge, AskHeight, AskWeight];
   const totalPages = pages.length;
+
+  useEffect(() => {
+    const checkOnboardingComplete = async () => {
+      const onboardingComplete = await AsyncStorage.getItem(
+        "onboardingComplete"
+      );
+      if (onboardingComplete === "true") {
+        // router.replace("/(tabs)/home");
+      }
+      setIsLoading(false);
+    };
+    checkOnboardingComplete();
+  }, []);
+  if (isLoading) {
+    return (
+      <SafeAreaWrapper>
+        <ActivityLoader />
+      </SafeAreaWrapper>
+    );
+  }
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentStep + 1 === totalPages) {
       // Save the answers to AsyncStorage or any other storage
-      for (const [key, value] of Object.entries(answers)) {
-        const [question, answer] = value;
-        if (answer === null) continue;
-        if (question === "weight") {
-          await drizzleDb.insert(schema.weightHistory).values({
-            weight: answer,
-            date_created: new Date().toISOString(),
-          });
-          continue;
-        }
-        await AsyncStorage.setItem(question, answer.toString());
-      }
+      // for (const [key, value] of Object.entries(answers)) {
+      //   const [question, answer] = value;
+      //   if (answer === null) continue;
+      //   if (question === "weight") {
+      //     await createWeightEntry(drizzleDb, answer);
+      //     continue;
+      //   }
+      //   await AsyncStorage.setItem(question, answer.toString());
+      // }
+      await AsyncStorage.setItem("onboardingComplete", "true");
       router.replace("/(tabs)/home");
       return;
     }
     setCurrentStep(currentStep + 1);
   };
-  const handleSkip = () => {
+  const handleSkip = async () => {
     Haptics.selectionAsync();
+    await AsyncStorage.setItem("onboardingComplete", "true");
+
     router.replace("/(tabs)/home");
   };
 
@@ -66,14 +90,7 @@ export function OnboardingScreen() {
 
   const renderContent = () => {
     const CurrentPage = pages[currentStep];
-    return (
-      <CurrentPage
-        selectedAnswer={answers[currentStep]?.[1] || null}
-        updateAnswer={(key: string, answer: any) => {
-          setAnswers((prev) => ({ ...prev, [currentStep]: [key, answer] }));
-        }}
-      />
-    );
+    return <CurrentPage onContinue={handleContinue} />;
   };
 
   const shouldShowProgress = currentStep > 0 && currentStep <= pages.length;
@@ -81,36 +98,16 @@ export function OnboardingScreen() {
 
   return (
     <View className="flex-1">
-      {shouldShowProgress && (
-        <OnboardingProgress
-          currentStep={currentStep}
-          totalSteps={pages.length}
-          onBack={handleBack}
-        />
-      )}
-      {renderContent()}
-      {currentStep <= pages.length && (
-        <Animated.View entering={FadeIn.duration(600)}>
-          <TouchableOpacity
-            className="items-center border-md m-2 p-4"
-            style={[!answers[currentStep] ? styles.disabledButton : null]}
-            onPress={handleContinue}
-            disabled={!answers[currentStep]}
-          >
-            <Text className="text-lg font-semibold text-primary">
-              {isWelcomeScreen ? "Get Started" : "Continue"}
-            </Text>
-          </TouchableOpacity>
-          {currentStep < totalPages && (
-            <TouchableOpacity
-              className="items-center border-md m-2 "
-              onPress={handleSkip}
-            >
-              <Text className="text-lg font-semibold text-primary">Skip</Text>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-      )}
+      <SafeAreaView className="flex-1">
+        {shouldShowProgress && (
+          <OnboardingProgress
+            currentStep={currentStep}
+            totalSteps={pages.length}
+            onBack={handleBack}
+          />
+        )}
+        {renderContent()}
+      </SafeAreaView>
     </View>
   );
 }

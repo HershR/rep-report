@@ -12,16 +12,23 @@ import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 import { set } from "react-hook-form";
 import { lbsToKg, kgToLbs } from "@/src/utils/measurementConversion";
-const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createWeightEntry } from "@/src/db/dbHelpers";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import { useSQLiteContext } from "expo-sqlite";
+import * as schema from "@/src//db/schema";
+
+const AskWeight = ({ onContinue }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
   const [mode, setMode] = useState<"metric" | "imperial">("imperial");
   const regex = /^\d{0,4}(\.\d?)?$/;
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
 
   const handleWeightChange = (value: string) => {
     const trimmed = value.trim();
     if (value === "") {
       setWeight(null);
-      updateAnswer("weight", null);
       return;
     }
     if (!regex.test(trimmed)) return;
@@ -30,18 +37,14 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
       num = num / 10;
       setWeight(num.toFixed(1));
       const kgs = lbsToKg(num);
-      updateAnswer("weight", kgs);
     } else if (mode === "metric" && num > 453.5) {
       num = Math.min(num, 453.5);
       setWeight(num.toString());
-      updateAnswer("weight", num);
     } else {
       setWeight(trimmed);
       if (mode === "imperial") {
         const kgs = lbsToKg(num);
-        updateAnswer("weight", kgs);
       } else {
-        updateAnswer("weight", num);
       }
     }
   };
@@ -49,7 +52,6 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
   const modeChange = (mode: "imperial" | "metric") => {
     setMode(mode);
     if (weight === null) {
-      updateAnswer("weight", null);
       return;
     }
     if (mode === "imperial") {
@@ -62,7 +64,7 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="bg-background">
+    <View className="flex-1">
       <Animated.View
         entering={FadeInDown.duration(600)}
         className="flex-1 justify-center items-center"
@@ -114,7 +116,26 @@ const AskWeight = ({ updateAnswer }: OnboardingPageProps) => {
           </View>
         </View>
       </Animated.View>
-    </SafeAreaWrapper>
+      <View className="items-center">
+        <Button
+          className="min-w-52 mb-4"
+          size={"lg"}
+          disabled={weight === null}
+          onPress={async () => {
+            if (weight === null) {
+              return;
+            }
+            await createWeightEntry(drizzleDb, parseFloat(weight), mode);
+            onContinue();
+          }}
+        >
+          <Text>Continue</Text>
+        </Button>
+        <Button variant={"ghost"} size={"lg"} onPress={onContinue}>
+          <Text>Skip</Text>
+        </Button>
+      </View>
+    </View>
   );
 };
 

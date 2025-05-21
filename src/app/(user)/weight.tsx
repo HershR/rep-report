@@ -25,10 +25,15 @@ import {
   lbsToKg,
 } from "@/src/utils/measurementConversion";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
+import { DateTime } from "luxon";
 
 const WeightHistory = () => {
   const [weight, setWeight] = useState<string | null>(null);
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(
+    DateTime.now()
+      .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+      .toJSDate()
+  );
   const [dateModalVisible, setDateModalVisible] = useState(false);
   const { unit } = useMeasurementUnit();
   const regex = /^\d{0,4}(\.\d?)?$/;
@@ -50,7 +55,7 @@ const WeightHistory = () => {
   const addWeightEntry = async (weight: number) => {
     try {
       const kg = unit === "imperial" ? lbsToKg(weight) : weight;
-      await createWeightEntry(drizzleDb, kg, date);
+      await createWeightEntry(drizzleDb, kg, "metric", date.toISOString());
     } catch (error) {
       console.error("Error creating weight entry:", error);
     }
@@ -145,14 +150,14 @@ const WeightHistory = () => {
                   key={weight.id}
                   className="flex-row items-center justify-between"
                 >
-                  <Text key={weight.id} className="text-xl font-bold">
+                  <Text key={weight.id} className="flex-1 text-xl font-bold">
                     {convertWeightString(
                       weight.weight,
                       weight.unit === "imperial" ? "imperial" : "metric",
                       unit
                     )}
                   </Text>
-                  <Text className="text-sm text-muted-foreground">
+                  <Text className="flex-1 text-sm text-muted-foreground">
                     {new Date(weight.date_created).toLocaleDateString(
                       undefined,
                       dateOptions

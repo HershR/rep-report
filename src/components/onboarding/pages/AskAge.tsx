@@ -9,16 +9,17 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useState } from "react";
 import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
-const AskAge = ({ selectedAnswer, updateAnswer }: OnboardingPageProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(selectedAnswer);
+import { TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const AskAge = ({ onContinue }: OnboardingPageProps) => {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const handleDateConfirm = (date: Date) => {
     setDatePickerVisibility(false);
     setSelectedDate(date);
-    updateAnswer("dateOfBirth", date);
   };
   return (
-    <SafeAreaWrapper backgroundColor="bg-background">
+    <View className="flex-1">
       <Animated.View
         entering={FadeInDown.duration(600)}
         className="flex-1 justify-center items-center"
@@ -46,6 +47,28 @@ const AskAge = ({ selectedAnswer, updateAnswer }: OnboardingPageProps) => {
           </Text>
         </Button>
       </Animated.View>
+      <View className="items-center">
+        <Button
+          className="min-w-52 mb-4"
+          size={"lg"}
+          disabled={selectedDate === null}
+          onPress={async () => {
+            if (selectedDate === null) {
+              return;
+            }
+            await AsyncStorage.setItem(
+              "dateOfBirth",
+              selectedDate.toISOString()
+            );
+            onContinue();
+          }}
+        >
+          <Text>Continue</Text>
+        </Button>
+        <Button variant={"ghost"} size={"lg"} onPress={onContinue}>
+          <Text>Skip</Text>
+        </Button>
+      </View>
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
@@ -67,7 +90,7 @@ const AskAge = ({ selectedAnswer, updateAnswer }: OnboardingPageProps) => {
         themeVariant="light"
         display="spinner"
       ></DateTimePickerModal>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
