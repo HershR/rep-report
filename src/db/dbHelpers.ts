@@ -178,7 +178,7 @@ export const getWeightHistory = async (
 export const createWeightEntry = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   weight: number,
-  unit: "metric" | "imperial" = "imperial",
+  unit: Unit = Unit.imperial,
   date: string = DateTime.now()
     .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
     .toUTC()

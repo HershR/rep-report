@@ -7,10 +7,8 @@ import { Button } from "../../ui/button";
 import { Text } from "../../ui/text";
 import { View } from "react-native";
 import { useState } from "react";
-import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
-import { set } from "react-hook-form";
 import { cmToFeetInches, inchesToCm } from "@/src/utils/measurementConversion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 const AskAge = ({ onContinue }: OnboardingPageProps) => {

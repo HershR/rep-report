@@ -17,6 +17,8 @@ import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
 import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
+import { useMeasurementUnit } from "../context/MeasurementUnitContext";
+import { UNIT_LABELS } from "@/src/constants/measurementLables";
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
@@ -41,7 +43,7 @@ const emptyForm: Workout = {
   id: -1,
   date: "",
   mode: 0,
-  unit: "lb",
+  unit: Unit.imperial,
   routine_id: null,
   exercise_id: 0,
   notes: null,
@@ -50,6 +52,8 @@ const emptyForm: Workout = {
 const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const { unit } = useMeasurementUnit();
+
   const {
     control,
     handleSubmit,
@@ -187,7 +191,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           {mode === 0 ? (
             <>
               <Text className="flex-1 text-center text-lg">Reps</Text>
-              <Text className="flex-1 text-center text-lg">Weight (lb)</Text>
+              <Text className="flex-1 text-center text-lg">
+                Weight (
+                {unit === Unit.imperial
+                  ? UNIT_LABELS.imperial.weight
+                  : UNIT_LABELS.metric.weight}
+                )
+              </Text>
             </>
           ) : (
             <View className="flex-1">

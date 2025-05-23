@@ -72,7 +72,7 @@ const Profile = () => {
   };
 
   const setUnit = async (unit: Unit) => {
-    await AsyncStorage.setItem("measurementUnit", unit);
+    await AsyncStorage.setItem("measurementUnit", unit.toString());
   };
   const setTheme = async (theme: string) => {
     await AsyncStorage.setItem("theme", theme);
@@ -117,7 +117,7 @@ const Profile = () => {
           <View className="flex-1 flex-row justify-between items-center">
             <Text className="text-xl font-medium text-left">Height</Text>
             <Text className="text-xl font-medium text-right">
-              {height ? convertHeightString(height, "metric", unit) : "NA"}
+              {height ? convertHeightString(height, Unit.metric, unit) : "NA"}
             </Text>
           </View>
           <Separator className="" />
@@ -126,7 +126,7 @@ const Profile = () => {
             <TouchableOpacity onPress={() => router.push("/weight")}>
               <Text className="text-xl font-medium text-right">
                 {weight?.weight
-                  ? convertWeightString(weight.weight, "metric", unit)
+                  ? convertWeightString(weight.weight, weight.unit, unit)
                   : "NA"}
               </Text>
             </TouchableOpacity>
@@ -155,6 +155,23 @@ const Profile = () => {
             </View>
             <Separator />
             <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+              <Text className="text-xl font-medium">Units</Text>
+              <View className="flex-row items-center gap-x-2">
+                <Text className="w-6 text-center text-xl font-semibold">
+                  Lb
+                </Text>
+                <Switch
+                  checked={unit !== Unit.imperial}
+                  onCheckedChange={() => toggleUnit()}
+                  nativeID="airplane-mode"
+                />
+                <Text className="w-6 text-center text-xl font-semibold">
+                  Kg
+                </Text>
+              </View>
+            </View>
+            <Separator />
+            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
               <Text className="text-xl font-medium">My Weight</Text>
               <Button
                 variant={"ghost"}
@@ -174,27 +191,6 @@ const Profile = () => {
                 <ChevronRight size={24} className="color-primary" />
               </Button>
             </View>
-            <Separator />
-
-            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-              <Text className="text-xl font-medium">Units</Text>
-              <View className="flex-row items-center gap-x-2">
-                <Text className="w-6 text-center text-xl font-semibold">
-                  Lb
-                </Text>
-                <Switch
-                  checked={unit !== "imperial"}
-                  onCheckedChange={() => toggleUnit()}
-                  nativeID="airplane-mode"
-                />
-                <Text className="w-6 text-center text-xl font-semibold">
-                  Kg
-                </Text>
-              </View>
-            </View>
-            <Button onPress={() => router.replace("../index")}>
-              <Text>To Onboarding</Text>
-            </Button>
           </ScrollView>
         </CardContent>
       </Card>

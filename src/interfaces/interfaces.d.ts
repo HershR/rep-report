@@ -63,7 +63,7 @@ interface Workout {
   id: number;
   date: string; // ISO date
   mode: number; // weight or time
-  unit: string; // e.g., kg, lbs
+  unit: Unit; // e.g., kg, lbs
   routine_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   notes: string | null;

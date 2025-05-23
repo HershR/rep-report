@@ -1,43 +1,37 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-type MeasurementUnit = "metric" | "imperial";
-
-interface MeasurementUnitContextProps {
-  unit: MeasurementUnit;
-  setUnit: (unit: MeasurementUnit) => void;
+interface UnitContextProps {
+  unit: Unit;
+  setUnit: (unit: Unit) => void;
   toggleUnit: () => void;
 }
 
-const MeasurementUnitContext = createContext<
-  MeasurementUnitContextProps | undefined
->(undefined);
+const UnitContext = createContext<UnitContextProps | undefined>(undefined);
 
 export const MeasurementUnitProvider = ({
-  defaultUnit = "metric",
+  defaultUnit = Unit.imperial,
   children,
 }: {
-  defaultUnit?: MeasurementUnit;
+  defaultUnit?: Unit;
   children: ReactNode;
 }) => {
-  const [unit, setUnit] = useState<MeasurementUnit>(defaultUnit);
+  const [unit, setUnit] = useState<Unit>(defaultUnit);
 
   const toggleUnit = () => {
-    setUnit((prev) => (prev === "metric" ? "imperial" : "metric"));
+    setUnit((prev) => (prev === Unit.metric ? Unit.imperial : Unit.metric));
   };
 
   return (
-    <MeasurementUnitContext.Provider value={{ unit, setUnit, toggleUnit }}>
+    <UnitContext.Provider value={{ unit, setUnit, toggleUnit }}>
       {children}
-    </MeasurementUnitContext.Provider>
+    </UnitContext.Provider>
   );
 };
 
 export const useMeasurementUnit = () => {
-  const context = useContext(MeasurementUnitContext);
+  const context = useContext(UnitContext);
   if (!context) {
-    throw new Error(
-      "useMeasurementUnit must be used within a MeasurementUnitProvider"
-    );
+    throw new Error("useUnit must be used within a UnitProvider");
   }
   return context;
 };

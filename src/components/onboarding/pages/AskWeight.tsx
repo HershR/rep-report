@@ -7,12 +7,9 @@ import { Button } from "../../ui/button";
 import { Text } from "../../ui/text";
 import { View } from "react-native";
 import { useState } from "react";
-import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
-import { set } from "react-hook-form";
 import { lbsToKg, kgToLbs } from "@/src/utils/measurementConversion";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createWeightEntry } from "@/src/db/dbHelpers";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
@@ -20,7 +17,7 @@ import * as schema from "@/src//db/schema";
 
 const AskWeight = ({ onContinue }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
-  const [mode, setMode] = useState<"metric" | "imperial">("imperial");
+  const [mode, setMode] = useState<Unit>(Unit.imperial);
   const regex = /^\d{0,4}(\.\d?)?$/;
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -33,28 +30,23 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
     }
     if (!regex.test(trimmed)) return;
     let num = parseFloat(trimmed);
-    if (mode === "imperial" && num > 999.9) {
+    if (mode === Unit.imperial && num > 999.9) {
       num = num / 10;
       setWeight(num.toFixed(1));
-      const kgs = lbsToKg(num);
-    } else if (mode === "metric" && num > 453.5) {
+    } else if (mode === Unit.metric && num > 453.5) {
       num = Math.min(num, 453.5);
       setWeight(num.toString());
     } else {
       setWeight(trimmed);
-      if (mode === "imperial") {
-        const kgs = lbsToKg(num);
-      } else {
-      }
     }
   };
 
-  const modeChange = (mode: "imperial" | "metric") => {
+  const modeChange = (mode: Unit) => {
     setMode(mode);
     if (weight === null) {
       return;
     }
-    if (mode === "imperial") {
+    if (mode === Unit.imperial) {
       const lbs = kgToLbs(parseFloat(weight));
       setWeight(lbs.toString());
     } else {
@@ -85,18 +77,18 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
           <View className="flex-row">
             <Button
               onPress={() => {
-                modeChange("imperial");
+                modeChange(Unit.imperial);
               }}
-              variant={mode === "imperial" ? "default" : "outline"}
+              variant={mode === Unit.imperial ? "default" : "outline"}
               className="flex-1 rounded-r-none"
             >
               <Text className="text-2xl font-bold">Lbs</Text>
             </Button>
             <Button
               onPress={() => {
-                modeChange("metric");
+                modeChange(Unit.metric);
               }}
-              variant={mode === "metric" ? "default" : "outline"}
+              variant={mode === Unit.metric ? "default" : "outline"}
               className="flex-1 rounded-l-none"
             >
               <Text className="text-2xl font-bold">Kg</Text>
@@ -104,10 +96,10 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
           </View>
           <View className="flex-row h-11 native:h-14 mt-4">
             <Input
-              className="flex-1 ml-4"
+              className="flex-1"
               textAlign="right"
-              placeholder={mode === "imperial" ? "lbs" : "kg"}
-              keyboardType="numeric"
+              placeholder={mode === Unit.imperial ? "lbs" : "kg"}
+              keyboardType="decimal-pad"
               autoComplete="off"
               value={weight || ""}
               onChangeText={handleWeightChange}

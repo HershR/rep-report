@@ -1,5 +1,3 @@
-export type Unit = "imperial" | "metric";
-
 export const inchesToCm = (inches: number) => {
   return parseFloat((inches * 2.54).toFixed(1));
 };
@@ -25,9 +23,9 @@ export function convertHeightString(
   targetUnit: Unit
 ) {
   if (currentUnit === targetUnit) {
-    return height + (targetUnit === "imperial" ? " inches" : " cm");
+    return height + (targetUnit === Unit.imperial ? " inches" : " cm");
   }
-  if (targetUnit === "imperial") {
+  if (targetUnit === Unit.imperial) {
     const { feet, inches } = cmToFeetInches(height);
     return `${feet}' ${inches}"`;
   } else {
@@ -41,11 +39,26 @@ export function convertWeightString(
   targetUnit: Unit
 ) {
   if (currentUnit === targetUnit) {
-    return weight + (targetUnit === "imperial" ? " lbs" : " kg");
+    return weight + (targetUnit === Unit.imperial ? " lbs" : " kg");
   }
-  if (targetUnit === "imperial") {
+  if (targetUnit === Unit.imperial) {
     return kgToLbs(weight) + " lbs";
   } else {
     return lbsToKg(weight) + " kg";
+  }
+}
+
+export function convertWeight(
+  weight: number,
+  currentUnit: Unit,
+  targetUnit: Unit
+) {
+  if (currentUnit === targetUnit) {
+    return weight;
+  }
+  if (targetUnit === Unit.imperial) {
+    return kgToLbs(weight);
+  } else {
+    return lbsToKg(weight);
   }
 }

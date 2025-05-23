@@ -72,7 +72,7 @@ export const routineSchedule = sqliteTable("routine_schedule", {
 export const weightHistory = sqliteTable("weight_history", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   weight: real("weight").notNull(),
-  unit: text("unit").notNull().default("kg"), // e.g., kg, lbs
+  unit: text("unit").notNull().default("imperial"), // e.g., imperial, metric
   date_created: text("date_created").notNull(),
 });
 

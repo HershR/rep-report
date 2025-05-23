@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { OnboardingProgress } from "@/src/components/onboarding/OnboardingProgress";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Text } from "../ui/text";
 import Welcome from "./pages/Welcome";
 import AskAge from "./pages/AskAge";
 import AskHeight from "./pages/AskHeight";
@@ -16,7 +14,6 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import SafeAreaWrapper from "../SafeAreaWrapper";
 import ActivityLoader from "../ActivityLoader";
-import { createWeightEntry } from "@/src/db/dbHelpers";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export interface OnboardingPageProps {
@@ -42,7 +39,7 @@ export function OnboardingScreen() {
         "onboardingComplete"
       );
       if (onboardingComplete === "true") {
-        // router.replace("/(tabs)/home");
+        router.replace("/(tabs)/home");
       }
       setIsLoading(false);
     };
@@ -58,16 +55,6 @@ export function OnboardingScreen() {
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentStep + 1 === totalPages) {
-      // Save the answers to AsyncStorage or any other storage
-      // for (const [key, value] of Object.entries(answers)) {
-      //   const [question, answer] = value;
-      //   if (answer === null) continue;
-      //   if (question === "weight") {
-      //     await createWeightEntry(drizzleDb, answer);
-      //     continue;
-      //   }
-      //   await AsyncStorage.setItem(question, answer.toString());
-      // }
       await AsyncStorage.setItem("onboardingComplete", "true");
       router.replace("/(tabs)/home");
       return;
