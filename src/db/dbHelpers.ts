@@ -9,6 +9,8 @@ import {
   workoutSets,
   exercises,
   weightHistory,
+  userSettings,
+  routineSchedule,
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
@@ -173,6 +175,13 @@ export const getWeightHistory = async (
   });
 };
 
+export const getUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string
+) => {
+  return db.query.userSettings.findFirst({ where: eq(userSettings.key, key) });
+};
+
 //Create
 
 export const createWeightEntry = async (
@@ -321,7 +330,7 @@ export const addDaysToRoutine = async (
     return { routine_id: routineId, day: x };
   });
 
-  return db.insert(schema.routineSchedule).values(routineDays);
+  return db.insert(routineSchedule).values(routineDays);
 };
 
 //Update
@@ -380,14 +389,28 @@ export const updateRoutine = async (
   addExercisesToRoutine(db, routineId, routineForm.exercises);
 
   await db
-    .delete(schema.routineSchedule)
-    .where(eq(schema.routineSchedule.routine_id, routineId));
+    .delete(routineSchedule)
+    .where(eq(routineSchedule.routine_id, routineId));
   addDaysToRoutine(
     db,
     routineId,
     routineForm.days.filter((x) => x.selected).map((y) => y.id)
   );
   return routineId;
+};
+
+export const updateUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string,
+  value: string
+) => {
+  return db
+    .insert(userSettings)
+    .values({ key: key, value: value })
+    .onConflictDoUpdate({
+      target: userSettings.key,
+      set: { value: value },
+    });
 };
 
 //Delete

@@ -11,7 +11,14 @@ import { OnboardingPageProps } from "../OnboardingScreen";
 import { Input } from "../../ui/input";
 import { cmToFeetInches, inchesToCm } from "@/src/utils/measurementConversion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { updateUserSetting } from "@/src/db/dbHelpers";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src/db/schema";
+
 const AskAge = ({ onContinue }: OnboardingPageProps) => {
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
   const [height, setHeight] = useState<string | null>(null);
   const [feet, setFeet] = useState<string | null>(null);
   const [inches, setInches] = useState<string | null>(null);
@@ -183,7 +190,7 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
             if (height === null) {
               return;
             }
-            await AsyncStorage.setItem("height", height);
+            await updateUserSetting(drizzleDb, "height", height);
             onContinue();
           }}
         >

@@ -23,6 +23,7 @@ import {
   convertHeightString,
   convertWeightString,
 } from "@/src/utils/measurementConversion";
+import { getUserSetting } from "@/src/db/dbHelpers";
 
 const Profile = () => {
   const isMountingRef = useRef(false);
@@ -47,9 +48,9 @@ const Profile = () => {
     })
   );
   const getAge = async () => {
-    const dob = await AsyncStorage.getItem("dateOfBirth");
+    const dob = await getUserSetting(drizzleDb, "dob");
     if (dob) {
-      const date = new Date(dob);
+      const date = new Date(dob.value);
       const today = new Date();
       const age = today.getFullYear() - date.getFullYear();
       const monthDiff = today.getMonth() - date.getMonth();
@@ -66,12 +67,16 @@ const Profile = () => {
     }
   };
   const getHeight = async () => {
-    const _height = await AsyncStorage.getItem("height");
-    setHeight(parseFloat(_height || "0"));
+    const userHeight = await getUserSetting(drizzleDb, "height");
+    if (userHeight) {
+      setHeight(parseFloat(userHeight.value));
+    } else {
+      setHeight(0);
+    }
   };
 
   const setUnit = async (unit: Unit) => {
-    await AsyncStorage.setItem("measurementUnit", unit.toString());
+    await AsyncStorage.setItem("measurementUnit", unit);
   };
   const setTheme = async (theme: string) => {
     await AsyncStorage.setItem("theme", theme);

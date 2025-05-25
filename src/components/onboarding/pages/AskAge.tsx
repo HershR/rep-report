@@ -7,13 +7,20 @@ import { Button } from "../../ui/button";
 import { Text } from "../../ui/text";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useState } from "react";
-import SafeAreaWrapper from "../../SafeAreaWrapper";
 import { OnboardingPageProps } from "../OnboardingScreen";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src/db/schema";
+import { updateUserSetting } from "@/src/db/dbHelpers";
+
 const AskAge = ({ onContinue }: OnboardingPageProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+
   const handleDateConfirm = (date: Date) => {
     setDatePickerVisibility(false);
     setSelectedDate(date);
@@ -56,8 +63,9 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
             if (selectedDate === null) {
               return;
             }
-            await AsyncStorage.setItem(
-              "dateOfBirth",
+            await updateUserSetting(
+              drizzleDb,
+              "dob",
               selectedDate.toISOString()
             );
             onContinue();

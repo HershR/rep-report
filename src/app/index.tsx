@@ -3,7 +3,6 @@ import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import { OnboardingScreen } from "@/src/components/onboarding/OnboardingScreen";
 
 const Index = () => {
-  console.log("Onboarding Index Page");
   return (
     <SafeAreaWrapper backgroundColor="bg-background">
       <OnboardingScreen />
