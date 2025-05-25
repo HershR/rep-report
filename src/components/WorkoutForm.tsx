@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,6 +19,7 @@ import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
 import { useMeasurementUnit } from "../context/MeasurementUnitContext";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
+import { convertWeight } from "../utils/measurementConversion";
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
@@ -96,6 +97,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       const set = data.sets[i];
       if (data.mode === 0) {
         set.duration = null;
+        set.weight = convertWeight(set.weight || 0, unit, "imperial");
       } else {
         set.reps = null;
         set.weight = null;
