@@ -18,23 +18,24 @@ import { NAV_THEME } from "@/src/lib/constants";
 import { Button } from "@/src/components/ui/button";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 import { useRouter } from "expo-router";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import {
+  convertHeightString,
+  convertWeightString,
+} from "@/src/utils/measurementConversion";
+import { getUserSetting } from "@/src/db/dbHelpers";
 
 const Profile = () => {
   const isMountingRef = useRef(false);
-  const [age, setAge] = useState<string | null>();
-  const [height, setHeight] = useState<string | null>();
+  const [age, setAge] = useState<number | null>();
+  const [height, setHeight] = useState<number | null>();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
 
   const router = useRouter();
-
-  const getAge = async () => {
-    const _age = await AsyncStorage.getItem("age");
-    setAge(_age || "0");
-  };
-
+  const { unit, toggleUnit } = useMeasurementUnit();
   const {
     data: weight,
     error: weightError,
@@ -46,20 +47,54 @@ const Profile = () => {
       ],
     })
   );
-
+  const getAge = async () => {
+    const dob = await getUserSetting(drizzleDb, "dob");
+    if (dob) {
+      const date = new Date(dob.value);
+      const today = new Date();
+      const age = today.getFullYear() - date.getFullYear();
+      const monthDiff = today.getMonth() - date.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < date.getDate())
+      ) {
+        setAge(age - 1);
+      } else {
+        setAge(age);
+      }
+    } else {
+      setAge(0);
+    }
+  };
   const getHeight = async () => {
-    const _height = await AsyncStorage.getItem("height");
-    setHeight(_height || "0");
+    const userHeight = await getUserSetting(drizzleDb, "height");
+    if (userHeight) {
+      setHeight(parseFloat(userHeight.value));
+    } else {
+      setHeight(0);
+    }
   };
 
+  const setUnit = async (unit: Unit) => {
+    await AsyncStorage.setItem("measurementUnit", unit);
+  };
   const setTheme = async (theme: string) => {
     await AsyncStorage.setItem("theme", theme);
   };
+
   useEffect(() => {
     isMountingRef.current = true;
     getAge();
     getHeight();
   }, []);
+
+  useEffect(() => {
+    if (!isMountingRef.current) {
+      setUnit(unit);
+    } else {
+      isMountingRef.current = false;
+    }
+  }, [unit]);
   useEffect(() => {
     if (!isMountingRef.current) {
       setTheme(colorScheme);
@@ -84,21 +119,21 @@ const Profile = () => {
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-xl font-medium text-left">Weight</Text>
-            <TouchableOpacity onPress={() => router.push("/weight")}>
-              {weight ? (
-                <Text className="text-xl font-medium text-right">
-                  {weight.weight} lb
-                </Text>
-              ) : (
-                <Text className="text-xl font-medium text-right">NA</Text>
-              )}
-            </TouchableOpacity>
+            <Text className="text-xl font-medium text-left">Height</Text>
+            <Text className="text-xl font-medium text-right">
+              {height ? convertHeightString(height, "metric", unit) : "NA"}
+            </Text>
           </View>
           <Separator className="" />
           <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-xl font-medium text-left">Height</Text>
-            <Text className="text-xl font-medium text-right">{height} ft</Text>
+            <Text className="text-xl font-medium text-left">Weight</Text>
+            <TouchableOpacity onPress={() => router.push("/weight")}>
+              <Text className="text-xl font-medium text-right">
+                {weight?.weight
+                  ? convertWeightString(weight.weight, "imperial", unit)
+                  : "NA"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </CardContent>
       </Card>
@@ -120,6 +155,23 @@ const Profile = () => {
                   nativeID="airplane-mode"
                 />
                 <MoonStar className="color-primary" size={24} />
+              </View>
+            </View>
+            <Separator />
+            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+              <Text className="text-xl font-medium">Units</Text>
+              <View className="flex-row items-center gap-x-2">
+                <Text className="w-6 text-center text-xl font-semibold">
+                  Lb
+                </Text>
+                <Switch
+                  checked={unit !== "imperial"}
+                  onCheckedChange={() => toggleUnit()}
+                  nativeID="airplane-mode"
+                />
+                <Text className="w-6 text-center text-xl font-semibold">
+                  Kg
+                </Text>
               </View>
             </View>
             <Separator />

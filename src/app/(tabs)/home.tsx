@@ -16,7 +16,7 @@ import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
 import { DateTime } from "luxon";
-export default function Index() {
+export default function Home() {
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });

@@ -9,10 +9,13 @@ import {
   workoutSets,
   exercises,
   weightHistory,
+  userSettings,
+  routineSchedule,
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
 import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
+import { DateTime } from "luxon";
 
 //Get
 
@@ -172,15 +175,25 @@ export const getWeightHistory = async (
   });
 };
 
+export const getUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string
+) => {
+  return db.query.userSettings.findFirst({ where: eq(userSettings.key, key) });
+};
+
 //Create
 
 export const createWeightEntry = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   weight: number,
-  date: Date = new Date()
+  date: string = DateTime.now()
+    .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+    .toUTC()
+    .toISO()
 ) => {
   return db.insert(weightHistory).values({
-    date_created: date.toISOString(),
+    date_created: date,
     weight: weight,
   });
 };
@@ -225,14 +238,12 @@ const createWorkout = async (
   {
     date,
     mode,
-    unit,
     notes,
     routine_id,
     exercise_id,
   }: {
     date: string;
     mode: number;
-    unit: string; // e.g., kg, lbs
     notes: string | null;
     routine_id: number | null;
     exercise_id: number;
@@ -244,7 +255,6 @@ const createWorkout = async (
     .values({
       date,
       mode,
-      unit,
       routine_id,
       exercise_id,
       notes,
@@ -257,14 +267,13 @@ const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  { date, mode, unit, routine_id, exercise_id, notes }: Workout
+  { date, mode, routine_id, exercise_id, notes }: Workout
 ) => {
   //Check if exercise is in local DB
   const id = await getOrCreateExercise(db, exercise_id);
   return await createWorkout(db, {
     date,
     mode,
-    unit,
     routine_id,
     exercise_id: id,
     notes,
@@ -321,7 +330,7 @@ export const addDaysToRoutine = async (
     return { routine_id: routineId, day: x };
   });
 
-  return db.insert(schema.routineSchedule).values(routineDays);
+  return db.insert(routineSchedule).values(routineDays);
 };
 
 //Update
@@ -380,14 +389,28 @@ export const updateRoutine = async (
   addExercisesToRoutine(db, routineId, routineForm.exercises);
 
   await db
-    .delete(schema.routineSchedule)
-    .where(eq(schema.routineSchedule.routine_id, routineId));
+    .delete(routineSchedule)
+    .where(eq(routineSchedule.routine_id, routineId));
   addDaysToRoutine(
     db,
     routineId,
     routineForm.days.filter((x) => x.selected).map((y) => y.id)
   );
   return routineId;
+};
+
+export const updateUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string,
+  value: string
+) => {
+  return db
+    .insert(userSettings)
+    .values({ key: key, value: value })
+    .onConflictDoUpdate({
+      target: userSettings.key,
+      set: { value: value },
+    });
 };
 
 //Delete

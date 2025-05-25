@@ -18,6 +18,8 @@ import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import { convertWeight } from "@/src/utils/measurementConversion";
 
 const CreateWorkout = () => {
   const {
@@ -33,6 +35,7 @@ const CreateWorkout = () => {
   } = useLocalSearchParams();
 
   const { selectedDate } = useDate();
+  const { unit } = useMeasurementUnit();
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -114,8 +117,17 @@ const CreateWorkout = () => {
               mode: 0,
               notes: null,
               exercise: { name: exerciseName, image: null },
-              sets: workout?.sets || [],
-              unit: "lb",
+              sets:
+                workout?.sets.map((x) => {
+                  return {
+                    ...x,
+
+                    weight: x.weight
+                      ? // @ts-ignore
+                        convertWeight(x.weight, "imperial", unit)
+                      : null,
+                  };
+                }) || [],
             }}
             onSubmit={createWorkout}
           />

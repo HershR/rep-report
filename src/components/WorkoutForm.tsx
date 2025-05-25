@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -17,20 +17,12 @@ import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
 import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "./ui/alert-dialog";
+import { useMeasurementUnit } from "../context/MeasurementUnitContext";
+import { UNIT_LABELS } from "@/src/constants/measurementLables";
+import { convertWeight } from "../utils/measurementConversion";
 
 interface WorkoutWithExercise
-  extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
   exercise: Pick<Exercise, "name" | "image">;
 }
 
@@ -52,7 +44,6 @@ const emptyForm: Workout = {
   id: -1,
   date: "",
   mode: 0,
-  unit: "lb",
   routine_id: null,
   exercise_id: 0,
   notes: null,
@@ -61,6 +52,8 @@ const emptyForm: Workout = {
 const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const { unit } = useMeasurementUnit();
+
   const {
     control,
     handleSubmit,
@@ -104,6 +97,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       const set = data.sets[i];
       if (data.mode === 0) {
         set.duration = null;
+        set.weight = convertWeight(set.weight || 0, unit, "imperial");
       } else {
         set.reps = null;
         set.weight = null;
@@ -198,7 +192,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           {mode === 0 ? (
             <>
               <Text className="flex-1 text-center text-lg">Reps</Text>
-              <Text className="flex-1 text-center text-lg">Weight (lb)</Text>
+              <Text className="flex-1 text-center text-lg">
+                Weight (
+                {unit === "imperial"
+                  ? UNIT_LABELS.imperial.weight
+                  : UNIT_LABELS.metric.weight}
+                )
+              </Text>
             </>
           ) : (
             <View className="flex-1">
