@@ -116,7 +116,6 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </CardHeader>
       {/* DATE */}
       <CardContent>
-        <Text className="font-semibold">Date</Text>
         <Controller
           control={control}
           name="date"
@@ -343,9 +342,6 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           <Text>Add Set</Text>
         </Button>
         <View className="flex-row w-full justify-center items-center gap-x-2">
-          <Button className="flex-1" onPress={handleSubmit(validateAndSubmit)}>
-            <Text>Save</Text>
-          </Button>
           <Button
             className="flex-1"
             variant={"destructive"}
@@ -364,6 +360,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
             }}
           >
             <Text>Clear Sets</Text>
+          </Button>
+          <Button className="flex-1" onPress={handleSubmit(validateAndSubmit)}>
+            <Text>Save</Text>
           </Button>
         </View>
       </CardFooter>

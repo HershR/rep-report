@@ -112,14 +112,14 @@ const AllExerciseSearch = () => {
     equipment: string[] = [],
     muscles: string[] = []
   ) {
-    if (
-      searchQuery === "" &&
-      selectedCategory.length === 0 &&
-      selectedEquipment.length === 0 &&
-      selectedMucles.length === 0
-    ) {
-      return data;
-    }
+    // if (
+    //   searchQuery === "" &&
+    //   selectedCategory.length === 0 &&
+    //   selectedEquipment.length === 0 &&
+    //   selectedMucles.length === 0
+    // ) {
+    //   return data;
+    // }
     return data.filter((x) => {
       if (
         category.length > 0 &&
@@ -145,9 +145,9 @@ const AllExerciseSearch = () => {
 
       const description = x.translations.find((y) => y.language === 2);
       if (
-        !!searchQuery &&
-        description?.name.toLowerCase().includes(searchQuery.toLowerCase()) ===
-          false
+        !description?.name ||
+        (!!searchQuery &&
+          !description?.name.toLowerCase().includes(searchQuery.toLowerCase()))
       ) {
         return false;
       }

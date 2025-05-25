@@ -36,11 +36,7 @@ const Profile = () => {
 
   const router = useRouter();
   const { unit, toggleUnit } = useMeasurementUnit();
-  const {
-    data: weight,
-    error: weightError,
-    updatedAt: weightLoaded,
-  } = useLiveQuery(
+  const { data: weight } = useLiveQuery(
     drizzleDb.query.weightHistory.findFirst({
       orderBy: (weight_history, { desc }) => [
         desc(weight_history.date_created),
@@ -152,7 +148,6 @@ const Profile = () => {
                 <Switch
                   checked={isDarkColorScheme}
                   onCheckedChange={() => toggleColorScheme()}
-                  nativeID="airplane-mode"
                 />
                 <MoonStar className="color-primary" size={24} />
               </View>
@@ -165,9 +160,8 @@ const Profile = () => {
                   Lb
                 </Text>
                 <Switch
-                  checked={unit !== "imperial"}
+                  checked={unit === "metric"}
                   onCheckedChange={() => toggleUnit()}
-                  nativeID="airplane-mode"
                 />
                 <Text className="w-6 text-center text-xl font-semibold">
                   Kg
