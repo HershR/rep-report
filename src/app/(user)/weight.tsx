@@ -23,7 +23,6 @@ import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import {
   convertWeightString,
   lbsToKg,
-  Unit,
 } from "@/src/utils/measurementConversion";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
 import { DateTime } from "luxon";
@@ -55,7 +54,7 @@ const WeightHistory = () => {
 
   const addWeightEntry = async (weight: number) => {
     try {
-      await createWeightEntry(drizzleDb, weight, unit, date.toISOString());
+      await createWeightEntry(drizzleDb, weight, date.toISOString());
     } catch (error) {
       console.error("Error creating weight entry:", error);
     }
@@ -69,10 +68,10 @@ const WeightHistory = () => {
     }
     if (!regex.test(trimmed)) return;
     let num = parseFloat(trimmed);
-    if (unit === Unit.imperial && num > 999.9) {
+    if (unit === "imperial" && num > 999.9) {
       num = num / 10;
       setWeight(num.toFixed(1));
-    } else if (unit === Unit.metric && num > 453.5) {
+    } else if (unit === "metric" && num > 453.5) {
       num = Math.min(num, 453.5);
       setWeight(num.toString());
     } else {
@@ -116,7 +115,7 @@ const WeightHistory = () => {
             />
             <Text className="text-6xl font-semibold self-end">
               {" "}
-              {unit === Unit.metric
+              {unit === "metric"
                 ? UNIT_LABELS.metric.weight
                 : UNIT_LABELS.imperial.weight}{" "}
             </Text>
@@ -153,7 +152,7 @@ const WeightHistory = () => {
                   className="flex-row items-center justify-between"
                 >
                   <Text key={weight.id} className="flex-1 text-xl font-bold">
-                    {convertWeightString(weight.weight, weight.unit, unit)}
+                    {convertWeightString(weight.weight, "imperial", unit)}
                   </Text>
                   <Text className="flex-1 text-sm text-muted-foreground">
                     {new Date(weight.date_created).toLocaleDateString(

@@ -21,14 +21,9 @@ export interface OnboardingPageProps {
 }
 export function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, [string, any | null]>>(
-    {}
-  );
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
 
   const pages = [Welcome, AskAge, AskHeight, AskWeight];
   const totalPages = pages.length;
@@ -61,12 +56,6 @@ export function OnboardingScreen() {
     }
     setCurrentStep(currentStep + 1);
   };
-  const handleSkip = async () => {
-    Haptics.selectionAsync();
-    await AsyncStorage.setItem("onboardingComplete", "true");
-
-    router.replace("/(tabs)/home");
-  };
 
   const handleBack = () => {
     Haptics.selectionAsync();
@@ -81,7 +70,6 @@ export function OnboardingScreen() {
   };
 
   const shouldShowProgress = currentStep > 0 && currentStep <= pages.length;
-  const isWelcomeScreen = currentStep === 0;
 
   return (
     <View className="flex-1">
@@ -98,81 +86,3 @@ export function OnboardingScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  welcomeContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  welcomeTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 24,
-    // color: Colors.light.primary,
-  },
-  welcomeSubtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    color: "#666",
-    lineHeight: 26,
-    marginBottom: 40,
-  },
-  welcomeImage: {
-    width: "100%",
-    height: 300,
-    marginTop: 20,
-  },
-  questionContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  question: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  option: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#F5F5F5",
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  selectedOption: {
-    // borderColor: Colors.light.primary,
-    backgroundColor: "#E3F2FD",
-  },
-  optionText: {
-    fontSize: 16,
-    textAlign: "center",
-    fontWeight: "500",
-  },
-  selectedOptionText: {
-    // color: Colors.light.primary,
-    fontWeight: "600",
-  },
-  continueButton: {
-    // backgroundColor: Colors.light.primary,
-    padding: 16,
-    margin: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  continueButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-});

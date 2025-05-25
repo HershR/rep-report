@@ -22,7 +22,6 @@ import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import {
   convertHeightString,
   convertWeightString,
-  Unit,
 } from "@/src/utils/measurementConversion";
 
 const Profile = () => {
@@ -117,7 +116,7 @@ const Profile = () => {
           <View className="flex-1 flex-row justify-between items-center">
             <Text className="text-xl font-medium text-left">Height</Text>
             <Text className="text-xl font-medium text-right">
-              {height ? convertHeightString(height, Unit.metric, unit) : "NA"}
+              {height ? convertHeightString(height, "metric", unit) : "NA"}
             </Text>
           </View>
           <Separator className="" />
@@ -126,7 +125,7 @@ const Profile = () => {
             <TouchableOpacity onPress={() => router.push("/weight")}>
               <Text className="text-xl font-medium text-right">
                 {weight?.weight
-                  ? convertWeightString(weight.weight, weight.unit, unit)
+                  ? convertWeightString(weight.weight, "imperial", unit)
                   : "NA"}
               </Text>
             </TouchableOpacity>
@@ -161,7 +160,7 @@ const Profile = () => {
                   Lb
                 </Text>
                 <Switch
-                  checked={unit !== Unit.imperial}
+                  checked={unit !== "imperial"}
                   onCheckedChange={() => toggleUnit()}
                   nativeID="airplane-mode"
                 />

@@ -101,11 +101,10 @@ const UpdateWorkout = () => {
                     return {
                       ...x,
                       weight: x.weight
-                        ? convertWeight(x.weight, workout.mode, unit)
+                        ? convertWeight(x.weight, "imperial", unit)
                         : null,
                     };
                   }) || [],
-                unit: unit,
               }}
               onSubmit={saveWorkout}
               action={() => (

@@ -178,7 +178,6 @@ export const getWeightHistory = async (
 export const createWeightEntry = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   weight: number,
-  unit: Unit = Unit.imperial,
   date: string = DateTime.now()
     .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
     .toUTC()
@@ -186,7 +185,6 @@ export const createWeightEntry = async (
 ) => {
   return db.insert(weightHistory).values({
     date_created: date,
-    unit: unit,
     weight: weight,
   });
 };
@@ -231,14 +229,12 @@ const createWorkout = async (
   {
     date,
     mode,
-    unit,
     notes,
     routine_id,
     exercise_id,
   }: {
     date: string;
     mode: number;
-    unit: string; // e.g., kg, lbs
     notes: string | null;
     routine_id: number | null;
     exercise_id: number;
@@ -250,7 +246,6 @@ const createWorkout = async (
     .values({
       date,
       mode,
-      unit,
       routine_id,
       exercise_id,
       notes,
@@ -263,14 +258,13 @@ const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  { date, mode, unit, routine_id, exercise_id, notes }: Workout
+  { date, mode, routine_id, exercise_id, notes }: Workout
 ) => {
   //Check if exercise is in local DB
   const id = await getOrCreateExercise(db, exercise_id);
   return await createWorkout(db, {
     date,
     mode,
-    unit,
     routine_id,
     exercise_id: id,
     notes,

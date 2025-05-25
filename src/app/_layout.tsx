@@ -21,7 +21,6 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
-import { Unit } from "../utils/measurementConversion";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -60,7 +59,7 @@ export default function RootLayout() {
       await AsyncStorage.setItem("measurementUnit", "metric");
     }
     setMeasurementUnit(
-      savedMeasurementUnit === "imperial" ? Unit.imperial : Unit.metric
+      savedMeasurementUnit === "imperial" ? "imperial" : "metric"
     );
   };
   const loadTheme = async () => {

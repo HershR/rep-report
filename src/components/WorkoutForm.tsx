@@ -21,7 +21,7 @@ import { useMeasurementUnit } from "../context/MeasurementUnitContext";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
 
 interface WorkoutWithExercise
-  extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
   exercise: Pick<Exercise, "name" | "image">;
 }
 
@@ -43,7 +43,6 @@ const emptyForm: Workout = {
   id: -1,
   date: "",
   mode: 0,
-  unit: Unit.imperial,
   routine_id: null,
   exercise_id: 0,
   notes: null,
@@ -193,7 +192,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
               <Text className="flex-1 text-center text-lg">Reps</Text>
               <Text className="flex-1 text-center text-lg">
                 Weight (
-                {unit === Unit.imperial
+                {unit === "imperial"
                   ? UNIT_LABELS.imperial.weight
                   : UNIT_LABELS.metric.weight}
                 )

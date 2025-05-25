@@ -17,7 +17,7 @@ import * as schema from "@/src//db/schema";
 
 const AskWeight = ({ onContinue }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
-  const [mode, setMode] = useState<Unit>(Unit.imperial);
+  const [mode, setMode] = useState<Unit>("imperial");
   const regex = /^\d{0,4}(\.\d?)?$/;
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -30,29 +30,19 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
     }
     if (!regex.test(trimmed)) return;
     let num = parseFloat(trimmed);
-    if (mode === Unit.imperial && num > 999.9) {
+    if (mode === "metric") {
+      num = kgToLbs(num);
+    }
+    if (num > 999.9) {
       num = num / 10;
       setWeight(num.toFixed(1));
-    } else if (mode === Unit.metric && num > 453.5) {
-      num = Math.min(num, 453.5);
-      setWeight(num.toString());
     } else {
-      setWeight(trimmed);
+      setWeight(num.toString());
     }
   };
 
   const modeChange = (mode: Unit) => {
     setMode(mode);
-    if (weight === null) {
-      return;
-    }
-    if (mode === Unit.imperial) {
-      const lbs = kgToLbs(parseFloat(weight));
-      setWeight(lbs.toString());
-    } else {
-      const kgs = lbsToKg(parseFloat(weight));
-      setWeight(kgs.toString());
-    }
   };
 
   return (
@@ -77,18 +67,18 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
           <View className="flex-row">
             <Button
               onPress={() => {
-                modeChange(Unit.imperial);
+                modeChange("imperial");
               }}
-              variant={mode === Unit.imperial ? "default" : "outline"}
+              variant={mode === "imperial" ? "default" : "outline"}
               className="flex-1 rounded-r-none"
             >
               <Text className="text-2xl font-bold">Lbs</Text>
             </Button>
             <Button
               onPress={() => {
-                modeChange(Unit.metric);
+                modeChange("metric");
               }}
-              variant={mode === Unit.metric ? "default" : "outline"}
+              variant={mode === "metric" ? "default" : "outline"}
               className="flex-1 rounded-l-none"
             >
               <Text className="text-2xl font-bold">Kg</Text>
@@ -98,10 +88,16 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
             <Input
               className="flex-1"
               textAlign="right"
-              placeholder={mode === Unit.imperial ? "lbs" : "kg"}
+              placeholder={mode === "imperial" ? "lbs" : "kg"}
               keyboardType="decimal-pad"
               autoComplete="off"
-              value={weight || ""}
+              value={
+                mode === "imperial"
+                  ? weight || ""
+                  : weight
+                  ? lbsToKg(parseFloat(weight || "0")).toString()
+                  : ""
+              }
               onChangeText={handleWeightChange}
               maxLength={5}
             />
@@ -117,7 +113,7 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
             if (weight === null) {
               return;
             }
-            await createWeightEntry(drizzleDb, parseFloat(weight), mode);
+            await createWeightEntry(drizzleDb, parseFloat(weight));
             onContinue();
           }}
         >

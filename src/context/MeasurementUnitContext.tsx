@@ -9,7 +9,7 @@ interface UnitContextProps {
 const UnitContext = createContext<UnitContextProps | undefined>(undefined);
 
 export const MeasurementUnitProvider = ({
-  defaultUnit = Unit.imperial,
+  defaultUnit = "imperial",
   children,
 }: {
   defaultUnit?: Unit;
@@ -18,7 +18,7 @@ export const MeasurementUnitProvider = ({
   const [unit, setUnit] = useState<Unit>(defaultUnit);
 
   const toggleUnit = () => {
-    setUnit((prev) => (prev === Unit.metric ? Unit.imperial : Unit.metric));
+    setUnit((prev) => (prev === "imperial" ? "metric" : "imperial"));
   };
 
   return (

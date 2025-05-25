@@ -124,11 +124,10 @@ const CreateWorkout = () => {
 
                     weight: x.weight
                       ? // @ts-ignore
-                        convertWeight(x.weight, workout.unit, unit)
+                        convertWeight(x.weight, "imperial", unit)
                       : null,
                   };
                 }) || [],
-              unit: unit,
             }}
             onSubmit={createWorkout}
           />

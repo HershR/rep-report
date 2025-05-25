@@ -1,4 +1,1 @@
-enum Unit {
-  imperial = "imperial",
-  metric = "metric",
-}
+type Unit = "imperial" | "metric";
