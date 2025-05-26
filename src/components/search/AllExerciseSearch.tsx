@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { SetStateAction, useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
@@ -10,7 +10,6 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
-import apiData from "@/src/data/exerciseInfo";
 import ActivityLoader from "../ActivityLoader";
 
 const categories = Object.entries(wgerCategories).map((x) => {
@@ -176,40 +175,32 @@ const AllExerciseSearch = () => {
     },
   ];
 
+  function updateState(state: SetStateAction<any>, value: string | null) {
+    if (typeof state === "function") {
+      if (value === null) {
+        state([]);
+        return;
+      }
+      state((prev: any) => {
+        if (Array.isArray(prev)) {
+          return prev.includes(value)
+            ? prev.filter((x: string) => x !== value)
+            : [...prev, value];
+        }
+        return prev;
+      });
+    }
+  }
   function onFilterChange(id: number, value: string | null): void {
     switch (id) {
       case 0:
-        if (value === null) {
-          setSelectedCategory([]);
-          return;
-        }
-        if (!selectedCategory.includes(value)) {
-          setSelectedCategory([...selectedCategory, value]);
-        } else {
-          setSelectedCategory((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedCategory, value);
         break;
       case 1:
-        if (value === null) {
-          setSelectedEquipment([]);
-          return;
-        }
-        if (!selectedEquipment.includes(value)) {
-          setSelectedEquipment([...selectedEquipment, value]);
-        } else {
-          setSelectedEquipment((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedEquipment, value);
         break;
       case 2:
-        if (value === null) {
-          setSelectedMucles([]);
-          return;
-        }
-        if (!selectedMucles.includes(value)) {
-          setSelectedMucles([...selectedMucles, value]);
-        } else {
-          setSelectedMucles((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedMucles, value);
         break;
     }
   }
