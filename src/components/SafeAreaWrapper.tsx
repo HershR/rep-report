@@ -11,7 +11,7 @@ interface Props {
 const SafeAreaWrapper = ({
   children,
   style,
-  backgroundColor = "bg-secondary",
+  backgroundColor = "bg-background",
 }: Props) => {
   return (
     <View className={"relative flex-1 " + backgroundColor}>

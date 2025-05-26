@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { Image, ImageContentFit, ImageSource, ImageStyle } from "expo-image";
 import ImageNotFound from "@/src/assets/images/image-not-found.png";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { ImageOff } from "@/src/lib/icons/ImageOff";
 interface Props {
   image_uri: string | null;
   containerClassname?: string;
@@ -46,7 +47,7 @@ const ExerciseImage = ({
           }}
         />
       ) : (
-        <MaterialIcons name="image-not-supported" size={50} color="black" />
+        <ImageOff size={50} className="color-primary" />
       )}
     </View>
   );

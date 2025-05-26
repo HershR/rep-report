@@ -101,8 +101,7 @@ const Profile = () => {
 
   return (
     <SafeAreaWrapper>
-      <Text className="text-3xl text-left w-full">Profile</Text>
-      <Card className="flex-row w-full h-1/4 pt-6 mt-16">
+      <Card className="flex-row w-full h-1/4 pt-6 ">
         <CardContent className="flex justify-center items-center">
           <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
             <User className="color-primary" size={80}></User>
