@@ -80,7 +80,7 @@ const Saved = () => {
             <Text>Routines</Text>
           </TabsTrigger>
         </TabsList>
-        <View className="mb-4">
+        <View className="my-4">
           <SearchBar
             placeholder={
               tab === "favorites" ? "Search favorites..." : "Search routines..."

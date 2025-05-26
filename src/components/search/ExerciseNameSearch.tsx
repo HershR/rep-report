@@ -53,7 +53,7 @@ const ExerciseNameSearch = () => {
       return {
         ...x.data,
         id: x.data.base_id,
-        image: "https://wger.de/" + x.data.image,
+        image: x.data.image ? "https://wger.de/" + x.data.image : "",
       };
     });
 
@@ -64,8 +64,8 @@ const ExerciseNameSearch = () => {
     return exercies;
   }
   return (
-    <>
-      <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
+    <View className="flex-1 gap-y-4">
+      <View className="flex-row w-full justify-center items-center gap-x-2">
         <View className="flex-1">
           <SearchBar
             placeholder="Search exercise..."
@@ -128,7 +128,7 @@ const ExerciseNameSearch = () => {
           }
         />
       )}
-    </>
+    </View>
   );
 };
 

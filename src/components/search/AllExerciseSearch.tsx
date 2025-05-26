@@ -206,8 +206,8 @@ const AllExerciseSearch = () => {
   }
 
   return (
-    <>
-      <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
+    <View className="flex-1 gap-y-4">
+      <View className="flex-row w-full justify-center items-center gap-x-2">
         <View className="flex-1">
           <SearchBar
             placeholder="Search exercise..."
@@ -228,7 +228,7 @@ const AllExerciseSearch = () => {
       {(selectedCategory.length > 0 ||
         selectedEquipment.length > 0 ||
         selectedMucles.length > 0) && (
-        <View className="flex-row flex-wrap gap-2 mb-4">
+        <View className="flex-row flex-wrap gap-x-2">
           {selectedCategory.map((value) => (
             <FilterChip
               key={value}
@@ -301,7 +301,7 @@ const AllExerciseSearch = () => {
           />
         </>
       )}
-    </>
+    </View>
   );
 };
 
