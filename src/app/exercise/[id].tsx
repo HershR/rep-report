@@ -1,21 +1,14 @@
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  FlatList,
-} from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchExerciseDetail } from "@/src/services/api";
 import useFetch from "@/src/services/useFetch";
-import { SafeAreaView, useSafeAreaFrame } from "react-native-safe-area-context";
+import { useSafeAreaFrame } from "react-native-safe-area-context";
 import { removeHTML, toUpperCase } from "@/src/services/textFormatter";
 import MuscleCard from "@/src/components/MuscleCard";
 import CustomCarousel from "@/src/components/CustomCarousel";
 import { SearchChip } from "@/src/components/SearchChip";
 import { Text } from "@/src/components/ui/text";
-import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import { Star } from "@/src/lib/icons/Star";
 import { Button } from "@/src/components/ui/button";
 import {
@@ -114,16 +107,13 @@ const ExerciseDetails = () => {
   }
 
   return (
-    <SafeAreaWrapper style="mt-5">
+    <SafeAreaWrapper>
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityLoader />
         </View>
       ) : (
         <>
-          <Button variant={"ghost"} size={"icon"} onPress={router.back}>
-            <ArrowRight size={32} className="rotate-180 color-primary" />
-          </Button>
           <ScrollView
             ref={scrollViewRef}
             className="flex-1"
@@ -137,7 +127,7 @@ const ExerciseDetails = () => {
                   data={exercise?.images.map((x) => x.image)}
                   renderFunction={(item: string) => {
                     return (
-                      <View className="flex-1 m-2 justify-center items-center">
+                      <View className="flex-1 justify-center m-2 mt-0 items-center">
                         <ExerciseImage
                           image_uri={item}
                           containerClassname="w-full aspect-square"

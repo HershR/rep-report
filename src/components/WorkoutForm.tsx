@@ -98,11 +98,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   };
 
   return (
-    <Card className="flex-1 w-full md:max-w-[640px]">
+    <Card className="relative flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
-        {action && action()}
       </CardHeader>
+      <View className="absolute right-2 top-2">{action && action()}</View>
       {/* DATE */}
       <CardContent>
         <Controller
@@ -202,7 +202,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </CardContent>
       <ScrollView
         ref={scrollViewRef}
-        className="flex mb-2"
+        className="flex mb-2 border-2 border-purple-300"
         showsVerticalScrollIndicator={false}
       >
         {fields.map((field, index) => (
@@ -318,7 +318,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </ScrollView>
 
       {/* Footer */}
-      <CardFooter className="flex flex-col gap-y-2">
+      <CardFooter className="flex-col gap-y-2">
         <Button
           className="w-full"
           onPress={() => {

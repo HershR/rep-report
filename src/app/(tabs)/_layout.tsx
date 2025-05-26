@@ -48,7 +48,6 @@ const _Layout = () => {
               ? NAV_THEME.dark.background
               : NAV_THEME.light.background
           }`,
-          // position: "absolute",
           overflow: "hidden",
         },
       }}

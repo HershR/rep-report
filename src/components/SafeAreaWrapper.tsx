@@ -13,14 +13,14 @@ const SafeAreaWrapper = ({
   children,
   style,
   backgroundColor = "bg-background",
-  edges = [],
+  edges = [], //"left", "right", "bottom"
 }: Props) => {
   return (
-    <View className={"relative flex-1 " + backgroundColor}>
+    <View className={"relative flex-1 bg-red-500" + backgroundColor}>
       <SafeAreaView
         edges={edges}
         className={twMerge(
-          "flex-1 mx-8 my-5 md:mx-16 border-purple-500",
+          "border-2 border-green-500 flex-1 mx-8 my-5 md:mx-16",
           style
         )}
       >

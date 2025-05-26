@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -104,6 +105,19 @@ export default function RootLayout() {
   ) {
     return null;
   }
+  function headerOptions(title: string, colorScheme: "light" | "dark") {
+    return {
+      title: title,
+      headerShown: true,
+      headerStyle: {
+        backgroundColor: NAV_THEME[colorScheme].border,
+      },
+      headerTitleStyle: {
+        color: NAV_THEME[colorScheme].text,
+      },
+      headerShadowVisible: false,
+    };
+  }
   return (
     <>
       <Suspense fallback={<ActivityLoader />}>
@@ -117,47 +131,49 @@ export default function RootLayout() {
               <ThemeProvider
                 value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
               >
-                <StatusBar hidden={true} />
-                <Stack>
-                  <Stack.Screen
-                    name="index"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="exercise/[id]"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="workout/create/[id]"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="workout/update/[id]"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/create"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/[id]"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/update/[id]"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="(user)"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                </Stack>
-                <PortalHost />
-                <Toast />
+                <StatusBar hidden={false} />
+                <SafeAreaView className="flex-1">
+                  <Stack>
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="exercise/[id]"
+                      options={headerOptions("Exercise Details", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/create/[id]"
+                      options={headerOptions("New Workout", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/update/[id]"
+                      options={headerOptions("Edit Workout", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/create"
+                      options={headerOptions("New Routine", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/[id]"
+                      options={headerOptions("Routine Details", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/update/[id]"
+                      options={headerOptions("Edit Routine", colorScheme)}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(user)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                  </Stack>
+                  <PortalHost />
+                  <Toast />
+                </SafeAreaView>
               </ThemeProvider>
             </DateProvider>
           </MeasurementUnitProvider>
