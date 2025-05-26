@@ -74,6 +74,7 @@ const ExerciseNameSearch = () => {
               setSearchQuery(text);
             }}
             onPress={() => {}}
+            autoFocus={true}
           />
         </View>
         <Select
