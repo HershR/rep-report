@@ -95,8 +95,7 @@ const Saved = () => {
           {!favoritesLoaded ? (
             <ActivityLoader />
           ) : (
-            <>
-              {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
+            <View className="flex-1 justify-start">
               <ExerciseList
                 exercises={
                   searchQuery
@@ -111,14 +110,14 @@ const Saved = () => {
                   </View>
                 }
               />
-            </>
+            </View>
           )}
         </TabsContent>
         <TabsContent className="flex-1" value="routines">
           {!routinesLoaded ? (
             <ActivityLoader />
           ) : (
-            <View className="flex-1 justify-center items-center">
+            <View className="flex-1">
               <FlatList
                 className="w-full"
                 data={

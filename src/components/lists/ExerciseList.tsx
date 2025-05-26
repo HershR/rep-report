@@ -25,7 +25,7 @@ const ExerciseList = ({
   return (
     <FlatList
       className="w-full"
-      contentContainerClassName=" justify-center item-center"
+      contentContainerClassName="justify-center item-center"
       key={numColumns}
       numColumns={numColumns}
       data={formatList(exercises, numColumns).slice(
@@ -34,7 +34,7 @@ const ExerciseList = ({
       )}
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
-      columnWrapperClassName="justify-start gap-x-4 my-2"
+      columnWrapperClassName="justify-start gap-x-4 mb-4"
       ListEmptyComponent={emptyListComp}
       ListHeaderComponent={
         exercises?.length > pageSize ? (

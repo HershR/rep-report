@@ -31,9 +31,9 @@ const ExerciseCard = ({ exercise, containerClassname = "" }: Props) => {
         {/* <Text className="absolute top-2 right-2 text-sm font-medium text-white bg-black rounded-full px-3 py-2">
           
         </Text> */}
-        <View className="absolute -bottom-1 left-0 right-0 w-full h-16 max-h-[30%] bg-secondary/80 justify-center px-2">
+        <View className="absolute -bottom-1 left-0 right-0 w-full h-16 max-h-[35%] bg-secondary/80 justify-center px-2">
           <Text
-            className={`w-full text-left text-base md:text-xl lg:text-2xl font-bold`}
+            className={`w-full text-left text-base md:text-xl lg:text-2xl font-bold pb-2`}
             numberOfLines={2}
           >
             {name}
