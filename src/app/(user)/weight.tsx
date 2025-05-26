@@ -86,7 +86,7 @@ const WeightHistory = () => {
     day: "numeric",
   };
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper edges={["bottom"]}>
       <Card className="flex-1">
         <CardHeader className="flex gap-x-2">
           <CardTitle>Add Entry</CardTitle>

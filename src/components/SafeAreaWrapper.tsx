@@ -7,16 +7,18 @@ interface Props {
   children?: ReactNode;
   style?: string;
   backgroundColor?: string;
+  edges?: ("top" | "bottom" | "left" | "right")[];
 }
 const SafeAreaWrapper = ({
   children,
   style,
   backgroundColor = "bg-background",
+  edges = [],
 }: Props) => {
   return (
     <View className={"relative flex-1 " + backgroundColor}>
       <SafeAreaView
-        edges={[]}
+        edges={edges}
         className={twMerge(
           "flex-1 mx-8 my-5 md:mx-16 border-purple-500",
           style
