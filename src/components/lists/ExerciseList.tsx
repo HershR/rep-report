@@ -35,7 +35,6 @@ const ExerciseList = ({
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       columnWrapperClassName="justify-start gap-x-4 my-2"
-      // contentContainerStyle={{ paddingBottom: 10 }}
       ListEmptyComponent={emptyListComp}
       ListHeaderComponent={
         exercises?.length > pageSize ? (

@@ -14,8 +14,8 @@ import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
-import { Button } from "@/src/components/ui/button";
 import { DateTime } from "luxon";
+import { Separator } from "@/src/components/ui/separator";
 export default function Home() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -53,20 +53,21 @@ export default function Home() {
 
   return (
     <SafeAreaWrapper>
-      <View className="flex h-32">
+      <View className="h-32">
         <DatePickerWithWeek
           currentDate={selectedDate!}
           onDateChange={setSelectedDate}
         />
       </View>
+      <Separator className="my-4" />
       {!recentExerciseLoaded || !workoutLoaded ? (
         <ActivityLoader />
       ) : (
         <View className="flex-1">
-          <View className="flex mt-2 mb-6">
+          <View className="flex">
             {recentExercise ? (
               <>
-                <Text className="text-xl font-semibold mt-4">
+                <Text className="text-xl font-semibold mb-2">
                   Recent Exercise:
                 </Text>
                 <RecentExerciseList
@@ -76,6 +77,8 @@ export default function Home() {
               </>
             ) : null}
           </View>
+          <Separator className="my-4" />
+
           <View className="flex-1">
             <SearchBar
               placeholder={"Add exercise"}
@@ -86,7 +89,7 @@ export default function Home() {
               <ActivityLoader />
             ) : (
               <>
-                <Text className="text-xl font-semibold mt-4">
+                <Text className="text-xl font-semibold mt-2 mb-2">
                   {selectedDate?.toISODate() === DateTime.now().toISODate()
                     ? "Today's Workouts"
                     : selectedDate?.toFormat("LLL dd, yyyy")}

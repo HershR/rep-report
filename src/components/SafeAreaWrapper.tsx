@@ -16,8 +16,11 @@ const SafeAreaWrapper = ({
   return (
     <View className={"relative flex-1 " + backgroundColor}>
       <SafeAreaView
-        className={twMerge("flex-1 mx-8 my-5 md:mx-16", style)}
-        //
+        edges={[]}
+        className={twMerge(
+          "flex-1 mx-8 my-5 md:mx-16 border-purple-500",
+          style
+        )}
       >
         {children}
       </SafeAreaView>

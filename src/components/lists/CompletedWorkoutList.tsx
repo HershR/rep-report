@@ -21,7 +21,6 @@ const CompletedWorkoutList = ({ workouts, onUpdate }: Props) => {
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       columnWrapperClassName={numColumns > 1 ? "justify-start gap-x-4" : ""}
-      contentContainerStyle={{ paddingBottom: 50 }}
       ItemSeparatorComponent={() => <View className="h-4"></View>}
       renderItem={({ item }) => {
         if (item.empty) {
