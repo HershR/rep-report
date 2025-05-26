@@ -40,27 +40,16 @@ const emptySet: WorkoutSet = {
   weight: null,
   duration: null,
 };
-const emptyForm: Workout = {
-  id: -1,
-  date: "",
-  mode: 0,
-  routine_id: null,
-  exercise_id: 0,
-  notes: null,
-  sets: [emptySet],
-};
 const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const { unit } = useMeasurementUnit();
-
   const {
     control,
     handleSubmit,
     watch,
     setValue,
     clearErrors,
-    reset,
     formState: { errors },
   } = useForm<Workout>({
     defaultValues: {
@@ -119,7 +108,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
         <Controller
           control={control}
           name="date"
-          render={({ field: { onChange, value } }) => (
+          render={({}) => (
             <View className="flex-row items-center gap-x-2">
               <Text className="font-medium text-xl">{date}</Text>
               <Button

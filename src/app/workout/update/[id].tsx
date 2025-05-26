@@ -92,9 +92,9 @@ const UpdateWorkout = () => {
           <>
             <WorkoutForm
               defaultForm={{
-                date: selectedDate?.toISODate()!,
-                mode: 0,
-                notes: null,
+                date: workout?.date || selectedDate?.toISODate()!,
+                mode: workout?.mode || 0,
+                notes: workout?.notes || "",
                 exercise: { name: exerciseName, image: null },
                 sets:
                   workout?.sets.map((x) => {
