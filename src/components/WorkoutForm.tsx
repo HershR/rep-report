@@ -202,13 +202,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </CardContent>
       <ScrollView
         ref={scrollViewRef}
-        className="flex mb-2 border-2 border-purple-300"
+        className="flex-1 mb-2"
         showsVerticalScrollIndicator={false}
       >
         {fields.map((field, index) => (
           <CardContent
             key={field.id}
-            className="flex w-full justify-center pb-2 mb-2"
+            className="flex w-full justify-center pb-0 mb-2"
           >
             <View className="flex-1 flex-row w-full items-center gap-x-4">
               <View className="w-8 h-8 justify-center items-center bg-primary rounded-full">

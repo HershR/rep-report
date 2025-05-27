@@ -20,6 +20,7 @@ import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import { convertWeight } from "@/src/utils/measurementConversion";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CreateWorkout = () => {
   const {
@@ -43,7 +44,6 @@ const CreateWorkout = () => {
   const { data: workout, loading } = useFetch(() =>
     getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
-
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -113,10 +113,8 @@ const CreateWorkout = () => {
                 workout?.sets.map((x) => {
                   return {
                     ...x,
-
                     weight: x.weight
-                      ? // @ts-ignore
-                        convertWeight(x.weight, "imperial", unit)
+                      ? convertWeight(x.weight, "imperial", unit)
                       : null,
                   };
                 }) || [],

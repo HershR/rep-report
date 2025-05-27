@@ -26,13 +26,12 @@ import {
 import { getUserSetting } from "@/src/db/dbHelpers";
 
 const Profile = () => {
-  const isMountingRef = useRef(false);
   const [age, setAge] = useState<number | null>();
   const [height, setHeight] = useState<number | null>();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
 
   const router = useRouter();
   const { unit, toggleUnit } = useMeasurementUnit();
@@ -79,25 +78,24 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    isMountingRef.current = true;
     getAge();
     getHeight();
   }, []);
 
-  useEffect(() => {
-    if (!isMountingRef.current) {
-      setUnit(unit);
-    } else {
-      isMountingRef.current = false;
-    }
-  }, [unit]);
-  useEffect(() => {
-    if (!isMountingRef.current) {
-      setTheme(colorScheme);
-    } else {
-      isMountingRef.current = false;
-    }
-  }, [colorScheme]);
+  // useEffect(() => {
+  //   if (!isMountingRef.current) {
+  //     setUnit(unit);
+  //   } else {
+  //     isMountingRef.current = false;
+  //   }
+  // }, [unit]);
+  // useEffect(() => {
+  //   if (!isMountingRef.current) {
+  //     setTheme(colorScheme);
+  //   } else {
+  //     isMountingRef.current = false;
+  //   }
+  // }, [colorScheme]);
 
   return (
     <SafeAreaWrapper>
@@ -146,7 +144,10 @@ const Profile = () => {
                 <Sun className="color-primary" size={24} />
                 <Switch
                   checked={isDarkColorScheme}
-                  onCheckedChange={() => toggleColorScheme()}
+                  onCheckedChange={async () => {
+                    await setTheme(colorScheme === "light" ? "dark" : "light");
+                    toggleColorScheme();
+                  }}
                 />
                 <MoonStar className="color-primary" size={24} />
               </View>
@@ -155,14 +156,17 @@ const Profile = () => {
             <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
               <Text className="text-xl font-medium">Units</Text>
               <View className="flex-row items-center gap-x-2">
-                <Text className="w-6 text-center text-xl font-semibold">
+                <Text className="min-w-6 text-center text-xl font-semibold">
                   Lb
                 </Text>
                 <Switch
                   checked={unit === "metric"}
-                  onCheckedChange={() => toggleUnit()}
+                  onCheckedChange={async () => {
+                    await setUnit(unit === "imperial" ? "metric" : "imperial");
+                    toggleUnit();
+                  }}
                 />
-                <Text className="w-6 text-center text-xl font-semibold">
+                <Text className="min-w-6 text-center text-xl font-semibold">
                   Kg
                 </Text>
               </View>

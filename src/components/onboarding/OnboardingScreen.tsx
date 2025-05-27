@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { OnboardingProgress } from "@/src/components/onboarding/OnboardingProgress";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -9,12 +9,8 @@ import AskAge from "./pages/AskAge";
 import AskHeight from "./pages/AskHeight";
 import AskWeight from "./pages/AskWeight";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
 import SafeAreaWrapper from "../SafeAreaWrapper";
 import ActivityLoader from "../ActivityLoader";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export interface OnboardingPageProps {
   onContinue: () => void;
@@ -73,16 +69,14 @@ export function OnboardingScreen() {
 
   return (
     <View className="flex-1">
-      <SafeAreaView className="flex-1">
-        {shouldShowProgress && (
-          <OnboardingProgress
-            currentStep={currentStep}
-            totalSteps={pages.length}
-            onBack={handleBack}
-          />
-        )}
-        {renderContent()}
-      </SafeAreaView>
+      {shouldShowProgress && (
+        <OnboardingProgress
+          currentStep={currentStep}
+          totalSteps={pages.length}
+          onBack={handleBack}
+        />
+      )}
+      {renderContent()}
     </View>
   );
 }

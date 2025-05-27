@@ -94,7 +94,7 @@ const StartWorkout = () => {
               renderItem={({ item }) => {
                 return (
                   <Card
-                    className={`flex-1 max-h-24 md:max-h-32 justify-center items-center py-1 px-2`}
+                    className={`flex-1 max-h-24 md:max-h-32 justify-center items-center py-2 px-2`}
                   >
                     <View className="flex-row w-full h-full justify-center items-center">
                       <Link href={`/exercise/${item.id}`} asChild>
@@ -140,7 +140,7 @@ const StartWorkout = () => {
           <CardContent>
             <Separator />
           </CardContent>
-          <CardFooter className="flex-row gap-x-2">
+          <CardFooter className="gap-x-2">
             <View className="flex-1">
               <ConfirmAlert
                 title="Delete Routine"

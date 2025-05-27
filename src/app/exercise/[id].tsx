@@ -229,10 +229,9 @@ const ExerciseDetails = () => {
               router.push({
                 pathname: "../workout/create/[id]",
                 params: {
-                  id: -1,
+                  id: 0,
                   exerciseId: id,
                   exerciseName: name,
-                  formMode: 0,
                 },
               })
             }

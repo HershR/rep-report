@@ -1,7 +1,13 @@
 import { View, FlatList, TouchableOpacity } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Separator } from "./ui/separator";
@@ -90,9 +96,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
   return (
     <>
       <Card className="flex-1 w-full md:max-w-md">
-        <CardHeader className="flex-row w-full justify-between items-center pb-4">
-          <CardTitle>Routine</CardTitle>
-        </CardHeader>
+        <CardHeader className="flex-row w-full justify-between items-center pb-4"></CardHeader>
         <CardContent>
           <Controller
             control={control}
@@ -134,7 +138,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           <Separator />
         </CardContent>
         <CardContent className="gap-y-2">
-          <CardTitle>Schedule</CardTitle>
+          <Text className="text-xl font-semibold">Schedule:</Text>
           <View className="flex-row max-w-sm justify-center items-center gap-x-2">
             {[0, 1, 2, 3, 4, 5, 6].map((day_no) => {
               return (
@@ -169,13 +173,13 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           <Separator />
         </CardContent>
         <CardContent className="flex-1 gap-y-4">
-          <CardTitle className="font-semibold">Exercise</CardTitle>
           <FlatList
             ref={flatlistRef}
             data={exerciseFields}
             keyExtractor={(item, index) => `${index}_${item.id}`}
             showsVerticalScrollIndicator={false}
             contentContainerClassName="gap-y-4"
+            ListEmptyComponent={<Text>No Exercise Added</Text>}
             ListHeaderComponent={
               errors.exercises?.root && (
                 <Text className="text-destructive">
@@ -230,31 +234,35 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
               );
             }}
           />
-
-          <Button onPress={() => setSearchModalVisible(true)}>
-            <Text>Add Exercise</Text>
-          </Button>
         </CardContent>
         <CardContent>
           <Separator />
         </CardContent>
-        <CardContent className="flex-row gap-x-2">
+        <CardFooter className="flex-col gap-y-2 justify-center items-center">
           <Button
-            className="flex-1"
-            variant={"destructive"}
-            onPress={() =>
-              reset(
-                { name: "", description: "", exercises: [] },
-                { keepDefaultValues: false }
-              )
-            }
+            className="w-full"
+            onPress={() => setSearchModalVisible(true)}
           >
-            <Text>Clear</Text>
+            <Text>Add Exercise</Text>
           </Button>
-          <Button className="flex-1" onPress={handleSubmit(onSubmit)}>
-            <Text>Save</Text>
-          </Button>
-        </CardContent>
+          <View className="flex-row gap-x-2">
+            <Button
+              className="flex-1"
+              variant={"destructive"}
+              onPress={() =>
+                reset(
+                  { name: "", description: "", exercises: [] },
+                  { keepDefaultValues: false }
+                )
+              }
+            >
+              <Text>Clear</Text>
+            </Button>
+            <Button className="flex-1" onPress={handleSubmit(onSubmit)}>
+              <Text>Save</Text>
+            </Button>
+          </View>
+        </CardFooter>
       </Card>
       <SearchModal
         visible={searchModalVisble}
