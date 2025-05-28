@@ -123,12 +123,12 @@ export default function RootLayout() {
                 <Stack
                   screenOptions={{
                     headerStyle: {
-                      backgroundColor: NAV_THEME[colorScheme].border,
+                      backgroundColor: NAV_THEME[colorScheme].background,
                     },
                     headerTitleStyle: {
                       color: NAV_THEME[colorScheme].text,
                     },
-                    headerShadowVisible: false,
+                    headerShadowVisible: true,
                     headerTransparent: true,
                     // headerBlurEffect: "dark",
                   }}
