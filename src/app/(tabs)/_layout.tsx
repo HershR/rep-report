@@ -42,14 +42,12 @@ const _Layout = () => {
           justifyContent: "center",
           alignItems: "center",
         },
-        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: `${
             isDarkColorScheme
               ? NAV_THEME.dark.background
               : NAV_THEME.light.background
           }`,
-          // position: "absolute",
           overflow: "hidden",
         },
       }}

@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "./SearchBar";
 import ActivityLoader from "./ActivityLoader";
 import { formatList } from "../utils/listFormatter";
+import { Separator } from "./ui/separator";
 interface SearchModalProps {
   visible: boolean;
   onClose: () => void;
@@ -73,7 +74,7 @@ const SearchModal = ({
             <CardTitle>Add Exercise</CardTitle>
           </CardHeader>
           <CardContent>
-            <Text className="text-lg font-bold mb-2">Favorites:</Text>
+            <Text className="text-lg font-bold mb-4">Favorites:</Text>
             <FlatList
               horizontal
               data={favorites}
@@ -115,7 +116,10 @@ const SearchModal = ({
               )}
             ></FlatList>
           </CardContent>
-          <CardContent className="flex-1 gap-y-2">
+          <CardContent>
+            <Separator className="my-2" />
+          </CardContent>
+          <CardContent className="flex-1 gap-y-4">
             <Text className="text-lg font-bold">Search Exercises</Text>
             <SearchBar
               placeholder={""}

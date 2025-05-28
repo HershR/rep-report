@@ -73,15 +73,7 @@ const UpdateWorkout = () => {
   }
 
   return (
-    <SafeAreaWrapper style="mt-5">
-      <Button
-        variant={"ghost"}
-        size={"icon"}
-        onPress={router.back}
-        className="z-50"
-      >
-        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-      </Button>
+    <SafeAreaWrapper>
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}

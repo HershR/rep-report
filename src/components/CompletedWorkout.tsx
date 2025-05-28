@@ -1,11 +1,11 @@
 import { View, TouchableOpacity, StyleProp, ViewStyle } from "react-native";
 import React from "react";
-import { Button } from "./ui/button";
 import { toUpperCase } from "../services/textFormatter";
 import ExerciseImage from "./ExerciseImage";
 import { Text } from "./ui/text";
 import { Card } from "./ui/card";
 import { Link, useRouter } from "expo-router";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 interface Props {
   workout: WorkoutWithExercise;
   containerStyle?: StyleProp<ViewStyle>;
@@ -14,15 +14,13 @@ interface Props {
 const CompletedWorkout = ({ workout, containerStyle }: Props) => {
   const image = workout.exercise.image;
   const router = useRouter();
-  function goToWorkout(workout: WorkoutWithExercise): void {
+  function goToWorkout(): void {
     return router.push({
       pathname: "../workout/update/[id]",
       params: {
         id: workout.id,
         exerciseId: workout.exercise_id,
         exerciseName: workout.exercise.name,
-        exerciseURI: workout.exercise.image,
-        formMode: 1,
       },
     });
   }
@@ -30,7 +28,10 @@ const CompletedWorkout = ({ workout, containerStyle }: Props) => {
     <Card
       className={`flex-1 max-h-32 justify-center items-center p-4 ${containerStyle}`}
     >
-      <View className="flex-row w-full h-full justify-center items-center">
+      <TouchableOpacity
+        className="flex-row w-full h-full justify-between items-center"
+        onPress={() => goToWorkout()}
+      >
         <Link href={`/exercise/${workout.exercise.id}`} asChild>
           <TouchableOpacity>
             <ExerciseImage
@@ -49,10 +50,8 @@ const CompletedWorkout = ({ workout, containerStyle }: Props) => {
             Sets: {workout.sets.length}
           </Text>
         </View>
-        <Button onPress={() => goToWorkout(workout)}>
-          <Text>Update</Text>
-        </Button>
-      </View>
+        <ChevronRight className="color-primary" size={30} />
+      </TouchableOpacity>
     </Card>
   );
 };

@@ -27,6 +27,7 @@ const Search = () => {
         <TabsContent
           value="search"
           forceMount={true}
+          className="mt-4"
           style={{
             display: value === "search" ? undefined : "none",
             flex: value === "search" ? 1 : 0,
@@ -37,6 +38,7 @@ const Search = () => {
         <TabsContent
           value="advanced"
           forceMount={true}
+          className="mt-4"
           style={{
             display: value === "advanced" ? undefined : "none",
             flex: value === "advanced" ? 1 : 0,

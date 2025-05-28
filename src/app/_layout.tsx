@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -104,6 +105,7 @@ export default function RootLayout() {
   ) {
     return null;
   }
+
   return (
     <>
       <Suspense fallback={<ActivityLoader />}>
@@ -117,8 +119,20 @@ export default function RootLayout() {
               <ThemeProvider
                 value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
               >
-                <StatusBar hidden={true} />
-                <Stack>
+                <StatusBar hidden={false} />
+                <Stack
+                  screenOptions={{
+                    headerStyle: {
+                      backgroundColor: NAV_THEME[colorScheme].background,
+                    },
+                    headerTitleStyle: {
+                      color: NAV_THEME[colorScheme].text,
+                    },
+                    headerShadowVisible: true,
+                    headerTransparent: true,
+                    // headerBlurEffect: "dark",
+                  }}
+                >
                   <Stack.Screen
                     name="index"
                     options={{ headerShown: false }}
@@ -129,27 +143,27 @@ export default function RootLayout() {
                   ></Stack.Screen>
                   <Stack.Screen
                     name="exercise/[id]"
-                    options={{ headerShown: false }}
+                    options={{ title: "Exercise Details" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="workout/create/[id]"
-                    options={{ headerShown: false }}
+                    options={{ title: "New Workout" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="workout/update/[id]"
-                    options={{ headerShown: false }}
+                    options={{ title: "Edit Workout" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="routine/create"
-                    options={{ headerShown: false }}
+                    options={{ title: "New Routine" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="routine/[id]"
-                    options={{ headerShown: false }}
+                    options={{ title: "Routine Details" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="routine/update/[id]"
-                    options={{ headerShown: false }}
+                    options={{ title: "Edit Routine" }}
                   ></Stack.Screen>
                   <Stack.Screen
                     name="(user)"

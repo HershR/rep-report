@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text } from "@/src/components/ui/text";
 import { User } from "@/src/lib/icons/User";
 import { MoonStar } from "@/src/lib/icons/MoonStar";
@@ -26,16 +26,16 @@ import {
 import { getUserSetting } from "@/src/db/dbHelpers";
 
 const Profile = () => {
-  const isMountingRef = useRef(false);
   const [age, setAge] = useState<number | null>();
   const [height, setHeight] = useState<number | null>();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
+
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
-
   const router = useRouter();
   const { unit, toggleUnit } = useMeasurementUnit();
+
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
   const { data: weight } = useLiveQuery(
     drizzleDb.query.weightHistory.findFirst({
       orderBy: (weight_history, { desc }) => [
@@ -43,33 +43,38 @@ const Profile = () => {
       ],
     })
   );
-  const getAge = async () => {
-    const dob = await getUserSetting(drizzleDb, "dob");
-    if (dob) {
-      const date = new Date(dob.value);
-      const today = new Date();
-      const age = today.getFullYear() - date.getFullYear();
-      const monthDiff = today.getMonth() - date.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < date.getDate())
-      ) {
-        setAge(age - 1);
+
+  useEffect(() => {
+    const getAge = async () => {
+      const dob = await getUserSetting(drizzleDb, "dob");
+      if (dob) {
+        const date = new Date(dob.value);
+        const today = new Date();
+        const age = today.getFullYear() - date.getFullYear();
+        const monthDiff = today.getMonth() - date.getMonth();
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < date.getDate())
+        ) {
+          setAge(age - 1);
+        } else {
+          setAge(age);
+        }
       } else {
-        setAge(age);
+        setAge(0);
       }
-    } else {
-      setAge(0);
-    }
-  };
-  const getHeight = async () => {
-    const userHeight = await getUserSetting(drizzleDb, "height");
-    if (userHeight) {
-      setHeight(parseFloat(userHeight.value));
-    } else {
-      setHeight(0);
-    }
-  };
+    };
+    const getHeight = async () => {
+      const userHeight = await getUserSetting(drizzleDb, "height");
+      if (userHeight) {
+        setHeight(parseFloat(userHeight.value));
+      } else {
+        setHeight(0);
+      }
+    };
+    getAge();
+    getHeight();
+  }, []);
 
   const setUnit = async (unit: Unit) => {
     await AsyncStorage.setItem("measurementUnit", unit);
@@ -78,31 +83,9 @@ const Profile = () => {
     await AsyncStorage.setItem("theme", theme);
   };
 
-  useEffect(() => {
-    isMountingRef.current = true;
-    getAge();
-    getHeight();
-  }, []);
-
-  useEffect(() => {
-    if (!isMountingRef.current) {
-      setUnit(unit);
-    } else {
-      isMountingRef.current = false;
-    }
-  }, [unit]);
-  useEffect(() => {
-    if (!isMountingRef.current) {
-      setTheme(colorScheme);
-    } else {
-      isMountingRef.current = false;
-    }
-  }, [colorScheme]);
-
   return (
     <SafeAreaWrapper>
-      <Text className="text-3xl text-left w-full">Profile</Text>
-      <Card className="flex-row w-full h-1/4 pt-6 mt-16">
+      <Card className="flex-row w-full h-1/4 pt-6 ">
         <CardContent className="flex justify-center items-center">
           <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
             <User className="color-primary" size={80}></User>
@@ -147,7 +130,10 @@ const Profile = () => {
                 <Sun className="color-primary" size={24} />
                 <Switch
                   checked={isDarkColorScheme}
-                  onCheckedChange={() => toggleColorScheme()}
+                  onCheckedChange={async () => {
+                    await setTheme(colorScheme === "light" ? "dark" : "light");
+                    toggleColorScheme();
+                  }}
                 />
                 <MoonStar className="color-primary" size={24} />
               </View>
@@ -156,14 +142,17 @@ const Profile = () => {
             <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
               <Text className="text-xl font-medium">Units</Text>
               <View className="flex-row items-center gap-x-2">
-                <Text className="w-6 text-center text-xl font-semibold">
+                <Text className="min-w-6 text-center text-xl font-semibold">
                   Lb
                 </Text>
                 <Switch
                   checked={unit === "metric"}
-                  onCheckedChange={() => toggleUnit()}
+                  onCheckedChange={async () => {
+                    await setUnit(unit === "imperial" ? "metric" : "imperial");
+                    toggleUnit();
+                  }}
                 />
-                <Text className="w-6 text-center text-xl font-semibold">
+                <Text className="min-w-6 text-center text-xl font-semibold">
                   Kg
                 </Text>
               </View>

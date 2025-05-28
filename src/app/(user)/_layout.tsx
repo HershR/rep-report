@@ -15,9 +15,8 @@ const UserLayout = () => {
           title: "Weight History",
           headerShown: true,
           headerStyle: {
-            backgroundColor: NAV_THEME[colorScheme].background,
+            backgroundColor: NAV_THEME[colorScheme].border,
           },
-          headerTintColor: NAV_THEME[colorScheme].text,
           headerTitleStyle: {
             color: NAV_THEME[colorScheme].text,
           },

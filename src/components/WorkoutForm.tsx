@@ -20,6 +20,7 @@ import { CalendarDays } from "../lib/icons/CalendarDays";
 import { useMeasurementUnit } from "../context/MeasurementUnitContext";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
 import { convertWeight } from "../utils/measurementConversion";
+import { Separator } from "./ui/separator";
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
@@ -98,11 +99,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   };
 
   return (
-    <Card className="flex-1 w-full md:max-w-[640px]">
+    <Card className="relative flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
-        {action && action()}
       </CardHeader>
+      <View className="absolute right-2 top-2">{action && action()}</View>
       {/* DATE */}
       <CardContent>
         <Controller
@@ -136,6 +137,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
             ></Textarea>
           )}
         />
+      </CardContent>
+      <CardContent>
+        <Separator />
       </CardContent>
       {/* MODE */}
       <CardContent>
@@ -202,13 +206,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </CardContent>
       <ScrollView
         ref={scrollViewRef}
-        className="flex mb-2"
+        className="flex-1 mb-2"
         showsVerticalScrollIndicator={false}
       >
         {fields.map((field, index) => (
           <CardContent
             key={field.id}
-            className="flex w-full justify-center pb-2 mb-2"
+            className="flex w-full justify-center pb-0 mb-2"
           >
             <View className="flex-1 flex-row w-full items-center gap-x-4">
               <View className="w-8 h-8 justify-center items-center bg-primary rounded-full">
@@ -316,9 +320,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           </CardContent>
         ))}
       </ScrollView>
-
+      <CardContent>
+        <Separator />
+      </CardContent>
       {/* Footer */}
-      <CardFooter className="flex flex-col gap-y-2">
+      <CardFooter className="flex-col gap-y-2">
         <Button
           className="w-full"
           onPress={() => {

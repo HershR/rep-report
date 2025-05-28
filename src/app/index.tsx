@@ -4,7 +4,7 @@ import { OnboardingScreen } from "@/src/components/onboarding/OnboardingScreen";
 
 const Index = () => {
   return (
-    <SafeAreaWrapper backgroundColor="bg-background">
+    <SafeAreaWrapper>
       <OnboardingScreen />
     </SafeAreaWrapper>
   );
