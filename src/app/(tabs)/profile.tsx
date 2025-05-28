@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text } from "@/src/components/ui/text";
 import { User } from "@/src/lib/icons/User";
 import { MoonStar } from "@/src/lib/icons/MoonStar";
@@ -28,13 +28,14 @@ import { getUserSetting } from "@/src/db/dbHelpers";
 const Profile = () => {
   const [age, setAge] = useState<number | null>();
   const [height, setHeight] = useState<number | null>();
+
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-
   const router = useRouter();
   const { unit, toggleUnit } = useMeasurementUnit();
+
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
   const { data: weight } = useLiveQuery(
     drizzleDb.query.weightHistory.findFirst({
       orderBy: (weight_history, { desc }) => [
