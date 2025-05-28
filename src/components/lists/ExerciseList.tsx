@@ -4,11 +4,13 @@ import ExerciseCard from "../ExerciseCard";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 import { formatList } from "@/src/utils/listFormatter";
 import PaginationButtons from "../PaginationButtons";
+import Animated, { FadeIn } from "react-native-reanimated";
 interface Props {
   exercises: Omit<Exercise, "is_favorite">[];
   emptyListComp?: any;
   currentPage?: number;
   pageSize?: number;
+  animate?: boolean;
   onPageChange?: (page: number) => void;
 }
 
@@ -17,6 +19,7 @@ const ExerciseList = ({
   currentPage = 0,
   pageSize = 999,
   emptyListComp,
+  animate = false,
   onPageChange,
 }: Props) => {
   const { width, height } = useSafeAreaFrame();
@@ -61,6 +64,16 @@ const ExerciseList = ({
       renderItem={({ item }) => {
         if (item.empty) {
           return <View className="flex-1"></View>;
+        }
+        if (animate) {
+          return (
+            <Animated.View entering={FadeIn.duration(600)} className="flex-1">
+              <ExerciseCard
+                exercise={item}
+                containerClassname="flex-1 aspect-square"
+              />
+            </Animated.View>
+          );
         }
         return (
           <ExerciseCard

@@ -115,6 +115,7 @@ const ExerciseNameSearch = () => {
         </Text>
       ) : (
         <ExerciseList
+          animate={true}
           exercises={suggestionToExercise(exerciseSuggestions || []).sort(
             (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
           )}

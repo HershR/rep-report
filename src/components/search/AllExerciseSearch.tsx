@@ -289,6 +289,7 @@ const AllExerciseSearch = () => {
       ) : (
         <>
           <ExerciseList
+            animate={true}
             exercises={infoToExercise(fileredData || []).sort((a, b) =>
               a.name.toLowerCase().localeCompare(b.name.toLowerCase())
             )}
