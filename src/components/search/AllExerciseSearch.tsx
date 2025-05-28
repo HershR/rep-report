@@ -44,6 +44,14 @@ const AllExerciseSearch = () => {
       fetchExcercises({
         offset: 0,
         limit: fetchAmount,
+      }).then((data) => {
+        const res = data.results.filter(
+          (x) => !!x.translations.find((y) => y.language === 2)?.name
+        );
+        return {
+          results: res,
+          count: res.length,
+        };
       }),
     true
   );
@@ -66,26 +74,20 @@ const AllExerciseSearch = () => {
     if (exerciseLoading) {
       return;
     }
-    if (
-      searchQuery === "" &&
-      selectedCategory.length === 0 &&
-      selectedEquipment.length === 0 &&
-      selectedMucles.length === 0
-    ) {
-      setFilteredData(exerciseInfo?.results ?? []);
-      return;
-    }
-    const timeoutId = setTimeout(async () => {
-      const newData = filterExercise(
-        exerciseInfo?.results || [],
-        searchQuery,
-        selectedCategory,
-        selectedEquipment,
-        selectedMucles
-      );
-      setFilteredData(newData);
-      setPage(0);
-    }, 500);
+    const timeoutId = setTimeout(
+      async () => {
+        const newData = filterExercise(
+          exerciseInfo?.results || [],
+          searchQuery,
+          selectedCategory,
+          selectedEquipment,
+          selectedMucles
+        );
+        setFilteredData(newData);
+        setPage(0);
+      },
+      searchQuery ? 500 : 0
+    );
     return () => clearTimeout(timeoutId);
   }, [searchQuery, selectedCategory, selectedEquipment, selectedMucles]);
 
@@ -111,14 +113,14 @@ const AllExerciseSearch = () => {
     equipment: string[] = [],
     muscles: string[] = []
   ) {
-    // if (
-    //   searchQuery === "" &&
-    //   selectedCategory.length === 0 &&
-    //   selectedEquipment.length === 0 &&
-    //   selectedMucles.length === 0
-    // ) {
-    //   return data;
-    // }
+    if (
+      searchQuery === "" &&
+      selectedCategory.length === 0 &&
+      selectedEquipment.length === 0 &&
+      selectedMucles.length === 0
+    ) {
+      return data;
+    }
     return data.filter((x) => {
       if (
         category.length > 0 &&
