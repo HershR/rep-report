@@ -20,6 +20,7 @@ import { CalendarDays } from "../lib/icons/CalendarDays";
 import { useMeasurementUnit } from "../context/MeasurementUnitContext";
 import { UNIT_LABELS } from "@/src/constants/measurementLables";
 import { convertWeight } from "../utils/measurementConversion";
+import { Separator } from "./ui/separator";
 
 interface WorkoutWithExercise
   extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
@@ -136,6 +137,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
             ></Textarea>
           )}
         />
+      </CardContent>
+      <CardContent>
+        <Separator />
       </CardContent>
       {/* MODE */}
       <CardContent>
@@ -316,7 +320,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           </CardContent>
         ))}
       </ScrollView>
-
+      <CardContent>
+        <Separator />
+      </CardContent>
       {/* Footer */}
       <CardFooter className="flex-col gap-y-2">
         <Button
