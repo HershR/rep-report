@@ -42,33 +42,38 @@ const Profile = () => {
       ],
     })
   );
-  const getAge = async () => {
-    const dob = await getUserSetting(drizzleDb, "dob");
-    if (dob) {
-      const date = new Date(dob.value);
-      const today = new Date();
-      const age = today.getFullYear() - date.getFullYear();
-      const monthDiff = today.getMonth() - date.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < date.getDate())
-      ) {
-        setAge(age - 1);
+
+  useEffect(() => {
+    const getAge = async () => {
+      const dob = await getUserSetting(drizzleDb, "dob");
+      if (dob) {
+        const date = new Date(dob.value);
+        const today = new Date();
+        const age = today.getFullYear() - date.getFullYear();
+        const monthDiff = today.getMonth() - date.getMonth();
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < date.getDate())
+        ) {
+          setAge(age - 1);
+        } else {
+          setAge(age);
+        }
       } else {
-        setAge(age);
+        setAge(0);
       }
-    } else {
-      setAge(0);
-    }
-  };
-  const getHeight = async () => {
-    const userHeight = await getUserSetting(drizzleDb, "height");
-    if (userHeight) {
-      setHeight(parseFloat(userHeight.value));
-    } else {
-      setHeight(0);
-    }
-  };
+    };
+    const getHeight = async () => {
+      const userHeight = await getUserSetting(drizzleDb, "height");
+      if (userHeight) {
+        setHeight(parseFloat(userHeight.value));
+      } else {
+        setHeight(0);
+      }
+    };
+    getAge();
+    getHeight();
+  }, []);
 
   const setUnit = async (unit: Unit) => {
     await AsyncStorage.setItem("measurementUnit", unit);
@@ -76,26 +81,6 @@ const Profile = () => {
   const setTheme = async (theme: string) => {
     await AsyncStorage.setItem("theme", theme);
   };
-
-  useEffect(() => {
-    getAge();
-    getHeight();
-  }, []);
-
-  // useEffect(() => {
-  //   if (!isMountingRef.current) {
-  //     setUnit(unit);
-  //   } else {
-  //     isMountingRef.current = false;
-  //   }
-  // }, [unit]);
-  // useEffect(() => {
-  //   if (!isMountingRef.current) {
-  //     setTheme(colorScheme);
-  //   } else {
-  //     isMountingRef.current = false;
-  //   }
-  // }, [colorScheme]);
 
   return (
     <SafeAreaWrapper>

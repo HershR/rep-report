@@ -58,6 +58,11 @@ const Saved = () => {
     })
   );
   useEffect(() => {
+    if (favoritesError) {
+      console.log("Saved Favorites Fetch Error: ", favoritesError);
+    }
+  }, [favoritesError]);
+  useEffect(() => {
     if (routineError) {
       console.log("Saved Routine Fetch Error: ", routineError);
     }
@@ -129,6 +134,11 @@ const Saved = () => {
                 }
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerClassName="gap-y-4"
+                ListEmptyComponent={
+                  <View className="flex-1 items-center justify-center">
+                    <Text>No Routines</Text>
+                  </View>
+                }
                 renderItem={({ item }) => (
                   <Card className="flex-1 justify-center items-center p-4">
                     <TouchableOpacity
