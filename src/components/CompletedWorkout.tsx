@@ -29,7 +29,7 @@ const CompletedWorkout = ({ workout, containerStyle }: Props) => {
       className={`flex-1 max-h-32 justify-center items-center p-4 ${containerStyle}`}
     >
       <TouchableOpacity
-        className="flex-row w-full h-full justify-center items-center"
+        className="flex-row w-full h-full justify-between items-center"
         onPress={() => goToWorkout()}
       >
         <Link href={`/exercise/${workout.exercise.id}`} asChild>

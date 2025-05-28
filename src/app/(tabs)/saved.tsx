@@ -26,6 +26,7 @@ import ActivityLoader from "@/src/components/ActivityLoader";
 import { Button } from "@/src/components/ui/button";
 import { CircleX } from "~/lib/icons/CircleX";
 import { dateNameLong } from "@/src/utils/dateUtils";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
 const Saved = () => {
   const router = useRouter();
@@ -119,7 +120,6 @@ const Saved = () => {
           ) : (
             <View className="flex-1">
               <FlatList
-                className="w-full"
                 data={
                   searchQuery
                     ? routines.filter((x) =>
@@ -130,11 +130,12 @@ const Saved = () => {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerClassName="gap-y-4"
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => router.push(`/routine/${item.id}`)}
-                  >
-                    <Card className="w-full flex-row justify-between items-center">
-                      <CardHeader>
+                  <Card className="flex-1 justify-center items-center p-4">
+                    <TouchableOpacity
+                      className="flex-row justify-between items-center"
+                      onPress={() => router.push(`/routine/${item.id}`)}
+                    >
+                      <View className="flex-1 mx-4 max-h-32 overflow-hidden">
                         <CardTitle>{item.name}</CardTitle>
                         {item?.routineSchedule?.length > 0 && (
                           <CardDescription className="flex-row font-medium">
@@ -150,10 +151,10 @@ const Saved = () => {
                         {item.description && (
                           <CardDescription>{item.description}</CardDescription>
                         )}
-                      </CardHeader>
-                      <CardContent></CardContent>
-                    </Card>
-                  </TouchableOpacity>
+                      </View>
+                      <ChevronRight className="color-primary" size={30} />
+                    </TouchableOpacity>
+                  </Card>
                 )}
               ></FlatList>
               <Button
