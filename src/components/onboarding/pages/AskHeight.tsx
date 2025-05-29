@@ -38,7 +38,7 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
         >
           How tall are you?
         </Animated.Text>
-        <View className="max-w-60 items-center justify-center">
+        <View className="max-w-60 items-center justify-center gap-y-4">
           <View className="flex-row">
             <Button
               onPress={() => {
@@ -60,13 +60,11 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
             </Button>
           </View>
 
-          <View>
-            <HeightSelector
-              heightCm={height}
-              mode={mode}
-              onChange={(newHeight) => setHeight(newHeight)}
-            />
-          </View>
+          <HeightSelector
+            heightCm={height}
+            unit={mode}
+            onChange={(newHeight) => setHeight(newHeight)}
+          />
         </View>
       </Animated.View>
       <View className="items-center">

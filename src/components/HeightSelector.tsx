@@ -4,14 +4,17 @@ import { Text } from "./ui/text";
 import { Input } from "./ui/input";
 type UpdateHeightProps = {
   heightCm: number;
-  mode: Unit;
+  unit: Unit;
   onChange?: (heightCm: number) => void;
 };
 
 function cmToFeetInches(cm: number) {
   const totalInches = cm / 2.54;
   const feet = Math.floor(totalInches / 12);
-  const inches = Math.round((totalInches % 12) * 10) / 10;
+  let inches = totalInches % 12;
+  if (!Number.isInteger(inches)) {
+    inches = parseFloat(inches.toFixed(1));
+  }
   return { feet, inches };
 }
 
@@ -21,7 +24,7 @@ function feetInchesToCm(feet: number, inches: number) {
 
 export const HeightSelector = ({
   heightCm,
-  mode,
+  unit: mode,
   onChange,
 }: UpdateHeightProps) => {
   const [cm, setCm] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export const HeightSelector = ({
         Number.isInteger(heightCm) ? heightCm.toString() : heightCm.toFixed(1)
       );
     }
-  }, [heightCm, mode]);
+  }, [mode]);
 
   const handleFeetChange = (text: string) => {
     if (text === "") {
@@ -108,7 +111,7 @@ export const HeightSelector = ({
               keyboardType="number-pad"
               value={feet || ""}
               onChangeText={handleFeetChange}
-              maxLength={2}
+              maxLength={1}
             />
           </View>
           <View className="flex-1">
