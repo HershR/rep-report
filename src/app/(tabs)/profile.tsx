@@ -1,33 +1,45 @@
+import { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useState } from "react";
-import { Text } from "@/src/components/ui/text";
-import { User } from "@/src/lib/icons/User";
-import { MoonStar } from "@/src/lib/icons/MoonStar";
-import { Sun } from "@/src/lib/icons/Sun";
-import { Switch } from "@/src/components/ui/switch";
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { useSQLiteContext } from "expo-sqlite";
-import * as schema from "@/src//db/schema";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { NAV_THEME } from "@/src/lib/constants";
-import { Button } from "@/src/components/ui/button";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 import { useRouter } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import {
   convertHeightString,
   convertWeightString,
 } from "@/src/utils/measurementConversion";
+//db
+import * as schema from "@/src//db/schema";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { updateUserSetting } from "@/src/db/dbHelpers";
 import { getUserSetting } from "@/src/db/dbHelpers";
+//ui
+import { useColorScheme } from "@/src/lib/useColorScheme";
+import { NAV_THEME } from "@/src/lib/constants";
+import { Text } from "@/src/components/ui/text";
+import { Switch } from "@/src/components/ui/switch";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Separator } from "~/components/ui/separator";
+//icons
+import { User } from "@/src/lib/icons/User";
+import { MoonStar } from "@/src/lib/icons/MoonStar";
+import { Sun } from "@/src/lib/icons/Sun";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { Ruler } from "@/src/lib/icons/Ruler";
+import { CalendarDays } from "@/src/lib/icons/CalendarDays";
+import { Cake } from "@/src/lib/icons/Cake";
+import { eq } from "drizzle-orm";
+import { DateTime } from "luxon";
+import { utcToLocalMidnight } from "@/src/utils/datetimeConversion";
 
 const Profile = () => {
   const [age, setAge] = useState<number | null>();
   const [height, setHeight] = useState<number | null>();
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
@@ -43,27 +55,30 @@ const Profile = () => {
       ],
     })
   );
-
+  const { data: dob } = useLiveQuery(
+    drizzleDb.query.userSettings.findFirst({
+      where: eq(schema.userSettings.key, "dob"),
+    })
+  );
   useEffect(() => {
-    const getAge = async () => {
-      const dob = await getUserSetting(drizzleDb, "dob");
-      if (dob) {
-        const date = new Date(dob.value);
-        const today = new Date();
-        const age = today.getFullYear() - date.getFullYear();
-        const monthDiff = today.getMonth() - date.getMonth();
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < date.getDate())
-        ) {
-          setAge(age - 1);
-        } else {
-          setAge(age);
-        }
+    if (dob) {
+      const date = new Date(dob.value);
+      const today = new Date();
+      const age = today.getFullYear() - date.getFullYear();
+      const monthDiff = today.getMonth() - date.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < date.getDate())
+      ) {
+        setAge(age - 1);
       } else {
-        setAge(0);
+        setAge(age);
       }
-    };
+    } else {
+      setAge(0);
+    }
+  }, [dob]);
+  useEffect(() => {
     const getHeight = async () => {
       const userHeight = await getUserSetting(drizzleDb, "height");
       if (userHeight) {
@@ -72,7 +87,6 @@ const Profile = () => {
         setHeight(0);
       }
     };
-    getAge();
     getHeight();
   }, []);
 
@@ -178,9 +192,52 @@ const Profile = () => {
                 <ChevronRight size={24} className="color-primary" />
               </Button>
             </View>
+            <Separator />
+            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+              <Text className="text-xl font-medium">Update Height</Text>
+              <Button variant={"ghost"} size="icon" className="flex-row w-14">
+                <Ruler className="color-primary" />
+                <ChevronRight size={24} className="color-primary" />
+              </Button>
+            </View>
+            <Separator />
+            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+              <Text className="text-xl font-medium">Update Age</Text>
+              <Button
+                variant={"ghost"}
+                size="icon"
+                className="flex-row w-14"
+                onPress={() => setDatePickerVisibility(true)}
+              >
+                <Cake className="color-primary" />
+                <ChevronRight size={24} className="color-primary" />
+              </Button>
+            </View>
           </ScrollView>
         </CardContent>
       </Card>
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        isDarkModeEnabled={isDarkColorScheme}
+        date={dob?.value ? new Date(dob.value) : new Date()}
+        onConfirm={async (date) => {
+          if (date) {
+            const tzDate = utcToLocalMidnight(date);
+            await updateUserSetting(drizzleDb, "dob", tzDate.toISOString());
+          }
+          setDatePickerVisibility(false);
+        }}
+        onCancel={() => {
+          setDatePickerVisibility(false);
+        }}
+        minimumDate={new Date(1900, 0, 1)}
+        maximumDate={new Date()}
+        timePickerModeAndroid="spinner"
+        modalPropsIOS={{
+          presentationStyle: "formSheet",
+        }}
+      ></DateTimePickerModal>
     </SafeAreaWrapper>
   );
 };
