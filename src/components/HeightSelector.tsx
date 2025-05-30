@@ -2,26 +2,12 @@ import React, { useState, useEffect } from "react";
 import { View } from "react-native";
 import { Text } from "./ui/text";
 import { Input } from "./ui/input";
+import { cmToFeetInches, feetInchesToCm } from "../utils/measurementConversion";
 type UpdateHeightProps = {
   heightCm: number;
   unit: Unit;
   onChange?: (heightCm: number) => void;
 };
-
-function cmToFeetInches(cm: number) {
-  const totalInches = cm / 2.54;
-  const feet = Math.floor(totalInches / 12);
-  let inches = totalInches % 12;
-  if (!Number.isInteger(inches)) {
-    inches = parseFloat(inches.toFixed(1));
-  }
-  return { feet, inches };
-}
-
-function feetInchesToCm(feet: number, inches: number) {
-  //round to first decimal
-  return Math.round((feet * 12 + inches) * 2.54 * 10) / 10;
-}
 
 export const HeightSelector = ({
   heightCm,
