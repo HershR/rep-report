@@ -106,7 +106,7 @@ const Profile = () => {
   return (
     <>
       <SafeAreaWrapper>
-        <Card className="flex-1 max-w-screen-md pt-6 ">
+        <Card className="flex-1 max-w-screen-md pt-6 mt-4">
           <View className="flex-row">
             <CardContent className="flex justify-center items-center">
               <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
@@ -128,13 +128,11 @@ const Profile = () => {
               <Separator className="" />
               <View className="flex-1 flex-row justify-between items-center">
                 <Text className="text-xl font-medium text-left">Weight</Text>
-                <TouchableOpacity onPress={() => router.push("/weight")}>
-                  <Text className="text-xl font-medium text-right">
-                    {weight?.weight
-                      ? convertWeightString(weight.weight, "imperial", unit)
-                      : "NA"}
-                  </Text>
-                </TouchableOpacity>
+                <Text className="text-xl font-medium text-right">
+                  {weight?.weight
+                    ? convertWeightString(weight.weight, "imperial", unit)
+                    : "NA"}
+                </Text>
               </View>
             </CardContent>
           </View>

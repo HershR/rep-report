@@ -15,12 +15,13 @@ const UserLayout = () => {
           title: "Weight History",
           headerShown: true,
           headerStyle: {
-            backgroundColor: NAV_THEME[colorScheme].border,
+            backgroundColor: NAV_THEME[colorScheme].background,
           },
           headerTitleStyle: {
             color: NAV_THEME[colorScheme].text,
           },
-          headerShadowVisible: false,
+          headerShadowVisible: true,
+          headerTransparent: true,
         }}
       />
     </Stack>
