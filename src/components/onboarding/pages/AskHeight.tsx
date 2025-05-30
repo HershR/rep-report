@@ -34,7 +34,7 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
         />
         <Animated.Text
           entering={FadeIn.duration(600)}
-          className="text-2xl font-bold mb-6 text-center"
+          className="text-primary text-2xl font-bold mb-6 text-center"
         >
           How tall are you?
         </Animated.Text>

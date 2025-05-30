@@ -25,7 +25,7 @@ const Welcome = ({ onContinue }: OnboardingPageProps) => {
           resizeMode="contain"
         />
       </Animated.View>
-      <View className="items-center">
+      <View className="items-center mb-11 native:mb-14">
         <Button className="min-w-52" size={"lg"} onPress={onContinue}>
           <Text>Get Started</Text>
         </Button>

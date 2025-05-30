@@ -13,7 +13,7 @@ import { lbsToKg, kgToLbs } from "@/src/utils/measurementConversion";
 import { createWeightEntry } from "@/src/db/dbHelpers";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
-import * as schema from "@/src//db/schema";
+import * as schema from "@/src/db/schema";
 
 const AskWeight = ({ onContinue }: OnboardingPageProps) => {
   const [weight, setWeight] = useState<string | null>(null);
@@ -59,11 +59,11 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
         />
         <Animated.Text
           entering={FadeIn.duration(600)}
-          className="text-2xl font-bold mb-6 text-center"
+          className="text-primary text-2xl font-bold mb-6 text-center"
         >
           What is your weight?
         </Animated.Text>
-        <View className="max-w-60 items-center justify-center">
+        <View className="max-w-60 items-center justify-center gap-y-4">
           <View className="flex-row">
             <Button
               onPress={() => {
@@ -84,11 +84,13 @@ const AskWeight = ({ onContinue }: OnboardingPageProps) => {
               <Text className="text-2xl font-bold">Kg</Text>
             </Button>
           </View>
-          <View className="flex-row h-11 native:h-14 mt-4">
+          <View className="w-full ">
+            <Text className="text-lg font-medium">
+              {mode === "imperial" ? "Weight (lb)" : "Weight (kg)"}:
+            </Text>
             <Input
-              className="flex-1"
+              className="min-w-full"
               textAlign="right"
-              placeholder={mode === "imperial" ? "lbs" : "kg"}
               keyboardType="decimal-pad"
               autoComplete="off"
               value={

@@ -19,7 +19,8 @@ function cmToFeetInches(cm: number) {
 }
 
 function feetInchesToCm(feet: number, inches: number) {
-  return Math.round((feet * 12 + inches) * 2.54);
+  //round to first decimal
+  return Math.round((feet * 12 + inches) * 2.54 * 10) / 10;
 }
 
 export const HeightSelector = ({
@@ -106,7 +107,7 @@ export const HeightSelector = ({
       {mode === "imperial" ? (
         <View className="flex-row gap-x-4">
           <View className="flex-1">
-            <Text>Feet:</Text>
+            <Text className="text-lg font-medium">Feet:</Text>
             <Input
               keyboardType="number-pad"
               value={feet || ""}
@@ -115,18 +116,18 @@ export const HeightSelector = ({
             />
           </View>
           <View className="flex-1">
-            <Text>Inches:</Text>
+            <Text className="text-lg font-medium">Inches:</Text>
             <Input
               keyboardType="number-pad"
               value={inches || ""}
               onChangeText={handleInchesChange}
-              maxLength={3}
+              maxLength={4}
             />
           </View>
         </View>
       ) : (
         <View className="w-full">
-          <Text>Height (cm):</Text>
+          <Text className="text-lg font-medium">Height (cm):</Text>
           <Input
             className="min-w-[50%]"
             keyboardType="number-pad"
