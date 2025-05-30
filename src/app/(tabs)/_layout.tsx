@@ -42,6 +42,7 @@ const _Layout = () => {
           justifyContent: "center",
           alignItems: "center",
         },
+
         tabBarStyle: {
           backgroundColor: `${
             isDarkColorScheme
@@ -89,6 +90,16 @@ const _Layout = () => {
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon title="Profile" Icon={User} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: "Dashboard",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Dashboard" Icon={House} focused={focused} />
           ),
         }}
       />
