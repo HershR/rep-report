@@ -14,13 +14,14 @@ import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
 import { updateUserSetting } from "@/src/db/dbHelpers";
+import { useColorScheme } from "@/src/lib/useColorScheme";
 
 const AskAge = ({ onContinue }: OnboardingPageProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
-
+  const { isDarkColorScheme } = useColorScheme();
   const handleDateConfirm = (date: Date) => {
     setDatePickerVisibility(false);
     setSelectedDate(date);
@@ -39,7 +40,7 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
         />
         <Animated.Text
           entering={FadeIn.duration(600)}
-          className="text-2xl font-bold mb-6 text-center"
+          className="text-primary text-2xl font-bold mb-6 text-center"
         >
           When were you born?
         </Animated.Text>
@@ -80,7 +81,7 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
-        isDarkModeEnabled={false}
+        isDarkModeEnabled={isDarkColorScheme}
         is24Hour={true}
         date={new Date()}
         onConfirm={(date) => {
@@ -95,7 +96,6 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
         modalPropsIOS={{
           presentationStyle: "formSheet",
         }}
-        themeVariant="light"
         display="spinner"
       ></DateTimePickerModal>
     </View>

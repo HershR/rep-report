@@ -21,6 +21,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import {
+  convertWeight,
   convertWeightString,
   lbsToKg,
 } from "@/src/utils/measurementConversion";
@@ -54,7 +55,11 @@ const WeightHistory = () => {
 
   const addWeightEntry = async (weight: number) => {
     try {
-      await createWeightEntry(drizzleDb, weight, date.toISOString());
+      await createWeightEntry(
+        drizzleDb,
+        convertWeight(weight, unit, "imperial"),
+        date.toISOString()
+      );
     } catch (error) {
       console.error("Error creating weight entry:", error);
     }

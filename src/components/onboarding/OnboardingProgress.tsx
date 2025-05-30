@@ -1,5 +1,7 @@
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Button } from "../ui/button";
+import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 interface OnboardingProgressProps {
   currentStep: number;
   totalSteps: number;
@@ -15,12 +17,9 @@ export function OnboardingProgress({
 
   return (
     <View className="flex-row items-center p-4 gap-4">
-      <TouchableOpacity
-        onPress={onBack}
-        className="p-2 rounded-md bg-background"
-      >
-        <Ionicons className="color-primary" name="arrow-back" size={20} />
-      </TouchableOpacity>
+      <Button onPress={onBack} size={"icon"} variant={"ghost"}>
+        <ArrowRight className="color-primary rotate-180" size={30} />
+      </Button>
       <View className="flex-1 h-1 bg-secondary rounded-md overflow-hidden">
         <View
           style={[{ width: `${progress}%` }]}
