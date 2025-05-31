@@ -19,9 +19,17 @@ import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { desc, eq, like } from "drizzle-orm";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { CardDescription, CardTitle } from "@/src/components/ui/card";
+import { User } from "@/src/lib/icons/User";
+import SearchBar from "@/src/components/SearchBar";
+import { useRouter } from "expo-router";
+import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
+import { workouts, exercises } from "@/src/db/schema";
+
 const Dashboard = () => {
   const { selectedDate, setSelectedDate } = useDate();
   const [selected, setSelected] = useState(selectedDate?.toISODate());
+  const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
@@ -51,6 +59,20 @@ const Dashboard = () => {
     }),
     [selected]
   );
+  const { data: recentExercise, updatedAt: recentExerciseLoaded } =
+    useLiveQuery(
+      drizzleDb
+        .selectDistinct({
+          id: workouts.exercise_id,
+          name: exercises.name,
+          image: exercises.image,
+          category: exercises.category,
+        })
+        .from(workouts)
+        .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
+        .orderBy(desc(workouts.last_updated), desc(workouts.date))
+        .limit(10)
+    );
   const workoutDates = monthWorkouts.map((x) => x.date);
   const markedDates: { [key: string]: any } = {};
   workoutDates.forEach(
@@ -66,7 +88,7 @@ const Dashboard = () => {
         <Text>Error</Text>
       ) : (
         <>
-          <Calendar
+          {/* <Calendar
             onDayPress={(day: DateData) => {
               console.log(day);
               setSelected(day.dateString);
@@ -79,11 +101,39 @@ const Dashboard = () => {
                 selectedColor: "black",
               },
             }}
-          />
-          <Text>{routines.length}</Text>
-          <Text>{monthWorkouts.length}</Text>
+          /> */}
+          {/* <Text>{routines.length}</Text> */}
+          {/* <Text>{monthWorkouts.length}</Text> */}
         </>
       )}
+      <View className="flex-row items-end gap-x-4 mb-5">
+        <Button
+          className="rounded-full w-16 h-16"
+          size={"icon"}
+          variant={"secondary"}
+        >
+          <User className="color-primary" size={40} />
+        </Button>
+        <View className="mb-2">
+          <CardTitle>Welcome Back</CardTitle>
+          <CardDescription>Ready to get fit</CardDescription>
+        </View>
+      </View>
+      <SearchBar
+        placeholder={"Search"}
+        value={""}
+        onPress={() => router.push("/search")}
+      />
+      <Text>Popular</Text>
+      <Text>Recent</Text>
+      <>
+        <Text className="text-xl font-semibold mb-2">Recent Exercise:</Text>
+        <RecentExerciseList
+          exercise={recentExercise}
+          horzontal={false}
+          onPress={(id: number) => router.push(`/exercise/${id}`)}
+        />
+      </>
     </SafeAreaWrapper>
   );
 };

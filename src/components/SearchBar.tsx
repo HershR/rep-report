@@ -1,6 +1,5 @@
-import { View, Image } from "react-native";
+import { View } from "react-native";
 import React from "react";
-import { icons } from "@/src/constants/icons";
 import { Input } from "~/components/ui/input";
 import { Search } from "~/lib/icons/Search";
 interface SearchBarProps {
