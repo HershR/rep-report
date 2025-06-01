@@ -229,13 +229,13 @@ const Profile = () => {
                   <ChevronRight size={24} className="color-primary" />
                 </Button>
               </View>
-              <Separator />
+              {/* <Separator />
               <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
                 <Text className="text-xl font-medium">Seed Database</Text>
                 <Button onPress={async () => seedDatabase(drizzleDb)}>
                   <Text>Seed</Text>
                 </Button>
-              </View>
+              </View> */}
             </ScrollView>
           </CardContent>
         </Card>

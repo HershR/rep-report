@@ -11,6 +11,7 @@ import { desc, eq } from "drizzle-orm";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -23,6 +24,9 @@ import { workouts, exercises, Routine } from "@/src/db/schema";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 import { DateTime } from "luxon";
+import { useSafeAreaFrame } from "react-native-safe-area-context";
+import CustomCarousel from "@/src/components/CustomCarousel";
+import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 
 interface RoutineWithExercise extends Routine {
   exercise: schema.Exercise[];
@@ -34,17 +38,8 @@ const Dashboard = () => {
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
+  const { width, height } = useSafeAreaFrame();
 
-  // const {
-  //   data: routines,
-  //   updatedAt: routinesLoaded,
-  //   error: routineError,
-  // } = useLiveQuery(
-  //   drizzleDb.query.routines.findMany({
-  //     orderBy: (routines, { desc }) => [desc(routines.last_updated)],
-  //     with: { routineExercises: true, routineSchedule: true },
-  //   })
-  // );
   const {
     data: routines,
     updatedAt: routinesLoaded,
@@ -53,7 +48,7 @@ const Dashboard = () => {
     drizzleDb
       .select()
       .from(schema.routineSchedule)
-      .where(eq(schema.routineSchedule.day, (selectedDate?.weekday || 0) - 1))
+      .where(eq(schema.routineSchedule.day, new Date().getDay() ?? 0))
       .leftJoin(
         schema.routines,
         eq(schema.routines.id, schema.routineSchedule.routine_id)
@@ -70,20 +65,23 @@ const Dashboard = () => {
         eq(schema.exercises.id, schema.routineExercises.exercise_id)
       )
   );
-  const { data: recentExercise, updatedAt: recentExerciseLoaded } =
-    useLiveQuery(
-      drizzleDb
-        .selectDistinct({
-          id: workouts.exercise_id,
-          name: exercises.name,
-          image: exercises.image,
-          category: exercises.category,
-        })
-        .from(workouts)
-        .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
-        .orderBy(desc(workouts.last_updated), desc(workouts.date))
-        .limit(10)
-    );
+  const {
+    data: recentExercise,
+    updatedAt: recentExerciseLoaded,
+    error: recentExerciseError,
+  } = useLiveQuery(
+    drizzleDb
+      .selectDistinct({
+        id: workouts.exercise_id,
+        name: exercises.name,
+        image: exercises.image,
+        category: exercises.category,
+      })
+      .from(workouts)
+      .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
+      .orderBy(desc(workouts.last_updated), desc(workouts.date))
+      .limit(10)
+  );
 
   useEffect(() => {
     if (routines) {
@@ -99,14 +97,6 @@ const Dashboard = () => {
         return acc;
       }, []);
       setRoutines(result);
-      // const r = routines.filter((routine) =>
-      //   selectedDate
-      //     ? routine.routineSchedule.find(
-      //         (schedule) => schedule.day === (selectedDate.weekday || 0) - 1
-      //       )
-      //     : false
-      // );
-      // setRoutines(r);
     }
   }, [routines]);
   return (
@@ -123,38 +113,44 @@ const Dashboard = () => {
           <View className="mb-2">
             <CardTitle>Welcome Back</CardTitle>
             <CardDescription>
-              {DateTime.now().toLocal().toFormat("LLL dd yyyy")}
+              {DateTime.now().toFormat("LLL dd yyyy")}
             </CardDescription>
           </View>
         </View>
-        <SearchBar
-          placeholder={"Search"}
-          value={""}
-          onPress={() => router.push("/search")}
-        />
-        {!todaysRoutines ? (
+
+        {todaysRoutines ? (
           <View>
             <Text className="text-xl font-semibold mb-2">
-              Scheduled Workout
+              Scheduled Workout:
             </Text>
-            <FlatList
-              data={todaysRoutines}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <Card className="flex-1 justify-center items-center p-4">
-                  <TouchableOpacity
-                    className="flex-row justify-between items-center"
-                    onPress={() => router.push(`/routine/${item.id}`)}
-                  >
-                    <View className="flex-1 mx-4 max-h-32 overflow-hidden">
-                      <CardTitle>{item.name}</CardTitle>
 
-                      {/* {item.routineExercises.map((x, index) =><CardDescription key={index}>{x.}</CardDescription> )} */}
-                    </View>
-                    <ChevronRight className="color-primary" size={30} />
-                  </TouchableOpacity>
-                </Card>
-              )}
+            <CustomCarousel
+              data={todaysRoutines}
+              width={width - 64}
+              height={160}
+              renderFunction={function (
+                item: RoutineWithExercise,
+                index?: number
+              ) {
+                return (
+                  <View className="flex-1 justify-center mr-2">
+                    <Card className="p-4">
+                      <TouchableOpacity
+                        className="flex-row justify-between items-center"
+                        onPress={() => router.push(`/routine/${item.id}`)}
+                      >
+                        <View className="flex-1 mx-4 max-h-40 overflow-hidden">
+                          <CardTitle>{item.name}</CardTitle>
+                          <CardDescription numberOfLines={6}>
+                            {item.exercise.map((x) => x.name + "\n")}
+                          </CardDescription>
+                        </View>
+                        <ChevronRight className="color-primary" size={30} />
+                      </TouchableOpacity>
+                    </Card>
+                  </View>
+                );
+              }}
             />
           </View>
         ) : (
@@ -175,19 +171,27 @@ const Dashboard = () => {
             </CardFooter>
           </Card>
         )}
-        {!routinesLoaded ? (
+
+        {!recentExerciseLoaded ? (
           <ActivityLoader />
-        ) : routineError ? (
+        ) : recentExerciseError ? (
           <Text>Error</Text>
         ) : (
-          <View className="flex-1">
+          <View className="flex">
             <Text className="text-xl font-semibold mb-2">Recent Exercise:</Text>
-            <ExerciseList
-              exercises={recentExercise}
-              // onPress={(id: number) => router.push(`/exercise/${id}`)}
+            <RecentExerciseList
+              exercise={recentExercise}
+              onPress={(id: number) => router.push(`/exercise/${id}`)}
             />
           </View>
         )}
+        <View className="flex-1">
+          <Card className="flex-1">
+            <CardContent className="flex-1 justify-center items-center">
+              <Text>More Coming Soon</Text>
+            </CardContent>
+          </Card>
+        </View>
       </View>
     </SafeAreaWrapper>
   );
