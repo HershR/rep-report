@@ -7,12 +7,17 @@ import Animated, { FadeIn } from "react-native-reanimated";
 interface Props {
   exercise: Omit<Exercise, "is_favorite">[];
   onPress: (id: number) => void;
+  horzontal?: boolean;
 }
 
-const RecentExerciseList = ({ exercise: recentExercise, onPress }: Props) => {
+const RecentExerciseList = ({
+  exercise: recentExercise,
+  onPress,
+  horzontal = true,
+}: Props) => {
   return (
     <FlatList
-      horizontal
+      horizontal={horzontal}
       showsHorizontalScrollIndicator={false}
       data={recentExercise}
       keyExtractor={(item) => item.id!.toString()}
@@ -27,7 +32,9 @@ const RecentExerciseList = ({ exercise: recentExercise, onPress }: Props) => {
                 category: item.category!,
                 image: item.image || null,
               }}
-              containerClassname="aspect-square h-40 md:h-52"
+              containerClassname={
+                horzontal ? "aspect-square h-40 md:h-52" : "h-40 md:h-52 w-full"
+              }
             />
           </Animated.View>
         );

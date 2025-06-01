@@ -9,7 +9,11 @@ import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
 import Toast from "react-native-toast-message";
-import { addExercisesToRoutine, createRoutine } from "@/src/db/dbHelpers";
+import {
+  addDaysToRoutine,
+  addExercisesToRoutine,
+  createRoutine,
+} from "@/src/db/dbHelpers";
 
 const ViewRoutine = () => {
   const db = useSQLiteContext();
@@ -39,6 +43,11 @@ const ViewRoutine = () => {
         description: routineForm.description || null,
       });
       await addExercisesToRoutine(drizzleDb, routineId, routineForm.exercises);
+      await addDaysToRoutine(
+        drizzleDb,
+        routineId,
+        routineForm.days.filter((x) => x.selected).map((y) => y.id)
+      );
     } catch (error: any) {
       saveFailMsg(error);
       return;

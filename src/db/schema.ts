@@ -80,11 +80,6 @@ export const userSettings = sqliteTable("user_settings", {
 });
 
 // Optional, for easier querying
-export const workoutRoutineRelations = relations(routines, ({ many }) => ({
-  workouts: many(workouts),
-  routineExercises: many(routineExercises),
-  routineSchedule: many(routineSchedule),
-}));
 
 export const workoutRelations = relations(workouts, ({ many, one }) => ({
   sets: many(workoutSets),
@@ -93,7 +88,18 @@ export const workoutRelations = relations(workouts, ({ many, one }) => ({
     references: [exercises.id],
   }),
 }));
+export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [workoutSets.workout_id],
+    references: [workouts.id],
+  }),
+}));
 
+export const routineRelations = relations(routines, ({ many }) => ({
+  workouts: many(workouts),
+  routineExercises: many(routineExercises),
+  routineSchedule: many(routineSchedule),
+}));
 export const routineExerciseRelations = relations(
   routineExercises,
   ({ one }) => ({
@@ -108,13 +114,6 @@ export const routineExerciseRelations = relations(
   })
 );
 
-export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
-  workout: one(workouts, {
-    fields: [workoutSets.workout_id],
-    references: [workouts.id],
-  }),
-}));
-
 export const routineScheduleRelations = relations(
   routineSchedule,
   ({ one }) => ({
@@ -124,3 +123,12 @@ export const routineScheduleRelations = relations(
     }),
   })
 );
+
+//types
+export type Routine = typeof routines.$inferSelect;
+export type RoutineExercise = typeof routineExercises.$inferSelect;
+export type RoutineSchedule = typeof routineSchedule.$inferSelect;
+export type RoutineWithExerciseSchedule = Routine & {
+  routineExercises: RoutineExercise[];
+} & { routineSchedule: RoutineSchedule[] };
+export type Exercise = typeof exercises.$inferSelect;
