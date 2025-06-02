@@ -15,159 +15,189 @@ import ActivityLoader from "@/src/components/ActivityLoader";
 import { DateTime } from "luxon";
 import { Separator } from "@/src/components/ui/separator";
 import {
+  Calendar,
   CalendarProvider,
   ExpandableCalendar,
   WeekCalendar,
 } from "react-native-calendars";
-import { useCallback, useRef, useState } from "react";
-import { MarkedDates } from "react-native-calendars/src/types";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  DateData,
+  Direction,
+  MarkedDates,
+} from "react-native-calendars/src/types";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
+import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  FadeOutDown,
+  FadeOutUp,
+  SlideInUp,
+  SlideOutUp,
+  StretchInY,
+  StretchOutY,
+} from "react-native-reanimated";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { twMerge } from "tailwind-merge";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function Home() {
   const router = useRouter();
-
-  const { selectedDate, setSelectedDate } = useDate();
-  const [currentDate, setCurrentDate] = useState(DateTime.now());
   const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
-  const [weekView, setWeekView] = useState<boolean>(false);
-  const [marked, setMarked] = useState<MarkedDates>({});
-
+  const [selectedDate, setSelectedDate] = useState(DateTime.now());
+  const [weekView, setWeekView] = useState(true);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
   useDrizzleStudio(db);
-  const { data: recentExercise, updatedAt: recentExerciseLoaded } =
-    useLiveQuery(
-      drizzleDb
-        .selectDistinct({
-          id: workouts.exercise_id,
-          name: exercises.name,
-          image: exercises.image,
-          category: exercises.category,
-        })
-        .from(workouts)
-        .innerJoin(exercises, eq(workouts.exercise_id, exercises.id))
-        .orderBy(desc(workouts.last_updated), desc(workouts.date))
-        .limit(10)
-    );
 
   const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
     drizzleDb.query.workouts.findMany({
-      where: eq(workouts.date, currentDate?.toISODate()!),
+      where: eq(workouts.date, selectedDate?.toISODate()!),
       with: {
         exercise: true,
         sets: true,
       },
       orderBy: desc(workouts.last_updated),
     }),
-    [currentDate]
+    [selectedDate]
   );
+  const onDayPress = useCallback((day: DateData) => {
+    setSelectedDate(
+      selectedDate.set({ day: day.day, month: day.month, year: day.year })
+    );
+  }, []);
+
   const toggleCalendarExpansion = useCallback(() => {
     calendarRef.current?.toggleCalendarPosition();
   }, []);
 
-  const renderHeader = useCallback(
-    (date: Date) => {
-      return (
-        <TouchableOpacity
-          className="flex-row justify-center items-center m-3 gap-x-4"
-          onPress={toggleCalendarExpansion}
-        >
-          <Text className="text-xl">
-            {DateTime.fromISO(date.toISOString()).toFormat("LLL yyyy")}
-          </Text>
-          <CalendarDays className="color-primary" size={26} />
-        </TouchableOpacity>
-      );
-    },
-    [toggleCalendarExpansion]
-  );
-
-  return (
-    <SafeAreaWrapper>
-      {/* <View className="h-32">
-        <DatePickerWithWeek
-        currentDate={selectedDate!}
-        onDateChange={setSelectedDate}
-        />
-        </View> */}
-      <CalendarProvider
-        date={new Date().toISOString().slice(0, 10)}
-        // onDateChanged={(date)=>{
-
-        // }}
-        // onMonthChange={onMonthChange}
-        // showTodayButton
-        // disabledOpacity={0.6}
-        // theme={todayBtnTheme.current}
-        // todayBottomMargin={16}
-        // disableAutoDaySelection={[ExpandableCalendar.navigationTypes.MONTH_SCROLL, ExpandableCalendar.navigationTypes.MONTH_ARROWS]}
+  const renderHeader = (date: Date) => {
+    return (
+      <TouchableOpacity
+        className="flex-row justify-center items-center m-3 gap-x-4"
+        onPress={toggleCalendarExpansion}
       >
-        {weekView ? (
-          <WeekCalendar firstDay={1} markedDates={marked} />
-        ) : (
+        <Text className="text-2xl">
+          {DateTime.fromISO(date.toISOString()).toFormat("LLL yyyy")}
+        </Text>
+        <CalendarDays className="color-primary" size={26} />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderArrow = (direction: Direction) => {
+    return (
+      <ChevronRight
+        className={twMerge(
+          "color-primary",
+          direction === "left" ? "rotate-180" : ""
+        )}
+        size={24}
+      />
+    );
+  };
+  const marked = useMemo(() => {
+    return {
+      [selectedDate.toISODate()]: {
+        selected: true,
+        disableTouchEvent: true,
+        selectedColor: "orange",
+        selectedTextColor: "red",
+      },
+    };
+  }, [selectedDate]);
+  return (
+    <>
+      <CalendarProvider date={selectedDate.toISODate()}>
+        <SafeAreaView>
           <ExpandableCalendar
-            renderHeader={renderHeader}
             ref={calendarRef}
-            onDayPress={(day) => {
-              setCurrentDate(
-                currentDate?.set({
-                  year: day.year,
-                  month: day.month,
-                  day: day.day,
-                })
-              );
-            }}
+            renderHeader={renderHeader}
+            renderArrow={renderArrow}
+            // current={selectedDate.toISODate()}
+            disableArrowLeft={false}
+            disableArrowRight={false}
+            markedDates={marked}
+            onDayPress={onDayPress}
             allowShadow={false}
+            enableSwipeMonths={false}
+            closeOnDayPress={false}
             hideKnob
             disableWeekScroll
+            disablePan
             disableAllTouchEventsForDisabledDays
-            firstDay={1}
-            markedDates={marked}
-            closeOnDayPress={false}
           />
-        )}
+        </SafeAreaView>
         <Separator className="my-4" />
-        {!recentExerciseLoaded || !workoutLoaded ? (
-          <ActivityLoader />
-        ) : (
-          <View className="flex-1">
-            {/* <View className="flex">
-            {recentExercise ? (
-              <>
-                <Text className="text-xl font-semibold mb-2">
-                  Recent Exercise:
-                </Text>
-                <RecentExerciseList
-                  exercise={recentExercise}
-                  onPress={(id: number) => router.push(`/exercise/${id}`)}
-                />
-              </>
-            ) : null}
-          </View>
-          <Separator className="my-4" /> */}
 
+        <SafeAreaWrapper>
+          {/* <View className="h-32">
+        <DatePickerWithWeek
+          currentDate={selectedDate!}
+          onDateChange={setSelectedDate}
+        />
+      </View> */}
+          {/* {weekView ? (
+          <
+            // Animated.View
+            // entering={SlideInUp.duration(600)}
+            // exiting={FadeOutDown.duration(600)}
+          >
+            {renderHeader(selectedDate.toJSDate())}
+            <WeekCalendar
+              current={selectedDate.toISODate()}
+              disableArrowLeft={false}
+              disableArrowRight={false}
+              markedDates={marked}
+              onDayPress={onDayPress}
+              allowShadow={false}
+              enableSwipeMonths={false}
+            />
+          </
+            // Animated.View
+          >
+        ) : (
+          <Animated.View
+            entering={StretchInY.duration(200)}
+            exiting={StretchOutY.duration(50)}
+          >
+            <Calendar
+              current={selectedDate.toISODate()}
+              markedDates={marked}
+              onDayPress={onDayPress}
+              renderHeader={renderHeader}
+            />
+          </Animated.View>
+        )} */}
+
+          {!workoutLoaded ? (
+            <ActivityLoader />
+          ) : (
             <View className="flex-1">
-              <SearchBar
-                placeholder={"Add exercise"}
-                value={""}
-                onPress={() => router.push("/search")}
-              />
-              {!workoutLoaded ? (
-                <ActivityLoader />
-              ) : (
-                <>
-                  <Text className="text-xl font-semibold mt-2 mb-2">
-                    {currentDate?.toISODate() === DateTime.now().toISODate()
-                      ? "Today's Workouts"
-                      : selectedDate?.toFormat("LLL dd, yyyy")}
-                    :
-                  </Text>
-                  <CompletedWorkoutList workouts={todayWorkouts} />
-                </>
-              )}
+              <View className="flex-1">
+                <SearchBar
+                  placeholder={"Add exercise"}
+                  value={""}
+                  onPress={() => router.push("/search")}
+                />
+                {!workoutLoaded ? (
+                  <ActivityLoader />
+                ) : (
+                  <>
+                    <Text className="text-xl font-semibold mt-2 mb-2">
+                      {selectedDate?.toISODate() === DateTime.now().toISODate()
+                        ? "Today's Workouts"
+                        : selectedDate?.toFormat("LLL dd, yyyy")}
+                      :
+                    </Text>
+                    <CompletedWorkoutList workouts={todayWorkouts} />
+                  </>
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
+        </SafeAreaWrapper>
       </CalendarProvider>
-    </SafeAreaWrapper>
+    </>
   );
 }
