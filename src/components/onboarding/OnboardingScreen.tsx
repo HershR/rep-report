@@ -30,7 +30,7 @@ export function OnboardingScreen() {
         "onboardingComplete"
       );
       if (onboardingComplete === "true") {
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)/dashboard");
       }
       setIsLoading(false);
     };
