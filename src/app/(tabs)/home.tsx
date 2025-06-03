@@ -1,66 +1,76 @@
 import { TouchableOpacity, View } from "react-native";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
-import { useDate } from "@/src/context/DateContext";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { Text } from "~/components/ui/text";
-import { desc, eq } from "drizzle-orm";
-import { workouts, exercises } from "@/src//db/schema";
+import { between, desc } from "drizzle-orm";
+import { workouts } from "@/src//db/schema";
 import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { DateTime } from "luxon";
 import { Separator } from "@/src/components/ui/separator";
-import {
-  Calendar,
-  CalendarProvider,
-  ExpandableCalendar,
-  WeekCalendar,
-} from "react-native-calendars";
-import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  DateData,
-  Direction,
-  MarkedDates,
-} from "react-native-calendars/src/types";
+import { CalendarProvider, ExpandableCalendar } from "react-native-calendars";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DateData, Direction } from "react-native-calendars/src/types";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
-import DatePickerWithWeek from "@/src/components/datepicker/DatePickerWithWeek";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  FadeOutDown,
-  FadeOutUp,
-  SlideInUp,
-  SlideOutUp,
-  StretchInY,
-  StretchOutY,
-} from "react-native-reanimated";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 import { twMerge } from "tailwind-merge";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NAV_THEME } from "~/lib/constants";
+import { useColorScheme } from "~/lib/useColorScheme";
+
 export default function Home() {
   const router = useRouter();
+  const { colorScheme, isDarkColorScheme } = useColorScheme();
   const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
   const [selectedDate, setSelectedDate] = useState(DateTime.now());
-  const [weekView, setWeekView] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(
+    DateTime.now().toISODate()
+  );
+  const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
   useDrizzleStudio(db);
-
-  const { data: todayWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
+  const { data: monthsWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
     drizzleDb.query.workouts.findMany({
-      where: eq(workouts.date, selectedDate?.toISODate()!),
+      where: between(
+        workouts.date,
+        selectedDate.startOf("month").toISODate(),
+        selectedDate.endOf("month").toISODate()
+      ),
       with: {
         exercise: true,
         sets: true,
       },
       orderBy: desc(workouts.last_updated),
     }),
-    [selectedDate]
+    [selectedMonth]
   );
+
+  useEffect(() => {
+    if (monthsWorkouts) {
+      setDaysWorkouts(
+        monthsWorkouts.filter((x) => x.date === selectedDate.toISODate())
+      );
+    }
+  }, [selectedDate, monthsWorkouts]);
+
+  useEffect(() => {
+    const splitDate = selectedMonth.split("-");
+    const month = splitDate[1];
+    const year = splitDate[0];
+    if (
+      parseInt(month) !== selectedDate.month ||
+      parseInt(year) !== selectedDate.year
+    ) {
+      setSelectedMonth(selectedDate.toISODate());
+    }
+  }, [selectedDate]);
+
   const onDayPress = useCallback((day: DateData) => {
     setSelectedDate(
       selectedDate.set({ day: day.day, month: day.month, year: day.year })
@@ -71,7 +81,7 @@ export default function Home() {
     calendarRef.current?.toggleCalendarPosition();
   }, []);
 
-  const renderHeader = (date: Date) => {
+  const renderHeader = useCallback((date: Date) => {
     return (
       <TouchableOpacity
         className="flex-row justify-center items-center m-3 gap-x-4"
@@ -83,7 +93,7 @@ export default function Home() {
         <CalendarDays className="color-primary" size={26} />
       </TouchableOpacity>
     );
-  };
+  }, []);
 
   const renderArrow = (direction: Direction) => {
     return (
@@ -97,79 +107,70 @@ export default function Home() {
     );
   };
   const marked = useMemo(() => {
+    const dates = new Set(monthsWorkouts.map((x) => x.date));
+    const markedDates: { [key: string]: any } = {};
+    dates.forEach(
+      (x) =>
+        (markedDates[x] = {
+          marked: true,
+        })
+    );
+
     return {
+      ...markedDates,
       [selectedDate.toISODate()]: {
         selected: true,
         disableTouchEvent: true,
-        selectedColor: "orange",
-        selectedTextColor: "red",
       },
     };
-  }, [selectedDate]);
+  }, [selectedDate, daysWorkouts]);
+
   return (
     <>
-      <CalendarProvider date={selectedDate.toISODate()}>
+      <CalendarProvider
+        date={selectedDate.toISODate()}
+        // onDateChanged={(date) => {
+        //   const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
+        //   setSelectedDate(newDate);
+        // }}
+        onMonthChange={onDayPress}
+      >
         <SafeAreaView>
           <ExpandableCalendar
+            theme={{
+              backgroundColor: NAV_THEME[colorScheme].background,
+              calendarBackground: NAV_THEME[colorScheme].background,
+              selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
+              selectedDayTextColor: NAV_THEME[colorScheme].border,
+              dotColor: NAV_THEME[colorScheme].primary,
+              arrowColor: NAV_THEME[colorScheme].primary,
+              monthTextColor: NAV_THEME[colorScheme].text,
+              textDisabledColor: NAV_THEME[colorScheme].border,
+              dayTextColor: NAV_THEME[colorScheme].text,
+              todayTextColor: NAV_THEME[colorScheme].text,
+              todayDotColor: NAV_THEME[colorScheme].text,
+              todayBackgroundColor: NAV_THEME[colorScheme].border,
+            }}
             ref={calendarRef}
             renderHeader={renderHeader}
             renderArrow={renderArrow}
-            // current={selectedDate.toISODate()}
-            disableArrowLeft={false}
-            disableArrowRight={false}
+            current={selectedDate.toISODate()}
             markedDates={marked}
             onDayPress={onDayPress}
             allowShadow={false}
             enableSwipeMonths={false}
             closeOnDayPress={false}
             hideKnob
-            disableWeekScroll
             disablePan
+            disableWeekScroll
+            disableArrowLeft={false}
+            disableArrowRight={false}
             disableAllTouchEventsForDisabledDays
           />
         </SafeAreaView>
         <Separator className="my-4" />
 
         <SafeAreaWrapper>
-          {/* <View className="h-32">
-        <DatePickerWithWeek
-          currentDate={selectedDate!}
-          onDateChange={setSelectedDate}
-        />
-      </View> */}
-          {/* {weekView ? (
-          <
-            // Animated.View
-            // entering={SlideInUp.duration(600)}
-            // exiting={FadeOutDown.duration(600)}
-          >
-            {renderHeader(selectedDate.toJSDate())}
-            <WeekCalendar
-              current={selectedDate.toISODate()}
-              disableArrowLeft={false}
-              disableArrowRight={false}
-              markedDates={marked}
-              onDayPress={onDayPress}
-              allowShadow={false}
-              enableSwipeMonths={false}
-            />
-          </
-            // Animated.View
-          >
-        ) : (
-          <Animated.View
-            entering={StretchInY.duration(200)}
-            exiting={StretchOutY.duration(50)}
-          >
-            <Calendar
-              current={selectedDate.toISODate()}
-              markedDates={marked}
-              onDayPress={onDayPress}
-              renderHeader={renderHeader}
-            />
-          </Animated.View>
-        )} */}
-
           {!workoutLoaded ? (
             <ActivityLoader />
           ) : (
@@ -190,7 +191,7 @@ export default function Home() {
                         : selectedDate?.toFormat("LLL dd, yyyy")}
                       :
                     </Text>
-                    <CompletedWorkoutList workouts={todayWorkouts} />
+                    <CompletedWorkoutList workouts={daysWorkouts} />
                   </>
                 )}
               </View>
