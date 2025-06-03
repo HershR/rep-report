@@ -125,7 +125,7 @@ const ExerciseDetails = () => {
                   width={Math.min(height * 0.5, width - 64)}
                   height={Math.min(height * 0.5, width - 64)}
                   data={exercise?.images.map((x) => x.image)}
-                  renderFunction={(item: string) => {
+                  renderItem={(item: string) => {
                     return (
                       <View className="flex-1 justify-center m-2 mt-0 items-center">
                         <ExerciseImage
@@ -203,8 +203,9 @@ const ExerciseDetails = () => {
                       width={300}
                       height={425}
                       loop={false}
+                      //@ts-ignore
                       data={allMuscles}
-                      renderFunction={(item: Muscles[]) => {
+                      renderItem={(item: Muscles[]) => {
                         return (
                           <MuscleCard
                             muscleList={item}

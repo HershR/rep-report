@@ -128,10 +128,7 @@ const Dashboard = () => {
               data={todaysRoutines}
               width={width - 64}
               height={160}
-              renderFunction={function (
-                item: RoutineWithExercise,
-                index?: number
-              ) {
+              renderItem={function (item: RoutineWithExercise, index?: number) {
                 return (
                   <View className="flex-1 justify-center mr-2">
                     <Card className="p-4">
