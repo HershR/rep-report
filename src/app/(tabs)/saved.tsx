@@ -1,31 +1,28 @@
-import { FlatList, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/src/components/ui/tabs";
-import { Text } from "@/src/components/ui/text";
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
-import { desc, eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
+//db
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
+import { eq } from "drizzle-orm";
+//utils
+import { dateNameLong } from "@/src/utils/dateUtils";
+//ui
+import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
 import { CircleX } from "~/lib/icons/CircleX";
-import { dateNameLong } from "@/src/utils/dateUtils";
+import { Card, CardDescription, CardTitle } from "@/src/components/ui/card";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
 const Saved = () => {

@@ -162,7 +162,13 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardFooter>
-              <Button>
+              <Button
+                onPress={() =>
+                  router.push({
+                    pathname: "/routine/create",
+                  })
+                }
+              >
                 <Text>Create Routine</Text>
               </Button>
             </CardFooter>

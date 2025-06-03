@@ -1,14 +1,13 @@
-import { KeyboardAvoidingView, Platform } from "react-native";
 import React from "react";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import { Button } from "@/src/components/ui/button";
-import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import { router } from "expo-router";
+import { KeyboardAvoidingView, Platform } from "react-native";
+import Toast from "react-native-toast-message";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import RoutineForm, { RoutineFormField } from "@/src/components/RoutineForm";
+//db
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
-import Toast from "react-native-toast-message";
 import {
   addDaysToRoutine,
   addExercisesToRoutine,
