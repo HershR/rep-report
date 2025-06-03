@@ -138,8 +138,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
           <Separator />
         </CardContent>
         <CardContent className="gap-y-2">
-          <Text className="text-xl font-semibold">Schedule:</Text>
-          <View className="flex-row max-w-sm justify-center items-center gap-x-2">
+          <View className="flex-row max-w-sm justify-between items-center gap-x-2">
             {[0, 1, 2, 3, 4, 5, 6].map((day_no) => {
               return (
                 <Controller
@@ -149,7 +148,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                   render={({ field: { onChange, value } }) => {
                     return (
                       <Button
-                        className="rounded-full flex-1 aspect-square"
+                        className="h-8 w-8 aspect-square rounded-full"
                         size={"icon"}
                         variant={value.selected ? "default" : "outline"}
                         onPress={() => {
@@ -195,7 +194,7 @@ const RoutineForm = ({ defaultForm, onSubmit }: Props) => {
                   render={({ field: { onChange, value } }) => (
                     <>
                       <Card
-                        className={`flex-1 max-h-24 md:max-h-32 justify-center items-center py-1 px-2`}
+                        className={`flex-1 max-h-22 md:max-h-32 justify-center items-center py-1 px-2`}
                       >
                         <View className="flex-row w-full h-full justify-center items-center">
                           <Link href={`/exercise/${value.id}`} asChild>
