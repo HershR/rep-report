@@ -1,14 +1,20 @@
-import { FlatList, TouchableOpacity, View } from "react-native";
+import { DateTime } from "luxon";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { TouchableOpacity, View } from "react-native";
+import { useSafeAreaFrame } from "react-native-safe-area-context";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import { useDate } from "@/src/context/DateContext";
-import { Button } from "@/src/components/ui/button";
-import { Text } from "@/src/components/ui/text";
-import * as schema from "@/src//db/schema";
+import ActivityLoader from "@/src/components/ActivityLoader";
+import CustomCarousel from "@/src/components/CustomCarousel";
+import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
+//db
+import * as schema from "@/src/db/schema";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { desc, eq } from "drizzle-orm";
-import ActivityLoader from "@/src/components/ActivityLoader";
+import { workouts, exercises, Routine } from "@/src/db/schema";
+//ui
 import {
   Card,
   CardContent,
@@ -18,15 +24,9 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { User } from "@/src/lib/icons/User";
-import SearchBar from "@/src/components/SearchBar";
-import { useRouter } from "expo-router";
-import { workouts, exercises, Routine } from "@/src/db/schema";
-import ExerciseList from "@/src/components/lists/ExerciseList";
+import { Button } from "@/src/components/ui/button";
+import { Text } from "@/src/components/ui/text";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
-import { DateTime } from "luxon";
-import { useSafeAreaFrame } from "react-native-safe-area-context";
-import CustomCarousel from "@/src/components/CustomCarousel";
-import RecentExerciseList from "@/src/components/lists/RecentExerciseList";
 
 interface RoutineWithExercise extends Routine {
   exercise: schema.Exercise[];
@@ -118,11 +118,13 @@ const Dashboard = () => {
           </View>
         </View>
 
-        {todaysRoutines ? (
+        {!routinesLoaded ? (
+          <ActivityLoader />
+        ) : routineError ? (
+          <Text>Fail to Load Routines</Text>
+        ) : todaysRoutines ? (
           <View>
-            <Text className="text-xl font-semibold mb-2">
-              Scheduled Workout:
-            </Text>
+            <Text className="text-xl font-semibold">Scheduled Workout:</Text>
 
             <CustomCarousel
               data={todaysRoutines}
@@ -131,17 +133,22 @@ const Dashboard = () => {
               renderItem={function (item: RoutineWithExercise, index?: number) {
                 return (
                   <View className="flex-1 justify-center mr-2">
-                    <Card className="p-4">
+                    <Card className="p-4 max-h-40 overflow-hidden">
                       <TouchableOpacity
                         className="flex-row justify-between items-center"
                         onPress={() => router.push(`/routine/${item.id}`)}
                       >
-                        <View className="flex-1 mx-4 max-h-40 overflow-hidden">
+                        <CardContent className="flex-1">
                           <CardTitle>{item.name}</CardTitle>
-                          <CardDescription numberOfLines={6}>
-                            {item.exercise.map((x) => x.name + "\n")}
+                          {item.description && (
+                            <CardDescription numberOfLines={2}>
+                              {item.description}
+                            </CardDescription>
+                          )}
+                          <CardDescription numberOfLines={3}>
+                            {item.exercise.map((x) => x.name).join(", ")}
                           </CardDescription>
-                        </View>
+                        </CardContent>
                         <ChevronRight className="color-primary" size={30} />
                       </TouchableOpacity>
                     </Card>
@@ -158,7 +165,7 @@ const Dashboard = () => {
                 You have no workouts scheduled for today.
               </CardDescription>
               <CardDescription>
-                Press the button below to schedule a workout
+                Press the button below to schedule a workout.
               </CardDescription>
             </CardHeader>
             <CardFooter>
@@ -178,8 +185,8 @@ const Dashboard = () => {
         {!recentExerciseLoaded ? (
           <ActivityLoader />
         ) : recentExerciseError ? (
-          <Text>Error</Text>
-        ) : (
+          <Text>Fail to Load Recent Exercise</Text>
+        ) : recentExercise ? (
           <View className="flex">
             <Text className="text-xl font-semibold mb-2">Recent Exercise:</Text>
             <RecentExerciseList
@@ -187,11 +194,32 @@ const Dashboard = () => {
               onPress={(id: number) => router.push(`/exercise/${id}`)}
             />
           </View>
+        ) : (
+          <Card className="bg-secondary border-none">
+            <CardHeader>
+              <CardTitle>No Recent Workouts</CardTitle>
+              <CardDescription>You have no recent workouts.</CardDescription>
+              <CardDescription>
+                Press the button below to search for workouts.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <Button
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/search",
+                  })
+                }
+              >
+                <Text>Search Exercise</Text>
+              </Button>
+            </CardFooter>
+          </Card>
         )}
-        <View className="flex-1">
+        <View className="flex-1 mt-6">
           <Card className="flex-1">
             <CardContent className="flex-1 justify-center items-center">
-              <Text>More Coming Soon</Text>
+              <Text>More Features Coming Soon</Text>
             </CardContent>
           </Card>
         </View>
