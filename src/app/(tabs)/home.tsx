@@ -31,6 +31,7 @@ export default function Home() {
   const [selectedMonth, setSelectedMonth] = useState(
     DateTime.now().toISODate()
   );
+  const [showCalendar, setShowCalendar] = useState(true);
   const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -50,7 +51,9 @@ export default function Home() {
     }),
     [selectedMonth]
   );
-
+  useEffect(() => {
+    setShowCalendar(false);
+  }, []);
   useEffect(() => {
     if (monthsWorkouts) {
       setDaysWorkouts(
@@ -87,7 +90,7 @@ export default function Home() {
         className="flex-row justify-center items-center m-3 gap-x-4"
         onPress={toggleCalendarExpansion}
       >
-        <Text className="text-2xl">
+        <Text className="text-2xl font-medium">
           {DateTime.fromISO(date.toISOString()).toFormat("LLL yyyy")}
         </Text>
         <CalendarDays className="color-primary" size={26} />
@@ -136,65 +139,66 @@ export default function Home() {
         onMonthChange={onDayPress}
       >
         <SafeAreaView>
-          <ExpandableCalendar
-            theme={{
-              backgroundColor: NAV_THEME[colorScheme].background,
-              calendarBackground: NAV_THEME[colorScheme].background,
-              selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
-              selectedDayTextColor: NAV_THEME[colorScheme].border,
-              dotColor: NAV_THEME[colorScheme].primary,
-              arrowColor: NAV_THEME[colorScheme].primary,
-              monthTextColor: NAV_THEME[colorScheme].text,
-              textDisabledColor: NAV_THEME[colorScheme].border,
-              dayTextColor: NAV_THEME[colorScheme].text,
-              todayTextColor: NAV_THEME[colorScheme].text,
-              todayDotColor: NAV_THEME[colorScheme].text,
-              todayBackgroundColor: NAV_THEME[colorScheme].border,
-            }}
-            ref={calendarRef}
-            renderHeader={renderHeader}
-            renderArrow={renderArrow}
-            current={selectedDate.toISODate()}
-            markedDates={marked}
-            onDayPress={onDayPress}
-            allowShadow={false}
-            enableSwipeMonths={false}
-            closeOnDayPress={false}
-            hideKnob
-            disablePan
-            disableWeekScroll
-            disableArrowLeft={false}
-            disableArrowRight={false}
-            disableAllTouchEventsForDisabledDays
-          />
+          {showCalendar ? null : (
+            <ExpandableCalendar
+              key={colorScheme}
+              theme={{
+                backgroundColor: NAV_THEME[colorScheme].background,
+                calendarBackground: NAV_THEME[colorScheme].background,
+                selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
+                selectedDayTextColor: NAV_THEME[colorScheme].border,
+                dotColor: NAV_THEME[colorScheme].primary,
+                arrowColor: NAV_THEME[colorScheme].primary,
+                monthTextColor: NAV_THEME[colorScheme].text,
+                textDisabledColor: NAV_THEME[colorScheme].border,
+                dayTextColor: NAV_THEME[colorScheme].text,
+                todayTextColor: NAV_THEME[colorScheme].text,
+                todayDotColor: NAV_THEME[colorScheme].text,
+                todayBackgroundColor: NAV_THEME[colorScheme].border,
+              }}
+              ref={calendarRef}
+              renderHeader={renderHeader}
+              renderArrow={renderArrow}
+              current={selectedDate.toISODate()}
+              markedDates={marked}
+              onDayPress={onDayPress}
+              allowShadow={false}
+              enableSwipeMonths={false}
+              closeOnDayPress={false}
+              hideKnob
+              disablePan
+              disableWeekScroll
+              disableArrowLeft={false}
+              disableArrowRight={false}
+              disableAllTouchEventsForDisabledDays
+            />
+          )}
         </SafeAreaView>
-        <Separator className="my-4" />
+        <Separator className="mt-2" />
 
         <SafeAreaWrapper>
           {!workoutLoaded ? (
             <ActivityLoader />
           ) : (
-            <View className="flex-1">
-              <View className="flex-1">
-                <SearchBar
-                  placeholder={"Add exercise"}
-                  value={""}
-                  onPress={() => router.push("/search")}
-                />
-                {!workoutLoaded ? (
-                  <ActivityLoader />
-                ) : (
-                  <>
-                    <Text className="text-xl font-semibold mt-2 mb-2">
+            <View className="flex-1 gap-y-4">
+              <SearchBar
+                placeholder={"Add exercise"}
+                value={""}
+                onPress={() => router.push("/search")}
+              />
+              {!workoutLoaded ? (
+                <ActivityLoader />
+              ) : (
+                <>
+                  {/* <Text className="text-xl font-semibold mt-2 mb-2">
                       {selectedDate?.toISODate() === DateTime.now().toISODate()
                         ? "Today's Workouts"
                         : selectedDate?.toFormat("LLL dd, yyyy")}
                       :
-                    </Text>
-                    <CompletedWorkoutList workouts={daysWorkouts} />
-                  </>
-                )}
-              </View>
+                    </Text> */}
+                  <CompletedWorkoutList workouts={daysWorkouts} />
+                </>
+              )}
             </View>
           )}
         </SafeAreaWrapper>
