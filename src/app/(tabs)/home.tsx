@@ -1,27 +1,29 @@
-import { TouchableOpacity, View } from "react-native";
-import SearchBar from "@/src/components/SearchBar";
-import { useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
-import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { Text } from "~/components/ui/text";
-import { between, desc } from "drizzle-orm";
-import { workouts } from "@/src//db/schema";
-import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import ActivityLoader from "@/src/components/ActivityLoader";
 import { DateTime } from "luxon";
-import { Separator } from "@/src/components/ui/separator";
-import { CalendarProvider, ExpandableCalendar } from "react-native-calendars";
+import { useRouter } from "expo-router";
+import { TouchableOpacity, View } from "react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DateData, Direction } from "react-native-calendars/src/types";
-import { CalendarDays } from "@/src/lib/icons/CalendarDays";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
-import { twMerge } from "tailwind-merge";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DateData, Direction } from "react-native-calendars/src/types";
+import { CalendarProvider, ExpandableCalendar } from "react-native-calendars";
+import { twMerge } from "tailwind-merge";
+import SearchBar from "@/src/components/SearchBar";
+import ActivityLoader from "@/src/components/ActivityLoader";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
+//db
+import * as schema from "@/src/db/schema";
+import { workouts } from "@/src/db/schema";
+import { between, desc } from "drizzle-orm";
+import { useSQLiteContext } from "expo-sqlite";
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+//ui
+import { Text } from "~/components/ui/text";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
+import { Separator } from "@/src/components/ui/separator";
+import { CalendarDays } from "@/src/lib/icons/CalendarDays";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
 export default function Home() {
   const router = useRouter();
