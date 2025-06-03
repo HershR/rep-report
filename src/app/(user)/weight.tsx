@@ -1,32 +1,34 @@
+import { DateTime } from "luxon";
 import React, { useState } from "react";
+import { FlatList, TextInput, View } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import ActivityLoader from "@/src/components/ActivityLoader";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+//db
+import * as schema from "@/src/db/schema";
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { createWeightEntry, deleteWeightEntry } from "@/src/db/dbHelpers";
+//ui
+import { Separator } from "@/src/components/ui/separator";
+import { Button } from "@/src/components/ui/button";
+import { Text } from "@/src/components/ui/text";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Text } from "@/src/components/ui/text";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
-import { useSQLiteContext } from "expo-sqlite";
-import { Separator } from "@/src/components/ui/separator";
-import { FlatList, TextInput, View } from "react-native";
-import { Button } from "@/src/components/ui/button";
-import { createWeightEntry, deleteWeightEntry } from "@/src/db/dbHelpers";
-import ActivityLoader from "@/src/components/ActivityLoader";
 import { Plus } from "@/src/lib/icons/Plus";
 import { CircleX } from "@/src/lib/icons/CircleX";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { CalendarDays } from "@/src/lib/icons/CalendarDays";
-import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+//utils
+import { UNIT_LABELS } from "@/src/constants/measurementLables";
 import {
   convertWeight,
   convertWeightString,
-  lbsToKg,
 } from "@/src/utils/measurementConversion";
-import { UNIT_LABELS } from "@/src/constants/measurementLables";
-import { DateTime } from "luxon";
 
 const WeightHistory = () => {
   const [weight, setWeight] = useState<string | null>(null);
@@ -93,32 +95,33 @@ const WeightHistory = () => {
   return (
     <SafeAreaWrapper>
       <Card className="flex-1">
-        <CardHeader className="flex gap-x-2">
-          <CardTitle>Add Entry</CardTitle>
-          <View className="flex-row items-center">
+        <CardHeader>
+          <View className="flex-row items-center justify-between">
             <Text className="text-xl font-semibold">
               {date.toLocaleDateString(undefined, dateOptions)}
             </Text>
             <Button
+              className="ml-2"
               variant={"ghost"}
               size={"icon"}
               onPress={() => setDateModalVisible(true)}
             >
-              <CalendarDays className="color-primary" size={30} />
+              <CalendarDays className="color-primary" size={24} />
             </Button>
           </View>
         </CardHeader>
         <CardContent>
           <View className="flex-row justify-center items-center gap-x-2">
             <TextInput
-              className="flex-1 justify-center items-center rounded-md border border-input bg-background px-3 pb-0 text-6xl font-bold text-center"
+              className="flex-1 text-primary justify-center items-center rounded-md border border-input bg-background px-3 pb-0 text-6xl font-bold text-center"
               placeholderClassName="text-sm"
               keyboardType="numeric"
               textAlign="center"
               value={weight || ""}
               onChangeText={(text) => handleWeightChange(text)}
+              maxLength={5}
             />
-            <Text className="text-6xl font-semibold self-end">
+            <Text className="text-6xl font-medium self-end">
               {" "}
               {unit === "metric"
                 ? UNIT_LABELS.metric.weight
