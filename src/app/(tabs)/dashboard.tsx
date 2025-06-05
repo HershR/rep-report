@@ -13,7 +13,7 @@ import * as schema from "@/src/db/schema";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { desc, eq } from "drizzle-orm";
-import { workouts, exercises, Routine } from "@/src/db/schema";
+import { workouts, exercises, RoutineWithExercise } from "@/src/db/schema";
 //ui
 import {
   Card,
@@ -27,10 +27,6 @@ import { User } from "@/src/lib/icons/User";
 import { Button } from "@/src/components/ui/button";
 import { Text } from "@/src/components/ui/text";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
-
-interface RoutineWithExercise extends Routine {
-  exercise: schema.Exercise[];
-}
 
 const Dashboard = () => {
   const { selectedDate, setSelectedDate } = useDate();

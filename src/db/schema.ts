@@ -132,3 +132,6 @@ export type RoutineWithExerciseSchedule = Routine & {
   routineExercises: RoutineExercise[];
 } & { routineSchedule: RoutineSchedule[] };
 export type Exercise = typeof exercises.$inferSelect;
+export type RoutineWithExercise = Routine & {
+  exercise: Exercise[];
+};
