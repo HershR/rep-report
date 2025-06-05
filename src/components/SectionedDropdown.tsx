@@ -18,6 +18,8 @@ import { Text } from "./ui/text";
 import { Input } from "./ui/input";
 import { SelectSeparator } from "./ui/select";
 import { ListFilter } from "../lib/icons/ListFilter";
+import { Card, CardContent } from "./ui/card";
+import { Separator } from "./ui/separator";
 interface Item {
   id: string;
   name: string;
@@ -113,61 +115,41 @@ export default function SectionedDropdown({
         <Text numberOfLines={1}>Filters</Text>
         <ListFilter className="color-primary ml-2" size={18} />
       </TouchableOpacity>
-      <Modal
-        animationType="slide"
-        visible={isOpen}
-        transparent={true}
-        onRequestClose={() => setIsOpen(false)}
-      >
-        <TouchableWithoutFeedback onPressOut={() => setIsOpen(false)}>
-          <View className="flex-1 bg-gray-500/30 justify-center items-center p-8">
-            <TouchableWithoutFeedback>
-              <View className="flex-1 w-full max-w-sm rounded-md bg-background">
-                <>
-                  <View className="flex-row items-center mx-2">
-                    <Input
-                      placeholder={"Search for Filter"}
-                      value={searchQuery}
-                      onChangeText={(value) => setSearchQuery(value.trim())}
-                      className="flex-1 pl-12 border-none border-0"
-                    ></Input>
-                    <Search className="color-primary absolute left-0 ml-2"></Search>
-                  </View>
-                  <SelectSeparator className="mx-2" />
-                  <ScrollView className="flex-1 px-2 pb-6">
-                    <Accordion
-                      type="multiple"
-                      collapsible
-                      defaultValue={[sections[0].name]}
-                    >
-                      {sections.map((item, index) => (
-                        <AccordianDropdown
-                          key={item.name}
-                          id={item.name}
-                          placeholder={item.name}
-                          options={item.items}
-                          selectedItems={selectedItems[index]}
-                          onSelect={(value) => onSelect(item.id, value)}
-                          searchQuery={searchQuery}
-                        />
-                      ))}
-                    </Accordion>
-                  </ScrollView>
-                  <Button
-                    className="m-4 max-w-sm"
-                    onPress={() => {
-                      setIsOpen(false);
-                      onClose?.();
-                    }}
-                  >
-                    <Text>Close</Text>
-                  </Button>
-                </>
-              </View>
-            </TouchableWithoutFeedback>
+      {isOpen && (
+        <Card className="absolute z-50 right-0 top-0 mt-14 justify-start items-start w-64">
+          <View className="flex-row items-center mx-2">
+            <Input
+              placeholder={"Search for Filter"}
+              value={searchQuery}
+              onChangeText={(value) => setSearchQuery(value.trim())}
+              className="flex-1 pl-12 border-none border-0"
+            ></Input>
+            <Search className="color-primary absolute left-0 ml-2"></Search>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+          <CardContent className="w-full m-0">
+            <Separator />
+          </CardContent>
+          <ScrollView className="flex-1 w-full px-2 pb-6 max-h-[550px]">
+            <Accordion
+              type="multiple"
+              collapsible
+              defaultValue={[sections[0].name]}
+            >
+              {sections.map((item, index) => (
+                <AccordianDropdown
+                  key={item.name}
+                  id={item.name}
+                  placeholder={item.name}
+                  options={item.items}
+                  selectedItems={selectedItems[index]}
+                  onSelect={(value) => onSelect(item.id, value)}
+                  searchQuery={searchQuery}
+                />
+              ))}
+            </Accordion>
+          </ScrollView>
+        </Card>
+      )}
     </View>
   );
 }
