@@ -122,7 +122,7 @@ const Dashboard = () => {
           <ActivityLoader />
         ) : routineError ? (
           <Text>Fail to Load Routines</Text>
-        ) : todaysRoutines ? (
+        ) : todaysRoutines && todaysRoutines.length > 0 ? (
           <View>
             <Text className="text-xl font-semibold">Scheduled Workout:</Text>
 
@@ -186,7 +186,7 @@ const Dashboard = () => {
           <ActivityLoader />
         ) : recentExerciseError ? (
           <Text>Fail to Load Recent Exercise</Text>
-        ) : recentExercise ? (
+        ) : recentExercise && recentExercise.length > 0 ? (
           <View className="flex">
             <Text className="text-xl font-semibold mb-2">Recent Exercise:</Text>
             <RecentExerciseList
