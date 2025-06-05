@@ -45,7 +45,7 @@ const DatePickerWithWeek = ({
 
     return days.map((date) => {
       const bgColor =
-        currentDate.day !== date.day ? "bg-background" : "bg-primary";
+        currentDate.day !== date.day ? "bg-secondary" : "bg-primary";
       const textColor =
         currentDate.day !== date.day ? "text-primary" : "text-border";
       return (

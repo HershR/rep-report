@@ -1,109 +1,285 @@
-import { ScrollView, View } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import {
+  convertHeightString,
+  convertWeightString,
+} from "@/src/utils/measurementConversion";
+import HeightSelectorModal from "@/src/components/HeightSelectorModal";
+//db
+import * as schema from "@/src//db/schema";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { updateUserSetting } from "@/src/db/dbHelpers";
+//ui
+import { useColorScheme } from "@/src/lib/useColorScheme";
+import { NAV_THEME } from "@/src/lib/constants";
 import { Text } from "@/src/components/ui/text";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Switch } from "@/src/components/ui/switch";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Separator } from "~/components/ui/separator";
+//icons
 import { User } from "@/src/lib/icons/User";
 import { MoonStar } from "@/src/lib/icons/MoonStar";
 import { Sun } from "@/src/lib/icons/Sun";
-import { Switch } from "@/src/components/ui/switch";
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { Button } from "@/src/components/ui/button";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { Ruler } from "@/src/lib/icons/Ruler";
+import { Cake } from "@/src/lib/icons/Cake";
+import { eq } from "drizzle-orm";
+import { utcToLocalMidnight } from "@/src/utils/datetimeConversion";
+import { seedDatabase } from "@/src/db/seed";
 
-const setTheme = async (theme: string) => {
-  await AsyncStorage.setItem("theme", theme);
-};
 const Profile = () => {
-  const isMountingRef = useRef(false);
-  const [age, setAge] = useState<string | null>();
-  const [weight, setWeight] = useState<string | null>();
-  const [height, setHeight] = useState<string | null>();
+  const [age, setAge] = useState<number | null>();
+  const [height, setHeight] = useState<number | null>();
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isHeightModalVisible, setHeightModalVisibility] = useState(false);
 
   const { colorScheme, isDarkColorScheme, toggleColorScheme } =
     useColorScheme();
+  const router = useRouter();
+  const { unit, toggleUnit } = useMeasurementUnit();
 
-  const getAge = async () => {
-    const _age = await AsyncStorage.getItem("age");
-    setAge(_age || "0");
-  };
-  const getWeight = async () => {
-    const _weight = await AsyncStorage.getItem("weight");
-    setWeight(_weight || "0");
-  };
+  const db = useSQLiteContext();
+  const drizzleDb = drizzle(db, { schema });
+  const { data: weight } = useLiveQuery(
+    drizzleDb.query.weightHistory.findFirst({
+      orderBy: (weight_history, { desc }) => [
+        desc(weight_history.date_created),
+      ],
+    })
+  );
+  const { data: userDob } = useLiveQuery(
+    drizzleDb.query.userSettings.findFirst({
+      where: eq(schema.userSettings.key, "dob"),
+    })
+  );
 
-  const getHeight = async () => {
-    const _height = await AsyncStorage.getItem("height");
-    setHeight(_height || "0");
-  };
+  const { data: userHeight } = useLiveQuery(
+    drizzleDb.query.userSettings.findFirst({
+      where: eq(schema.userSettings.key, "height"),
+    })
+  );
 
   useEffect(() => {
-    isMountingRef.current = true;
-    getAge();
-    getWeight();
-    getHeight();
-  }, []);
-  useEffect(() => {
-    if (!isMountingRef.current) {
-      setTheme(colorScheme);
+    if (userDob) {
+      const date = new Date(userDob.value);
+      const today = new Date();
+      const age = today.getFullYear() - date.getFullYear();
+      const monthDiff = today.getMonth() - date.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < date.getDate())
+      ) {
+        setAge(age - 1);
+      } else {
+        setAge(age);
+      }
     } else {
-      isMountingRef.current = false;
+      setAge(0);
     }
-  }, [colorScheme]);
+  }, [userDob]);
+
+  useEffect(() => {
+    const getHeight = async () => {
+      if (userHeight) {
+        setHeight(parseFloat(userHeight.value));
+      } else {
+        setHeight(0);
+      }
+    };
+    getHeight();
+  }, [userHeight]);
+
+  const setUnit = async (unit: Unit) => {
+    await AsyncStorage.setItem("measurementUnit", unit);
+  };
+  const setTheme = async (theme: string) => {
+    await AsyncStorage.setItem("theme", theme);
+  };
 
   return (
-    <SafeAreaWrapper>
-      <Text className="text-3xl text-left w-full">Profile</Text>
-      <Card className="flex-row w-full h-1/4 pt-6">
-        <CardContent className="flex justify-center items-center">
-          <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
-            <User className="color-primary" size={80}></User>
-          </View>
-        </CardContent>
-        <CardContent className="flex-1 justify-center">
-          <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Age</Text>
-            <Text className="text-xl font-medium text-right">{age} yr</Text>
-          </View>
-          <Separator className="" />
-          <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Weight</Text>
-            <Text className="text-xl font-medium text-right">{weight} lb</Text>
-          </View>
-          <Separator className="" />
-          <View className="flex-1 flex-row justify-between items-center">
-            <Text className="text-sm font-medium text-left">Height</Text>
-            <Text className="text-xl font-medium text-right">{height} ft</Text>
-          </View>
-        </CardContent>
-      </Card>
-
-      <Card className="flex-1">
-        <CardContent className="flex-1">
-          <ScrollView
-            className="flex-1 w-full mt-8"
-            showsVerticalScrollIndicator={false}
-            contentContainerClassName="gap-y-4"
-          >
-            <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-              <Text className="text-lg font-medium">App Theme</Text>
-              <View className="flex-row items-center gap-x-2">
-                <Sun className="color-primary" size={20} />
-                <Switch
-                  checked={isDarkColorScheme}
-                  onCheckedChange={() => toggleColorScheme()}
-                  nativeID="airplane-mode"
-                />
-                <MoonStar className="color-primary" size={20} />
+    <>
+      <SafeAreaWrapper>
+        <Card className="flex-1 max-w-screen-md pt-6 mt-4">
+          <View className="flex-row">
+            <CardContent className="flex justify-center items-center">
+              <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
+                <User className="color-primary" size={80}></User>
               </View>
-            </View>
-            <Separator className="" />
-          </ScrollView>
-        </CardContent>
-      </Card>
-    </SafeAreaWrapper>
+            </CardContent>
+            <CardContent className="flex-1 justify-center">
+              <View className="flex-1 flex-row justify-between items-center">
+                <Text className="text-xl font-medium text-left">Age</Text>
+                <Text className="text-xl font-medium text-right">{age} yr</Text>
+              </View>
+              <Separator className="" />
+              <View className="flex-1 flex-row justify-between items-center">
+                <Text className="text-xl font-medium text-left">Height</Text>
+                <Text className="text-xl font-medium text-right">
+                  {height ? convertHeightString(height, "metric", unit) : "NA"}
+                </Text>
+              </View>
+              <Separator className="" />
+              <View className="flex-1 flex-row justify-between items-center">
+                <Text className="text-xl font-medium text-left">Weight</Text>
+                <Text className="text-xl font-medium text-right">
+                  {weight?.weight
+                    ? convertWeightString(weight.weight, "imperial", unit)
+                    : "NA"}
+                </Text>
+              </View>
+            </CardContent>
+          </View>
+          <CardContent className="flex-1">
+            <Separator />
+
+            <ScrollView
+              className="flex-1 w-full mt-8"
+              showsVerticalScrollIndicator={false}
+              contentContainerClassName="gap-y-4"
+            >
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">App Theme</Text>
+                <View className="flex-row items-center gap-x-2">
+                  <Sun className="color-primary" size={24} />
+                  <Switch
+                    checked={isDarkColorScheme}
+                    onCheckedChange={async () => {
+                      await setTheme(
+                        colorScheme === "light" ? "dark" : "light"
+                      );
+                      toggleColorScheme();
+                    }}
+                  />
+                  <MoonStar className="color-primary" size={24} />
+                </View>
+              </View>
+              <Separator />
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">Units</Text>
+                <View className="flex-row items-center gap-x-2">
+                  <Text className="min-w-6 text-center text-xl font-semibold">
+                    Lb
+                  </Text>
+                  <Switch
+                    checked={unit === "metric"}
+                    onCheckedChange={async () => {
+                      await setUnit(
+                        unit === "imperial" ? "metric" : "imperial"
+                      );
+                      toggleUnit();
+                    }}
+                  />
+                  <Text className="min-w-6 text-center text-xl font-semibold">
+                    Kg
+                  </Text>
+                </View>
+              </View>
+              <Separator />
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">My Weight</Text>
+                <Button
+                  variant={"ghost"}
+                  size="icon"
+                  className="flex-row w-14"
+                  onPress={() => router.push("/weight")}
+                >
+                  <Ionicons
+                    name="scale"
+                    size={24}
+                    color={
+                      colorScheme === "light"
+                        ? NAV_THEME.light.primary
+                        : NAV_THEME.dark.primary
+                    }
+                  />
+                  <ChevronRight size={24} className="color-primary" />
+                </Button>
+              </View>
+              <Separator />
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">Update Height</Text>
+                <Button
+                  variant={"ghost"}
+                  size="icon"
+                  className="flex-row w-14"
+                  onPress={() => setHeightModalVisibility(true)}
+                >
+                  <Ruler className="color-primary" />
+                  <ChevronRight size={24} className="color-primary" />
+                </Button>
+              </View>
+              <Separator />
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">Update Age</Text>
+                <Button
+                  variant={"ghost"}
+                  size="icon"
+                  className="flex-row w-14"
+                  onPress={() => setDatePickerVisibility(true)}
+                >
+                  <Cake className="color-primary" />
+                  <ChevronRight size={24} className="color-primary" />
+                </Button>
+              </View>
+              {/* <Separator />
+              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
+                <Text className="text-xl font-medium">Seed Database</Text>
+                <Button onPress={async () => seedDatabase(drizzleDb)}>
+                  <Text>Seed</Text>
+                </Button>
+              </View> */}
+            </ScrollView>
+          </CardContent>
+        </Card>
+      </SafeAreaWrapper>
+      <View className="flex">
+        <HeightSelectorModal
+          isVisable={isHeightModalVisible}
+          defaultHeight={height || 0}
+          unit={unit}
+          onSubmit={async (height: number) => {
+            if (height) {
+              await updateUserSetting(drizzleDb, "height", height.toString());
+            }
+            setHeightModalVisibility(false);
+          }}
+          onClose={() => {
+            setHeightModalVisibility(false);
+          }}
+        />
+      </View>
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        isDarkModeEnabled={isDarkColorScheme}
+        date={userDob?.value ? new Date(userDob.value) : new Date()}
+        onConfirm={async (date) => {
+          if (date) {
+            const tzDate = utcToLocalMidnight(date);
+            await updateUserSetting(drizzleDb, "dob", tzDate.toISOString());
+          }
+          setDatePickerVisibility(false);
+        }}
+        onCancel={() => {
+          setDatePickerVisibility(false);
+        }}
+        minimumDate={new Date(1900, 0, 1)}
+        maximumDate={new Date()}
+        timePickerModeAndroid="spinner"
+        modalPropsIOS={{
+          presentationStyle: "formSheet",
+        }}
+      />
+    </>
   );
 };
 

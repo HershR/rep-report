@@ -63,7 +63,6 @@ interface Workout {
   id: number;
   date: string; // ISO date
   mode: number; // weight or time
-  unit: string; // e.g., kg, lbs
   routine_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   notes: string | null;
@@ -87,8 +86,7 @@ interface WorkoutRoutine {
   name: string;
   date_created: string;
   last_updated: string;
-  workout_count: number; // maybe computed later instead?
-  description?: string; // optional
+  description: string | null;
   exercises?: Exercise[];
 }
 

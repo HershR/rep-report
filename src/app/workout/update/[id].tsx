@@ -20,6 +20,8 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
 import { Trash2 } from "@/src/lib/icons/Trash2";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { convertWeight } from "@/src/utils/measurementConversion";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 
 const UpdateWorkout = () => {
   const {
@@ -31,6 +33,7 @@ const UpdateWorkout = () => {
     exerciseId: string;
     exerciseName: string;
   } = useLocalSearchParams();
+  const { unit } = useMeasurementUnit();
 
   const { selectedDate } = useDate();
 
@@ -70,15 +73,7 @@ const UpdateWorkout = () => {
   }
 
   return (
-    <SafeAreaWrapper style="mt-5">
-      <Button
-        variant={"ghost"}
-        size={"icon"}
-        onPress={router.back}
-        className="z-50"
-      >
-        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-      </Button>
+    <SafeAreaWrapper>
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -89,12 +84,19 @@ const UpdateWorkout = () => {
           <>
             <WorkoutForm
               defaultForm={{
-                date: selectedDate?.toISODate()!,
-                mode: 0,
-                notes: null,
+                date: workout?.date || selectedDate?.toISODate()!,
+                mode: workout?.mode || 0,
+                notes: workout?.notes || "",
                 exercise: { name: exerciseName, image: null },
-                sets: workout?.sets || [],
-                unit: "lb",
+                sets:
+                  workout?.sets.map((x) => {
+                    return {
+                      ...x,
+                      weight: x.weight
+                        ? convertWeight(x.weight, "imperial", unit)
+                        : null,
+                    };
+                  }) || [],
               }}
               onSubmit={saveWorkout}
               action={() => (

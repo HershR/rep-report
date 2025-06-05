@@ -1,31 +1,29 @@
-import { FlatList, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/src/components/ui/tabs";
-import { Text } from "@/src/components/ui/text";
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
-import { desc, eq } from "drizzle-orm";
 import SearchBar from "@/src/components/SearchBar";
 import { useRouter } from "expo-router";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ExerciseList from "@/src/components/lists/ExerciseList";
 import ActivityLoader from "@/src/components/ActivityLoader";
+//db
+import { useSQLiteContext } from "expo-sqlite";
+import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/src//db/schema";
+import { eq } from "drizzle-orm";
+//utils
+import { dateNameLong } from "@/src/utils/dateUtils";
+//ui
+import { Text } from "@/src/components/ui/text";
 import { Button } from "@/src/components/ui/button";
 import { CircleX } from "~/lib/icons/CircleX";
-import { dateNameLong } from "@/src/utils/dateUtils";
+import { Card, CardDescription, CardTitle } from "@/src/components/ui/card";
+import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
 const Saved = () => {
   const router = useRouter();
@@ -57,6 +55,11 @@ const Saved = () => {
     })
   );
   useEffect(() => {
+    if (favoritesError) {
+      console.log("Saved Favorites Fetch Error: ", favoritesError);
+    }
+  }, [favoritesError]);
+  useEffect(() => {
     if (routineError) {
       console.log("Saved Routine Fetch Error: ", routineError);
     }
@@ -80,7 +83,7 @@ const Saved = () => {
             <Text>Routines</Text>
           </TabsTrigger>
         </TabsList>
-        <View className="mb-4">
+        <View className="my-4">
           <SearchBar
             placeholder={
               tab === "favorites" ? "Search favorites..." : "Search routines..."
@@ -95,8 +98,7 @@ const Saved = () => {
           {!favoritesLoaded ? (
             <ActivityLoader />
           ) : (
-            <>
-              {/* <CardTitle className="ml-4 mb-2">Favorites:</CardTitle> */}
+            <View className="flex-1 justify-start">
               <ExerciseList
                 exercises={
                   searchQuery
@@ -111,16 +113,15 @@ const Saved = () => {
                   </View>
                 }
               />
-            </>
+            </View>
           )}
         </TabsContent>
         <TabsContent className="flex-1" value="routines">
           {!routinesLoaded ? (
             <ActivityLoader />
           ) : (
-            <View className="flex-1 justify-center items-center">
+            <View className="flex-1">
               <FlatList
-                className="w-full"
                 data={
                   searchQuery
                     ? routines.filter((x) =>
@@ -130,12 +131,18 @@ const Saved = () => {
                 }
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerClassName="gap-y-4"
+                ListEmptyComponent={
+                  <View className="flex-1 items-center justify-center">
+                    <Text>No Routines</Text>
+                  </View>
+                }
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => router.push(`/routine/${item.id}`)}
-                  >
-                    <Card className="w-full flex-row justify-between items-center">
-                      <CardHeader>
+                  <Card className="flex-1 justify-center items-center p-4">
+                    <TouchableOpacity
+                      className="flex-row justify-between items-center"
+                      onPress={() => router.push(`/routine/${item.id}`)}
+                    >
+                      <View className="flex-1 mx-4 max-h-32 overflow-hidden">
                         <CardTitle>{item.name}</CardTitle>
                         {item?.routineSchedule?.length > 0 && (
                           <CardDescription className="flex-row font-medium">
@@ -151,10 +158,10 @@ const Saved = () => {
                         {item.description && (
                           <CardDescription>{item.description}</CardDescription>
                         )}
-                      </CardHeader>
-                      <CardContent></CardContent>
-                    </Card>
-                  </TouchableOpacity>
+                      </View>
+                      <ChevronRight className="color-primary" size={30} />
+                    </TouchableOpacity>
+                  </Card>
                 )}
               ></FlatList>
               <Button

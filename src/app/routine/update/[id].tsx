@@ -59,14 +59,6 @@ const ViewUpateRoutine = () => {
   }
   return (
     <SafeAreaWrapper>
-      <Button
-        variant={"ghost"}
-        size={"icon"}
-        onPress={() => router.back()}
-        className="z-50"
-      >
-        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-      </Button>
       {loading ? (
         <ActivityLoader />
       ) : (

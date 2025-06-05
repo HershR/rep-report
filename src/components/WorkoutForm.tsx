@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -17,20 +17,13 @@ import { DateTime } from "luxon";
 import { CircleX } from "~/lib/icons/CircleX";
 import WorkoutTimeSelector from "./WorkoutTimeSelector";
 import { CalendarDays } from "../lib/icons/CalendarDays";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "./ui/alert-dialog";
+import { useMeasurementUnit } from "../context/MeasurementUnitContext";
+import { UNIT_LABELS } from "@/src/constants/measurementLables";
+import { convertWeight } from "../utils/measurementConversion";
+import { Separator } from "./ui/separator";
 
 interface WorkoutWithExercise
-  extends Pick<Workout, "date" | "mode" | "notes" | "sets" | "unit"> {
+  extends Pick<Workout, "date" | "mode" | "notes" | "sets"> {
   exercise: Pick<Exercise, "name" | "image">;
 }
 
@@ -48,26 +41,16 @@ const emptySet: WorkoutSet = {
   weight: null,
   duration: null,
 };
-const emptyForm: Workout = {
-  id: -1,
-  date: "",
-  mode: 0,
-  unit: "lb",
-  routine_id: null,
-  exercise_id: 0,
-  notes: null,
-  sets: [emptySet],
-};
 const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const { unit } = useMeasurementUnit();
   const {
     control,
     handleSubmit,
     watch,
     setValue,
     clearErrors,
-    reset,
     formState: { errors },
   } = useForm<Workout>({
     defaultValues: {
@@ -104,6 +87,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       const set = data.sets[i];
       if (data.mode === 0) {
         set.duration = null;
+        set.weight = convertWeight(set.weight || 0, unit, "imperial");
       } else {
         set.reps = null;
         set.weight = null;
@@ -115,18 +99,17 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   };
 
   return (
-    <Card className="flex-1 w-full md:max-w-[640px]">
+    <Card className="relative flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
         <CardTitle>{defaultForm.exercise.name}</CardTitle>
-        {action && action()}
       </CardHeader>
+      <View className="absolute right-2 top-2">{action && action()}</View>
       {/* DATE */}
       <CardContent>
-        <Text className="font-semibold">Date</Text>
         <Controller
           control={control}
           name="date"
-          render={({ field: { onChange, value } }) => (
+          render={({}) => (
             <View className="flex-row items-center gap-x-2">
               <Text className="font-medium text-xl">{date}</Text>
               <Button
@@ -154,6 +137,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
             ></Textarea>
           )}
         />
+      </CardContent>
+      <CardContent>
+        <Separator />
       </CardContent>
       {/* MODE */}
       <CardContent>
@@ -198,7 +184,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           {mode === 0 ? (
             <>
               <Text className="flex-1 text-center text-lg">Reps</Text>
-              <Text className="flex-1 text-center text-lg">Weight (lb)</Text>
+              <Text className="flex-1 text-center text-lg">
+                Weight (
+                {unit === "imperial"
+                  ? UNIT_LABELS.imperial.weight
+                  : UNIT_LABELS.metric.weight}
+                )
+              </Text>
             </>
           ) : (
             <View className="flex-1">
@@ -214,13 +206,13 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
       </CardContent>
       <ScrollView
         ref={scrollViewRef}
-        className="flex mb-2"
+        className="flex-1 mb-2"
         showsVerticalScrollIndicator={false}
       >
         {fields.map((field, index) => (
           <CardContent
             key={field.id}
-            className="flex w-full justify-center pb-2 mb-2"
+            className="flex w-full justify-center pb-0 mb-2"
           >
             <View className="flex-1 flex-row w-full items-center gap-x-4">
               <View className="w-8 h-8 justify-center items-center bg-primary rounded-full">
@@ -328,9 +320,11 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           </CardContent>
         ))}
       </ScrollView>
-
+      <CardContent>
+        <Separator />
+      </CardContent>
       {/* Footer */}
-      <CardFooter className="flex flex-col gap-y-2">
+      <CardFooter className="flex-col gap-y-2">
         <Button
           className="w-full"
           onPress={() => {
@@ -343,9 +337,6 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
           <Text>Add Set</Text>
         </Button>
         <View className="flex-row w-full justify-center items-center gap-x-2">
-          <Button className="flex-1" onPress={handleSubmit(validateAndSubmit)}>
-            <Text>Save</Text>
-          </Button>
           <Button
             className="flex-1"
             variant={"destructive"}
@@ -364,6 +355,9 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
             }}
           >
             <Text>Clear Sets</Text>
+          </Button>
+          <Button className="flex-1" onPress={handleSubmit(validateAndSubmit)}>
+            <Text>Save</Text>
           </Button>
         </View>
       </CardFooter>

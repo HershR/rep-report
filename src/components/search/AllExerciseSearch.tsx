@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { SetStateAction, useEffect, useState } from "react";
 import useFetch from "@/src/services/useFetch";
 import { fetchExcercises } from "@/src/services/api";
 import SearchBar from "@/src/components/SearchBar";
@@ -10,7 +10,6 @@ import { wgerMuscles } from "@/src/constants/exerciseMuscles";
 import { Text } from "../ui/text";
 import FilterChip from "../FilterChip";
 import SectionedDropdown, { SectionItem } from "../SectionedDropdown";
-import apiData from "@/src/data/exerciseInfo";
 import ActivityLoader from "../ActivityLoader";
 
 const categories = Object.entries(wgerCategories).map((x) => {
@@ -45,6 +44,14 @@ const AllExerciseSearch = () => {
       fetchExcercises({
         offset: 0,
         limit: fetchAmount,
+      }).then((data) => {
+        const res = data.results.filter(
+          (x) => !!x.translations.find((y) => y.language === 2)?.name
+        );
+        return {
+          results: res,
+          count: res.length,
+        };
       }),
     true
   );
@@ -67,26 +74,20 @@ const AllExerciseSearch = () => {
     if (exerciseLoading) {
       return;
     }
-    if (
-      searchQuery === "" &&
-      selectedCategory.length === 0 &&
-      selectedEquipment.length === 0 &&
-      selectedMucles.length === 0
-    ) {
-      setFilteredData(exerciseInfo?.results ?? []);
-      return;
-    }
-    const timeoutId = setTimeout(async () => {
-      const newData = filterExercise(
-        exerciseInfo?.results || [],
-        searchQuery,
-        selectedCategory,
-        selectedEquipment,
-        selectedMucles
-      );
-      setFilteredData(newData);
-      setPage(0);
-    }, 500);
+    const timeoutId = setTimeout(
+      async () => {
+        const newData = filterExercise(
+          exerciseInfo?.results || [],
+          searchQuery,
+          selectedCategory,
+          selectedEquipment,
+          selectedMucles
+        );
+        setFilteredData(newData);
+        setPage(0);
+      },
+      searchQuery ? 500 : 0
+    );
     return () => clearTimeout(timeoutId);
   }, [searchQuery, selectedCategory, selectedEquipment, selectedMucles]);
 
@@ -145,9 +146,9 @@ const AllExerciseSearch = () => {
 
       const description = x.translations.find((y) => y.language === 2);
       if (
-        !!searchQuery &&
-        description?.name.toLowerCase().includes(searchQuery.toLowerCase()) ===
-          false
+        !description?.name ||
+        (!!searchQuery &&
+          !description?.name.toLowerCase().includes(searchQuery.toLowerCase()))
       ) {
         return false;
       }
@@ -176,47 +177,39 @@ const AllExerciseSearch = () => {
     },
   ];
 
+  function updateState(state: SetStateAction<any>, value: string | null) {
+    if (typeof state === "function") {
+      if (value === null) {
+        state([]);
+        return;
+      }
+      state((prev: any) => {
+        if (Array.isArray(prev)) {
+          return prev.includes(value)
+            ? prev.filter((x: string) => x !== value)
+            : [...prev, value];
+        }
+        return prev;
+      });
+    }
+  }
   function onFilterChange(id: number, value: string | null): void {
     switch (id) {
       case 0:
-        if (value === null) {
-          setSelectedCategory([]);
-          return;
-        }
-        if (!selectedCategory.includes(value)) {
-          setSelectedCategory([...selectedCategory, value]);
-        } else {
-          setSelectedCategory((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedCategory, value);
         break;
       case 1:
-        if (value === null) {
-          setSelectedEquipment([]);
-          return;
-        }
-        if (!selectedEquipment.includes(value)) {
-          setSelectedEquipment([...selectedEquipment, value]);
-        } else {
-          setSelectedEquipment((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedEquipment, value);
         break;
       case 2:
-        if (value === null) {
-          setSelectedMucles([]);
-          return;
-        }
-        if (!selectedMucles.includes(value)) {
-          setSelectedMucles([...selectedMucles, value]);
-        } else {
-          setSelectedMucles((prev) => prev.filter((x) => x !== value));
-        }
+        updateState(setSelectedMucles, value);
         break;
     }
   }
 
   return (
-    <>
-      <View className="flex-row w-full justify-center items-center gap-x-2 mb-4">
+    <View className="flex-1 gap-y-4">
+      <View className="flex-row w-full justify-center items-center gap-x-2">
         <View className="flex-1">
           <SearchBar
             placeholder="Search exercise..."
@@ -237,7 +230,7 @@ const AllExerciseSearch = () => {
       {(selectedCategory.length > 0 ||
         selectedEquipment.length > 0 ||
         selectedMucles.length > 0) && (
-        <View className="flex-row flex-wrap gap-2 mb-4">
+        <View className="flex-row flex-wrap gap-x-2">
           {selectedCategory.map((value) => (
             <FilterChip
               key={value}
@@ -296,6 +289,7 @@ const AllExerciseSearch = () => {
       ) : (
         <>
           <ExerciseList
+            animate={true}
             exercises={infoToExercise(fileredData || []).sort((a, b) =>
               a.name.toLowerCase().localeCompare(b.name.toLowerCase())
             )}
@@ -310,7 +304,7 @@ const AllExerciseSearch = () => {
           />
         </>
       )}
-    </>
+    </View>
   );
 };
 

@@ -1,5 +1,5 @@
 // schema.ts
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 
 // Exercises (from Wger API or user-defined)
@@ -39,7 +39,6 @@ export const workouts = sqliteTable("workouts", {
   last_updated: text("last_updated").notNull(),
   date: text("date").notNull(), // ISO YYYY-MM-DD
   mode: integer("mode").notNull().default(0), // 0 = weight, 1 = time
-  unit: text("unit").notNull().default("lb"), // e.g., kg, lbs
   notes: text("notes"),
   routine_id: integer("routine_id").references(() => routines.id, {
     onDelete: "set null",
@@ -57,7 +56,7 @@ export const workoutSets = sqliteTable("workout_sets", {
     .references(() => workouts.id, { onDelete: "cascade" }),
   order: integer("order").notNull(), // Set index
   reps: integer("reps"),
-  weight: integer("weight"),
+  weight: real("weight"), // in lbs
   duration: text("duration"), // HH:mm:ss
 });
 
@@ -69,12 +68,18 @@ export const routineSchedule = sqliteTable("routine_schedule", {
   day: integer("day").notNull(), //sunday=0 ... saterday = 6
 });
 
+export const weightHistory = sqliteTable("weight_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  weight: real("weight").notNull(), //in lbs
+  date_created: text("date_created").notNull(),
+});
+
+export const userSettings = sqliteTable("user_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
 // Optional, for easier querying
-export const workoutRoutineRelations = relations(routines, ({ many }) => ({
-  workouts: many(workouts),
-  routineExercises: many(routineExercises),
-  routineSchedule: many(routineSchedule),
-}));
 
 export const workoutRelations = relations(workouts, ({ many, one }) => ({
   sets: many(workoutSets),
@@ -83,7 +88,18 @@ export const workoutRelations = relations(workouts, ({ many, one }) => ({
     references: [exercises.id],
   }),
 }));
+export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [workoutSets.workout_id],
+    references: [workouts.id],
+  }),
+}));
 
+export const routineRelations = relations(routines, ({ many }) => ({
+  workouts: many(workouts),
+  routineExercises: many(routineExercises),
+  routineSchedule: many(routineSchedule),
+}));
 export const routineExerciseRelations = relations(
   routineExercises,
   ({ one }) => ({
@@ -98,13 +114,6 @@ export const routineExerciseRelations = relations(
   })
 );
 
-export const workoutSetRelations = relations(workoutSets, ({ one }) => ({
-  workout: one(workouts, {
-    fields: [workoutSets.workout_id],
-    references: [workouts.id],
-  }),
-}));
-
 export const routineScheduleRelations = relations(
   routineSchedule,
   ({ one }) => ({
@@ -114,3 +123,12 @@ export const routineScheduleRelations = relations(
     }),
   })
 );
+
+//types
+export type Routine = typeof routines.$inferSelect;
+export type RoutineExercise = typeof routineExercises.$inferSelect;
+export type RoutineSchedule = typeof routineSchedule.$inferSelect;
+export type RoutineWithExerciseSchedule = Routine & {
+  routineExercises: RoutineExercise[];
+} & { routineSchedule: RoutineSchedule[] };
+export type Exercise = typeof exercises.$inferSelect;

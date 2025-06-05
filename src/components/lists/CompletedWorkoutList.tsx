@@ -3,6 +3,7 @@ import React from "react";
 import CompletedWorkout from "../CompletedWorkout";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 import { formatList } from "@/src/utils/listFormatter";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
 interface Props {
   workouts: WorkoutWithExercise[];
@@ -21,13 +22,16 @@ const CompletedWorkoutList = ({ workouts, onUpdate }: Props) => {
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       columnWrapperClassName={numColumns > 1 ? "justify-start gap-x-4" : ""}
-      contentContainerStyle={{ paddingBottom: 50 }}
       ItemSeparatorComponent={() => <View className="h-4"></View>}
       renderItem={({ item }) => {
         if (item.empty) {
           return <View className="flex-1 h-32 p-4"></View>;
         }
-        return <CompletedWorkout workout={item} />;
+        return (
+          <Animated.View entering={FadeIn.duration(600)} className="flex-1">
+            <CompletedWorkout workout={item} />
+          </Animated.View>
+        );
       }}
     />
   );

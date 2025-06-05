@@ -7,6 +7,7 @@ import { Search } from "~/lib/icons/Search";
 import { House } from "~/lib/icons/House";
 import { User } from "~/lib/icons/User";
 import { Bookmark } from "~/lib/icons/Bookmark";
+import { Dumbbell } from "~/lib/icons/Dumbbell";
 import { useColorScheme } from "@/src/lib/useColorScheme";
 import { NAV_THEME } from "~/lib/constants";
 interface TabIconProps {
@@ -42,20 +43,19 @@ const _Layout = () => {
           justifyContent: "center",
           alignItems: "center",
         },
-        tabBarHideOnKeyboard: true,
+
         tabBarStyle: {
           backgroundColor: `${
             isDarkColorScheme
               ? NAV_THEME.dark.background
               : NAV_THEME.light.background
           }`,
-          // position: "absolute",
           overflow: "hidden",
         },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="dashboard"
         options={{
           title: "Home",
           headerShown: false,
@@ -71,6 +71,16 @@ const _Layout = () => {
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon title="Search" Icon={Search} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Workouts",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Workouts" Icon={Dumbbell} focused={focused} />
           ),
         }}
       />

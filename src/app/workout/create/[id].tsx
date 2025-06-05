@@ -18,6 +18,9 @@ import Toast from "react-native-toast-message";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import { convertWeight } from "@/src/utils/measurementConversion";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CreateWorkout = () => {
   const {
@@ -33,6 +36,7 @@ const CreateWorkout = () => {
   } = useLocalSearchParams();
 
   const { selectedDate } = useDate();
+  const { unit } = useMeasurementUnit();
 
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -40,7 +44,6 @@ const CreateWorkout = () => {
   const { data: workout, loading } = useFetch(() =>
     getRecentWorkout(drizzleDb, parseInt(exerciseId))
   );
-
   function saveSuccessMsg() {
     Toast.show({
       type: "success",
@@ -92,15 +95,7 @@ const CreateWorkout = () => {
     router.back();
   }
   return (
-    <SafeAreaWrapper style="mt-5">
-      <Button
-        variant={"ghost"}
-        size={"icon"}
-        onPress={router.back}
-        className="z-50"
-      >
-        <ArrowRight size={32} className="rotate-180 color-primary mb-4" />
-      </Button>
+    <SafeAreaWrapper>
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -114,8 +109,15 @@ const CreateWorkout = () => {
               mode: 0,
               notes: null,
               exercise: { name: exerciseName, image: null },
-              sets: workout?.sets || [],
-              unit: "lb",
+              sets:
+                workout?.sets.map((x) => {
+                  return {
+                    ...x,
+                    weight: x.weight
+                      ? convertWeight(x.weight, "imperial", unit)
+                      : null,
+                  };
+                }) || [],
             }}
             onSubmit={createWorkout}
           />
