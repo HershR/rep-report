@@ -57,7 +57,7 @@ export default function RootLayout() {
   const loadMeasurementUnit = async () => {
     const savedMeasurementUnit = await AsyncStorage.getItem("measurementUnit");
     if (savedMeasurementUnit === null) {
-      await AsyncStorage.setItem("measurementUnit", "metric");
+      await AsyncStorage.setItem("measurementUnit", "imperial");
     }
     setMeasurementUnit(
       savedMeasurementUnit === "imperial" ? "imperial" : "metric"

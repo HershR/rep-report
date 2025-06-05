@@ -47,7 +47,7 @@ export function OnboardingScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentStep + 1 === totalPages) {
       await AsyncStorage.setItem("onboardingComplete", "true");
-      router.replace("/(tabs)/home");
+      router.replace("/(tabs)/dashboard");
       return;
     }
     setCurrentStep(currentStep + 1);
