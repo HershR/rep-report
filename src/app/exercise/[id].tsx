@@ -26,14 +26,14 @@ import {
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
-import { useTheme } from "@react-navigation/native";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ActivityLoader from "@/src/components/ActivityLoader";
-
+import { useColorScheme } from "@/src/lib/useColorScheme";
+import { NAV_THEME } from "@/src/lib/constants";
 const ExerciseDetails = () => {
   const router = useRouter();
-  const { colors } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
+  const { colorScheme } = useColorScheme();
   const { width, height } = useSafeAreaFrame();
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
@@ -140,7 +140,7 @@ const ExerciseDetails = () => {
               </View>
             )}
             {/* Name */}
-            <View className="flex-row justify-between items-center  my-2">
+            <View className="flex-row justify-between items-start my-2">
               <Text className="flex-1 text-2xl font-bold text-left">
                 {name}
               </Text>
@@ -149,10 +149,12 @@ const ExerciseDetails = () => {
                 size={"icon"}
                 onPress={async () => toggleFavorite()}
               >
-                <Star className="color-primary" />
-                {isFavorite || false ? (
-                  <Star className="absolute " fill={colors.primary} />
-                ) : null}
+                <Star
+                  className="color-primary"
+                  fill={
+                    isFavorite ? NAV_THEME[colorScheme].primary : "transparent"
+                  }
+                />
               </Button>
             </View>
             {/* Chip */}
@@ -198,7 +200,10 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="items-center">
+                  <AccordionContent
+                    className="items-center"
+                    forceMount={exercise?.images.length == 0 || undefined}
+                  >
                     <CustomCarousel
                       width={300}
                       height={425}
