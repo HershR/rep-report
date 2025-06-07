@@ -31,6 +31,7 @@ import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 const Dashboard = () => {
   const { selectedDate, setSelectedDate } = useDate();
   const [todaysRoutines, setRoutines] = useState<RoutineWithExercise[]>([]);
+  const [carouselWidth, setCarouselWidth] = useState(400);
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -119,16 +120,24 @@ const Dashboard = () => {
         ) : routineError ? (
           <Text>Fail to Load Routines</Text>
         ) : todaysRoutines && todaysRoutines.length > 0 ? (
-          <View>
-            <Text className="text-xl font-semibold">Scheduled Workout:</Text>
+          <View
+            className="flex w-full justify-center items-center"
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setCarouselWidth(width);
+            }}
+          >
+            <Text className="self-start text-xl font-semibold">
+              Scheduled Workout:
+            </Text>
 
             <CustomCarousel
               data={todaysRoutines}
-              width={width - 64}
+              width={carouselWidth}
               height={160}
               renderItem={function (item: RoutineWithExercise, index?: number) {
                 return (
-                  <View className="flex-1 justify-center mr-2">
+                  <View className="flex-1 justify-center p-2">
                     <Card className="p-4 max-h-40 overflow-hidden">
                       <TouchableOpacity
                         className="flex-row justify-between items-center"

@@ -21,7 +21,7 @@ interface CarouselProps<T> {
 export function CustomCarousel<T>({
   data,
   renderItem,
-  width = Dimensions.get("window").width,
+  width = 400,
   height = 200,
   autoPlay = false,
   loop = false,
@@ -31,7 +31,6 @@ export function CustomCarousel<T>({
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const { colorScheme } = useColorScheme();
-
   const onPressPagination = (index: number) => {
     ref.current?.scrollTo({
       count: index - progress.value,
@@ -45,7 +44,6 @@ export function CustomCarousel<T>({
           width,
           height,
           justifyContent: "center",
-          alignItems: "center",
         }}
       >
         {renderItem(data[0], 0)}
