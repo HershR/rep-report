@@ -135,7 +135,6 @@ export default function RootLayout() {
                     },
                     headerShadowVisible: true,
                     headerTransparent: true,
-                    // headerBlurEffect: "dark",
                   }}
                 >
                   <Stack.Screen

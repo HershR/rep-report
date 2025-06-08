@@ -95,7 +95,7 @@ const CreateWorkout = () => {
     router.back();
   }
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}

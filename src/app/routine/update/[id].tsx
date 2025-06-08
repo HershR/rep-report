@@ -58,7 +58,7 @@ const ViewUpateRoutine = () => {
     }, 300);
   }
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       {loading ? (
         <ActivityLoader />
       ) : (

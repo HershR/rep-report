@@ -106,7 +106,7 @@ const Profile = () => {
 
   return (
     <>
-      <SafeAreaWrapper>
+      <SafeAreaWrapper hasTabBar>
         <Card className="flex-1 max-w-screen-md pt-6 mt-4">
           <View className="flex-row">
             <CardContent className="flex justify-center items-center">

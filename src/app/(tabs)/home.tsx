@@ -140,7 +140,7 @@ export default function Home() {
         // }}
         onMonthChange={onDayPress}
       >
-        <SafeAreaView>
+        <SafeAreaView edges={["top", "left", "right"]}>
           {showCalendar ? null : (
             <ExpandableCalendar
               key={colorScheme}
@@ -178,7 +178,7 @@ export default function Home() {
         </SafeAreaView>
         <Separator className="mt-2" />
 
-        <SafeAreaWrapper>
+        <SafeAreaWrapper hasTabBar>
           {!workoutLoaded ? (
             <ActivityLoader />
           ) : (

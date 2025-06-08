@@ -38,9 +38,9 @@ export function OnboardingScreen() {
   }, []);
   if (isLoading) {
     return (
-      <SafeAreaWrapper>
+      <View className="flex-1">
         <ActivityLoader />
-      </SafeAreaWrapper>
+      </View>
     );
   }
   const handleContinue = async () => {

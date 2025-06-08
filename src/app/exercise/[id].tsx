@@ -35,6 +35,8 @@ const ExerciseDetails = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const { colorScheme } = useColorScheme();
   const { width, height } = useSafeAreaFrame();
+  const [carouselWidth, setCarouselWidth] = useState(400);
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
@@ -105,9 +107,18 @@ const ExerciseDetails = () => {
       }
     }
   }
-
+  // return (
+  //   <SafeAreaWrapper hasHeader>
+  //     <View className="flex-1 justify-end bg-green-400">
+  //       <Text>Hello</Text>
+  //       <Button className="flex-end">
+  //         <Text>Button</Text>
+  //       </Button>
+  //     </View>
+  //   </SafeAreaWrapper>
+  // );
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityLoader />
@@ -120,10 +131,16 @@ const ExerciseDetails = () => {
             showsVerticalScrollIndicator={false}
           >
             {exercise?.images !== undefined && exercise.images.length > 0 && (
-              <View className="flex justify-center items-center">
+              <View
+                className="flex w-full justify-center items-center"
+                onLayout={(event) => {
+                  const { width } = event.nativeEvent.layout;
+                  setCarouselWidth(width);
+                }}
+              >
                 <CustomCarousel
-                  width={Math.min(height * 0.5, width - 64)}
-                  height={Math.min(height * 0.5, width - 64)}
+                  width={Math.min(height * 0.5, carouselWidth)}
+                  height={Math.min(height * 0.5, carouselWidth)}
                   data={exercise?.images.map((x) => x.image)}
                   renderItem={(item: string) => {
                     return (
