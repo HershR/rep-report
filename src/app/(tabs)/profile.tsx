@@ -261,6 +261,7 @@ const Profile = () => {
         isVisible={isDatePickerVisible}
         mode="date"
         isDarkModeEnabled={isDarkColorScheme}
+        is24Hour={true}
         date={userDob?.value ? new Date(userDob.value) : new Date()}
         onConfirm={async (date) => {
           if (date) {
