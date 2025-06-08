@@ -34,8 +34,8 @@ const ExerciseDetails = () => {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const { colorScheme } = useColorScheme();
-  const { width, height } = useSafeAreaFrame();
-  const [carouselWidth, setCarouselWidth] = useState(400);
+  const { height } = useSafeAreaFrame();
+  const [availablelWidth, setAvailabledWidth] = useState(400);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
@@ -107,16 +107,6 @@ const ExerciseDetails = () => {
       }
     }
   }
-  // return (
-  //   <SafeAreaWrapper hasHeader>
-  //     <View className="flex-1 justify-end bg-green-400">
-  //       <Text>Hello</Text>
-  //       <Button className="flex-end">
-  //         <Text>Button</Text>
-  //       </Button>
-  //     </View>
-  //   </SafeAreaWrapper>
-  // );
   return (
     <SafeAreaWrapper hasHeader>
       {loading ? (
@@ -129,18 +119,16 @@ const ExerciseDetails = () => {
             ref={scrollViewRef}
             className="flex-1"
             showsVerticalScrollIndicator={false}
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setAvailabledWidth(width);
+            }}
           >
             {exercise?.images !== undefined && exercise.images.length > 0 && (
-              <View
-                className="flex w-full justify-center items-center"
-                onLayout={(event) => {
-                  const { width } = event.nativeEvent.layout;
-                  setCarouselWidth(width);
-                }}
-              >
+              <View className="flex w-full justify-center items-center">
                 <CustomCarousel
-                  width={Math.min(height * 0.5, carouselWidth)}
-                  height={Math.min(height * 0.5, carouselWidth)}
+                  width={Math.min(height * 0.5, availablelWidth)}
+                  height={Math.min(height * 0.5, availablelWidth)}
                   data={exercise?.images.map((x) => x.image)}
                   renderItem={(item: string) => {
                     return (
@@ -200,7 +188,9 @@ const ExerciseDetails = () => {
               </TouchableOpacity>
             )}
             {/* Muscle Groups */}
-            {muscles !== undefined && muscles.length > 0 && width < 700 ? (
+            {muscles !== undefined &&
+            muscles.length > 0 &&
+            availablelWidth < 700 ? (
               <Accordion
                 type="single"
                 collapsible
