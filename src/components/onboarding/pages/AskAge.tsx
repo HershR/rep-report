@@ -1,20 +1,23 @@
+import { useState } from "react";
+import { View } from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
   FadeInUp,
 } from "react-native-reanimated";
-import { Button } from "../../ui/button";
-import { Text } from "../../ui/text";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { useState } from "react";
+import { useColorScheme } from "@/src/lib/useColorScheme";
 import { OnboardingPageProps } from "../OnboardingScreen";
-import { View } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+//db
+import * as schema from "@/src/db/schema";
 import { useSQLiteContext } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src/db/schema";
 import { updateUserSetting } from "@/src/db/dbHelpers";
-import { useColorScheme } from "@/src/lib/useColorScheme";
+//icons
+//ui
+import { Button } from "../../ui/button";
+import { Text } from "../../ui/text";
+import { utcToLocalMidnight } from "@/src/utils/datetimeConversion";
 
 const AskAge = ({ onContinue }: OnboardingPageProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -23,8 +26,9 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
   const drizzleDb = drizzle(db, { schema });
   const { isDarkColorScheme } = useColorScheme();
   const handleDateConfirm = (date: Date) => {
+    const tzDate = utcToLocalMidnight(date);
     setDatePickerVisibility(false);
-    setSelectedDate(date);
+    setSelectedDate(tzDate);
   };
   return (
     <View className="flex-1">
@@ -96,7 +100,6 @@ const AskAge = ({ onContinue }: OnboardingPageProps) => {
         modalPropsIOS={{
           presentationStyle: "formSheet",
         }}
-        display="spinner"
       ></DateTimePickerModal>
     </View>
   );

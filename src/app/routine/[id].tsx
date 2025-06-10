@@ -59,7 +59,7 @@ const StartWorkout = () => {
   };
 
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       {loading ? (
         <ActivityLoader />
       ) : (

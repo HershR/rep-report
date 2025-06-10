@@ -93,7 +93,7 @@ const WeightHistory = () => {
     day: "numeric",
   };
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       <Card className="flex-1">
         <CardHeader>
           <View className="flex-row items-center justify-between">

@@ -1,6 +1,7 @@
 import "../global.css";
 import { Stack } from "expo-router";
-import { StatusBar, View, Text } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { View, Text } from "react-native";
 import { DateProvider } from "../context/DateContext";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
@@ -57,7 +58,7 @@ export default function RootLayout() {
   const loadMeasurementUnit = async () => {
     const savedMeasurementUnit = await AsyncStorage.getItem("measurementUnit");
     if (savedMeasurementUnit === null) {
-      await AsyncStorage.setItem("measurementUnit", "metric");
+      await AsyncStorage.setItem("measurementUnit", "imperial");
     }
     setMeasurementUnit(
       savedMeasurementUnit === "imperial" ? "imperial" : "metric"
@@ -119,7 +120,11 @@ export default function RootLayout() {
               <ThemeProvider
                 value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
               >
-                <StatusBar hidden={false} />
+                <StatusBar
+                  hidden={false}
+                  style={isDarkColorScheme ? "light" : "dark"}
+                  backgroundColor={NAV_THEME[colorScheme].background}
+                />
                 <Stack
                   screenOptions={{
                     headerStyle: {
@@ -130,7 +135,6 @@ export default function RootLayout() {
                     },
                     headerShadowVisible: true,
                     headerTransparent: true,
-                    // headerBlurEffect: "dark",
                   }}
                 >
                   <Stack.Screen
