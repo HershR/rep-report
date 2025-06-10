@@ -122,7 +122,7 @@ export default function RootLayout() {
               >
                 <StatusBar
                   hidden={false}
-                  style={colorScheme}
+                  style={isDarkColorScheme ? "light" : "dark"}
                   backgroundColor={NAV_THEME[colorScheme].background}
                 />
                 <Stack
