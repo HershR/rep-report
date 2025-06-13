@@ -26,15 +26,17 @@ import {
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src//db/schema";
 import { useSQLiteContext } from "expo-sqlite";
-import { useTheme } from "@react-navigation/native";
 import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ActivityLoader from "@/src/components/ActivityLoader";
-
+import { useColorScheme } from "@/src/lib/useColorScheme";
+import { NAV_THEME } from "@/src/lib/constants";
 const ExerciseDetails = () => {
   const router = useRouter();
-  const { colors } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
-  const { width, height } = useSafeAreaFrame();
+  const { colorScheme } = useColorScheme();
+  const { height } = useSafeAreaFrame();
+  const [availablelWidth, setAvailabledWidth] = useState(400);
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
@@ -105,9 +107,8 @@ const ExerciseDetails = () => {
       }
     }
   }
-
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasHeader>
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityLoader />
@@ -118,12 +119,16 @@ const ExerciseDetails = () => {
             ref={scrollViewRef}
             className="flex-1"
             showsVerticalScrollIndicator={false}
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setAvailabledWidth(width);
+            }}
           >
             {exercise?.images !== undefined && exercise.images.length > 0 && (
-              <View className="flex justify-center items-center">
+              <View className="flex w-full justify-center items-center">
                 <CustomCarousel
-                  width={Math.min(height * 0.5, width - 64)}
-                  height={Math.min(height * 0.5, width - 64)}
+                  width={Math.min(height * 0.5, availablelWidth)}
+                  height={Math.min(height * 0.5, availablelWidth)}
                   data={exercise?.images.map((x) => x.image)}
                   renderItem={(item: string) => {
                     return (
@@ -140,7 +145,7 @@ const ExerciseDetails = () => {
               </View>
             )}
             {/* Name */}
-            <View className="flex-row justify-between items-center  my-2">
+            <View className="flex-row justify-between items-start my-2">
               <Text className="flex-1 text-2xl font-bold text-left">
                 {name}
               </Text>
@@ -149,10 +154,12 @@ const ExerciseDetails = () => {
                 size={"icon"}
                 onPress={async () => toggleFavorite()}
               >
-                <Star className="color-primary" />
-                {isFavorite || false ? (
-                  <Star className="absolute " fill={colors.primary} />
-                ) : null}
+                <Star
+                  className="color-primary"
+                  fill={
+                    isFavorite ? NAV_THEME[colorScheme].primary : "transparent"
+                  }
+                />
               </Button>
             </View>
             {/* Chip */}
@@ -181,7 +188,9 @@ const ExerciseDetails = () => {
               </TouchableOpacity>
             )}
             {/* Muscle Groups */}
-            {muscles !== undefined && muscles.length > 0 && width < 700 ? (
+            {muscles !== undefined &&
+            muscles.length > 0 &&
+            availablelWidth < 700 ? (
               <Accordion
                 type="single"
                 collapsible
@@ -198,7 +207,10 @@ const ExerciseDetails = () => {
                   <AccordionTrigger>
                     <Text>Targeted Muscles</Text>
                   </AccordionTrigger>
-                  <AccordionContent className="items-center">
+                  <AccordionContent
+                    className="items-center"
+                    forceMount={exercise?.images.length == 0 || undefined}
+                  >
                     <CustomCarousel
                       width={300}
                       height={425}

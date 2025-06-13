@@ -24,6 +24,7 @@ const ExerciseList = ({
 }: Props) => {
   const { width, height } = useSafeAreaFrame();
   const numColumns = width < 600 ? 2 : width < 1000 ? 3 : 4;
+  pageSize = Math.ceil(pageSize / numColumns) * numColumns;
   const maxPages = Math.ceil((exercises?.length ?? 1) / pageSize);
   return (
     <FlatList

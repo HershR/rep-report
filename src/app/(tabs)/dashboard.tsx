@@ -13,7 +13,7 @@ import * as schema from "@/src/db/schema";
 import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { desc, eq } from "drizzle-orm";
-import { workouts, exercises, Routine } from "@/src/db/schema";
+import { workouts, exercises, RoutineWithExercise } from "@/src/db/schema";
 //ui
 import {
   Card,
@@ -28,13 +28,10 @@ import { Button } from "@/src/components/ui/button";
 import { Text } from "@/src/components/ui/text";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
-interface RoutineWithExercise extends Routine {
-  exercise: schema.Exercise[];
-}
-
 const Dashboard = () => {
   const { selectedDate, setSelectedDate } = useDate();
   const [todaysRoutines, setRoutines] = useState<RoutineWithExercise[]>([]);
+  const [carouselWidth, setCarouselWidth] = useState(400);
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -100,7 +97,7 @@ const Dashboard = () => {
     }
   }, [routines]);
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasTabBar>
       <View className="flex-1 gap-y-5">
         <View className="flex-row items-end gap-x-4">
           <Button
@@ -122,17 +119,25 @@ const Dashboard = () => {
           <ActivityLoader />
         ) : routineError ? (
           <Text>Fail to Load Routines</Text>
-        ) : todaysRoutines ? (
-          <View>
-            <Text className="text-xl font-semibold">Scheduled Workout:</Text>
+        ) : todaysRoutines && todaysRoutines.length > 0 ? (
+          <View
+            className="flex w-full justify-center items-center"
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setCarouselWidth(width);
+            }}
+          >
+            <Text className="self-start text-xl font-semibold">
+              Scheduled Workout:
+            </Text>
 
             <CustomCarousel
               data={todaysRoutines}
-              width={width - 64}
+              width={carouselWidth}
               height={160}
               renderItem={function (item: RoutineWithExercise, index?: number) {
                 return (
-                  <View className="flex-1 justify-center mr-2">
+                  <View className="flex-1 justify-center p-2">
                     <Card className="p-4 max-h-40 overflow-hidden">
                       <TouchableOpacity
                         className="flex-row justify-between items-center"
@@ -186,7 +191,7 @@ const Dashboard = () => {
           <ActivityLoader />
         ) : recentExerciseError ? (
           <Text>Fail to Load Recent Exercise</Text>
-        ) : recentExercise ? (
+        ) : recentExercise && recentExercise.length > 0 ? (
           <View className="flex">
             <Text className="text-xl font-semibold mb-2">Recent Exercise:</Text>
             <RecentExerciseList

@@ -4,7 +4,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import AllExerciseSearch from "@/src/components/search/AllExerciseSearch";
 const Search = () => {
   return (
-    <SafeAreaWrapper>
+    <SafeAreaWrapper hasTabBar>
       <AllExerciseSearch />
     </SafeAreaWrapper>
   );

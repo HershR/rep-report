@@ -38,16 +38,16 @@ export function OnboardingScreen() {
   }, []);
   if (isLoading) {
     return (
-      <SafeAreaWrapper>
+      <View className="flex-1">
         <ActivityLoader />
-      </SafeAreaWrapper>
+      </View>
     );
   }
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentStep + 1 === totalPages) {
       await AsyncStorage.setItem("onboardingComplete", "true");
-      router.replace("/(tabs)/home");
+      router.replace("/(tabs)/dashboard");
       return;
     }
     setCurrentStep(currentStep + 1);
