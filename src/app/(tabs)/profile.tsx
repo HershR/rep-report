@@ -106,15 +106,15 @@ const Profile = () => {
 
   return (
     <>
-      <SafeAreaWrapper hasTabBar>
-        <Card className="flex-1 max-w-screen-md pt-6 mt-4">
-          <View className="flex-row">
-            <CardContent className="flex justify-center items-center">
+      <SafeAreaWrapper hasTabBar={true}>
+        <View className="flex-1 max-w-screen-md pt-6 mt-4">
+          <View className="flex-row gap-x-10">
+            <View className="flex justify-center items-center">
               <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
                 <User className="color-primary" size={80}></User>
               </View>
-            </CardContent>
-            <CardContent className="flex-1 justify-center">
+            </View>
+            <View className="flex-1 justify-center">
               <View className="flex-1 flex-row justify-between items-center">
                 <Text className="text-xl font-medium text-left">Age</Text>
                 <Text className="text-xl font-medium text-right">{age} yr</Text>
@@ -135,13 +135,12 @@ const Profile = () => {
                     : "NA"}
                 </Text>
               </View>
-            </CardContent>
+            </View>
           </View>
-          <CardContent className="flex-1">
-            <Separator />
-
+          <Separator className="my-4" />
+          <View className="flex-1">
             <ScrollView
-              className="flex-1 w-full mt-8"
+              className="flex-1 w-full"
               showsVerticalScrollIndicator={false}
               contentContainerClassName="gap-y-4"
             >
@@ -237,8 +236,8 @@ const Profile = () => {
                 </Button>
               </View> */}
             </ScrollView>
-          </CardContent>
-        </Card>
+          </View>
+        </View>
       </SafeAreaWrapper>
       <View className="flex">
         <HeightSelectorModal
