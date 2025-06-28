@@ -11,12 +11,8 @@ import { SearchChip } from "@/src/components/SearchChip";
 import { Text } from "@/src/components/ui/text";
 import { Star } from "@/src/lib/icons/Star";
 import { Button } from "@/src/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "~/components/ui/accordion";
+import CustomAccordion from "@/src/components/CustomAccordion";
+
 import ExerciseImage from "@/src/components/ExerciseImage";
 import {
   getExerciseById,
@@ -40,6 +36,7 @@ const ExerciseDetails = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [descriptionLineCount, setDescriptionLineCount] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
+  const [showMucsleGroup, setShowMuscleGroup] = useState(false);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
 
@@ -191,44 +188,37 @@ const ExerciseDetails = () => {
             {muscles !== undefined &&
             muscles.length > 0 &&
             availablelWidth < 700 ? (
-              <Accordion
-                type="single"
-                collapsible
-                className="w-full max-w-sm native:max-w-md mt-2"
-                onValueChange={(val) => {
-                  if (!!val) {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  } else {
-                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                  }
-                }}
-              >
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>
-                    <Text>Targeted Muscles</Text>
-                  </AccordionTrigger>
-                  <AccordionContent
-                    className="items-center"
-                    forceMount={exercise?.images.length == 0 || undefined}
-                  >
-                    <CustomCarousel
-                      width={300}
-                      height={425}
-                      loop={false}
-                      //@ts-ignore
-                      data={allMuscles}
-                      renderItem={(item: Muscles[]) => {
-                        return (
-                          <MuscleCard
-                            muscleList={item}
-                            isFront={!!item && item[0]?.is_front}
-                          />
-                        );
-                      }}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              <View className="flex-1 mb-4">
+                <CustomAccordion
+                  title="Targeted Muscles"
+                  isOpened={showMucsleGroup}
+                  duration={300}
+                  onToggle={() => {
+                    setShowMuscleGroup((prev) => !prev);
+                    if (!showMucsleGroup) {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    } else {
+                      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                    }
+                  }}
+                >
+                  <CustomCarousel
+                    width={300}
+                    height={425}
+                    loop={false}
+                    //@ts-ignore
+                    data={allMuscles}
+                    renderItem={(item: Muscles[]) => {
+                      return (
+                        <MuscleCard
+                          muscleList={item}
+                          isFront={!!item && item[0]?.is_front}
+                        />
+                      );
+                    }}
+                  />
+                </CustomAccordion>
+              </View>
             ) : (
               <View className="flex-row mt-4 mb-4">
                 <MuscleCard muscleList={musclesFront} isFront={true} />
