@@ -74,7 +74,7 @@ export default function Home() {
   }, [selectedDate]);
 
   const onDayPress = useCallback((day: DateData) => {
-    console.log("onDayPress", day);
+    // console.log("onDayPress", day);
     setSelectedDate(
       selectedDate.set({ day: day.day, month: day.month, year: day.year })
     );
@@ -146,10 +146,11 @@ export default function Home() {
     <>
       <CalendarProvider
         date={selectedDate.toISODate()}
-        // onDateChanged={(date) => {
-        //   const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
-        //   setSelectedDate(newDate);
-        // }}
+        onDateChanged={(date) => {
+          const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
+          //@ts-ignore
+          setSelectedDate(newDate);
+        }}
         onMonthChange={onDayPress}
       >
         <SafeAreaView
