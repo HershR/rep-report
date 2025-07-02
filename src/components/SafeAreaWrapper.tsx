@@ -8,11 +8,13 @@ interface Props {
   children?: ReactNode;
   hasHeader?: boolean;
   hasTabBar?: boolean;
+  viewStyle?: string;
 }
 const SafeAreaWrapper = ({
   children,
   hasHeader = false,
   hasTabBar = false,
+  viewStyle = "",
 }: Props) => {
   let edges: Edges = ["left", "right"];
   const headerHeight = useHeaderHeight();
@@ -25,6 +27,7 @@ const SafeAreaWrapper = ({
 
   //Testing
   const debug = false;
+  const headerHeightPadded = headerHeight + 10;
   return (
     <SafeAreaView
       edges={edges}
@@ -34,11 +37,10 @@ const SafeAreaWrapper = ({
         <View
           className={twMerge(
             "flex-1 mx-8 my-5 md:mx-16",
+            hasHeader && `mt-${headerHeightPadded}`,
+            viewStyle,
             debug && "bg-blue-500"
           )}
-          style={{
-            marginTop: hasHeader ? headerHeight + 10 : 20,
-          }}
         >
           {children}
         </View>
