@@ -22,7 +22,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -120,62 +120,64 @@ export default function RootLayout() {
               <ThemeProvider
                 value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
               >
-                <StatusBar
-                  hidden={false}
-                  style={isDarkColorScheme ? "light" : "dark"}
-                  backgroundColor={NAV_THEME[colorScheme].background}
-                />
-                <Stack
-                  screenOptions={{
-                    headerStyle: {
-                      backgroundColor: NAV_THEME[colorScheme].background,
-                    },
-                    headerTitleStyle: {
-                      color: NAV_THEME[colorScheme].text,
-                    },
-                    headerShadowVisible: true,
-                    headerTransparent: true,
-                  }}
-                >
-                  <Stack.Screen
-                    name="index"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="exercise/[id]"
-                    options={{ title: "Exercise Details" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="workout/create/[id]"
-                    options={{ title: "New Workout" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="workout/update/[id]"
-                    options={{ title: "Edit Workout" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/create"
-                    options={{ title: "New Routine" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/[id]"
-                    options={{ title: "Routine Details" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="routine/update/[id]"
-                    options={{ title: "Edit Routine" }}
-                  ></Stack.Screen>
-                  <Stack.Screen
-                    name="(user)"
-                    options={{ headerShown: false }}
-                  ></Stack.Screen>
-                </Stack>
-                <PortalHost />
-                <Toast />
+                <SafeAreaProvider>
+                  <StatusBar
+                    hidden={false}
+                    style={isDarkColorScheme ? "light" : "dark"}
+                    backgroundColor={NAV_THEME[colorScheme].background}
+                  />
+                  <Stack
+                    screenOptions={{
+                      headerStyle: {
+                        backgroundColor: NAV_THEME[colorScheme].background,
+                      },
+                      headerTitleStyle: {
+                        color: NAV_THEME[colorScheme].text,
+                      },
+                      headerShadowVisible: true,
+                      headerTransparent: true,
+                    }}
+                  >
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="exercise/[id]"
+                      options={{ title: "Exercise Details" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/create/[id]"
+                      options={{ title: "New Workout" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/update/[id]"
+                      options={{ title: "Edit Workout" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/create"
+                      options={{ title: "New Routine" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/[id]"
+                      options={{ title: "Routine Details" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/update/[id]"
+                      options={{ title: "Edit Routine" }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(user)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                  </Stack>
+                  <PortalHost />
+                  <Toast />
+                </SafeAreaProvider>
               </ThemeProvider>
             </DateProvider>
           </MeasurementUnitProvider>

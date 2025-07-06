@@ -33,7 +33,7 @@ export default function Home() {
   const [selectedMonth, setSelectedMonth] = useState(
     DateTime.now().toISODate()
   );
-  const [showCalendar, setShowCalendar] = useState(true);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -53,9 +53,6 @@ export default function Home() {
     }),
     [selectedMonth]
   );
-  useEffect(() => {
-    setShowCalendar(false);
-  }, []);
   useEffect(() => {
     if (monthsWorkouts) {
       setDaysWorkouts(
@@ -77,6 +74,7 @@ export default function Home() {
   }, [selectedDate]);
 
   const onDayPress = useCallback((day: DateData) => {
+    // console.log("onDayPress", day);
     setSelectedDate(
       selectedDate.set({ day: day.day, month: day.month, year: day.year })
     );
@@ -130,35 +128,43 @@ export default function Home() {
     };
   }, [selectedDate, daysWorkouts]);
 
+  const CALENDARTHEME = {
+    backgroundColor: NAV_THEME[colorScheme].background,
+    calendarBackground: NAV_THEME[colorScheme].background,
+    selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
+    selectedDayTextColor: NAV_THEME[colorScheme].border,
+    dotColor: NAV_THEME[colorScheme].primary,
+    arrowColor: NAV_THEME[colorScheme].primary,
+    monthTextColor: NAV_THEME[colorScheme].text,
+    textDisabledColor: NAV_THEME[colorScheme].border,
+    dayTextColor: NAV_THEME[colorScheme].text,
+    todayTextColor: NAV_THEME[colorScheme].text,
+    todayDotColor: NAV_THEME[colorScheme].text,
+    todayBackgroundColor: NAV_THEME[colorScheme].border,
+  };
   return (
     <>
       <CalendarProvider
         date={selectedDate.toISODate()}
-        // onDateChanged={(date) => {
-        //   const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
-        //   setSelectedDate(newDate);
-        // }}
+        onDateChanged={(date) => {
+          const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
+          //@ts-ignore
+          setSelectedDate(newDate);
+        }}
         onMonthChange={onDayPress}
       >
-        <SafeAreaView edges={["top", "left", "right"]}>
-          {showCalendar ? null : (
+        <SafeAreaView
+          edges={["top", "left", "right"]}
+          onLayout={() => {
+            setShowCalendar(true);
+          }}
+        >
+          {showCalendar && (
             <ExpandableCalendar
-              key={colorScheme}
-              theme={{
-                backgroundColor: NAV_THEME[colorScheme].background,
-                calendarBackground: NAV_THEME[colorScheme].background,
-                selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
-                selectedDayTextColor: NAV_THEME[colorScheme].border,
-                dotColor: NAV_THEME[colorScheme].primary,
-                arrowColor: NAV_THEME[colorScheme].primary,
-                monthTextColor: NAV_THEME[colorScheme].text,
-                textDisabledColor: NAV_THEME[colorScheme].border,
-                dayTextColor: NAV_THEME[colorScheme].text,
-                todayTextColor: NAV_THEME[colorScheme].text,
-                todayDotColor: NAV_THEME[colorScheme].text,
-                todayBackgroundColor: NAV_THEME[colorScheme].border,
-              }}
               ref={calendarRef}
+              key={colorScheme}
+              theme={CALENDARTHEME}
+              firstDay={1}
               renderHeader={renderHeader}
               renderArrow={renderArrow}
               current={selectedDate.toISODate()}
@@ -176,13 +182,13 @@ export default function Home() {
             />
           )}
         </SafeAreaView>
-        <Separator className="mt-2" />
 
-        <SafeAreaWrapper hasTabBar>
+        <Separator className="mt-2 mb-4" />
+        <SafeAreaWrapper hasTabBar hasHeader viewStyle="mt-0">
           {!workoutLoaded ? (
             <ActivityLoader />
           ) : (
-            <View className="flex-1 gap-y-4">
+            <View className="flex-1 gap-y-2">
               <SearchBar
                 placeholder={"Add exercise"}
                 value={""}
@@ -192,12 +198,12 @@ export default function Home() {
                 <ActivityLoader />
               ) : (
                 <>
-                  {/* <Text className="text-xl font-semibold mt-2 mb-2">
-                      {selectedDate?.toISODate() === DateTime.now().toISODate()
-                        ? "Today's Workouts"
-                        : selectedDate?.toFormat("LLL dd, yyyy")}
-                      :
-                    </Text> */}
+                  <Text className="text-xl font-semibold mt-2 mb-2">
+                    {selectedDate?.toISODate() === DateTime.now().toISODate()
+                      ? "Today's Workouts"
+                      : selectedDate?.toFormat("LLL dd, yyyy")}
+                    :
+                  </Text>
                   <CompletedWorkoutList workouts={daysWorkouts} />
                 </>
               )}

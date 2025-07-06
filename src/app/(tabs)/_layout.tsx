@@ -51,6 +51,8 @@ const _Layout = () => {
               : NAV_THEME.light.background
           }`,
           overflow: "hidden",
+          position: "absolute",
+          height: 56,
         },
       }}
     >
