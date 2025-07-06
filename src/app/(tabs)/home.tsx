@@ -184,7 +184,7 @@ export default function Home() {
         </SafeAreaView>
 
         <Separator className="mt-2 mb-4" />
-        <SafeAreaWrapper hasTabBar hasHeader viewStyle="my-0">
+        <SafeAreaWrapper hasTabBar hasHeader viewStyle="mt-0">
           {!workoutLoaded ? (
             <ActivityLoader />
           ) : (

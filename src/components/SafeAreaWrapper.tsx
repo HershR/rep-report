@@ -1,8 +1,13 @@
 import { View } from "react-native";
 import React, { ReactNode } from "react";
-import { Edges, SafeAreaView } from "react-native-safe-area-context";
+import {
+  Edges,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { twMerge } from "tailwind-merge";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 interface Props {
   children?: ReactNode;
@@ -16,36 +21,45 @@ const SafeAreaWrapper = ({
   hasTabBar = false,
   viewStyle = "",
 }: Props) => {
-  let edges: Edges = ["left", "right"];
   const headerHeight = useHeaderHeight();
-  if (!hasHeader) {
-    edges = [...edges, "top"];
+  let tabHeight = 0;
+  if (hasTabBar) {
+    tabHeight = useBottomTabBarHeight();
   }
-  if (!hasTabBar) {
-    edges = [...edges, "bottom"];
-  }
-
+  const insets = useSafeAreaInsets();
   //Testing
+  const marginTop = headerHeight + 20;
+  const marginBottom = tabHeight + 20;
+
   const debug = false;
-  const headerHeightPadded = headerHeight + 10;
+  if (debug) {
+    console.log("SafeAreaWrapper", {
+      headerHeight,
+      tabHeight,
+      marginTop,
+      marginBottom,
+    });
+  }
   return (
-    <SafeAreaView
-      edges={edges}
-      className={twMerge("relative flex-1", debug && "bg-red-500")}
-    >
-      <View className="flex-1">
-        <View
-          className={twMerge(
-            "flex-1 mx-8 my-5 md:mx-16",
-            hasHeader && `mt-${headerHeightPadded}`,
-            viewStyle,
-            debug && "bg-blue-500"
-          )}
-        >
-          {children}
-        </View>
+    <View className={twMerge("relative flex-1", debug && "bg-red-500")}>
+      <View
+        style={{
+          paddingTop: !hasHeader ? insets.top : 0,
+          paddingBottom: !hasTabBar ? insets.bottom : 0,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+          marginTop: marginTop,
+          marginBottom: marginBottom,
+        }}
+        className={twMerge(
+          "flex-1 mx-8 md:mx-16",
+          viewStyle,
+          debug && "bg-blue-500"
+        )}
+      >
+        {children}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
