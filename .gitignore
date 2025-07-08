@@ -39,3 +39,5 @@ app-example
 nativewind-env.d.ts
 
 .vscode/
+/android
+/.idea
