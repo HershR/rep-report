@@ -40,3 +40,6 @@ nativewind-env.d.ts
 
 .vscode/
 /.idea
+
+/android
+/.idea

@@ -15,6 +15,7 @@ import Toast from "react-native-toast-message";
 import { getRoutineById, updateRoutine } from "@/src/db/dbHelpers";
 import useFetch from "@/src/services/useFetch";
 import ActivityLoader from "@/src/components/ActivityLoader";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 const ViewUpateRoutine = () => {
   const {
     id: routineId,
@@ -58,7 +59,7 @@ const ViewUpateRoutine = () => {
     }, 300);
   }
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="Update Routine" viewStyle="my-5">
       {loading ? (
         <ActivityLoader />
       ) : (
@@ -90,7 +91,7 @@ const ViewUpateRoutine = () => {
           />
         </KeyboardAvoidingView>
       )}
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 

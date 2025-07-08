@@ -91,7 +91,7 @@ export default function Home() {
         onPress={toggleCalendarExpansion}
       >
         <Text className="text-2xl font-medium">
-          {DateTime.fromISO(date.toISOString()).toFormat("LLL yyyy")}
+          {DateTime.fromISO(date.toISOString()).toFormat("LLLL yyyy")}
         </Text>
         <CalendarDays className="color-primary" size={26} />
       </TouchableOpacity>

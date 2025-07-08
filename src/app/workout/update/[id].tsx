@@ -22,6 +22,7 @@ import { Trash2 } from "@/src/lib/icons/Trash2";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { convertWeight } from "@/src/utils/measurementConversion";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 
 const UpdateWorkout = () => {
   const {
@@ -73,7 +74,7 @@ const UpdateWorkout = () => {
   }
 
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="Update Workout" viewStyle="my-5">
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -112,7 +113,7 @@ const UpdateWorkout = () => {
           </>
         )}
       </KeyboardAvoidingView>
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 
