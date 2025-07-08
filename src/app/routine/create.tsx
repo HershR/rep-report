@@ -13,6 +13,7 @@ import {
   addExercisesToRoutine,
   createRoutine,
 } from "@/src/db/dbHelpers";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 
 const ViewRoutine = () => {
   const db = useSQLiteContext();
@@ -57,14 +58,14 @@ const ViewRoutine = () => {
     }, 300);
   }
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="Create Routine" viewStyle="my-5">
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <RoutineForm onSubmit={saveRoutine} />
       </KeyboardAvoidingView>
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 

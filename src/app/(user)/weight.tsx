@@ -29,6 +29,7 @@ import {
   convertWeight,
   convertWeightString,
 } from "@/src/utils/measurementConversion";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 
 const WeightHistory = () => {
   const [weight, setWeight] = useState<string | null>(null);
@@ -93,7 +94,7 @@ const WeightHistory = () => {
     day: "numeric",
   };
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="Weight History" viewStyle="my-5">
       <Card className="flex-1">
         <CardHeader>
           <View className="flex-row items-center justify-between">
@@ -200,7 +201,7 @@ const WeightHistory = () => {
         }}
         onCancel={() => setDateModalVisible(false)}
       />
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 

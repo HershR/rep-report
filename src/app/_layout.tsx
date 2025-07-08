@@ -148,27 +148,30 @@ export default function RootLayout() {
                     ></Stack.Screen>
                     <Stack.Screen
                       name="exercise/[id]"
-                      options={{ title: "Exercise Details" }}
+                      options={{
+                        title: "Exercise Details",
+                        headerShown: false,
+                      }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="workout/create/[id]"
-                      options={{ title: "New Workout" }}
+                      options={{ title: "New Workout", headerShown: false }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="workout/update/[id]"
-                      options={{ title: "Edit Workout" }}
+                      options={{ title: "Edit Workout", headerShown: false }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="routine/create"
-                      options={{ title: "New Routine" }}
+                      options={{ title: "New Routine", headerShown: false }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="routine/[id]"
-                      options={{ title: "Routine Details" }}
+                      options={{ title: "Routine Details", headerShown: false }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="routine/update/[id]"
-                      options={{ title: "Edit Routine" }}
+                      options={{ title: "Edit Routine", headerShown: false }}
                     ></Stack.Screen>
                     <Stack.Screen
                       name="(user)"

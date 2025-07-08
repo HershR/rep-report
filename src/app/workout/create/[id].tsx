@@ -21,6 +21,7 @@ import ActivityLoader from "@/src/components/ActivityLoader";
 import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
 import { convertWeight } from "@/src/utils/measurementConversion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 
 const CreateWorkout = () => {
   const {
@@ -95,7 +96,7 @@ const CreateWorkout = () => {
     router.back();
   }
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="New Workout" viewStyle="my-5">
       <KeyboardAvoidingView
         className="relative flex-1 justify-start items-center"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -123,7 +124,7 @@ const CreateWorkout = () => {
           />
         )}
       </KeyboardAvoidingView>
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 

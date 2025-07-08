@@ -26,6 +26,7 @@ import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
 import ActivityLoader from "@/src/components/ActivityLoader";
 import { useColorScheme } from "@/src/lib/useColorScheme";
 import { NAV_THEME } from "@/src/lib/constants";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 const ExerciseDetails = () => {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -105,7 +106,7 @@ const ExerciseDetails = () => {
     }
   }
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="Exercise Details" viewStyle="my-5">
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityLoader />
@@ -243,7 +244,7 @@ const ExerciseDetails = () => {
           </Button>
         </>
       )}
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 

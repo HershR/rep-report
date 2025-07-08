@@ -29,6 +29,7 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowRight } from "@/src/lib/icons/ArrowRight";
 import ConfirmAlert from "@/src/components/ConfirmAlert";
 import { dateNameLong } from "@/src/utils/dateUtils";
+import SafeAreaWithHeader from "@/src/components/SafeAreaWithHeader";
 const StartWorkout = () => {
   const {
     id: routineId,
@@ -59,7 +60,7 @@ const StartWorkout = () => {
   };
 
   return (
-    <SafeAreaWrapper hasHeader>
+    <SafeAreaWithHeader title="New Routine" viewStyle="my-5">
       {loading ? (
         <ActivityLoader />
       ) : (
@@ -161,7 +162,7 @@ const StartWorkout = () => {
           </CardFooter>
         </Card>
       )}
-    </SafeAreaWrapper>
+    </SafeAreaWithHeader>
   );
 };
 
