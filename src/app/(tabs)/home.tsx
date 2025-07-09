@@ -37,8 +37,14 @@ export default function Home() {
   const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
+
   useDrizzleStudio(db);
-  const { data: monthsWorkouts, updatedAt: workoutLoaded } = useLiveQuery(
+
+  const {
+    data: monthsWorkouts,
+    updatedAt: workoutLoaded,
+    error: workoutError,
+  } = useLiveQuery(
     drizzleDb.query.workouts.findMany({
       where: between(
         workouts.date,
@@ -53,6 +59,12 @@ export default function Home() {
     }),
     [selectedMonth]
   );
+
+  useEffect(() => {
+    if (workoutError) {
+      console.error("Error fetching workouts:", workoutError);
+    }
+  }, [workoutError]);
   useEffect(() => {
     if (monthsWorkouts) {
       setDaysWorkouts(
@@ -187,6 +199,8 @@ export default function Home() {
         <SafeAreaWrapper hasTabBar hasHeader viewStyle="mt-0">
           {!workoutLoaded ? (
             <ActivityLoader />
+          ) : workoutError ? (
+            <Text>Failed to Load Workouts</Text>
           ) : (
             <View className="flex-1 gap-y-2">
               <SearchBar

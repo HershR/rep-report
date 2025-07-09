@@ -29,13 +29,11 @@ import { Text } from "@/src/components/ui/text";
 import { ChevronRight } from "@/src/lib/icons/ChevronRight";
 
 const Dashboard = () => {
-  const { selectedDate, setSelectedDate } = useDate();
   const [todaysRoutines, setRoutines] = useState<RoutineWithExercise[]>([]);
   const [carouselWidth, setCarouselWidth] = useState(400);
   const router = useRouter();
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
-  const { width, height } = useSafeAreaFrame();
 
   const {
     data: routines,
@@ -96,6 +94,20 @@ const Dashboard = () => {
       setRoutines(result);
     }
   }, [routines]);
+  useEffect(() => {
+    if (routineError) {
+      console.error("Dashboard Routine Fetch Error: ", routineError);
+    }
+  }, [routineError]);
+
+  useEffect(() => {
+    if (recentExerciseError) {
+      console.error(
+        "Dashboard Recent Exercise Fetch Error: ",
+        recentExerciseError
+      );
+    }
+  }, [recentExerciseError]);
   return (
     <SafeAreaWrapper hasTabBar viewStyle="my-5">
       <View className="flex-1 gap-y-5">
@@ -135,7 +147,7 @@ const Dashboard = () => {
               data={todaysRoutines}
               width={carouselWidth}
               height={160}
-              renderItem={function (item: RoutineWithExercise, index?: number) {
+              renderItem={function (item: RoutineWithExercise) {
                 return (
                   <View className="flex-1 justify-center p-2">
                     <Card className="p-4 max-h-40 overflow-hidden">
