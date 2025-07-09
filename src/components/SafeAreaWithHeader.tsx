@@ -14,7 +14,7 @@ const SafeAreaWithHeader = ({ children, title, viewStyle = "" }: Props) => {
   const debug = false;
   return (
     <View className={twMerge("relative flex-1", debug && "bg-red-500")}>
-      <SafeAreaView className="bg-background flex shadow-slate-900 shadow-md">
+      <SafeAreaView className="flex bg-background shadow-primary shadow-xl dark:border-b border-primary/50">
         <Header title={title} />
       </SafeAreaView>
       <SafeAreaWrapper hasHeader viewStyle={viewStyle}>
