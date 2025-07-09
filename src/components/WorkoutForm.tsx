@@ -101,7 +101,7 @@ const WorkoutForm = ({ defaultForm, onSubmit, action }: Props) => {
   return (
     <Card className="relative flex-1 w-full md:max-w-[640px]">
       <CardHeader className="flex-row w-full justify-between items-center">
-        <CardTitle>{defaultForm.exercise.name}</CardTitle>
+        <CardTitle className="mr-6">{defaultForm.exercise.name}</CardTitle>
       </CardHeader>
       <View className="absolute right-2 top-2">{action && action()}</View>
       {/* DATE */}

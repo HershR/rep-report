@@ -106,7 +106,7 @@ const Profile = () => {
 
   return (
     <>
-      <SafeAreaWrapper hasTabBar={true}>
+      <SafeAreaWrapper hasTabBar viewStyle="my-5">
         <View className="flex-1 max-w-screen-md pt-6 mt-4">
           <View className="flex-row gap-x-10">
             <View className="flex justify-center items-center">

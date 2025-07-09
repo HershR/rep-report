@@ -66,7 +66,7 @@ const Saved = () => {
   }, [routineError]);
 
   return (
-    <SafeAreaWrapper hasTabBar>
+    <SafeAreaWrapper hasTabBar viewStyle="my-5">
       <Tabs
         value={tab}
         onValueChange={(value) => {
