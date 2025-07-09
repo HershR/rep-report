@@ -97,7 +97,7 @@ const Dashboard = () => {
     }
   }, [routines]);
   return (
-    <SafeAreaWrapper hasTabBar>
+    <SafeAreaWrapper hasTabBar viewStyle="my-5">
       <View className="flex-1 gap-y-5">
         <View className="flex-row items-end gap-x-4">
           <Button
