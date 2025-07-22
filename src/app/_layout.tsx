@@ -1,6 +1,7 @@
 import "../global.css";
 import { Stack } from "expo-router";
-import { ActivityIndicator, StatusBar, View, Text } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { View, Text } from "react-native";
 import { DateProvider } from "../context/DateContext";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
@@ -19,7 +20,9 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import ActivityLoader from "../components/ActivityLoader";
+import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -46,10 +49,21 @@ export default function RootLayout() {
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
+  const [measurementUnit, setMeasurementUnit] = useState<Unit | null>(null);
   useEffect(() => {
     loadTheme();
+    loadMeasurementUnit();
   }, []);
 
+  const loadMeasurementUnit = async () => {
+    const savedMeasurementUnit = await AsyncStorage.getItem("measurementUnit");
+    if (savedMeasurementUnit === null) {
+      await AsyncStorage.setItem("measurementUnit", "imperial");
+    }
+    setMeasurementUnit(
+      savedMeasurementUnit === "imperial" ? "imperial" : "metric"
+    );
+  };
   const loadTheme = async () => {
     const savedTheme = await AsyncStorage.getItem("theme");
     if (savedTheme === null) {
@@ -85,38 +99,91 @@ export default function RootLayout() {
       </View>
     );
   }
-  if (!isColorSchemeLoaded) {
+  if (
+    !isColorSchemeLoaded ||
+    measurementUnit === null ||
+    measurementUnit === undefined
+  ) {
     return null;
   }
+
   return (
     <>
-      <Suspense fallback={<ActivityIndicator size="large" />}>
+      <Suspense fallback={<ActivityLoader />}>
         <SQLiteProvider
           databaseName={DATABASE_NAME}
           options={{ enableChangeListener: true }}
           useSuspense
         >
-          <DateProvider>
-            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-              <StatusBar hidden={true} />
-              <Stack>
-                <Stack.Screen
-                  name="(tabs)"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="exercise/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-                <Stack.Screen
-                  name="workout/[id]"
-                  options={{ headerShown: false }}
-                ></Stack.Screen>
-              </Stack>
-              <PortalHost />
-              <Toast />
-            </ThemeProvider>
-          </DateProvider>
+          <MeasurementUnitProvider defaultUnit={measurementUnit}>
+            <DateProvider>
+              <ThemeProvider
+                value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
+              >
+                <SafeAreaProvider>
+                  <StatusBar
+                    hidden={false}
+                    style={isDarkColorScheme ? "light" : "dark"}
+                    backgroundColor={NAV_THEME[colorScheme].background}
+                  />
+                  <Stack
+                    screenOptions={{
+                      headerStyle: {
+                        backgroundColor: NAV_THEME[colorScheme].background,
+                      },
+                      headerTitleStyle: {
+                        color: NAV_THEME[colorScheme].text,
+                      },
+                      headerShadowVisible: true,
+                      headerTransparent: true,
+                    }}
+                  >
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="exercise/[id]"
+                      options={{
+                        title: "Exercise Details",
+                        headerShown: false,
+                      }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/create/[id]"
+                      options={{ title: "New Workout", headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="workout/update/[id]"
+                      options={{ title: "Edit Workout", headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/create"
+                      options={{ title: "New Routine", headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/[id]"
+                      options={{ title: "Routine Details", headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="routine/update/[id]"
+                      options={{ title: "Edit Routine", headerShown: false }}
+                    ></Stack.Screen>
+                    <Stack.Screen
+                      name="(user)"
+                      options={{ headerShown: false }}
+                    ></Stack.Screen>
+                  </Stack>
+                  <PortalHost />
+                  <Toast />
+                </SafeAreaProvider>
+              </ThemeProvider>
+            </DateProvider>
+          </MeasurementUnitProvider>
         </SQLiteProvider>
       </Suspense>
     </>

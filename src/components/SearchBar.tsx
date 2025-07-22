@@ -1,11 +1,11 @@
-import { View, Image } from "react-native";
+import { View } from "react-native";
 import React from "react";
-import { icons } from "@/src/constants/icons";
 import { Input } from "~/components/ui/input";
 import { Search } from "~/lib/icons/Search";
 interface SearchBarProps {
   placeholder: string;
   value: string;
+  autoFocus?: boolean;
   onPress?: () => void;
   onChangeText?: (text: string) => void;
 }
@@ -13,17 +13,19 @@ interface SearchBarProps {
 const SearchBar = ({
   placeholder,
   value,
+  autoFocus = false,
   onPress,
   onChangeText,
 }: SearchBarProps) => {
   return (
     <View className="flex-row items-center">
       <Input
-        onPress={onPress}
-        placeholder={placeholder}
-        value={value}
-        onChangeText={onChangeText}
         className="flex-1 pl-12"
+        placeholder={placeholder}
+        onChangeText={(value) => onChangeText?.(value.trim())}
+        value={value}
+        onPress={onPress}
+        autoFocus={autoFocus}
       ></Input>
       <Search className="color-primary absolute left-0 ml-3"></Search>
     </View>

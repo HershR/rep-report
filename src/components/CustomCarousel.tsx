@@ -1,79 +1,90 @@
-import { StyleProp, ViewStyle } from "react-native";
+import { Dimensions, View } from "react-native";
 import React from "react";
 import Carousel, {
   ICarouselInstance,
   Pagination,
 } from "react-native-reanimated-carousel";
 import { useSharedValue } from "react-native-reanimated";
-import { DotStyle } from "react-native-reanimated-carousel/lib/typescript/components/Pagination/Basic/PaginationItem";
-import { useTheme } from "@react-navigation/native";
-interface CarouselProps {
-  data: any[];
-  width: number;
-  height: number;
-  vertical?: boolean;
+import { NAV_THEME } from "../lib/constants";
+import { useColorScheme } from "../lib/useColorScheme";
+interface CarouselProps<T> {
+  data: T[];
+  renderItem: (item: T, index: number) => React.ReactElement;
+  width?: number;
+  height?: number;
+  autoPlay?: boolean;
   loop?: boolean;
-  carouselStyle?: StyleProp<ViewStyle>;
-  dotStyle?: DotStyle;
-  activeDotStyle?: DotStyle;
-  renderFunction: (item: any, index?: number) => any;
+  pagingEnabled?: boolean;
+  showDots?: boolean;
 }
 
-const CustomCarousel = ({
+export function CustomCarousel<T>({
   data,
-  width,
-  height,
-  vertical = false,
+  renderItem,
+  width = 400,
+  height = 200,
+  autoPlay = false,
   loop = false,
-  carouselStyle: style,
-  dotStyle,
-  activeDotStyle,
-  renderFunction: renderItem,
-}: CarouselProps) => {
+  pagingEnabled = true,
+  showDots = true,
+}: CarouselProps<T>) {
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
-  const { colors } = useTheme();
-
+  const { colorScheme } = useColorScheme();
   const onPressPagination = (index: number) => {
     ref.current?.scrollTo({
       count: index - progress.value,
       animated: true,
     });
   };
+  if (data.length === 1) {
+    return (
+      <View
+        style={{
+          width,
+          height,
+          justifyContent: "center",
+        }}
+      >
+        {renderItem(data[0], 0)}
+      </View>
+    );
+  }
   return (
     <>
       <Carousel
         ref={ref}
-        vertical={vertical}
-        loop={loop}
-        data={data}
         width={width}
         height={height}
+        autoPlay={autoPlay}
+        loop={loop}
+        pagingEnabled={pagingEnabled}
+        data={data}
+        scrollAnimationDuration={500}
         renderItem={({ item, index }) => renderItem(item, index)}
-        style={style}
         onProgressChange={progress}
       ></Carousel>
-      {data.length > 1 && (
+      {showDots && (
         <Pagination.Basic
           progress={progress}
-          data={data}
+          data={data.map((x, index) => {
+            return index;
+          })}
           dotStyle={{
-            borderRadius: 100,
-            backgroundColor: colors.border,
-            ...dotStyle,
+            width: 25,
+            height: 4,
+            backgroundColor: NAV_THEME[colorScheme].border,
           }}
           activeDotStyle={{
-            borderRadius: 100,
             overflow: "hidden",
-            backgroundColor: colors.primary,
-            ...activeDotStyle,
+            backgroundColor: NAV_THEME[colorScheme].primary,
           }}
-          containerStyle={{ gap: 5, marginTop: 5 }}
+          containerStyle={{ gap: 10, marginTop: 5 }}
           onPress={onPressPagination}
         />
       )}
     </>
   );
-};
+}
 
 export default CustomCarousel;

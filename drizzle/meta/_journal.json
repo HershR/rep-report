@@ -36,6 +36,69 @@
       "when": 1744750866398,
       "tag": "0004_cheerful_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1746912796229,
+      "tag": "0005_mean_black_widow",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1746938325630,
+      "tag": "0006_wooden_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1747253118818,
+      "tag": "0007_warm_mattie_franklin",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1747708907387,
+      "tag": "0008_unusual_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1747763911790,
+      "tag": "0009_clear_smiling_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1747763948867,
+      "tag": "0010_cultured_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1747862381560,
+      "tag": "0011_spooky_sabretooth",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1748136348639,
+      "tag": "0012_messy_iron_monger",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1748136467852,
+      "tag": "0013_cool_wrecking_crew",
+      "breakpoints": true
     }
   ]
 }

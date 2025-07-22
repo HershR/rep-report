@@ -63,8 +63,7 @@ interface Workout {
   id: number;
   date: string; // ISO date
   mode: number; // weight or time
-  unit: string; // e.g., kg, lbs
-  collection_id: number | null; // foreign key
+  routine_id: number | null; // foreign key
   exercise_id: number; // foreign key -> Exercise
   notes: string | null;
   sets: WorkoutSet[];
@@ -87,8 +86,8 @@ interface WorkoutRoutine {
   name: string;
   date_created: string;
   last_updated: string;
-  workout_count: number; // maybe computed later instead?
-  description?: string; // optional
+  description: string | null;
+  exercises?: Exercise[];
 }
 
 //Exercise belonging to a routine
@@ -97,4 +96,10 @@ interface RoutineExercise {
   routine_id: number; // foreign key -> Routine
   exercise_id: number; // foreign key -> Exercise
   order: number; // optional, for drag & drop later
+}
+
+interface RoutineDay {
+  id: number;
+  routine_id: number;
+  day: number;
 }

@@ -7,6 +7,7 @@ import { Search } from "~/lib/icons/Search";
 import { House } from "~/lib/icons/House";
 import { User } from "~/lib/icons/User";
 import { Bookmark } from "~/lib/icons/Bookmark";
+import { Dumbbell } from "~/lib/icons/Dumbbell";
 import { useColorScheme } from "@/src/lib/useColorScheme";
 import { NAV_THEME } from "~/lib/constants";
 interface TabIconProps {
@@ -18,14 +19,14 @@ interface TabIconProps {
 const TabIcon = ({ title, Icon, focused }: TabIconProps) => {
   if (focused)
     return (
-      <View className="flex flex-1 flex-row w-full min-w-[112px] min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden">
+      <View className="flex-1 flex-row w-full min-w-28 min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden">
         <Icon className="color-primary" size={20} />
         <Text className="font-semibold ml-2">{title}</Text>
       </View>
     );
   return (
     <View className="size-full justify-center items-center mt-4 rounded-full">
-      <Icon className="color-border" size={20} />
+      <Icon className="color-primary/50" size={20} />
     </View>
   );
 };
@@ -42,20 +43,21 @@ const _Layout = () => {
           justifyContent: "center",
           alignItems: "center",
         },
-        tabBarHideOnKeyboard: true,
+
         tabBarStyle: {
           backgroundColor: `${
             isDarkColorScheme
               ? NAV_THEME.dark.background
               : NAV_THEME.light.background
           }`,
-          position: "absolute",
           overflow: "hidden",
+          position: "absolute",
+          height: 56,
         },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="dashboard"
         options={{
           title: "Home",
           headerShown: false,
@@ -71,6 +73,16 @@ const _Layout = () => {
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon title="Search" Icon={Search} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Workouts",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Workouts" Icon={Dumbbell} focused={focused} />
           ),
         }}
       />

@@ -3,14 +3,19 @@ import { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import * as schema from "./schema";
 
 import {
-  workoutRoutines,
+  routines,
   routineExercises,
   workouts,
   workoutSets,
   exercises,
+  weightHistory,
+  userSettings,
+  routineSchedule,
 } from "./schema";
 import { eq, sql } from "drizzle-orm";
 import { fetchExerciseDetail } from "../services/api";
+import { RoutineFormField as RoutineFormFields } from "../components/RoutineForm";
+import { DateTime } from "luxon";
 
 //Get
 
@@ -19,6 +24,7 @@ export const getAllExercises = async (
 ) => {
   return db.select().from(exercises);
 };
+
 export const getExerciseById = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number
@@ -26,6 +32,34 @@ export const getExerciseById = async (
   return db.query.exercises.findFirst({
     where: eq(exercises.id, id),
   });
+};
+export const getOrCreateExercise = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  exercise_id: number
+): Promise<number> => {
+  const existing = await db.query.exercises.findFirst({
+    where: eq(exercises.id, exercise_id),
+  });
+  let id = existing?.id;
+  // Step 2: If not, fetch from Wger
+  if (!existing) {
+    const remoteExercise = await fetchExerciseDetail(exercise_id.toString());
+    if (!remoteExercise) throw new Error("Exercise not found from Wger");
+
+    const exercise = {
+      id: remoteExercise.id,
+      name: remoteExercise.translations.find((x) => x.language == 2)!.name,
+      category: remoteExercise.category.name,
+      image:
+        remoteExercise.images.length == 0
+          ? null
+          : remoteExercise.images[0].image,
+      is_favorite: false,
+    };
+    // Step 3: Insert into local DB
+    return await createExercise(db, exercise);
+  }
+  return id!;
 };
 
 export const getFavoriteExercises = async (
@@ -36,22 +70,24 @@ export const getFavoriteExercises = async (
     orderBy: (exercises, { desc }) => [desc(exercises.name)],
   });
 };
+
 export const getAllRoutines = async (db: ExpoSQLiteDatabase<typeof schema>) => {
-  return db.select().from(workoutRoutines);
+  return db.select().from(routines);
 };
 
 export const getRoutineById = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number
 ) => {
-  return db.query.workoutRoutines.findFirst({
-    where: eq(workoutRoutines.id, id),
+  return db.query.routines.findFirst({
+    where: eq(routines.id, id),
     with: {
       routineExercises: {
         with: {
           exercise: true,
         },
       },
+      routineSchedule: true,
     },
   });
 };
@@ -61,7 +97,7 @@ export const getWorkoutsForRoutine = async (
   routineId: number
 ) => {
   return db.query.workouts.findMany({
-    where: eq(workouts.collection_id, routineId),
+    where: eq(workouts.routine_id, routineId),
     with: {
       sets: true,
       exercise: true,
@@ -123,8 +159,46 @@ export const getRecentWorkout = async (
   });
 };
 
+export const getRecentWeight = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.weightHistory.findFirst({
+    orderBy: (weight_history, { desc }) => [desc(weight_history.date_created)],
+  });
+};
+
+export const getWeightHistory = async (
+  db: ExpoSQLiteDatabase<typeof schema>
+) => {
+  return db.query.weightHistory.findMany({
+    orderBy: (weight_history, { desc }) => [desc(weight_history.date_created)],
+  });
+};
+
+export const getUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string
+) => {
+  return db.query.userSettings.findFirst({ where: eq(userSettings.key, key) });
+};
+
 //Create
-export const createExercise = async (
+
+export const createWeightEntry = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  weight: number,
+  date: string = DateTime.now()
+    .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+    .toUTC()
+    .toISO()
+) => {
+  return db.insert(weightHistory).values({
+    date_created: date,
+    weight: weight,
+  });
+};
+
+const createExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   exercise: Exercise
 ) => {
@@ -143,49 +217,35 @@ export const createExercise = async (
 
 export const createRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  name: string
+  { name, description }: { name: string; description: string | null }
 ) => {
   const now = new Date().toISOString();
   const result = await db
-    .insert(workoutRoutines)
+    .insert(routines)
     .values({
       name,
+      description: description,
       date_created: now,
       last_updated: now,
     })
-    .returning({ id: workoutRoutines.id });
+    .returning({ id: routines.id });
 
   return result[0]?.id;
 };
 
-export const addExerciseToRoutine = async (
-  db: ExpoSQLiteDatabase<typeof schema>,
-  routineId: number,
-  exerciseId: number,
-  order: number
-) => {
-  return db.insert(routineExercises).values({
-    routine_id: routineId,
-    exercise_id: exerciseId,
-    order,
-  });
-};
-
-export const createWorkout = async (
+const createWorkout = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   {
     date,
     mode,
-    unit,
     notes,
-    collection_id,
+    routine_id,
     exercise_id,
   }: {
     date: string;
     mode: number;
-    unit: string; // e.g., kg, lbs
     notes: string | null;
-    collection_id: number | null;
+    routine_id: number | null;
     exercise_id: number;
   }
 ) => {
@@ -195,8 +255,7 @@ export const createWorkout = async (
     .values({
       date,
       mode,
-      unit,
-      collection_id,
+      routine_id,
       exercise_id,
       notes,
       last_updated: now,
@@ -208,40 +267,15 @@ export const createWorkout = async (
 };
 export const createWorkoutWithExercise = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  { date, mode, unit, collection_id, exercise_id, notes }: Workout
+  { date, mode, routine_id, exercise_id, notes }: Workout
 ) => {
-  // Step 1: Check if exercise is in local DB
-  const existing = await db.query.exercises.findFirst({
-    where: eq(exercises.id, exercise_id),
-  });
-  let id = existing?.id;
-  // Step 2: If not, fetch from Wger
-  if (!existing) {
-    const remoteExercise = await fetchExerciseDetail(exercise_id.toString());
-    if (!remoteExercise) throw new Error("Exercise not found from Wger");
-
-    // Step 3: Insert into local DB
-    const result = await db
-      .insert(exercises)
-      .values({
-        id: remoteExercise.id,
-        name: remoteExercise.translations.find((x) => x.language == 2)!.name,
-        category: remoteExercise.category.name,
-        image:
-          remoteExercise.images.length == 0
-            ? null
-            : remoteExercise.images[0].image,
-      })
-      .returning({ id: exercises.id });
-    id = result[0]?.id;
-  }
-  // Step 4: Insert workout
+  //Check if exercise is in local DB
+  const id = await getOrCreateExercise(db, exercise_id);
   return await createWorkout(db, {
     date,
     mode,
-    unit,
-    collection_id,
-    exercise_id: id!,
+    routine_id,
+    exercise_id: id,
     notes,
   });
 };
@@ -259,6 +293,44 @@ export const addSetsToWorkout = async (
     duration: set.duration,
   }));
   return db.insert(workoutSets).values(newSets);
+};
+export const addExerciseToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+
+  routineId: number,
+  exerciseId: number,
+  order: number
+) => {
+  const id = await getOrCreateExercise(db, exerciseId);
+  return db.insert(routineExercises).values({
+    routine_id: routineId,
+    exercise_id: id!,
+    order,
+  });
+};
+export const addExercisesToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  exercises: { id: number }[]
+) => {
+  for (let index = 0; index < exercises.length; index++) {
+    await addExerciseToRoutine(db, routineId, exercises[index].id, index);
+  }
+};
+
+export const addDaysToRoutine = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  routineId: number,
+  days: number[]
+) => {
+  if (days.length == 0) {
+    return;
+  }
+  const routineDays: Omit<RoutineDay, "id">[] = days.map((x) => {
+    return { routine_id: routineId, day: x };
+  });
+
+  return db.insert(routineSchedule).values(routineDays);
 };
 
 //Update
@@ -284,7 +356,7 @@ export const updateWorkoutWithSets = async (
     .set({
       date: workoutForm.date,
       mode: workoutForm.mode,
-      collection_id: workoutForm.collection_id,
+      routine_id: workoutForm.routine_id,
       notes: workoutForm.notes,
       last_updated: new Date().toISOString(),
     })
@@ -296,16 +368,49 @@ export const updateWorkoutWithSets = async (
 
   return workoutId;
 };
-
-export const updateRoutineName = async (
+export const updateRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
-  id: number,
-  newName: string
+  routineId: number,
+  routineForm: RoutineFormFields
+) => {
+  await db
+    .update(routines)
+    .set({
+      name: routineForm.name,
+      description: routineForm.description,
+      last_updated: new Date().toISOString(),
+    })
+    .where(eq(routines.id, routineId));
+
+  // Step 2: Delete old routines
+  await db
+    .delete(routineExercises)
+    .where(eq(routineExercises.routine_id, routineId));
+  addExercisesToRoutine(db, routineId, routineForm.exercises);
+
+  await db
+    .delete(routineSchedule)
+    .where(eq(routineSchedule.routine_id, routineId));
+  addDaysToRoutine(
+    db,
+    routineId,
+    routineForm.days.filter((x) => x.selected).map((y) => y.id)
+  );
+  return routineId;
+};
+
+export const updateUserSetting = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  key: string,
+  value: string
 ) => {
   return db
-    .update(workoutRoutines)
-    .set({ name: newName, last_updated: new Date().toISOString() })
-    .where(eq(workoutRoutines.id, id));
+    .insert(userSettings)
+    .values({ key: key, value: value })
+    .onConflictDoUpdate({
+      target: userSettings.key,
+      set: { value: value },
+    });
 };
 
 //Delete
@@ -314,7 +419,7 @@ export const deleteRoutine = async (
   db: ExpoSQLiteDatabase<typeof schema>,
   id: number
 ) => {
-  return db.delete(workoutRoutines).where(eq(workoutRoutines.id, id));
+  return db.delete(routines).where(eq(routines.id, id));
 };
 
 export const deleteWorkout = async (
@@ -329,6 +434,13 @@ export const deleteWorkoutSet = async (
   id: number
 ) => {
   return db.delete(workoutSets).where(eq(workoutSets.id, id));
+};
+
+export const deleteWeightEntry = async (
+  db: ExpoSQLiteDatabase<typeof schema>,
+  id: number
+) => {
+  return db.delete(weightHistory).where(eq(weightHistory.id, id));
 };
 
 //Reset
