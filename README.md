@@ -1,6 +1,13 @@
+<img src="./src/assets/images/icon.png" alt="Rep Report Logo" width="200" height="200">
+
 # RepReport
 
 Mobile fitness app made using Expo/React Native to track fitness progress.
+I started this project to easly keep track of my fitness journey and quickly find the information I need to start my next workout.
+
+[Screenshots](https://drive.google.com/drive/folders/1_XpxrWVO62c_I5oR7oxHKVaOUKava-yq?usp=sharing)
+
+[Android APK](https://drive.google.com/file/d/1OawCqNwQgGWZ6iXD57Rec8-UlHjoLxzK/view?usp=sharing)
 
 ## Audience
 
