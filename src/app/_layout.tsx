@@ -23,6 +23,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityLoader from "../components/ActivityLoader";
 import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Button } from "../components/ui/button";
+import { resetDatebase, resetMigrations } from "../db/dbHelpers";
+import * as schema from "@/src//db/schema";
+
 const DATABASE_NAME = "workouts";
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -42,7 +46,7 @@ export default function RootLayout() {
   const expoDb = openDatabaseSync(DATABASE_NAME, {
     enableChangeListener: true,
   });
-  const db = drizzle(expoDb);
+  const db = drizzle(expoDb, { schema });
   const { success, error } = useMigrations(db, migrations);
 
   //rnr ui lib
@@ -89,6 +93,23 @@ export default function RootLayout() {
     return (
       <View>
         <Text>Migration error: {error.message}</Text>
+        <Button
+          variant={"destructive"}
+          onPress={async () => {
+            await resetMigrations(db);
+          }}
+        >
+          <Text>Reset Migrations</Text>
+        </Button>
+        <Button
+          className="mt-2"
+          variant={"destructive"}
+          onPress={async () => {
+            await resetDatebase(db);
+          }}
+        >
+          <Text>Reset Database</Text>
+        </Button>
       </View>
     );
   }

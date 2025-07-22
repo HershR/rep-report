@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3429722e-b9fb-43fb-ad4d-599566e88ee7",
+  "id": "158abaa3-e400-4009-ba69-2fade09f4a2a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "exercises": {
@@ -12,13 +12,6 @@
           "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
-        },
-        "wger_id": {
-          "name": "wger_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "name": {
@@ -41,17 +34,17 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "is_favorite": {
+          "name": "is_favorite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
         }
       },
-      "indexes": {
-        "exercises_wger_id_unique": {
-          "name": "exercises_wger_id_unique",
-          "columns": [
-            "wger_id"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -92,10 +85,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "routine_exercises_routine_id_workout_routines_id_fk": {
-          "name": "routine_exercises_routine_id_workout_routines_id_fk",
+        "routine_exercises_routine_id_routines_id_fk": {
+          "name": "routine_exercises_routine_id_routines_id_fk",
           "tableFrom": "routine_exercises",
-          "tableTo": "workout_routines",
+          "tableTo": "routines",
           "columnsFrom": [
             "routine_id"
           ],
@@ -123,8 +116,53 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "workout_routines": {
-      "name": "workout_routines",
+    "routine_schedule": {
+      "name": "routine_schedule",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "routine_id": {
+          "name": "routine_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "day": {
+          "name": "day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "routine_schedule_routine_id_routines_id_fk": {
+          "name": "routine_schedule_routine_id_routines_id_fk",
+          "tableFrom": "routine_schedule",
+          "tableTo": "routines",
+          "columnsFrom": [
+            "routine_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "routines": {
+      "name": "routines",
       "columns": {
         "id": {
           "name": "id",
@@ -156,6 +194,61 @@
         },
         "last_updated": {
           "name": "last_updated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user_settings": {
+      "name": "user_settings",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "weight_history": {
+      "name": "weight_history",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "weight": {
+          "name": "weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -201,7 +294,7 @@
         },
         "weight": {
           "name": "weight",
-          "type": "integer",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -244,15 +337,15 @@
           "notNull": true,
           "autoincrement": true
         },
-        "created_date": {
-          "name": "created_date",
+        "date_created": {
+          "name": "date_created",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "updated_date": {
-          "name": "updated_date",
+        "last_updated": {
+          "name": "last_updated",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -280,8 +373,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "collection_id": {
-          "name": "collection_id",
+        "routine_id": {
+          "name": "routine_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -297,12 +390,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "workouts_collection_id_workout_routines_id_fk": {
-          "name": "workouts_collection_id_workout_routines_id_fk",
+        "workouts_routine_id_routines_id_fk": {
+          "name": "workouts_routine_id_routines_id_fk",
           "tableFrom": "workouts",
-          "tableTo": "workout_routines",
+          "tableTo": "routines",
           "columnsFrom": [
-            "collection_id"
+            "routine_id"
           ],
           "columnsTo": [
             "id"

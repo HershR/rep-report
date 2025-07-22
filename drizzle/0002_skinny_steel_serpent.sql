@@ -1,1 +1,0 @@
-ALTER TABLE `exercises` RENAME COLUMN "favorite" TO "is_favorite";

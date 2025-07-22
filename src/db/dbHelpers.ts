@@ -447,13 +447,24 @@ export const deleteWeightEntry = async (
 
 export async function resetDatebase(db: ExpoSQLiteDatabase<typeof schema>) {
   try {
+    db.run(sql`DROP TABLE IF EXISTS exercises`);
     db.run(sql`DROP TABLE IF EXISTS routine_exercises`);
     db.run(sql`DROP TABLE IF EXISTS workout_routines`);
+    db.run(sql`DROP TABLE IF EXISTS routine_schedule`);
+    db.run(sql`DROP TABLE IF EXISTS user_settings`);
+    db.run(sql`DROP TABLE IF EXISTS weight_history`);
     db.run(sql`DROP TABLE IF EXISTS workout_sets`);
     db.run(sql`DROP TABLE IF EXISTS workouts`);
-    db.run(sql`DROP TABLE IF EXISTS exercises`);
     db.run(sql`DROP TABLE IF EXISTS _drizzle_migrations`);
     console.log("Database cleared!");
+  } catch (error) {
+    console.error("Error clearing database:", error);
+  }
+}
+export async function resetMigrations(db: ExpoSQLiteDatabase<typeof schema>) {
+  try {
+    db.run(sql`DROP TABLE IF EXISTS _drizzle_migrations`);
+    console.log("Migrations reset");
   } catch (error) {
     console.error("Error clearing database:", error);
   }
