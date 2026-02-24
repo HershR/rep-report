@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { Clock, Play, TrendingUp } from 'lucide-react-native';
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { withUniwind } from 'uniwind';
 
@@ -14,62 +15,120 @@ const StyledImage = withUniwind(Image);
 export default function Home() {
   const weeklyWorkouts = [1, 2, 3];
   const totalMinutes = 40;
+  const recentWorkouts = [1, 2, 3, 4, 5];
   return (
     <View className="flex-1">
-      <StyledSafeAreaView className="flex-1 gap-y-8 p-6">
+      <StyledSafeAreaView className="flex-1 gap-y-8 p-6 pb-2">
         <View>
           <Text className="text-3xl font-bold sm:text-lg lg:text-xl">Hello, User</Text>
           <Text className="mt-1 text-gray-500">Ready for your next Workout!</Text>
         </View>
         {/* Stats Cards */}
-        <View className="flex flex-row items-center justify-center gap-4">
-          <View className="w-1/2 gap-2 rounded-2xl bg-blue-50 p-4">
-            <View className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-              <Icon className="text-blue-600" as={TrendingUp} size={20} />
-            </View>
-            <View>
-              <Text className="text-2xl font-bold">{weeklyWorkouts.length}</Text>
-              <Text className="text-xs font-medium text-gray-500">Workouts this week</Text>
-            </View>
-          </View>
-          <View className="w-1/2 gap-2 rounded-2xl bg-orange-50 p-4">
-            <View className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
-              <Icon className="text-orange-600" as={Clock} size={20} />
-            </View>
-            <View>
-              <Text className="text-2xl font-bold">{Math.round(totalMinutes)}</Text>
-              <Text className="text-xs font-medium text-gray-500">Minutes active</Text>
-            </View>
-          </View>
-        </View>
-        {/* Featured and Recent Workouts */}
-        {/* Featured / CTA */}
-        <View>
-          <Text className="mb-4 text-xl font-bold">Daily Pick</Text>
-          <View className="group relative h-48 cursor-pointer overflow-hidden rounded-3xl shadow-lg">
-            <StyledImage
-              source={{
-                uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
-              }}
-              alt="Running"
-              className="h-full w-full transition-transform duration-500 group-hover:scale-105"
-              contentFit="cover"
-              transition={1000}
-            />
-            <View className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black to-transparent p-6">
-              <Text className="text-background text-xl font-bold">Morning Cardio</Text>
-              <View className="text-background mt-1 flex flex-row items-center gap-2 text-sm">
-                <Icon className="text-background" as={Clock} size={14} />
-                <Text className="text-background">30 min</Text>
-                <Text className="text-background">•</Text>
-                <Text className="text-background">Intermediate</Text>
+        <ScrollView className="" showsVerticalScrollIndicator={false}>
+          <View className="flex flex-row items-center justify-center gap-4">
+            <View className="w-1/2 gap-2 rounded-2xl bg-blue-50 p-4">
+              <View className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Icon className="text-blue-600" as={TrendingUp} size={20} />
+              </View>
+              <View>
+                <Text className="text-2xl font-bold">{weeklyWorkouts.length}</Text>
+                <Text className="text-xs font-medium text-gray-500">Workouts this week</Text>
               </View>
             </View>
-            <Button className="absolute right-6 bottom-6 rounded-full bg-white p-3 text-black">
-              <Icon as={Play} size={20} />
-            </Button>
+            <View className="w-1/2 gap-2 rounded-2xl bg-orange-50 p-4">
+              <View className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                <Icon className="text-orange-600" as={Clock} size={20} />
+              </View>
+              <View>
+                <Text className="text-2xl font-bold">{Math.round(totalMinutes)}</Text>
+                <Text className="text-xs font-medium text-gray-500">Minutes active</Text>
+              </View>
+            </View>
           </View>
-        </View>
+          {/* Featured and Recent Workouts */}
+          {/* Featured / CTA */}
+          <View>
+            <Text className="mb-4 text-xl font-bold">Daily Pick</Text>
+            <View className="group relative h-48 cursor-pointer overflow-hidden rounded-3xl shadow-lg">
+              <StyledImage
+                source={{
+                  uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
+                }}
+                alt="Running"
+                className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                contentFit="cover"
+                transition={1000}
+              />
+              <View className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black to-transparent p-6">
+                <Text className="text-background text-xl font-bold">Morning Cardio</Text>
+                <View className="text-background mt-1 flex flex-row items-center gap-2 text-sm">
+                  <Icon className="text-background" as={Clock} size={14} />
+                  <Text className="text-background">30 min</Text>
+                  <Text className="text-background">•</Text>
+                  <Text className="text-background">Intermediate</Text>
+                </View>
+              </View>
+              <Button className="absolute right-6 bottom-6 rounded-full bg-white p-3 text-black">
+                <Icon as={Play} size={20} />
+              </Button>
+            </View>
+          </View>
+          <View className="mt-4">
+            <Text className="mb-4 text-xl font-bold">Recent Workouts</Text>
+            {recentWorkouts.length === 0 && (
+              <Text className="text-center text-sm text-gray-500">No recent workouts</Text>
+            )}
+            <FlashList
+              data={recentWorkouts}
+              renderItem={(workout, index) => (
+                <View
+                  key={index}
+                  className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4">
+                  <StyledImage
+                    source={{
+                      uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
+                    }}
+                    alt="Workout Thumbnail"
+                    className="h-16 w-16 rounded-lg"
+                    contentFit="cover"
+                  />
+                  <View>
+                    <Text className="font-medium">Evening Yoga</Text>
+                    <View className="mt-1 flex flex-row items-center gap-2 text-xs text-gray-500">
+                      <Icon className="text-gray-500" as={Clock} size={12} />
+                      <Text>45 min</Text>
+                      <Text>•</Text>
+                      <Text>Beginner</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            />
+            {/* {recentWorkouts.map((workout, index) => (
+              <View
+                key={index}
+                className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4">
+                <StyledImage
+                  source={{
+                    uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
+                  }}
+                  alt="Workout Thumbnail"
+                  className="h-16 w-16 rounded-lg"
+                  contentFit="cover"
+                />
+                <View>
+                  <Text className="font-medium">Evening Yoga</Text>
+                  <View className="mt-1 flex flex-row items-center gap-2 text-xs text-gray-500">
+                    <Icon className="text-gray-500" as={Clock} size={12} />
+                    <Text>45 min</Text>
+                    <Text>•</Text>
+                    <Text>Beginner</Text>
+                  </View>
+                </View>
+              </View>
+            ))} */}
+          </View>
+        </ScrollView>
       </StyledSafeAreaView>
     </View>
   );
