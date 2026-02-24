@@ -27,7 +27,7 @@ export default function Home() {
           className="flex-1"
           contentContainerClassName="w-full justify-center gap-y-4 mt-4"
           showsVerticalScrollIndicator={false}>
-          <View className="flex flex-row items-center justify-center gap-4">
+          <View className="flex flex-row items-center justify-center gap-4 px-2">
             <View className="w-1/2 gap-2 rounded-2xl bg-blue-50 p-4">
               <View className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                 <Icon className="text-blue-600" as={TrendingUp} size={20} />
