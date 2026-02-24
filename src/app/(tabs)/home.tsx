@@ -18,13 +18,16 @@ export default function Home() {
   const recentWorkouts = [1, 2, 3, 4, 5];
   return (
     <View className="flex-1">
-      <StyledSafeAreaView className="flex-1 gap-y-8 p-6 pb-2">
+      <StyledSafeAreaView className="flex-1 p-6 pb-2">
         <View>
           <Text className="text-3xl font-bold sm:text-lg lg:text-xl">Hello, User</Text>
           <Text className="mt-1 text-gray-500">Ready for your next Workout!</Text>
         </View>
         {/* Stats Cards */}
-        <ScrollView className="" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="w-full justify-center gap-y-4 mt-4"
+          showsVerticalScrollIndicator={false}>
           <View className="flex flex-row items-center justify-center gap-4">
             <View className="w-1/2 gap-2 rounded-2xl bg-blue-50 p-4">
               <View className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -45,7 +48,6 @@ export default function Home() {
               </View>
             </View>
           </View>
-          {/* Featured and Recent Workouts */}
           {/* Featured / CTA */}
           <View>
             <Text className="mb-4 text-xl font-bold">Daily Pick</Text>
@@ -73,20 +75,21 @@ export default function Home() {
               </Button>
             </View>
           </View>
-          <View className="mt-4">
+          {/* Featured and Recent Workouts */}
+          <View>
             <Text className="mb-4 text-xl font-bold">Recent Workouts</Text>
             {recentWorkouts.length === 0 && (
               <Text className="text-center text-sm text-gray-500">No recent workouts</Text>
             )}
             <FlashList
               data={recentWorkouts}
-              renderItem={(workout, index) => (
+              renderItem={({ workout, index }) => (
                 <View
                   key={index}
                   className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4">
                   <StyledImage
                     source={{
-                      uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
+                      uri: 'https://picsum.photos/200/200?random=' + index,
                     }}
                     alt="Workout Thumbnail"
                     className="h-16 w-16 rounded-lg"
@@ -104,29 +107,6 @@ export default function Home() {
                 </View>
               )}
             />
-            {/* {recentWorkouts.map((workout, index) => (
-              <View
-                key={index}
-                className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4">
-                <StyledImage
-                  source={{
-                    uri: 'https://fastly.picsum.photos/id/539/400/200.jpg?hmac=wQJ0BYlehncMJgnnAIN4NXXyq1BShgIQMSUS37rfTEU',
-                  }}
-                  alt="Workout Thumbnail"
-                  className="h-16 w-16 rounded-lg"
-                  contentFit="cover"
-                />
-                <View>
-                  <Text className="font-medium">Evening Yoga</Text>
-                  <View className="mt-1 flex flex-row items-center gap-2 text-xs text-gray-500">
-                    <Icon className="text-gray-500" as={Clock} size={12} />
-                    <Text>45 min</Text>
-                    <Text>•</Text>
-                    <Text>Beginner</Text>
-                  </View>
-                </View>
-              </View>
-            ))} */}
           </View>
         </ScrollView>
       </StyledSafeAreaView>
