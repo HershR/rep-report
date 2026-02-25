@@ -19,8 +19,8 @@ export default function Home() {
     <View className="flex-1">
       <StyledSafeAreaView className="flex-1 p-6 pb-2">
         <View>
-          <Text className="text-3xl font-bold sm:text-lg lg:text-xl">Hello, User</Text>
-          <Text className="mt-1 text-gray-500">Ready for your next Workout!</Text>
+          <Text className="text-primary text-3xl font-bold sm:text-lg lg:text-xl">Hello, User</Text>
+          <Text className="text-muted-foreground mt-1">Ready for your next Workout!</Text>
         </View>
         {/* Stats Cards */}
         <ScrollView
@@ -33,7 +33,7 @@ export default function Home() {
                 <Icon className="text-blue-600" as={TrendingUp} size={20} />
               </View>
               <View>
-                <Text className="text-2xl font-bold">{weeklyWorkouts.length}</Text>
+                <Text className="text-2xl font-bold text-gray-900">{weeklyWorkouts.length}</Text>
                 <Text className="text-xs font-medium text-gray-500">Workouts this week</Text>
               </View>
             </View>
@@ -42,7 +42,7 @@ export default function Home() {
                 <Icon className="text-orange-600" as={Clock} size={20} />
               </View>
               <View>
-                <Text className="text-2xl font-bold">{Math.round(totalMinutes)}</Text>
+                <Text className="text-2xl font-bold text-gray-900">{Math.round(totalMinutes)}</Text>
                 <Text className="text-xs font-medium text-gray-500">Minutes active</Text>
               </View>
             </View>
@@ -60,16 +60,16 @@ export default function Home() {
                 contentFit="cover"
                 transition={1000}
               />
-              <View className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black to-transparent p-6">
-                <Text className="text-background text-xl font-bold">Morning Cardio</Text>
-                <View className="text-background mt-1 flex flex-row items-center gap-2 text-sm">
-                  <Icon className="text-background" as={Clock} size={14} />
-                  <Text className="text-background">30 min</Text>
-                  <Text className="text-background">•</Text>
-                  <Text className="text-background">Intermediate</Text>
+              <View className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-gray-800 to-transparent p-6">
+                <Text className="text-xl font-bold text-white">Morning Cardio</Text>
+                <View className="mt-1 flex flex-row items-center gap-2 text-sm text-white">
+                  <Icon className="text-gray-500" as={Clock} size={14} />
+                  <Text className="text-white">30 min</Text>
+                  <Text className="text-white">•</Text>
+                  <Text className="text-white">Intermediate</Text>
                 </View>
               </View>
-              <Button className="absolute right-6 bottom-6 rounded-full bg-white p-3 text-black">
+              <Button className="text-primary bg-background absolute right-6 bottom-6 rounded-full p-3">
                 <Icon as={Play} size={20} />
               </Button>
             </View>
@@ -78,14 +78,14 @@ export default function Home() {
           <View>
             <Text className="mb-4 text-xl font-bold">Recent Workouts</Text>
             {recentWorkouts.length === 0 && (
-              <Text className="text-center text-sm text-gray-500">No recent workouts</Text>
+              <Text className="text-muted-foreground text-center text-sm">No recent workouts</Text>
             )}
             <FlashList
               data={recentWorkouts}
               renderItem={({ workout, index }) => (
                 <View
                   key={index}
-                  className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4">
+                  className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4 dark:bg-gray-700">
                   <StyledImage
                     source={{
                       uri: 'https://picsum.photos/200/200?random=' + index,
@@ -96,7 +96,7 @@ export default function Home() {
                   />
                   <View>
                     <Text className="font-medium">Evening Yoga</Text>
-                    <View className="mt-1 flex flex-row items-center gap-2 text-xs text-gray-500">
+                    <View className="mt-1 flex flex-row items-center gap-2 text-xs">
                       <Icon className="text-gray-500" as={Clock} size={12} />
                       <Text>45 min</Text>
                       <Text>•</Text>
