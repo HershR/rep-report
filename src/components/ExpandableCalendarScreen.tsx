@@ -1,21 +1,16 @@
-import { NAV_THEME } from '@/lib/theme';
-import { useTheme } from '@react-navigation/native';
-import { ChevronRight } from 'lucide-react-native';
+import { getTheme, lightThemeColor, themeColor } from '@/lib/calanderTheme';
 import React, { useCallback, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
-import { Icon } from './ui/icon';
-const ITEMS: any[] = [];
 
 interface Props {
   weekView?: boolean;
 }
-// const CHEVRON = require('../img/next.png');
 const ExpandableCalendarScreen = (props: Props) => {
   const { weekView } = props;
-  const theme = useTheme();
+  const theme = useRef(getTheme());
   const todayBtnTheme = useRef({
-    todayButtonTextColor: NAV_THEME[theme.dark ? 'dark' : 'light'].colors.primary,
+    todayButtonTextColor: themeColor,
   });
 
   // const onDateChanged = useCallback((date, updateSource) => {
@@ -40,23 +35,18 @@ const ExpandableCalendarScreen = (props: Props) => {
   }, []);
 
   const renderHeader = useCallback(
-    (date?: Date) => {
+    (date?: any) => {
       const rotationInDegrees = rotation.current.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '-180deg'],
       });
       return (
         <TouchableOpacity style={styles.header} onPress={toggleCalendarExpansion}>
-          <Text style={styles.headerTitle}>{date?.toLocaleDateString()}</Text>
+          <Text style={styles.headerTitle}>{date?.toString('MMMM yyyy')}</Text>
           {/* <Animated.Image
             source={CHEVRON}
             style={{ transform: [{ rotate: '90deg' }, { rotate: rotationInDegrees }] }}
           /> */}
-          <Icon
-            as={ChevronRight}
-            size={24}
-            style={{ transform: [{ rotate: rotationInDegrees }] }}
-          />
         </TouchableOpacity>
       );
     },
@@ -72,20 +62,19 @@ const ExpandableCalendarScreen = (props: Props) => {
 
   return (
     <CalendarProvider
-      date={ITEMS[1]?.title}
+      date={new Date().toISOString().split('T')[0]}
       // onDateChanged={onDateChanged}
       // onMonthChange={onMonthChange}
-      showTodayButton
+      // showTodayButton
       // disabledOpacity={0.6}
-      // theme={todayBtnTheme.current}
+      theme={todayBtnTheme.current}
       // todayBottomMargin={16}
       // disableAutoDaySelection={[ExpandableCalendar.navigationTypes.MONTH_SCROLL, ExpandableCalendar.navigationTypes.MONTH_ARROWS]}
     >
       {weekView ? (
-        <WeekCalendar testID={'weekCalendar'} firstDay={1} />
+        <WeekCalendar firstDay={1} />
       ) : (
         <ExpandableCalendar
-          testID={'calendars'}
           renderHeader={renderHeader}
           ref={calendarRef}
           onCalendarToggled={onCalendarToggled}
@@ -97,7 +86,7 @@ const ExpandableCalendarScreen = (props: Props) => {
           // calendarStyle={styles.calendar}
           // headerStyle={styles.header} // for horizontal only
           // disableWeekScroll
-          // theme={theme.current}
+          theme={theme.current}
           // disableAllTouchEventsForDisabledDays
           firstDay={1}
           // leftArrowImageSource={leftArrowIcon}
@@ -125,7 +114,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: 'bold', marginRight: 6 },
   section: {
-    backgroundColor: NAV_THEME.light.colors.background,
+    backgroundColor: lightThemeColor,
     color: 'grey',
     textTransform: 'capitalize',
   },
