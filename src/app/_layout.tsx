@@ -1,4 +1,5 @@
 import '@/global.css';
+import { DateProvider } from '@/hooks/DateContext';
 
 import { NAV_THEME } from '@/lib/theme';
 import { ThemeProvider } from '@react-navigation/native';
@@ -17,11 +18,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <PortalHost />
+      <DateProvider>
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <PortalHost />
+      </DateProvider>
     </ThemeProvider>
   );
 }

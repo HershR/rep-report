@@ -1,19 +1,25 @@
-import React, { useCallback, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { Animated, Easing } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
 // import { agendaItems, getMarkedDates } from '../mocks/agendaItems';
-import { getTheme, lightThemeColor, themeColor } from '../lib/calanderTheme';
-
+import { useDate } from '@/hooks/useDate';
+import { getTheme, themeColor } from '../lib/calanderTheme';
+import { Button } from './ui/button';
+import { Text } from './ui/text';
 const leftArrowIcon = require('@/assets/images/previous.png');
 const rightArrowIcon = require('@/assets/images/next.png');
+
 // const ITEMS: any[] = agendaItems;
 
 interface Props {
   weekView?: boolean;
+  children?: React.ReactNode;
 }
 const CHEVRON = require('@/assets/images/next.png');
-const CustomExpandableCalendar = (props: Props) => {
-  const { weekView } = props;
+const CustomExpandableCalendar = ({ weekView, children }: Props) => {
+  const todayISO = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // const [selectedDate, setSelectedDate] = useState(initialDateISO ?? todayISO);
+  const { currentDate, updateDate } = useDate();
   // const marked = useRef(getMarkedDates());
   const theme = useRef(getTheme());
   const todayBtnTheme = useRef({
@@ -52,13 +58,15 @@ const CustomExpandableCalendar = (props: Props) => {
         outputRange: ['0deg', '-180deg'],
       });
       return (
-        <TouchableOpacity style={styles.header} onPress={toggleCalendarExpansion}>
-          <Text style={styles.headerTitle}>{date?.toDateString()}</Text>
+        <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
+          <Text className="text-primary text-xl font-semibold">
+            {date?.toDateString().split(' ').slice(1, 4).join(' ')}
+          </Text>
           <Animated.Image
             source={CHEVRON}
             style={{ transform: [{ rotate: '90deg' }, { rotate: rotationInDegrees }] }}
           />
-        </TouchableOpacity>
+        </Button>
       );
     },
     [toggleCalendarExpansion]
@@ -70,76 +78,41 @@ const CustomExpandableCalendar = (props: Props) => {
     },
     [rotation]
   );
-
+  const handleDateChange = useCallback(
+    (dateISO: string) => {
+      updateDate(new Date(dateISO));
+    },
+    [updateDate]
+  );
   return (
     <CalendarProvider
-      date={'2024-06-01'}
-      // onDateChanged={onDateChanged}
-      // onMonthChange={onMonthChange}
-      // showTodayButton
-      // disabledOpacity={0.6}
-      theme={todayBtnTheme.current}
-      // todayBottomMargin={16}
-      // disableAutoDaySelection={[ExpandableCalendar.navigationTypes.MONTH_SCROLL, ExpandableCalendar.navigationTypes.MONTH_ARROWS]}
-    >
+      date={currentDate.toISOString().split('T')[0]}
+      onDateChanged={handleDateChange}
+      disabledOpacity={0.6}
+      theme={todayBtnTheme.current}>
       {weekView ? (
-        <WeekCalendar
-          testID={'CalendarWeek'}
-          firstDay={1}
-          // markedDates={marked.current}
-        />
+        <WeekCalendar testID={'CalendarWeek'} firstDay={1} />
       ) : (
         <ExpandableCalendar
           testID={'CalendarExpandable'}
           renderHeader={renderHeader}
           ref={calendarRef}
           onCalendarToggled={onCalendarToggled}
-          // horizontal={false}
-          // hideArrows
           disablePan
           hideKnob
-          initialPosition={ExpandableCalendar.positions.OPEN}
-          // calendarStyle={styles.calendar}
-          // headerStyle={styles.header} // for horizontal only
-          // disableWeekScroll
+          initialPosition={ExpandableCalendar.positions.CLOSED}
           theme={theme.current}
-          // disableAllTouchEventsForDisabledDays
           firstDay={1}
-          // markedDates={marked.current}
           leftArrowImageSource={leftArrowIcon}
           rightArrowImageSource={rightArrowIcon}
           animateScroll
           closeOnDayPress
+          allowShadow={false}
         />
       )}
-      {/* <AgendaList
-        sections={ITEMS}
-        renderItem={renderItem}
-        // scrollToNextEvent
-        sectionStyle={styles.section}
-        // dayFormat={'yyyy-MM-d'}
-      /> */}
+      {children}
     </CalendarProvider>
   );
 };
 
 export default CustomExpandableCalendar;
-
-const styles = StyleSheet.create({
-  calendar: {
-    paddingLeft: 20,
-    paddingRight: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  headerTitle: { fontSize: 16, fontWeight: 'bold', marginRight: 6 },
-  section: {
-    backgroundColor: lightThemeColor,
-    color: 'grey',
-    textTransform: 'capitalize',
-  },
-});

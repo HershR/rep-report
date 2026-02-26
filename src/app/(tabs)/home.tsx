@@ -82,7 +82,7 @@ export default function Home() {
             )}
             <FlashList
               data={recentWorkouts}
-              renderItem={({ workout, index }) => (
+              renderItem={({ item, index }) => (
                 <View
                   key={index}
                   className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4 dark:bg-gray-700">
