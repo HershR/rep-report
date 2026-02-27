@@ -2,20 +2,27 @@ import CustomExpandableCalendar from '@/components/CustomExpandableCalendar';
 import StyledSafeAreaView from '@/components/StyledSafeAreaView';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { useDate } from '@/hooks/useDate';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { Clock } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { withUniwind } from 'uniwind';
 const StyledImage = withUniwind(Image);
 
 export default function Dashboard() {
   const recentWorkouts = [1, 2, 3, 4, 5];
+  const dateContext = useDate();
+  const { currentDate, updateDate } = dateContext!;
+  useEffect(() => {
+    console.log('Current date in Dashboard:', currentDate);
+  }, [currentDate]);
   return (
     <View className="flex-1">
       <StyledSafeAreaView className="flex-1" edges={['top']}>
         <CustomExpandableCalendar weekView={false}>
-          <View className="flex-1 p-6 pb-2">
+          <View className="flex-1 px-6 py-4">
             <Text className="mb-4 text-xl font-bold">Exercises</Text>
             {recentWorkouts.length === 0 && (
               <Text className="text-muted-foreground text-center text-sm">No recent workouts</Text>

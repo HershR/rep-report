@@ -1,14 +1,14 @@
-import React, { useCallback, useMemo, useRef } from 'react';
-import { Animated, Easing } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { ActivityIndicator, Animated, Easing, View } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
 // import { agendaItems, getMarkedDates } from '../mocks/agendaItems';
 import { useDate } from '@/hooks/useDate';
+import DatePicker from 'react-native-date-picker';
 import { getTheme, themeColor } from '../lib/calanderTheme';
 import { Button } from './ui/button';
 import { Text } from './ui/text';
 const leftArrowIcon = require('@/assets/images/previous.png');
 const rightArrowIcon = require('@/assets/images/next.png');
-
 // const ITEMS: any[] = agendaItems;
 
 interface Props {
@@ -17,26 +17,12 @@ interface Props {
 }
 const CHEVRON = require('@/assets/images/next.png');
 const CustomExpandableCalendar = ({ weekView, children }: Props) => {
-  const todayISO = useMemo(() => new Date().toISOString().split('T')[0], []);
-  // const [selectedDate, setSelectedDate] = useState(initialDateISO ?? todayISO);
-  const { currentDate, updateDate } = useDate();
-  // const marked = useRef(getMarkedDates());
+  const [open, setOpen] = React.useState(false);
   const theme = useRef(getTheme());
+  const { currentDate, localDate, updateDate } = useDate()!;
   const todayBtnTheme = useRef({
     todayButtonTextColor: themeColor,
   });
-
-  // const onDateChanged = useCallback((date, updateSource) => {
-  //   console.log('ExpandableCalendarScreen onDateChanged: ', date, updateSource);
-  // }, []);
-
-  // const onMonthChange = useCallback(({dateString}) => {
-  //   console.log('ExpandableCalendarScreen onMonthChange: ', dateString);
-  // }, []);
-
-  // const renderItem = useCallback(({ item }: any) => {
-  //   return <AgendaItem item={item} />;
-  // }, []);
 
   const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
   const rotation = useRef(new Animated.Value(0));
@@ -58,18 +44,25 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
         outputRange: ['0deg', '-180deg'],
       });
       return (
-        <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
-          <Text className="text-primary text-xl font-semibold">
-            {date?.toDateString().split(' ').slice(1, 4).join(' ')}
-          </Text>
-          <Animated.Image
-            source={CHEVRON}
-            style={{ transform: [{ rotate: '90deg' }, { rotate: rotationInDegrees }] }}
-          />
-        </Button>
+        <View className="flex-row items-center justify-between">
+          <Button
+            variant={'outline'}
+            className="items-center justify-center"
+            onPress={() => setOpen(true)}>
+            <Text className="text-primary text-xl font-semibold">
+              {localDate?.toDateString().split(' ').slice(1, 3).join(' ') || 'Select Date'}
+            </Text>
+          </Button>
+          <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
+            <Animated.Image
+              source={CHEVRON}
+              style={{ transform: [{ rotate: '90deg' }, { rotate: rotationInDegrees }] }}
+            />
+          </Button>
+        </View>
       );
     },
-    [toggleCalendarExpansion]
+    [toggleCalendarExpansion, currentDate]
   );
 
   const onCalendarToggled = useCallback(
@@ -84,34 +77,56 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
     },
     [updateDate]
   );
+  if (currentDate === null || localDate === undefined || localDate === null)
+    return <ActivityIndicator size="large" className="flex-1" />;
   return (
-    <CalendarProvider
-      date={currentDate.toISOString().split('T')[0]}
-      onDateChanged={handleDateChange}
-      disabledOpacity={0.6}
-      theme={todayBtnTheme.current}>
-      {weekView ? (
-        <WeekCalendar testID={'CalendarWeek'} firstDay={1} />
-      ) : (
-        <ExpandableCalendar
-          testID={'CalendarExpandable'}
-          renderHeader={renderHeader}
-          ref={calendarRef}
-          onCalendarToggled={onCalendarToggled}
-          disablePan
-          hideKnob
-          initialPosition={ExpandableCalendar.positions.CLOSED}
-          theme={theme.current}
-          firstDay={1}
-          leftArrowImageSource={leftArrowIcon}
-          rightArrowImageSource={rightArrowIcon}
-          animateScroll
-          closeOnDayPress
-          allowShadow={false}
-        />
-      )}
-      {children}
-    </CalendarProvider>
+    <>
+      <CalendarProvider
+        date={localDate?.toISOString().split('T')[0]}
+        onDateChanged={(dateISO) => {
+          console.log('Selected date:', dateISO, new Date().toISOString());
+          const dates = dateISO.split('-');
+          const newDate = new Date();
+          newDate.setFullYear(parseInt(dates[0]), parseInt(dates[1]) - 1, parseInt(dates[2]));
+          handleDateChange(dateISO);
+        }}
+        disabledOpacity={0.6}
+        theme={todayBtnTheme.current}>
+        {weekView ? (
+          <WeekCalendar testID={'CalendarWeek'} firstDay={1} />
+        ) : (
+          <ExpandableCalendar
+            testID={'CalendarExpandable'}
+            renderHeader={renderHeader}
+            ref={calendarRef}
+            onCalendarToggled={onCalendarToggled}
+            disablePan
+            hideKnob
+            initialPosition={ExpandableCalendar.positions.CLOSED}
+            theme={theme.current}
+            firstDay={1}
+            leftArrowImageSource={leftArrowIcon}
+            rightArrowImageSource={rightArrowIcon}
+            animateScroll
+            closeOnDayPress
+            allowShadow={false}
+          />
+        )}
+        {children}
+      </CalendarProvider>
+      <DatePicker
+        modal
+        open={open}
+        date={currentDate}
+        onConfirm={(date: Date) => {
+          setOpen(false);
+          updateDate(date);
+        }}
+        onCancel={() => {
+          setOpen(false);
+        }}
+      />
+    </>
   );
 };
 
