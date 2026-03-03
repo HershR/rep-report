@@ -1,5 +1,6 @@
+import { localDayToUtcISO, nowUtcISO, utcISOToLocalDay } from '@/lib/dateUtils';
 import { DateContextType } from '@/types/DateContextTypes';
-import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useMemo, useState } from 'react';
 
 export const DateContext = createContext<DateContextType | null>(null);
 
@@ -7,20 +8,24 @@ interface DateProviderProps {
   children: ReactNode;
 }
 export const DateProvider = ({ children }: DateProviderProps) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [localDate, setLocalDate] = useState(new Date());
-  const updateDate = (newDate: Date) => {
-    setCurrentDate(newDate);
-  };
+  const [currentDate, setCurrentDate] = useState(nowUtcISO());
 
-  useEffect(() => {
-    setLocalDate(new Date(currentDate.getTime() + currentDate.getTimezoneOffset() * 60000));
-  }, [currentDate]);
+  const currentLocalDate = useMemo(() => utcISOToLocalDay(currentDate), [currentDate]);
+
+  const updateDate = useCallback((newDate: string) => {
+    setCurrentDate(newDate);
+  }, []);
+
+  const updateLocalDate = useCallback((localDate: string) => {
+    const utcISO = localDayToUtcISO(localDate);
+    setCurrentDate(utcISO);
+  }, []);
 
   const value = {
     currentDate,
     updateDate,
-    localDate,
+    currentLocalDate,
+    updateLocalDate,
   };
 
   return <DateContext.Provider value={value}>{children}</DateContext.Provider>;

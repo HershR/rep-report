@@ -3,6 +3,7 @@ import { ActivityIndicator, Animated, Easing, View } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
 // import { agendaItems, getMarkedDates } from '../mocks/agendaItems';
 import { useDate } from '@/hooks/useDate';
+import { formatDate } from '@/lib/dateUtils';
 import DatePicker from 'react-native-date-picker';
 import { getTheme, themeColor } from '../lib/calanderTheme';
 import { Button } from './ui/button';
@@ -19,7 +20,7 @@ const CHEVRON = require('@/assets/images/next.png');
 const CustomExpandableCalendar = ({ weekView, children }: Props) => {
   const [open, setOpen] = React.useState(false);
   const theme = useRef(getTheme());
-  const { currentDate, localDate, updateDate } = useDate()!;
+  const { currentLocalDate, updateLocalDate } = useDate()!;
   const todayBtnTheme = useRef({
     todayButtonTextColor: themeColor,
   });
@@ -50,7 +51,7 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
             className="items-center justify-center"
             onPress={() => setOpen(true)}>
             <Text className="text-primary text-xl font-semibold">
-              {localDate?.toDateString().split(' ').slice(1, 3).join(' ') || 'Select Date'}
+              {formatDate(currentLocalDate, 'MMM DD YYYY')}
             </Text>
           </Button>
           <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
@@ -62,7 +63,7 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
         </View>
       );
     },
-    [toggleCalendarExpansion, currentDate]
+    [toggleCalendarExpansion, currentLocalDate]
   );
 
   const onCalendarToggled = useCallback(
@@ -71,25 +72,14 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
     },
     [rotation]
   );
-  const handleDateChange = useCallback(
-    (dateISO: string) => {
-      updateDate(new Date(dateISO));
-    },
-    [updateDate]
-  );
-  if (currentDate === null || localDate === undefined || localDate === null)
+
+  if (currentLocalDate === null || currentLocalDate === undefined)
     return <ActivityIndicator size="large" className="flex-1" />;
   return (
     <>
       <CalendarProvider
-        date={localDate?.toISOString().split('T')[0]}
-        onDateChanged={(dateISO) => {
-          console.log('Selected date:', dateISO, new Date().toISOString());
-          const dates = dateISO.split('-');
-          const newDate = new Date();
-          newDate.setFullYear(parseInt(dates[0]), parseInt(dates[1]) - 1, parseInt(dates[2]));
-          handleDateChange(dateISO);
-        }}
+        date={currentLocalDate}
+        onDateChanged={updateLocalDate}
         disabledOpacity={0.6}
         theme={todayBtnTheme.current}>
         {weekView ? (
@@ -117,10 +107,10 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
       <DatePicker
         modal
         open={open}
-        date={currentDate}
+        date={new Date(currentLocalDate)}
         onConfirm={(date: Date) => {
           setOpen(false);
-          updateDate(date);
+          updateLocalDate(date.toISOString().split('T')[0]);
         }}
         onCancel={() => {
           setOpen(false);

@@ -1,5 +1,6 @@
 export interface DateContextType {
-  currentDate: Date | null;
-  localDate: Date | null;
-  updateDate: (date: Date) => void;
+  currentDate: string;
+  updateDate: (date: string) => void;
+  currentLocalDate: string;
+  updateLocalDate: (localDate: string) => void;
 }
