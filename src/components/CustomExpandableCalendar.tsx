@@ -1,10 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, View } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
 // import { agendaItems, getMarkedDates } from '../mocks/agendaItems';
 import { useDate } from '@/hooks/useDate';
 import { formatDate } from '@/lib/dateUtils';
-import DatePicker from 'react-native-date-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { getTheme, themeColor } from '../lib/calanderTheme';
 import { Button } from './ui/button';
 import { Text } from './ui/text';
@@ -18,9 +18,9 @@ interface Props {
 }
 const CHEVRON = require('@/assets/images/next.png');
 const CustomExpandableCalendar = ({ weekView, children }: Props) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const theme = useRef(getTheme());
-  const { currentLocalDate, updateLocalDate } = useDate()!;
+  const { currentLocalDate, updateLocalDate, currentDate, updateDate } = useDate()!;
   const todayBtnTheme = useRef({
     todayButtonTextColor: themeColor,
   });
@@ -104,18 +104,19 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
         )}
         {children}
       </CalendarProvider>
-      <DatePicker
-        modal
-        open={open}
-        date={new Date(currentLocalDate)}
-        onConfirm={(date: Date) => {
-          setOpen(false);
-          updateLocalDate(date.toISOString().split('T')[0]);
-        }}
-        onCancel={() => {
-          setOpen(false);
-        }}
-      />
+      {open && (
+        <DateTimePicker
+          value={new Date(currentDate)}
+          mode="date"
+          firstDayOfWeek={1}
+          onChange={(event, date) => {
+            setOpen(false);
+            console.log('Selected date:', date);
+            if (date) updateLocalDate(date.toISOString().split('T')[0]);
+          }}
+          maximumDate={new Date()}
+        />
+      )}
     </>
   );
 };
