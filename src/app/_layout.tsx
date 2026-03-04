@@ -1,21 +1,41 @@
 import '@/global.css';
 import { DateProvider } from '@/hooks/DateContext';
 
+import { Text } from '@/components/ui/text';
+import migrations from '@/drizzle/migrations';
 import { NAV_THEME } from '@/lib/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { Stack } from 'expo-router';
+import * as SQLite from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { useUniwind } from 'uniwind';
-
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
-
+const expo = SQLite.openDatabaseSync('db.db');
+const db = drizzle(expo);
 export default function RootLayout() {
   const { theme } = useUniwind();
-
+  const { success, error } = useMigrations(db, migrations);
+  if (error) {
+    return (
+      <View>
+        <Text>Migration error: {error.message}</Text>
+      </View>
+    );
+  }
+  if (!success) {
+    return (
+      <View>
+        <Text>Migration is in progress...</Text>
+      </View>
+    );
+  }
   return (
     <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
       <DateProvider>
