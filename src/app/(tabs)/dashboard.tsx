@@ -1,15 +1,13 @@
 import CustomExpandableCalendar from '@/components/CustomExpandableCalendar';
+import StyledImage from '@/components/StyledImage';
 import StyledSafeAreaView from '@/components/StyledSafeAreaView';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useDate } from '@/hooks/useDate';
 import { FlashList } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import { Clock } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import { withUniwind } from 'uniwind';
-const StyledImage = withUniwind(Image);
 
 export default function Dashboard() {
   const recentWorkouts = [1, 2, 3, 4, 5];

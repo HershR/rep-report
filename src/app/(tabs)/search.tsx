@@ -1,18 +1,33 @@
+import ExerciseSearchComponent from '@/components/ExerciseSearchComponent';
 import StyledSafeAreaView from '@/components/StyledSafeAreaView';
-import { Input } from '@/components/ui/input';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Text } from '@/components/ui/text';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 export default function Search() {
+  const [value, setValue] = React.useState('exercise');
+  const recentWorkouts = [1, 2, 3, 4, 5];
+
   return (
     <View className="flex-1">
-      <StyledSafeAreaView className="flex-1 p-6 pb-2">
-        <View>
-          <Text className="text-3xl font-bold sm:text-lg lg:text-xl">Find Exercise</Text>
-        </View>
-        <View className="relative mt-4 flex-row items-center">
-          {/* <SI className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400" size={20} /> */}
-          <Input placeholder="Search Exercises" className="w-full bg-gray-100 pl-12" />
-        </View>
+      <StyledSafeAreaView className="relative flex-1 p-6 pb-2">
+        <Tabs value={value} onValueChange={setValue} className="flex-1">
+          <TabsList>
+            <TabsTrigger value="exercise" className="flex-1">
+              <Text variant={'large'} className="">
+                Exercise
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger value="workout" className="flex-1">
+              <Text variant={'large'}>Workouts</Text>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="exercise" className="flex-1 gap-y-4">
+            <ExerciseSearchComponent />
+          </TabsContent>
+          <TabsContent value="workout"></TabsContent>
+        </Tabs>
       </StyledSafeAreaView>
     </View>
   );

@@ -1,15 +1,12 @@
+import StyledImage from '@/components/StyledImage';
 import StyledSafeAreaView from '@/components/StyledSafeAreaView';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { FlashList } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import { Clock, Play, TrendingUp } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { withUniwind } from 'uniwind';
-
-const StyledImage = withUniwind(Image);
 
 export default function Home() {
   const weeklyWorkouts = [1, 2, 3];

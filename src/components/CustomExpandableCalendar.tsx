@@ -51,7 +51,7 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
             className="items-center justify-center"
             onPress={() => setOpen(true)}>
             <Text className="text-primary text-xl font-semibold">
-              {formatDate(currentLocalDate, 'MMM DD YYYY')}
+              {formatDate(currentLocalDate, 'MMMM DD YYYY')}
             </Text>
           </Button>
           <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
