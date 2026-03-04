@@ -1,7 +1,7 @@
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Tabs } from 'expo-router';
-import { Dumbbell, Home, LucideIcon, Search, User } from 'lucide-react-native';
+import { Bookmark, Dumbbell, Home, LucideIcon, Search, User } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 interface TabIconProps {
@@ -35,6 +35,16 @@ const _Layout = () => {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon title="Search" tabIcon={Search} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Dashboard',
@@ -45,12 +55,12 @@ const _Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="saved"
         options={{
-          title: 'Search',
+          title: 'Saved',
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon title="Search" tabIcon={Search} focused={focused} />
+            <TabIcon title="Saved" tabIcon={Bookmark} focused={focused} />
           ),
         }}
       />
