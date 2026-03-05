@@ -7,12 +7,12 @@ import * as schema from '@/db/schema';
 import { useDate } from '@/hooks/useDate';
 import { formatDateString } from '@/lib/dateUtils';
 import { FlashList } from '@shopify/flash-list';
+import { eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { drizzle } from 'drizzle-orm/expo-sqlite/driver';
-import { eq } from 'drizzle-orm/sql/expressions/conditions';
 import { Clock } from 'lucide-react-native';
 import { useSQLiteContext } from 'node_modules/expo-sqlite/build/hooks';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 export default function Dashboard() {
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
@@ -31,13 +31,25 @@ export default function Dashboard() {
   );
   const renderWorkouts = () => {
     if (todaysWorkoutsError) {
-      return <Text>Error loading workouts: {todaysWorkoutsError.message}</Text>;
+      return (
+        <View className="flex-1 items-center justify-center">
+          <Text>Error loading workouts: {todaysWorkoutsError.message}</Text>
+        </View>
+      );
     }
     if (!todaysWorkoutsLoaded) {
-      return <Text>Loading workouts...</Text>;
+      return (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" />;
+        </View>
+      );
     }
     if (todaysWorkouts.length === 0) {
-      return <Text>No workouts for {formatDateString(currentLocalDate, 'MMMM DD YYYY')}</Text>;
+      return (
+        <View className="flex-1 items-center justify-center">
+          <Text>No workouts for {formatDateString(currentLocalDate, 'MMMM DD YYYY')}</Text>
+        </View>
+      );
     }
     return (
       <FlashList

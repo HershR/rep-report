@@ -21,9 +21,9 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 const DATABASE_NAME = 'db.db';
-const expo = SQLite.openDatabaseSync(DATABASE_NAME);
-const db = drizzle(expo);
 export default function RootLayout() {
+  const expo = SQLite.openDatabaseSync(DATABASE_NAME);
+  const db = drizzle(expo);
   const { theme } = useUniwind();
   const { success, error } = useMigrations(db, migrations);
   if (error) {

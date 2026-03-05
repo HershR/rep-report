@@ -68,17 +68,27 @@ export default function Home() {
   );
   const renderWorkouts = () => {
     if (!workoutsLoaded) {
-      return <ActivityIndicator size="large" />;
+      return (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      );
     }
     if (workoutsError) {
       return (
-        <Text className="text-center text-sm text-red-500">
-          Error loading workouts: {workoutsError.message}
-        </Text>
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-center text-sm text-red-500">
+            Error loading workouts: {workoutsError.message}
+          </Text>
+        </View>
       );
     }
     if (recentWorkouts.length === 0) {
-      return <Text className="text-muted-foreground text-center text-sm">No recent workouts</Text>;
+      return (
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-muted-foreground text-center text-sm">No recent workouts</Text>
+        </View>
+      );
     }
     return (
       <FlashList
