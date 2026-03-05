@@ -2,7 +2,6 @@ import '@/global.css';
 import { DateProvider } from '@/hooks/DateContext';
 
 import { Text } from '@/components/ui/text';
-import migrations from '@/drizzle/migrations';
 import { NAV_THEME } from '@/lib/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
@@ -10,14 +9,19 @@ import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { Stack } from 'expo-router';
 import * as SQLite from 'expo-sqlite';
+import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { Suspense } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { useUniwind } from 'uniwind';
+import migrations from '../../drizzle/migrations';
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
-const expo = SQLite.openDatabaseSync('db.db');
+const DATABASE_NAME = 'db.db';
+const expo = SQLite.openDatabaseSync(DATABASE_NAME);
 const db = drizzle(expo);
 export default function RootLayout() {
   const { theme } = useUniwind();
@@ -37,14 +41,21 @@ export default function RootLayout() {
     );
   }
   return (
-    <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
-      <DateProvider>
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <PortalHost />
-      </DateProvider>
-    </ThemeProvider>
+    <Suspense fallback={<ActivityIndicator size="large" />}>
+      <SQLiteProvider
+        databaseName={DATABASE_NAME}
+        options={{ enableChangeListener: true }}
+        useSuspense>
+        <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
+          <DateProvider>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+            <PortalHost />
+          </DateProvider>
+        </ThemeProvider>
+      </SQLiteProvider>
+    </Suspense>
   );
 }
