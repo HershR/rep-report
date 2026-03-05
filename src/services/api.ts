@@ -1,12 +1,14 @@
+import { ExerciseInfo, ExerciseSuggestion } from '@/types/WgerApiTypes';
+
 export const WGER_CONFIG = {
-  BASE_URL: "https://wger.de",
+  BASE_URL: 'https://wger.de/api/v2',
   header: {
-    accept: "application/json",
+    accept: 'application/json',
   },
 };
 
 export const fetchExcercises = async ({
-  category = "",
+  category = '',
   equipment = [],
   muscles = [],
   offset = 0,
@@ -19,36 +21,34 @@ export const fetchExcercises = async ({
   limit: number;
 }): Promise<{ results: ExerciseInfo[]; count: number }> => {
   const endpoint =
-    `${WGER_CONFIG.BASE_URL}/api/v2/exerciseinfo/?` +
+    `${WGER_CONFIG.BASE_URL}/exerciseinfo/?` +
     `offset=${offset}&limit=${limit}` +
-    (category ? `&category=${category}` : "") +
-    equipment.map((x) => `&equipment=${x}`).join("") +
-    muscles.map((x) => `&muscles=${x}`).join("");
+    (category ? `&category=${category}` : '') +
+    equipment.map((x) => `&equipment=${x}`).join('') +
+    muscles.map((x) => `&muscles=${x}`).join('');
   const response = await fetch(endpoint, {
-    method: "GET",
+    method: 'GET',
     headers: WGER_CONFIG.header,
   });
   if (!response.ok) {
     // @ts-ignore
-    throw new Error("Failed to fetch exercies", response.statusText);
+    throw new Error('Failed to fetch exercies', response.statusText);
   }
 
   const data = await response.json();
   return data;
 };
 
-export const fetchExerciseDetail = async (
-  exerciseId: string
-): Promise<ExerciseInfo> => {
+export const fetchExerciseDetail = async (exerciseId: string): Promise<ExerciseInfo> => {
   try {
-    const endpoint = `${WGER_CONFIG.BASE_URL}/api/v2/exerciseinfo/${exerciseId}?offset=0`;
+    const endpoint = `${WGER_CONFIG.BASE_URL}/exerciseinfo/${exerciseId}?offset=0`;
     const response = await fetch(endpoint, {
-      method: "GET",
+      method: 'GET',
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
       // @ts-ignore
-      throw new Error("Failed to fetch exercie details", response.statusText);
+      throw new Error('Failed to fetch exercie details', response.statusText);
     }
     const data: ExerciseInfo = await response.json();
     return data;
@@ -64,14 +64,14 @@ export const searchExercise = async ({
   query: string;
 }): Promise<ExerciseSuggestion[]> => {
   try {
-    const endpoint = `${WGER_CONFIG.BASE_URL}/api/v2/exercise/search/?term=${query}&language=en`;
+    const endpoint = `${WGER_CONFIG.BASE_URL}/exercise/search/?term=${query}&language=en`;
     const response = await fetch(endpoint, {
-      method: "GET",
+      method: 'GET',
       headers: WGER_CONFIG.header,
     });
     if (!response.ok) {
       // @ts-ignore
-      throw new Error("Failed to fetch exercies search", response.statusText);
+      throw new Error('Failed to fetch exercies search', response.statusText);
     }
     const data = await response.json();
     return data.suggestions;
