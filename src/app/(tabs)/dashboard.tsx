@@ -5,7 +5,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import * as schema from '@/db/schema';
 import { useDate } from '@/hooks/useDate';
-import { formatDate } from '@/lib/dateUtils';
+import { formatDateString } from '@/lib/dateUtils';
 import { FlashList } from '@shopify/flash-list';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { drizzle } from 'drizzle-orm/expo-sqlite/driver';
@@ -37,7 +37,7 @@ export default function Dashboard() {
       return <Text>Loading workouts...</Text>;
     }
     if (todaysWorkouts.length === 0) {
-      return <Text>No workouts for {formatDate(currentLocalDate, 'MMMM DD YYYY')}</Text>;
+      return <Text>No workouts for {formatDateString(currentLocalDate, 'MMMM DD YYYY')}</Text>;
     }
     return (
       <FlashList

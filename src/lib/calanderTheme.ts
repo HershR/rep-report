@@ -1,18 +1,20 @@
 import { Platform } from 'react-native';
+import { Theme } from 'react-native-calendars/src/types';
 import { THEME } from './theme';
 export const themeColor = '#00AAAF';
 export const lightThemeColor = '#f2f7f7';
 
-export function getTheme(isDark: boolean = false) {
+export function getTheme(isDark: boolean = false): Theme {
   const primaryColor = isDark ? THEME.dark.primary : THEME.light.primary;
   const secondaryColor = isDark ? THEME.dark.secondary : THEME.light.secondary;
   const disabledColor = isDark ? THEME.dark.mutedForeground : THEME.light.mutedForeground;
   return {
+    backgroundColor: 'transparent',
     // arrows
     arrowColor: primaryColor,
     arrowStyle: { padding: 0 },
     // knob
-    expandableKnobColor: primaryColor,
+    // expandableKnobColor: primaryColor,
     // month
     monthTextColor: primaryColor,
     textMonthFontSize: 16,

@@ -3,7 +3,7 @@ import { ActivityIndicator, Animated, Easing, View } from 'react-native';
 import { CalendarProvider, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
 // import { agendaItems, getMarkedDates } from '../mocks/agendaItems';
 import { useDate } from '@/hooks/useDate';
-import { formatDate } from '@/lib/dateUtils';
+import { formatDateString, nowUtcISO, utcISOToLocalDay } from '@/lib/dateUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getTheme, themeColor } from '../lib/calanderTheme';
 import { Button } from './ui/button';
@@ -51,7 +51,7 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
             className="items-center justify-center"
             onPress={() => setOpen(true)}>
             <Text className="text-primary text-xl font-semibold">
-              {formatDate(currentLocalDate, 'MMMM DD YYYY')}
+              {formatDateString(currentLocalDate, 'MMMM DD YYYY')}
             </Text>
           </Button>
           <Button variant={'ghost'} onPress={toggleCalendarExpansion}>
@@ -100,6 +100,8 @@ const CustomExpandableCalendar = ({ weekView, children }: Props) => {
             animateScroll
             closeOnDayPress
             allowShadow={false}
+            maxDate={utcISOToLocalDay(nowUtcISO())}
+            style={{ backgroundColor: '#aDaDDb' }}
           />
         )}
         {children}
