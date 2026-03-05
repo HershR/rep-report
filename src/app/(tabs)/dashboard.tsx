@@ -12,6 +12,7 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { drizzle } from 'drizzle-orm/expo-sqlite/driver';
 import { Clock } from 'lucide-react-native';
 import { useSQLiteContext } from 'node_modules/expo-sqlite/build/hooks';
+import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 export default function Dashboard() {
   const db = useSQLiteContext();
@@ -40,7 +41,7 @@ export default function Dashboard() {
     if (!todaysWorkoutsLoaded) {
       return (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" />;
+          <ActivityIndicator size="large" />
         </View>
       );
     }
