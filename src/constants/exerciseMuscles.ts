@@ -1,77 +1,17 @@
-export const wgerMuscles = [
-  {
-    id: 2,
-    name: "Anterior deltoid",
-    name_en: "Shoulders",
-  },
-  {
-    id: 1,
-    name: "Biceps brachii",
-    name_en: "Biceps",
-  },
-  {
-    id: 11,
-    name: "Biceps femoris",
-    name_en: "Hamstrings",
-  },
-  {
-    id: 13,
-    name: "Brachialis",
-    name_en: "",
-  },
-  {
-    id: 7,
-    name: "Gastrocnemius",
-    name_en: "Calves",
-  },
-  {
-    id: 8,
-    name: "Gluteus maximus",
-    name_en: "Glutes",
-  },
-  {
-    id: 12,
-    name: "Latissimus dorsi",
-    name_en: "Lats",
-  },
-  {
-    id: 14,
-    name: "Obliquus externus abdominis",
-    name_en: "",
-  },
-  {
-    id: 4,
-    name: "Pectoralis major",
-    name_en: "Chest",
-  },
-  {
-    id: 10,
-    name: "Quadriceps femoris",
-    name_en: "Quads",
-  },
-  {
-    id: 6,
-    name: "Rectus abdominis",
-    name_en: "Abs",
-  },
-  {
-    id: 3,
-    name: "Serratus anterior",
-    name_en: "",
-  },
-  {
-    id: 15,
-    name: "Soleus",
-    name_en: "",
-  },
-  {
-    id: 9,
-    name: "Trapezius",
-    name_en: "",
-  },
-  {
-    id: 5,
-    name: "Triceps brachii",
-    name_en: "Triceps",
-  },
-];
+export const wgerMuscles = new Map<number, any>([
+  [2, { id: 2, name: 'Anterior deltoid', name_en: 'Shoulders' }],
+  [1, { id: 1, name: 'Biceps brachii', name_en: 'Biceps' }],
+  [11, { id: 11, name: 'Biceps femoris', name_en: 'Hamstrings' }],
+  [13, { id: 13, name: 'Brachialis', name_en: '' }],
+  [7, { id: 7, name: 'Gastrocnemius', name_en: 'Calves' }],
+  [8, { id: 8, name: 'Gluteus maximus', name_en: 'Glutes' }],
+  [12, { id: 12, name: 'Latissimus dorsi', name_en: 'Lats' }],
+  [14, { id: 14, name: 'Obliquus externus abdominis', name_en: '' }],
+  [4, { id: 4, name: 'Pectoralis major', name_en: 'Chest' }],
+  [10, { id: 10, name: 'Quadriceps femoris', name_en: 'Quads' }],
+  [6, { id: 6, name: 'Rectus abdominis', name_en: 'Abs' }],
+  [3, { id: 3, name: 'Serratus anterior', name_en: '' }],
+  [15, { id: 15, name: 'Soleus', name_en: '' }],
+  [9, { id: 9, name: 'Trapezius', name_en: '' }],
+  [5, { id: 5, name: 'Triceps brachii', name_en: 'Triceps' }],
+]);
