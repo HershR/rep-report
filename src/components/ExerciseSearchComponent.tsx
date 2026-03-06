@@ -1,14 +1,73 @@
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
+import { fetchExcercises } from '@/services/api';
+import useFetch from '@/services/useFetch';
 import { FlashList } from '@shopify/flash-list';
 import { LucideIcon, Search as SI } from 'lucide-react-native';
-import React from 'react';
-import { Text, View } from 'react-native';
-import StyledImage from './StyledImage';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
+import ExerciseCard from './ExerciseCard';
 
 function ExerciseSearchComponent() {
-  const exercise = [1, 2, 3, 4, 5];
   const [searchQuery, setSearchQuery] = React.useState('');
+  const {
+    data: searchResults,
+    loading: searchResultsLoading,
+    error,
+    refetch: loadResults,
+    reset,
+  } = useFetch(
+    () =>
+      fetchExcercises({
+        offset: 0,
+        limit: 20,
+        name: searchQuery.trim(),
+      }).then((data) => {
+        const res = data.results.filter(
+          (x) => !!x.translations.find((y) => y.language === 2)?.name
+        );
+        return {
+          results: res,
+          count: res.length,
+        };
+      }),
+    false
+  );
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      await loadResults();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+  const renderSearchResults = () => {
+    if (searchResultsLoading) {
+      return (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <Text className="text-destructive text-lg">
+          Failed to load exercises. Please try again.
+        </Text>
+      );
+    }
+    if (searchResults?.results.length === 0) {
+      return <Text className="text-muted-foreground text-lg">No Exercise Found</Text>;
+    }
+
+    return (
+      <FlashList
+        data={searchResults?.results}
+        ItemSeparatorComponent={() => <View className="h-4 w-full" />}
+        renderItem={({ item, index }) => {
+          return <ExerciseCard key={index} {...item} />;
+        }}
+      />
+    );
+  };
 
   return (
     <>
@@ -21,29 +80,7 @@ function ExerciseSearchComponent() {
           onChangeText={setSearchQuery}
         />
       </View>
-      {exercise.length === 0 && (
-        <Text className="text-muted-foreground text-lg">No Exercise Found</Text>
-      )}
-      <FlashList
-        data={exercise}
-        renderItem={({ item, index }) => (
-          <View
-            key={index}
-            className="mb-4 flex flex-row items-center gap-4 rounded-2xl bg-gray-100 p-4 dark:bg-gray-700">
-            <StyledImage
-              source={{
-                uri: 'https://picsum.photos/200/200?random=' + index,
-              }}
-              alt="Workout Thumbnail"
-              className="h-16 w-16 rounded-lg"
-              contentFit="cover"
-            />
-            <View>
-              <Text className="font-medium">Evening Yoga</Text>
-            </View>
-          </View>
-        )}
-      />
+      {renderSearchResults()}
     </>
   );
 }
