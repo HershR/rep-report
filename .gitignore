@@ -41,3 +41,4 @@ nativewind-env.d.ts
 .vscode/
 /android
 /.idea
+wger.yaml
