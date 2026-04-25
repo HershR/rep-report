@@ -59,7 +59,7 @@ Design principles:
 
 Use:
 
-- Expo
+- Expo SDK 54
 - React Native
 - TypeScript
 - Expo Router
