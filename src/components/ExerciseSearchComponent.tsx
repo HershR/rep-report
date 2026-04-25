@@ -10,6 +10,10 @@ import ExerciseCard from './ExerciseCard';
 
 function ExerciseSearchComponent() {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(0);
+  const [totalCount, setTotalCount] = React.useState(0);
+  const [hasNext, setHasNext] = React.useState(true);
+  const [hasPrevious, setHasPrevious] = React.useState(false);
   const {
     data: searchResults,
     loading: searchResultsLoading,
@@ -23,6 +27,9 @@ function ExerciseSearchComponent() {
         limit: 20,
         name: searchQuery.trim(),
       }).then((data) => {
+        setTotalCount(data.count);
+        setHasNext(!!data.next);
+        setHasPrevious(!!data.previous);
         const res = data.results.filter(
           (x) => !!x.translations.find((y) => y.language === 2)?.name
         );
@@ -59,19 +66,33 @@ function ExerciseSearchComponent() {
     }
 
     return (
-      <FlashList
-        data={searchResults?.results}
-        ItemSeparatorComponent={() => <View className="h-4 w-full" />}
-        renderItem={({ item, index }) => {
-          return <ExerciseCard key={index} {...item} />;
-        }}
-      />
+      //pagination can be added here using hasNext and hasPrevious
+      <>
+        {/* <View className="w-full flex-row items-center justify-center gap-2 p-2">
+          <Button
+            disabled={!hasPrevious}
+            onPress={() => setCurrentPage((prev) => Math.max(0, prev - 1))}>
+            <Icon as={ChevronLeft} size={20} className="text-muted-foreground" />
+          </Button>
+          <Text className="text-lg">{currentPage + 1}</Text>
+          <Button disabled={!hasNext} onPress={() => setCurrentPage((prev) => prev + 1)}>
+            <Icon as={ChevronRight} size={20} className="text-muted-foreground" />
+          </Button>
+        </View> */}
+        <FlashList
+          data={searchResults?.results}
+          ItemSeparatorComponent={() => <View className="h-4 w-full" />}
+          renderItem={({ item, index }) => {
+            return <ExerciseCard key={index} {...item} />;
+          }}
+        />
+      </>
     );
   };
 
   return (
-    <>
-      <View className="border-border flex-row items-center gap-2 rounded-lg border-2 px-4 py-2">
+    <View className="flex-1 gap-4">
+      <View className="bg-secondary flex-row items-center gap-2 rounded-2xl px-4 py-2">
         <Icon as={SI as LucideIcon} className="text-muted-foreground" size={20} />
         <Input
           placeholder="Search Exercises"
@@ -81,7 +102,7 @@ function ExerciseSearchComponent() {
         />
       </View>
       {renderSearchResults()}
-    </>
+    </View>
   );
 }
 

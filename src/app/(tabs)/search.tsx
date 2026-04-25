@@ -23,7 +23,7 @@ export default function Search() {
               <Text variant={'large'}>Workouts</Text>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="exercise" className="flex-1 gap-y-4">
+          <TabsContent value="exercise" className="flex-1 pt-3">
             <ExerciseSearchComponent />
           </TabsContent>
           <TabsContent value="workout"></TabsContent>

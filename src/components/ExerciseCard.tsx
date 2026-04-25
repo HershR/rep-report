@@ -14,7 +14,7 @@ function ExerciseCard({ id, translations, images, category, muscles, equipment }
     <TouchableOpacity
       className="bg-background border-border flex flex-row items-center gap-4 rounded-2xl border p-3"
       onPress={() => router.push(`./exercise/${id}`)}>
-      <View className="h-24 w-24 items-center justify-center rounded-2xl bg-gray-200">
+      <View className="h-24 w-24 items-center justify-center rounded-2xl bg-white">
         {images.length > 0 ? (
           <StyledImage
             source={{ uri: images[0].image }}
