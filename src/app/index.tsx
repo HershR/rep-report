@@ -1,15 +1,8 @@
-import { Text, View } from "react-native";
+import { Redirect, type Href } from "expo-router";
+
+/** Valid route; typed routes union updates after `expo start` generates `.expo/types`. */
+const HOME = "/(tabs)/home" as Href;
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  return <Redirect href={HOME} />;
 }
