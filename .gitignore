@@ -42,3 +42,5 @@ nativewind-env.d.ts
 /android
 /.idea
 wger.yaml
+.drizzle/
+*.db
