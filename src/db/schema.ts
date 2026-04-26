@@ -51,6 +51,23 @@ export const workoutTemplateExercises = sqliteTable(
   (table) => [index("wte_template_id_idx").on(table.templateId)],
 );
 
+export const workoutTemplateSets = sqliteTable(
+  "workout_template_sets",
+  {
+    id: text("id").primaryKey().notNull(),
+    templateExerciseId: text("template_exercise_id")
+      .notNull()
+      .references(() => workoutTemplateExercises.id, { onDelete: "cascade" }),
+    orderIndex: integer("order_index").notNull().default(0),
+    targetReps: integer("target_reps"),
+    targetWeight: real("target_weight"),
+    targetDurationSeconds: integer("target_duration_seconds"),
+    setType: text("set_type").notNull().default("normal"),
+    ...timestampColumns,
+  },
+  (table) => [index("wts_template_exercise_id_idx").on(table.templateExerciseId)],
+);
+
 export const workoutSessions = sqliteTable(
   "workout_sessions",
   {
@@ -142,6 +159,7 @@ export const appSettings = sqliteTable("app_settings", {
 export type Exercise = typeof exercises.$inferSelect;
 export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
 export type WorkoutTemplateExercise = typeof workoutTemplateExercises.$inferSelect;
+export type WorkoutTemplateSet = typeof workoutTemplateSets.$inferSelect;
 export type WorkoutSession = typeof workoutSessions.$inferSelect;
 export type WorkoutSessionExercise = typeof workoutSessionExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;

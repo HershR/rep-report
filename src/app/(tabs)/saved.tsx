@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native";
 
@@ -6,6 +6,9 @@ import { CustomCard, CustomScreen, CustomText } from "@/components/common";
 import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import type { Exercise } from "@/features/exercises/types";
+import { TemplateCard } from "@/features/templates/components/TemplateCard";
+import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import type { WorkoutTemplate } from "@/features/templates/types";
 import { spacing, useThemeColors } from "@/theme";
 import { FlashList } from "@shopify/flash-list";
 
@@ -14,7 +17,14 @@ export default function SavedScreen() {
   const colors = useThemeColors();
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
+  const {
+    templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+    deleteWorkoutTemplate,
+  } = useWorkoutTemplates();
   const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
 
   const closeRemoveModal = () => setExerciseToRemove(null);
 
@@ -24,12 +34,20 @@ export default function SavedScreen() {
     closeRemoveModal();
   };
 
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    await deleteWorkoutTemplate(templateToDelete.id);
+    setTemplateToDelete(null);
+  };
+
   return (
     <CustomScreen scroll>
       <CustomText variant="title">Saved</CustomText>
-      <CustomText muted style={styles.subtitle}>
-        Favorite exercises saved offline.
-      </CustomText>
+      <CustomText muted style={styles.subtitle}>Manage saved exercises and templates.</CustomText>
+
+      <View style={styles.sectionHeader}>
+        <CustomText>Saved Exercises</CustomText>
+      </View>
 
       {isLoading && (
         <View
@@ -82,6 +100,47 @@ export default function SavedScreen() {
         />
       </View>
 
+      <View style={styles.sectionHeader}>
+        <CustomText>Workout Templates</CustomText>
+        <Pressable onPress={() => router.push("/workout/template/new" as Href)}>
+          <CustomText muted>Create New</CustomText>
+        </Pressable>
+      </View>
+
+      {templatesLoading ? (
+        <View style={{ alignItems: "center", marginTop: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : null}
+
+      {!templatesLoading && templatesError ? (
+        <CustomCard style={styles.gap}>
+          <CustomText>Could not load templates.</CustomText>
+        </CustomCard>
+      ) : null}
+
+      {!templatesLoading && !templatesError && templates.length === 0 ? (
+        <CustomCard style={styles.gap}>
+          <CustomText>No workout templates yet. Create one to start faster.</CustomText>
+        </CustomCard>
+      ) : null}
+
+      <View style={styles.gap}>
+        {templates.map((template) => (
+          <TemplateCard
+            key={template.id}
+            template={template}
+            onPress={() => {
+              router.push({
+                pathname: "/workout/template/[templateId]",
+                params: { templateId: template.id },
+              } as unknown as Href);
+            }}
+            onDelete={() => setTemplateToDelete(template)}
+          />
+        ))}
+      </View>
+
       <Modal
         transparent
         visible={Boolean(exerciseToRemove)}
@@ -113,6 +172,37 @@ export default function SavedScreen() {
           </CustomCard>
         </View>
       </Modal>
+
+      <Modal
+        transparent
+        visible={Boolean(templateToDelete)}
+        animationType="fade"
+        onRequestClose={() => setTemplateToDelete(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <CustomCard
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <CustomText>Delete template?</CustomText>
+            <CustomText muted style={styles.modalCopy}>
+              {templateToDelete
+                ? `${templateToDelete.name} will be permanently removed.`
+                : "This template will be permanently removed."}
+            </CustomText>
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setTemplateToDelete(null)} style={styles.modalButton}>
+                <CustomText muted>Cancel</CustomText>
+              </Pressable>
+              <Pressable onPress={() => void confirmDeleteTemplate()} style={styles.modalButton}>
+                <CustomText>Delete</CustomText>
+              </Pressable>
+            </View>
+          </CustomCard>
+        </View>
+      </Modal>
     </CustomScreen>
   );
 }
@@ -120,6 +210,12 @@ export default function SavedScreen() {
 const styles = StyleSheet.create({
   subtitle: { marginTop: spacing.xs },
   gap: { marginTop: spacing.lg },
+  sectionHeader: {
+    marginTop: spacing.lg,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.35)",
