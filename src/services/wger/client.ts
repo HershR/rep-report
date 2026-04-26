@@ -1,4 +1,7 @@
-import type { ExerciseFilterOption, ExerciseSearchPage } from "@/features/exercises/types";
+import type {
+  ExerciseFilterOption,
+  ExerciseSearchPage,
+} from "@/features/exercises/types";
 import {
   mapWgerExerciseToSearchResult,
   mapWgerSearchResponse,
@@ -53,6 +56,7 @@ export async function searchWgerExercises(
   const params = new URLSearchParams({
     offset: String(toOffset(page, limit)),
     limit: String(limit),
+    language__code: "en",
   });
 
   if (request.query?.trim()) params.set("name__search", request.query.trim());
@@ -71,7 +75,9 @@ export async function getWgerExerciseById(exerciseId: number) {
   return mapWgerExerciseToSearchResult(response);
 }
 
-export async function getWgerExerciseCategories(): Promise<ExerciseFilterOption[]> {
+export async function getWgerExerciseCategories(): Promise<
+  ExerciseFilterOption[]
+> {
   const url = `${WGER_BASE_URL}/exercisecategory/?limit=200`;
   const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
   return mapFilterOptions(response.results);

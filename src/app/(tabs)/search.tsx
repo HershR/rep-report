@@ -1,15 +1,9 @@
 import { useRouter } from "expo-router";
-import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { ExerciseFilterModal } from "@/features/exercises/components/ExerciseFilterModal";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useExerciseSearch } from "@/features/exercises/hooks/useExerciseSearch";
 import type { ExerciseFilterOption } from "@/features/exercises/types";
@@ -79,16 +73,6 @@ export default function SearchScreen() {
       return;
     }
     await saveFavoriteExercise(exercise);
-  };
-
-  const toggleId = (
-    id: number,
-    values: number[],
-    setValues: Dispatch<SetStateAction<number[]>>,
-  ) => {
-    setValues((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
   };
 
   const clearFilters = () => {
@@ -214,52 +198,32 @@ export default function SearchScreen() {
           )}
         />
       </View>
-
-      <Modal
+      <ExerciseFilterModal
         visible={filterModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setFilterModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <CustomText>Filters</CustomText>
-              <Pressable onPress={() => setFilterModalVisible(false)}>
-                <CustomText muted>Done</CustomText>
-              </Pressable>
-            </View>
-
-            {renderFilterSection({
-              title: "Categories",
-              options: categoryOptions,
-              selectedIds: selectedCategoryIds,
-              onToggle: (id) =>
-                toggleId(id, selectedCategoryIds, setSelectedCategoryIds),
-            })}
-
-            {renderFilterSection({
-              title: "Equipment",
-              options: equipmentOptions,
-              selectedIds: selectedEquipmentIds,
-              onToggle: (id) =>
-                toggleId(id, selectedEquipmentIds, setSelectedEquipmentIds),
-            })}
-
-            {renderFilterSection({
-              title: "Muscles",
-              options: muscleOptions,
-              selectedIds: selectedMuscleIds,
-              onToggle: (id) => toggleId(id, selectedMuscleIds, setSelectedMuscleIds),
-            })}
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setFilterModalVisible(false)}
+        categoryOptions={categoryOptions}
+        equipmentOptions={equipmentOptions}
+        muscleOptions={muscleOptions}
+        selectedCategoryIds={selectedCategoryIds}
+        selectedEquipmentIds={selectedEquipmentIds}
+        selectedMuscleIds={selectedMuscleIds}
+        onToggleCategory={(id) =>
+          setSelectedCategoryIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+          )
+        }
+        onToggleEquipment={(id) =>
+          setSelectedEquipmentIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+          )
+        }
+        onToggleMuscle={(id) =>
+          setSelectedMuscleIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+          )
+        }
+        onClearAll={clearFilters}
+      />
     </CustomScreen>
   );
 }
@@ -281,44 +245,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  filterSection: {
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  chipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  chip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
   openFilterButton: {
     borderWidth: 1,
     borderRadius: spacing.sm,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  modalContent: {
-    maxHeight: "75%",
-    borderTopLeftRadius: spacing.md,
-    borderTopRightRadius: spacing.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
   },
   results: {
     marginTop: spacing.md,
@@ -340,42 +271,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
 });
-
-function renderFilterSection({
-  title,
-  options,
-  selectedIds,
-  onToggle,
-}: {
-  title: string;
-  options: ExerciseFilterOption[];
-  selectedIds: number[];
-  onToggle: (id: number) => void;
-}) {
-  if (options.length === 0) return null;
-
-  return (
-    <View style={styles.filterSection}>
-      <CustomText muted>{title}</CustomText>
-      <View style={styles.chipsRow}>
-        {options.map((option) => {
-          const selected = selectedIds.includes(option.id);
-          return (
-            <Pressable
-              key={option.id}
-              onPress={() => onToggle(option.id)}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
-            >
-              <CustomText>{selected ? `\u2713 ${option.name}` : option.name}</CustomText>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
