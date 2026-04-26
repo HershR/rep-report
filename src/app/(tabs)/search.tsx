@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   StyleSheet,
   TextInput,
@@ -14,19 +14,47 @@ import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExer
 import { useExerciseSearch } from "@/features/exercises/hooks/useExerciseSearch";
 import type { ExerciseFilterOption } from "@/features/exercises/types";
 import {
-  getWgerEquipment,
-  getWgerExerciseCategories,
-  getWgerMuscles,
-} from "@/services/wger/client";
+  wgerCategories,
+  wgerEquipment,
+  wgerMuscles,
+} from "@/services/wger/constants";
 import { spacing, useThemeColors } from "@/theme";
 
 export default function SearchScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<number[]>([]);
   const [selectedMuscleIds, setSelectedMuscleIds] = useState<number[]>([]);
+
+  const categoryOptions = useMemo<ExerciseFilterOption[]>(
+    () =>
+      Object.entries(wgerCategories).map(([id, name]) => ({
+        id: Number(id),
+        name,
+      })),
+    [],
+  );
+
+  const equipmentOptions = useMemo<ExerciseFilterOption[]>(
+    () =>
+      Object.entries(wgerEquipment).map(([id, name]) => ({
+        id: Number(id),
+        name,
+      })),
+    [],
+  );
+
+  const muscleOptions = useMemo<ExerciseFilterOption[]>(
+    () =>
+      wgerMuscles.map((item) => ({
+        id: item.id,
+        name: item.name_en || item.name,
+      })),
+    [],
+  );
 
   const filters = useMemo(
     () => ({
@@ -44,24 +72,6 @@ export default function SearchScreen() {
     useExerciseSearch(filters);
   const { saveFavoriteExercise, removeFavoriteExercise } =
     useFavoriteExercises();
-
-  const categoriesQuery = useQuery({
-    queryKey: ["wger-filter-categories"],
-    queryFn: getWgerExerciseCategories,
-    staleTime: 5 * 60_000,
-  });
-
-  const equipmentQuery = useQuery({
-    queryKey: ["wger-filter-equipment"],
-    queryFn: getWgerEquipment,
-    staleTime: 5 * 60_000,
-  });
-
-  const musclesQuery = useQuery({
-    queryKey: ["wger-filter-muscles"],
-    queryFn: getWgerMuscles,
-    staleTime: 5 * 60_000,
-  });
 
   const onToggleFavorite = async (exercise: (typeof items)[number]) => {
     if (exercise.isFavorite) {
@@ -87,11 +97,10 @@ export default function SearchScreen() {
     setSelectedMuscleIds([]);
   };
 
-  const filterLoadError =
-    categoriesQuery.isError || equipmentQuery.isError || musclesQuery.isError;
-
-  const filterLoading =
-    categoriesQuery.isLoading || equipmentQuery.isLoading || musclesQuery.isLoading;
+  const activeFilterCount =
+    selectedCategoryIds.length +
+    selectedEquipmentIds.length +
+    selectedMuscleIds.length;
 
   return (
     <CustomScreen scroll>
@@ -116,39 +125,22 @@ export default function SearchScreen() {
       />
 
       <View style={styles.filtersHeader}>
-        <CustomText>Filters</CustomText>
-        <Pressable onPress={clearFilters}>
-          <CustomText muted>Clear</CustomText>
+        <Pressable
+          onPress={() => setFilterModalVisible(true)}
+          style={[
+            styles.openFilterButton,
+            { borderColor: colors.border, backgroundColor: colors.surface },
+          ]}
+        >
+          <CustomText>{`Filters (${activeFilterCount})`}</CustomText>
         </Pressable>
+
+        {activeFilterCount > 0 ? (
+          <Pressable onPress={clearFilters}>
+            <CustomText muted>Clear</CustomText>
+          </Pressable>
+        ) : null}
       </View>
-
-      {filterLoading ? <CustomText muted>Loading filters...</CustomText> : null}
-      {filterLoadError ? (
-        <CustomText muted style={styles.filterError}>
-          Some filters unavailable right now. Search still works.
-        </CustomText>
-      ) : null}
-
-      {renderFilterSection({
-        title: "Categories",
-        options: categoriesQuery.data ?? [],
-        selectedIds: selectedCategoryIds,
-        onToggle: (id) => toggleId(id, selectedCategoryIds, setSelectedCategoryIds),
-      })}
-
-      {renderFilterSection({
-        title: "Equipment",
-        options: equipmentQuery.data ?? [],
-        selectedIds: selectedEquipmentIds,
-        onToggle: (id) => toggleId(id, selectedEquipmentIds, setSelectedEquipmentIds),
-      })}
-
-      {renderFilterSection({
-        title: "Muscles",
-        options: musclesQuery.data ?? [],
-        selectedIds: selectedMuscleIds,
-        onToggle: (id) => toggleId(id, selectedMuscleIds, setSelectedMuscleIds),
-      })}
 
       {isLoading && (
         <View
@@ -222,6 +214,52 @@ export default function SearchScreen() {
           )}
         />
       </View>
+
+      <Modal
+        visible={filterModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <CustomText>Filters</CustomText>
+              <Pressable onPress={() => setFilterModalVisible(false)}>
+                <CustomText muted>Done</CustomText>
+              </Pressable>
+            </View>
+
+            {renderFilterSection({
+              title: "Categories",
+              options: categoryOptions,
+              selectedIds: selectedCategoryIds,
+              onToggle: (id) =>
+                toggleId(id, selectedCategoryIds, setSelectedCategoryIds),
+            })}
+
+            {renderFilterSection({
+              title: "Equipment",
+              options: equipmentOptions,
+              selectedIds: selectedEquipmentIds,
+              onToggle: (id) =>
+                toggleId(id, selectedEquipmentIds, setSelectedEquipmentIds),
+            })}
+
+            {renderFilterSection({
+              title: "Muscles",
+              options: muscleOptions,
+              selectedIds: selectedMuscleIds,
+              onToggle: (id) => toggleId(id, selectedMuscleIds, setSelectedMuscleIds),
+            })}
+          </View>
+        </View>
+      </Modal>
     </CustomScreen>
   );
 }
@@ -258,8 +296,29 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
   },
-  filterError: {
-    marginTop: spacing.xs,
+  openFilterButton: {
+    borderWidth: 1,
+    borderRadius: spacing.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  modalContent: {
+    maxHeight: "75%",
+    borderTopLeftRadius: spacing.md,
+    borderTopRightRadius: spacing.md,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
   },
   results: {
     marginTop: spacing.md,
