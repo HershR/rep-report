@@ -7,7 +7,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { initializeDatabase } from "@/db/init";
 import { getColors } from "@/theme";
-
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { sqlite } from "@/db/client";
 export default function RootLayout() {
   const scheme = useColorScheme();
   const colors = getColors(scheme);
@@ -17,7 +18,7 @@ export default function RootLayout() {
       console.error("DB init failed", error);
     });
   }, []);
-
+  useDrizzleStudio(sqlite);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
