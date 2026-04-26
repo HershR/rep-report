@@ -1,5 +1,4 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomText } from "@/components/common";
 import type { Exercise } from "@/features/exercises/types";
@@ -36,30 +35,33 @@ export function AddSavedExerciseSheet({
           {favorites.length === 0 ? (
             <CustomText muted>No saved exercises available.</CustomText>
           ) : (
-            <FlashList
-              data={favorites}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                const alreadySelected = selectedExerciseIds.includes(item.id);
-                return (
-                  <Pressable
-                    disabled={alreadySelected}
-                    onPress={() => onAddExercise(item)}
-                    style={({ pressed }) => [
-                      styles.row,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.background,
-                        opacity: alreadySelected ? 0.5 : pressed ? 0.8 : 1,
-                      },
-                    ]}
-                  >
-                    <CustomText>{item.name}</CustomText>
-                    <CustomText muted>{alreadySelected ? "Added" : "Add"}</CustomText>
-                  </Pressable>
-                );
-              }}
-            />
+            <View style={styles.listContainer}>
+              <FlatList
+                data={favorites}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => {
+                  const alreadySelected = selectedExerciseIds.includes(item.id);
+                  return (
+                    <Pressable
+                      disabled={alreadySelected}
+                      onPress={() => onAddExercise(item)}
+                      style={({ pressed }) => [
+                        styles.row,
+                        {
+                          borderColor: colors.border,
+                          backgroundColor: colors.background,
+                          opacity: alreadySelected ? 0.5 : pressed ? 0.8 : 1,
+                        },
+                      ]}
+                    >
+                      <CustomText>{item.name}</CustomText>
+                      <CustomText muted>{alreadySelected ? "Added" : "Add"}</CustomText>
+                    </Pressable>
+                  );
+                }}
+              />
+            </View>
           )}
         </CustomCard>
       </View>
@@ -77,7 +79,14 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     maxHeight: "70%",
+    minHeight: 240,
     gap: spacing.sm,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: spacing.sm,
   },
   header: {
     flexDirection: "row",
