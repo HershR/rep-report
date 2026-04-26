@@ -1,7 +1,7 @@
 import { and, asc, eq, like } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { exercises } from "@/db/schema";
+import { type ExerciseSource, exercises } from "@/db/schema";
 import { createUuid, nowUtc } from "@/db/utils";
 import type { Exercise, ExerciseSearchResult } from "@/features/exercises/types";
 
@@ -15,7 +15,7 @@ type CreateExerciseInput = {
   secondaryMuscles?: string[];
   imageUrl?: string | null;
   isFavorite?: boolean;
-  source?: "wger" | "custom";
+  source?: ExerciseSource;
 };
 
 function toJsonString(value: string[] | undefined): string | null {
@@ -47,7 +47,7 @@ function mapRowToExercise(row: typeof exercises.$inferSelect): Exercise {
     primaryMuscles: fromJsonString(row.primaryMuscles),
     secondaryMuscles: fromJsonString(row.secondaryMuscles),
     imageUrl: row.imageUrl,
-    source: row.source as "wger" | "custom",
+    source: row.source,
     isFavorite: row.isFavorite === 1,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

@@ -1,4 +1,26 @@
+import { relations } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+
+export const EXERCISE_SOURCES = ["wger", "custom"] as const;
+export type ExerciseSource = (typeof EXERCISE_SOURCES)[number];
+
+export const SET_TYPES = ["normal", "warmup", "drop", "failure"] as const;
+export type SetType = (typeof SET_TYPES)[number];
+
+export const WORKOUT_SESSION_STATUSES = ["active", "completed"] as const;
+export type WorkoutSessionStatus = (typeof WORKOUT_SESSION_STATUSES)[number];
+
+export const WEIGHT_UNITS = ["lb", "kg"] as const;
+export type WeightUnit = (typeof WEIGHT_UNITS)[number];
+
+export const DISTANCE_UNITS = ["mi", "km"] as const;
+export type DistanceUnit = (typeof DISTANCE_UNITS)[number];
+
+export const HEIGHT_UNITS = ["in", "cm"] as const;
+export type HeightUnit = (typeof HEIGHT_UNITS)[number];
+
+export const THEME_MODES = ["system", "light", "dark"] as const;
+export type ThemeMode = (typeof THEME_MODES)[number];
 
 const timestampColumns = {
   createdAt: text("created_at").notNull(),
@@ -18,7 +40,7 @@ export const exercises = sqliteTable(
     secondaryMuscles: text("secondary_muscles"),
     imageUrl: text("image_url"),
     isFavorite: integer("is_favorite").notNull().default(0),
-    source: text("source").notNull().default("wger"),
+    source: text("source", { enum: EXERCISE_SOURCES }).notNull().default("wger"),
     ...timestampColumns,
   },
   (table) => [
@@ -62,7 +84,7 @@ export const workoutTemplateSets = sqliteTable(
     targetReps: integer("target_reps"),
     targetWeight: real("target_weight"),
     targetDurationSeconds: integer("target_duration_seconds"),
-    setType: text("set_type").notNull().default("normal"),
+    setType: text("set_type", { enum: SET_TYPES }).notNull().default("normal"),
     ...timestampColumns,
   },
   (table) => [index("wts_template_exercise_id_idx").on(table.templateExerciseId)],
@@ -78,7 +100,7 @@ export const workoutSessions = sqliteTable(
     completedAt: text("completed_at"),
     durationSeconds: integer("duration_seconds"),
     notes: text("notes"),
-    status: text("status").notNull().default("active"),
+    status: text("status", { enum: WORKOUT_SESSION_STATUSES }).notNull().default("active"),
     ...timestampColumns,
   },
   (table) => [
@@ -117,7 +139,7 @@ export const workoutSets = sqliteTable(
     durationSeconds: integer("duration_seconds"),
     distance: real("distance"),
     isCompleted: integer("is_completed").notNull().default(0),
-    setType: text("set_type").notNull().default("normal"),
+    setType: text("set_type", { enum: SET_TYPES }).notNull().default("normal"),
     ...timestampColumns,
   },
   (table) => [index("workout_sets_wse_id_idx").on(table.workoutSessionExerciseId)],
@@ -149,20 +171,86 @@ export const measurements = sqliteTable(
 
 export const appSettings = sqliteTable("app_settings", {
   id: text("id").primaryKey().notNull(),
-  weightUnit: text("weight_unit").notNull().default("lb"),
-  distanceUnit: text("distance_unit").notNull().default("mi"),
-  heightUnit: text("height_unit").notNull().default("in"),
-  themeMode: text("theme_mode").notNull().default("system"),
+  weightUnit: text("weight_unit", { enum: WEIGHT_UNITS }).notNull().default("lb"),
+  distanceUnit: text("distance_unit", { enum: DISTANCE_UNITS }).notNull().default("mi"),
+  heightUnit: text("height_unit", { enum: HEIGHT_UNITS }).notNull().default("in"),
+  themeMode: text("theme_mode", { enum: THEME_MODES }).notNull().default("system"),
   ...timestampColumns,
 });
 
+export const workoutTemplatesRelations = relations(workoutTemplates, ({ many }) => ({
+  templateExercises: many(workoutTemplateExercises),
+  workoutSessions: many(workoutSessions),
+}));
+
+export const workoutTemplateExercisesRelations = relations(workoutTemplateExercises, ({ one, many }) => ({
+  template: one(workoutTemplates, {
+    fields: [workoutTemplateExercises.templateId],
+    references: [workoutTemplates.id],
+  }),
+  exercise: one(exercises, {
+    fields: [workoutTemplateExercises.exerciseId],
+    references: [exercises.id],
+  }),
+  sets: many(workoutTemplateSets),
+}));
+
+export const workoutTemplateSetsRelations = relations(workoutTemplateSets, ({ one }) => ({
+  templateExercise: one(workoutTemplateExercises, {
+    fields: [workoutTemplateSets.templateExerciseId],
+    references: [workoutTemplateExercises.id],
+  }),
+}));
+
+export const workoutSessionsRelations = relations(workoutSessions, ({ one, many }) => ({
+  template: one(workoutTemplates, {
+    fields: [workoutSessions.templateId],
+    references: [workoutTemplates.id],
+  }),
+  exercises: many(workoutSessionExercises),
+}));
+
+export const workoutSessionExercisesRelations = relations(workoutSessionExercises, ({ one, many }) => ({
+  workoutSession: one(workoutSessions, {
+    fields: [workoutSessionExercises.workoutSessionId],
+    references: [workoutSessions.id],
+  }),
+  exercise: one(exercises, {
+    fields: [workoutSessionExercises.exerciseId],
+    references: [exercises.id],
+  }),
+  sets: many(workoutSets),
+}));
+
+export const workoutSetsRelations = relations(workoutSets, ({ one }) => ({
+  workoutSessionExercise: one(workoutSessionExercises, {
+    fields: [workoutSets.workoutSessionExerciseId],
+    references: [workoutSessionExercises.id],
+  }),
+}));
+
+export const exercisesRelations = relations(exercises, ({ many }) => ({
+  templateExercises: many(workoutTemplateExercises),
+  workoutSessionExercises: many(workoutSessionExercises),
+}));
+
 export type Exercise = typeof exercises.$inferSelect;
+export type InsertExercise = typeof exercises.$inferInsert;
 export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
+export type InsertWorkoutTemplate = typeof workoutTemplates.$inferInsert;
 export type WorkoutTemplateExercise = typeof workoutTemplateExercises.$inferSelect;
+export type InsertWorkoutTemplateExercise = typeof workoutTemplateExercises.$inferInsert;
 export type WorkoutTemplateSet = typeof workoutTemplateSets.$inferSelect;
+export type InsertWorkoutTemplateSet = typeof workoutTemplateSets.$inferInsert;
 export type WorkoutSession = typeof workoutSessions.$inferSelect;
+export type InsertWorkoutSession = typeof workoutSessions.$inferInsert;
 export type WorkoutSessionExercise = typeof workoutSessionExercises.$inferSelect;
+export type InsertWorkoutSessionExercise = typeof workoutSessionExercises.$inferInsert;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
+export type InsertWorkoutSet = typeof workoutSets.$inferInsert;
 export type Profile = typeof profile.$inferSelect;
+export type InsertProfile = typeof profile.$inferInsert;
 export type Measurement = typeof measurements.$inferSelect;
+export type InsertMeasurement = typeof measurements.$inferInsert;
 export type AppSettings = typeof appSettings.$inferSelect;
+export type InsertAppSettings = typeof appSettings.$inferInsert;

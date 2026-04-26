@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
 import {
+  type SetType,
   workoutSessionExercises,
   workoutSessions,
   workoutSets,
@@ -96,7 +97,7 @@ export async function addWorkoutSet(input: {
   durationSeconds?: number | null;
   distance?: number | null;
   isCompleted?: boolean;
-  setType?: "normal" | "warmup" | "drop" | "failure";
+  setType?: SetType;
 }): Promise<WorkoutSet> {
   const id = createUuid();
   const timestamp = nowUtc();

@@ -3,6 +3,7 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
 import {
+  type SetType,
   exercises,
   workoutTemplateSets,
   workoutTemplateExercises,
@@ -89,7 +90,7 @@ async function hydrateTemplate(templateId: string): Promise<WorkoutTemplate | nu
           primaryMuscles: parseJsonArray(exercise.primaryMuscles),
           secondaryMuscles: parseJsonArray(exercise.secondaryMuscles),
           imageUrl: exercise.imageUrl,
-          source: exercise.source as "wger" | "custom",
+          source: exercise.source,
           isFavorite: exercise.isFavorite === 1,
           createdAt: exercise.createdAt,
           updatedAt: exercise.updatedAt,
@@ -213,7 +214,7 @@ export async function addSetToTemplateExercise(input: {
   targetReps?: number | null;
   targetWeight?: number | null;
   targetDurationSeconds?: number | null;
-  setType?: "normal" | "warmup" | "drop" | "failure";
+  setType?: SetType;
 }): Promise<WorkoutTemplateSet> {
   const id = createUuid();
   const timestamp = nowUtc();
@@ -242,7 +243,7 @@ export async function updateTemplateSet(
     targetReps?: number | null;
     targetWeight?: number | null;
     targetDurationSeconds?: number | null;
-    setType?: "normal" | "warmup" | "drop" | "failure";
+    setType?: SetType;
   },
 ): Promise<WorkoutTemplateSet | null> {
   await db

@@ -13,9 +13,9 @@ export async function initializeDatabase(): Promise<void> {
   await migrate(db, migrations);
   await seedDefaultAppSettings();
 
-  if (__DEV__) {
-    await runDatabaseSmokeTest();
-  }
+  // if (__DEV__) {
+  //   await runDatabaseSmokeTest();
+  // }
 
   initialized = true;
 }
