@@ -1,7 +1,13 @@
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
-
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useExerciseSearch } from "@/features/exercises/hooks/useExerciseSearch";
@@ -48,11 +54,15 @@ export default function SearchScreen() {
         ]}
       />
 
-      {isLoading ? (
-        <CustomText style={styles.gap}>Loading exercises...</CustomText>
-      ) : null}
+      {isLoading && (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
 
-      {isError ? (
+      {isError && (
         <CustomCard style={styles.gap}>
           <CustomText>Could not load search results right now.</CustomText>
           <CustomText muted>{error?.message ?? "Unknown error"}</CustomText>
@@ -60,9 +70,9 @@ export default function SearchScreen() {
             <CustomText>Retry</CustomText>
           </Pressable>
         </CustomCard>
-      ) : null}
+      )}
 
-      {!isLoading && !isError && items.length === 0 ? (
+      {!isLoading && !isError && items.length === 0 && (
         <CustomCard style={styles.gap}>
           <CustomText>
             {debouncedQuery
@@ -70,45 +80,51 @@ export default function SearchScreen() {
               : "Type exercise name to start searching."}
           </CustomText>
         </CustomCard>
-      ) : null}
+      )}
 
       <View style={styles.results}>
-        {items.map((exercise) => (
-          <CustomCard key={exercise.wgerExerciseId} style={styles.card}>
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/exercise/[exerciseId]",
-                  params: {
-                    exerciseId: String(exercise.wgerExerciseId),
-                    source: "wger",
-                  },
-                })
-              }
-            >
-              <CustomText>{exercise.name}</CustomText>
-              {exercise.category ? (
-                <CustomText muted>{exercise.category}</CustomText>
-              ) : null}
-              {exercise.description ? (
-                <CustomText muted numberOfLines={2}>
-                  {exercise.description}
-                </CustomText>
-              ) : null}
-            </Pressable>
+        <FlashList
+          data={items}
+          keyExtractor={(exercise) => String(exercise.wgerExerciseId)}
+          contentContainerStyle={{ gap: spacing.sm }}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          renderItem={({ item: exercise }) => (
+            <CustomCard style={styles.card}>
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/exercise/[exerciseId]",
+                    params: {
+                      exerciseId: String(exercise.wgerExerciseId),
+                      source: "wger",
+                    },
+                  })
+                }
+              >
+                <CustomText>{exercise.name}</CustomText>
+                {exercise.category ? (
+                  <CustomText muted>{exercise.category}</CustomText>
+                ) : null}
+                {exercise.description ? (
+                  <CustomText muted numberOfLines={2}>
+                    {exercise.description}
+                  </CustomText>
+                ) : null}
+              </Pressable>
 
-            <Pressable
-              style={styles.favoriteButton}
-              onPress={() => {
-                void onToggleFavorite(exercise);
-              }}
-            >
-              <CustomText>
-                {exercise.isFavorite ? "Unfavorite" : "Favorite"}
-              </CustomText>
-            </Pressable>
-          </CustomCard>
-        ))}
+              <Pressable
+                style={styles.favoriteButton}
+                onPress={() => {
+                  void onToggleFavorite(exercise);
+                }}
+              >
+                <CustomText>
+                  {exercise.isFavorite ? "Unfavorite" : "Favorite"}
+                </CustomText>
+              </Pressable>
+            </CustomCard>
+          )}
+        />
       </View>
     </CustomScreen>
   );
