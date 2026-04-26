@@ -1,4 +1,4 @@
-import type { paths } from "./WgerSchema";
+import type { paths } from "./wgerSchema";
 
 export type ExerciseInfo =
   paths["/api/v2/exerciseinfo/{id}/"]["get"]["responses"][200]["content"]["application/json"];
