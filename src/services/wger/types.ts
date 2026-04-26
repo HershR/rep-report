@@ -32,3 +32,8 @@ export type WgerExerciseInfo = {
 };
 
 export type WgerExerciseSearchRequest = ExerciseFilters;
+
+export type WgerFilterOption = {
+  id: number;
+  name: string;
+};

@@ -1,4 +1,4 @@
-import type { ExerciseSearchPage } from "@/features/exercises/types";
+import type { ExerciseFilterOption, ExerciseSearchPage } from "@/features/exercises/types";
 import {
   mapWgerExerciseToSearchResult,
   mapWgerSearchResponse,
@@ -7,6 +7,7 @@ import type {
   WgerApiListResponse,
   WgerExerciseInfo,
   WgerExerciseSearchRequest,
+  WgerFilterOption,
 } from "@/services/wger/types";
 
 const WGER_BASE_URL = "https://wger.de/api/v2";
@@ -35,6 +36,13 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+function mapFilterOptions(options: WgerFilterOption[]): ExerciseFilterOption[] {
+  return options
+    .map((option) => ({ id: option.id, name: option.name?.trim() ?? "" }))
+    .filter((option) => option.name.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function searchWgerExercises(
   request: WgerExerciseSearchRequest,
 ): Promise<ExerciseSearchPage> {
@@ -61,4 +69,22 @@ export async function getWgerExerciseById(exerciseId: number) {
   const url = `${WGER_BASE_URL}/exerciseinfo/${exerciseId}/`;
   const response = await fetchJson<WgerExerciseInfo>(url);
   return mapWgerExerciseToSearchResult(response);
+}
+
+export async function getWgerExerciseCategories(): Promise<ExerciseFilterOption[]> {
+  const url = `${WGER_BASE_URL}/exercisecategory/?limit=200`;
+  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
+  return mapFilterOptions(response.results);
+}
+
+export async function getWgerEquipment(): Promise<ExerciseFilterOption[]> {
+  const url = `${WGER_BASE_URL}/equipment/?limit=200`;
+  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
+  return mapFilterOptions(response.results);
+}
+
+export async function getWgerMuscles(): Promise<ExerciseFilterOption[]> {
+  const url = `${WGER_BASE_URL}/muscle/?limit=200`;
+  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
+  return mapFilterOptions(response.results);
 }

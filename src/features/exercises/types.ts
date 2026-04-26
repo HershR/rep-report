@@ -43,3 +43,8 @@ export type ExerciseSearchPage = {
   nextPage: number | null;
   previousPage: number | null;
 };
+
+export type ExerciseFilterOption = {
+  id: number;
+  name: string;
+};
