@@ -15,7 +15,7 @@ export async function runDatabaseSmokeTest(): Promise<void> {
     isFavorite: true,
   });
 
-  if (!updated || updated.name !== "Drizzle Smoke Exercise Updated" || updated.isFavorite !== 1) {
+  if (!updated || updated.name !== "Drizzle Smoke Exercise Updated" || updated.isFavorite !== true) {
     throw new Error("Smoke test failed: update");
   }
 }

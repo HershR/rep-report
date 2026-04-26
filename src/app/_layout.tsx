@@ -1,6 +1,7 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -10,6 +11,7 @@ import { getColors } from "@/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
 export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
   const scheme = useColorScheme();
   const colors = getColors(scheme);
 
@@ -22,16 +24,18 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style={scheme === "dark" ? "light" : "dark"} />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.surface },
-            headerTintColor: colors.text,
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: colors.background },
-            headerShown: false,
-          }}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+              headerShadowVisible: false,
+              contentStyle: { backgroundColor: colors.background },
+              headerShown: false,
+            }}
+          />
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
