@@ -1,16 +1,76 @@
 import { useRouter } from "expo-router";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
+import type { Exercise } from "@/features/exercises/types";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { spacing, useThemeColors } from "@/theme";
 import { FlashList } from "@shopify/flash-list";
 
+type SavedExerciseRow = Exercise & {
+  uiIsFavorite: boolean;
+};
+
 export default function SavedScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { favorites, isLoading, error, removeFavoriteExercise } =
+  const { favorites, isLoading, error, removeFavoriteExercise, saveFavoriteExercise } =
     useFavoriteExercises();
+  const [savedRows, setSavedRows] = useState<SavedExerciseRow[]>([]);
+
+  useEffect(() => {
+    setSavedRows((prev) => {
+      const mergedFavorites = favorites.map((exercise) => ({
+        ...exercise,
+        uiIsFavorite: true,
+      }));
+
+      const mergedIds = new Set(mergedFavorites.map((row) => row.id));
+      const staleRows = prev
+        .filter((row) => !mergedIds.has(row.id))
+        .map((row) => ({ ...row, uiIsFavorite: false }));
+
+      return [...mergedFavorites, ...staleRows];
+    });
+  }, [favorites]);
+
+  const toggleRowFavorite = async (exercise: SavedExerciseRow) => {
+    if (exercise.uiIsFavorite) {
+      await removeFavoriteExercise({ id: exercise.id });
+      setSavedRows((prev) =>
+        prev.map((row) =>
+          row.id === exercise.id ? { ...row, uiIsFavorite: false } : row,
+        ),
+      );
+      return;
+    }
+
+    if (exercise.wgerExerciseId === null) {
+      return;
+    }
+
+    await saveFavoriteExercise({
+      id: String(exercise.wgerExerciseId),
+      wgerExerciseId: exercise.wgerExerciseId,
+      name: exercise.name,
+      description: exercise.description,
+      category: exercise.category,
+      equipment: exercise.equipment,
+      primaryMuscles: exercise.primaryMuscles,
+      secondaryMuscles: exercise.secondaryMuscles,
+      imageUrl: exercise.imageUrl,
+      source: "wger",
+      isFavorite: true,
+    });
+
+    setSavedRows((prev) =>
+      prev.map((row) =>
+        row.id === exercise.id ? { ...row, uiIsFavorite: true } : row,
+      ),
+    );
+  };
 
   return (
     <CustomScreen scroll>
@@ -33,7 +93,7 @@ export default function SavedScreen() {
         </CustomCard>
       )}
 
-      {!isLoading && !error && favorites.length === 0 && (
+      {!isLoading && !error && savedRows.length === 0 && (
         <CustomCard style={styles.gap}>
           <CustomText>
             No saved exercises yet. Search and tap Favorite.
@@ -43,38 +103,29 @@ export default function SavedScreen() {
 
       <View style={styles.gap}>
         <FlashList
-          data={favorites}
+          data={savedRows}
           keyExtractor={(exercise) => String(exercise.id)}
           contentContainerStyle={{ gap: spacing.sm }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           renderItem={({ item: exercise }) => (
-            <CustomCard style={styles.card}>
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/exercise/[exerciseId]",
-                    params: {
-                      exerciseId: exercise.id,
-                      source: "local",
-                    },
-                  })
-                }
-              >
-                <CustomText>{exercise.name}</CustomText>
-                {exercise.category ? (
-                  <CustomText muted>{exercise.category}</CustomText>
-                ) : null}
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  void removeFavoriteExercise({ id: exercise.id });
-                }}
-                style={styles.removeButton}
-              >
-                <CustomText>Remove</CustomText>
-              </Pressable>
-            </CustomCard>
+            <ExerciseCard
+              name={exercise.name}
+              category={exercise.category}
+              imageUrl={exercise.imageUrl}
+              isFavorite={exercise.uiIsFavorite}
+              onPress={() =>
+                router.push({
+                  pathname: "/exercise/[exerciseId]",
+                  params: {
+                    exerciseId: exercise.id,
+                    source: "local",
+                  },
+                })
+              }
+              onToggleFavorite={() => {
+                void toggleRowFavorite(exercise);
+              }}
+            />
           )}
         />
       </View>
@@ -85,10 +136,4 @@ export default function SavedScreen() {
 const styles = StyleSheet.create({
   subtitle: { marginTop: spacing.xs },
   gap: { marginTop: spacing.lg },
-  card: { gap: spacing.sm },
-  removeButton: {
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
 });

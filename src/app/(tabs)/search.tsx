@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
 import { ExerciseFilterModal } from "@/features/exercises/components/ExerciseFilterModal";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useExerciseSearch } from "@/features/exercises/hooks/useExerciseSearch";
@@ -161,40 +162,24 @@ export default function SearchScreen() {
           contentContainerStyle={{ gap: spacing.sm }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           renderItem={({ item: exercise }) => (
-            <CustomCard style={styles.card}>
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/exercise/[exerciseId]",
-                    params: {
-                      exerciseId: String(exercise.wgerExerciseId),
-                      source: "wger",
-                    },
-                  })
-                }
-              >
-                <CustomText>{exercise.name}</CustomText>
-                {exercise.category ? (
-                  <CustomText muted>{exercise.category}</CustomText>
-                ) : null}
-                {exercise.description ? (
-                  <CustomText muted numberOfLines={2}>
-                    {exercise.description}
-                  </CustomText>
-                ) : null}
-              </Pressable>
-
-              <Pressable
-                style={styles.favoriteButton}
-                onPress={() => {
-                  void onToggleFavorite(exercise);
-                }}
-              >
-                <CustomText>
-                  {exercise.isFavorite ? "Unfavorite" : "Favorite"}
-                </CustomText>
-              </Pressable>
-            </CustomCard>
+            <ExerciseCard
+              name={exercise.name}
+              category={exercise.category}
+              imageUrl={exercise.imageUrl}
+              isFavorite={exercise.isFavorite}
+              onPress={() =>
+                router.push({
+                  pathname: "/exercise/[exerciseId]",
+                  params: {
+                    exerciseId: String(exercise.wgerExerciseId),
+                    source: "wger",
+                  },
+                })
+              }
+              onToggleFavorite={() => {
+                void onToggleFavorite(exercise);
+              }}
+            />
           )}
         />
       </View>
@@ -254,15 +239,6 @@ const styles = StyleSheet.create({
   results: {
     marginTop: spacing.md,
     gap: spacing.sm,
-  },
-  card: {
-    gap: spacing.sm,
-  },
-  favoriteButton: {
-    marginTop: spacing.xs,
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
   },
   retryButton: {
     marginTop: spacing.sm,
