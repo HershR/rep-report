@@ -23,7 +23,6 @@ export default function SearchScreen() {
       await removeFavoriteExercise({ wgerExerciseId: exercise.wgerExerciseId });
       return;
     }
-    console.log(exercise);
     await saveFavoriteExercise(exercise);
   };
 

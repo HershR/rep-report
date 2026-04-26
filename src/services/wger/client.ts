@@ -54,7 +54,6 @@ export async function searchWgerExercises(
 
   const url = `${WGER_BASE_URL}/exerciseinfo/?${params.toString()}`;
   const response = await fetchJson<WgerApiListResponse<WgerExerciseInfo>>(url);
-  console.log("result:", response.results[0]);
   return mapWgerSearchResponse(response);
 }
 

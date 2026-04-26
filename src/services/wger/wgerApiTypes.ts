@@ -17,3 +17,9 @@ export type ExerciseImage =
 
 export type ExerciseSuggestion =
   paths["/api/v2/exercise/search/"]["get"]["responses"][200]["content"]["application/json"];
+
+export type ExerciseTranslation =
+  paths["/api/v2/exercise-translation/{id}/"]["get"]["responses"][200]["content"]["application/json"];
+
+export type ExerciseTranslationList =
+  paths["/api/v2/exercise-translation/"]["get"]["responses"][200]["content"]["application/json"];
