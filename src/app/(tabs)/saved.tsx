@@ -1,75 +1,27 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
 import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
-import type { Exercise } from "@/features/exercises/types";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import type { Exercise } from "@/features/exercises/types";
 import { spacing, useThemeColors } from "@/theme";
 import { FlashList } from "@shopify/flash-list";
-
-type SavedExerciseRow = Exercise & {
-  uiIsFavorite: boolean;
-};
 
 export default function SavedScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { favorites, isLoading, error, removeFavoriteExercise, saveFavoriteExercise } =
+  const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
-  const [savedRows, setSavedRows] = useState<SavedExerciseRow[]>([]);
+  const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(null);
 
-  useEffect(() => {
-    setSavedRows((prev) => {
-      const mergedFavorites = favorites.map((exercise) => ({
-        ...exercise,
-        uiIsFavorite: true,
-      }));
+  const closeRemoveModal = () => setExerciseToRemove(null);
 
-      const mergedIds = new Set(mergedFavorites.map((row) => row.id));
-      const staleRows = prev
-        .filter((row) => !mergedIds.has(row.id))
-        .map((row) => ({ ...row, uiIsFavorite: false }));
-
-      return [...mergedFavorites, ...staleRows];
-    });
-  }, [favorites]);
-
-  const toggleRowFavorite = async (exercise: SavedExerciseRow) => {
-    if (exercise.uiIsFavorite) {
-      await removeFavoriteExercise({ id: exercise.id });
-      setSavedRows((prev) =>
-        prev.map((row) =>
-          row.id === exercise.id ? { ...row, uiIsFavorite: false } : row,
-        ),
-      );
-      return;
-    }
-
-    if (exercise.wgerExerciseId === null) {
-      return;
-    }
-
-    await saveFavoriteExercise({
-      id: String(exercise.wgerExerciseId),
-      wgerExerciseId: exercise.wgerExerciseId,
-      name: exercise.name,
-      description: exercise.description,
-      category: exercise.category,
-      equipment: exercise.equipment,
-      primaryMuscles: exercise.primaryMuscles,
-      secondaryMuscles: exercise.secondaryMuscles,
-      imageUrl: exercise.imageUrl,
-      source: "wger",
-      isFavorite: true,
-    });
-
-    setSavedRows((prev) =>
-      prev.map((row) =>
-        row.id === exercise.id ? { ...row, uiIsFavorite: true } : row,
-      ),
-    );
+  const confirmRemoveFavorite = async () => {
+    if (!exerciseToRemove) return;
+    await removeFavoriteExercise({ id: exerciseToRemove.id });
+    closeRemoveModal();
   };
 
   return (
@@ -93,7 +45,7 @@ export default function SavedScreen() {
         </CustomCard>
       )}
 
-      {!isLoading && !error && savedRows.length === 0 && (
+      {!isLoading && !error && favorites.length === 0 && (
         <CustomCard style={styles.gap}>
           <CustomText>
             No saved exercises yet. Search and tap Favorite.
@@ -103,7 +55,7 @@ export default function SavedScreen() {
 
       <View style={styles.gap}>
         <FlashList
-          data={savedRows}
+          data={favorites}
           keyExtractor={(exercise) => String(exercise.id)}
           contentContainerStyle={{ gap: spacing.sm }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
@@ -112,7 +64,7 @@ export default function SavedScreen() {
               name={exercise.name}
               category={exercise.category}
               imageUrl={exercise.imageUrl}
-              isFavorite={exercise.uiIsFavorite}
+              isFavorite
               onPress={() =>
                 router.push({
                   pathname: "/exercise/[exerciseId]",
@@ -123,12 +75,44 @@ export default function SavedScreen() {
                 })
               }
               onToggleFavorite={() => {
-                void toggleRowFavorite(exercise);
+                setExerciseToRemove(exercise);
               }}
             />
           )}
         />
       </View>
+
+      <Modal
+        transparent
+        visible={Boolean(exerciseToRemove)}
+        animationType="fade"
+        onRequestClose={closeRemoveModal}
+      >
+        <View style={styles.modalOverlay}>
+          <CustomCard
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <CustomText>Remove from favorites?</CustomText>
+            <CustomText muted style={styles.modalCopy}>
+              {exerciseToRemove
+                ? `${exerciseToRemove.name} will be removed from favorites.`
+                : "This exercise will be removed from favorites."}
+            </CustomText>
+
+            <View style={styles.modalActions}>
+              <Pressable onPress={closeRemoveModal} style={styles.modalButton}>
+                <CustomText muted>Cancel</CustomText>
+              </Pressable>
+              <Pressable onPress={() => void confirmRemoveFavorite()} style={styles.modalButton}>
+                <CustomText>Remove</CustomText>
+              </Pressable>
+            </View>
+          </CustomCard>
+        </View>
+      </Modal>
     </CustomScreen>
   );
 }
@@ -136,4 +120,26 @@ export default function SavedScreen() {
 const styles = StyleSheet.create({
   subtitle: { marginTop: spacing.xs },
   gap: { marginTop: spacing.lg },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    padding: spacing.lg,
+  },
+  modalCard: {
+    gap: spacing.sm,
+  },
+  modalCopy: {
+    marginTop: spacing.xs,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  modalButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
 });
