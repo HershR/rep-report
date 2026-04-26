@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "rep-report",
+    "slug": "rep-report",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "rep-report",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
