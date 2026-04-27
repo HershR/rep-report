@@ -9,6 +9,39 @@ import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { spacing, useThemeColors } from "@/theme";
 
+function toMetricWeight(value: number, unit: string): number {
+  if (unit === "lb") return value * 0.45359237;
+  return value;
+}
+
+function toDisplayWeight(
+  valueInKg: number,
+  weightUnit: "kg" | "lb",
+): { value: number; unit: "kg" | "lb" } {
+  if (weightUnit === "lb") {
+    return { value: valueInKg * 2.2046226218, unit: "lb" };
+  }
+  return { value: valueInKg, unit: "kg" };
+}
+
+function toMetricHeight(value: number, unit: string): number {
+  if (unit === "in") return value * 2.54;
+  return value;
+}
+
+function toDisplayHeightCm(
+  valueInCm: number,
+  heightUnit: "cm" | "in",
+): string {
+  if (heightUnit === "in") {
+    const totalInches = valueInCm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches - feet * 12);
+    return `${feet} ft ${inches} in`;
+  }
+  return `${Number(valueInCm.toFixed(2))} cm`;
+}
+
 export default function ProfileScreen() {
   const colors = useThemeColors();
   const { appSettings, updateAppSettings } = useAppSettings();
@@ -50,7 +83,9 @@ export default function ProfileScreen() {
   const onAddWeight = async () => {
     const value = Number(weightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
-    await addWeight({ value, unit: appSettings?.weightUnit ?? "kg" });
+    const unit = appSettings?.weightUnit ?? "kg";
+    const metricValue = toMetricWeight(value, unit);
+    await addWeight({ value: metricValue, unit: "kg" });
     setWeightValue("");
   };
 
@@ -62,7 +97,7 @@ export default function ProfileScreen() {
       if (feet < 0 || inches < 0) return;
       const totalInches = feet * 12 + inches;
       if (totalInches <= 0) return;
-      await addHeight({ value: totalInches, unit: "in" });
+      await addHeight({ value: toMetricHeight(totalInches, "in"), unit: "cm" });
       setHeightFeet("");
       setHeightInches("");
       return;
@@ -70,7 +105,7 @@ export default function ProfileScreen() {
 
     const value = Number(heightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
-    await addHeight({ value, unit: appSettings?.heightUnit ?? "cm" });
+    await addHeight({ value: toMetricHeight(value, "cm"), unit: "cm" });
     setHeightValue("");
   };
 
@@ -149,7 +184,17 @@ export default function ProfileScreen() {
 
         <CustomCard style={styles.card}>
           <CustomText>Weight</CustomText>
-          <CustomText muted>{`Latest ${latestWeight ? `${latestWeight.value} ${latestWeight.unit}` : "N/A"}`}</CustomText>
+          <CustomText muted>
+            {`Latest ${
+              latestWeight
+                ? (() => {
+                    const metricValue = toMetricWeight(latestWeight.value, latestWeight.unit);
+                    const display = toDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
+                    return `${Number(display.value.toFixed(2))} ${display.unit}`;
+                  })()
+                : "N/A"
+            }`}
+          </CustomText>
           <View style={styles.row}>
             <TextInput
               value={weightValue}
@@ -162,7 +207,13 @@ export default function ProfileScreen() {
             <CustomButton label="Add" onPress={() => void onAddWeight()} />
           </View>
           {weightHistory.slice(-5).reverse().map((item) => (
-            <CustomText key={item.id} muted>{`${format(new Date(item.measuredAt), "PP")} • ${item.value} ${item.unit}`}</CustomText>
+            <CustomText key={item.id} muted>
+              {`${format(new Date(item.measuredAt), "PP")} • ${(() => {
+                const metricValue = toMetricWeight(item.value, item.unit);
+                const display = toDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
+                return `${Number(display.value.toFixed(2))} ${display.unit}`;
+              })()}`}
+            </CustomText>
           ))}
         </CustomCard>
 
@@ -171,9 +222,10 @@ export default function ProfileScreen() {
           <CustomText muted>
             {`Latest ${
               latestHeight
-                ? latestHeight.unit === "in"
-                  ? `${Math.floor(latestHeight.value / 12)} ft ${latestHeight.value % 12} in`
-                  : `${latestHeight.value} ${latestHeight.unit}`
+                ? toDisplayHeightCm(
+                    toMetricHeight(latestHeight.value, latestHeight.unit),
+                    appSettings?.heightUnit ?? "cm",
+                  )
                 : "N/A"
             }`}
           </CustomText>
@@ -211,11 +263,10 @@ export default function ProfileScreen() {
           </View>
           {heightHistory.slice(-5).reverse().map((item) => (
             <CustomText key={item.id} muted>
-              {`${format(new Date(item.measuredAt), "PP")} • ${
-                item.unit === "in"
-                  ? `${Math.floor(item.value / 12)} ft ${item.value % 12} in`
-                  : `${item.value} ${item.unit}`
-              }`}
+              {`${format(new Date(item.measuredAt), "PP")} • ${toDisplayHeightCm(
+                toMetricHeight(item.value, item.unit),
+                appSettings?.heightUnit ?? "cm",
+              )}`}
             </CustomText>
           ))}
         </CustomCard>
