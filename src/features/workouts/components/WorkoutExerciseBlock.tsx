@@ -8,6 +8,7 @@ import { spacing } from "@/theme";
 
 type WorkoutExerciseBlockProps = {
   workoutExercise: WorkoutSessionExerciseWithDetails;
+  commitSetChangesOnChange?: boolean;
   onAddSet: (workoutSessionExerciseId: string) => void;
   onRemoveExercise: (workoutSessionExerciseId: string) => void;
   onUpdateSet: (
@@ -24,6 +25,7 @@ type WorkoutExerciseBlockProps = {
 
 export function WorkoutExerciseBlock({
   workoutExercise,
+  commitSetChangesOnChange = false,
   onAddSet,
   onRemoveExercise,
   onUpdateSet,
@@ -58,6 +60,7 @@ export function WorkoutExerciseBlock({
               index={index}
               workoutSet={workoutSet}
               isCardio={showDuration}
+              commitOnChange={commitSetChangesOnChange}
               onUpdate={onUpdateSet}
               onDelete={onDeleteSet}
             />

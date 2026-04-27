@@ -14,6 +14,7 @@ type WorkoutSetRowProps = {
   index: number;
   workoutSet: WorkoutSessionSet;
   isCardio: boolean;
+  commitOnChange?: boolean;
   onUpdate: (
     setId: string,
     input: {
@@ -41,6 +42,7 @@ export function WorkoutSetRow({
   index,
   workoutSet,
   isCardio,
+  commitOnChange = false,
   onUpdate,
   onDelete,
 }: WorkoutSetRowProps) {
@@ -65,7 +67,15 @@ export function WorkoutSetRow({
         <>
           <TextInput
             value={durationInput}
-            onChangeText={(value) => setDurationInput(formatDurationInput(value))}
+            onChangeText={(value) => {
+              const formatted = formatDurationInput(value);
+              setDurationInput(formatted);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  durationSeconds: durationDisplayToSeconds(formatted),
+                });
+              }
+            }}
             keyboardType="number-pad"
             placeholder="hh:mm:ss"
             placeholderTextColor={colors.textMuted}
@@ -98,10 +108,21 @@ export function WorkoutSetRow({
               },
             ]}
             onEndEditing={(event) => {
-              onUpdate(workoutSet.id, {
-                reps: toNumber(event.nativeEvent.text),
-              });
+              if (!commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  reps: toNumber(event.nativeEvent.text),
+                });
+              }
             }}
+            onChangeText={
+              commitOnChange
+                ? (value) => {
+                    onUpdate(workoutSet.id, {
+                      reps: toNumber(value),
+                    });
+                  }
+                : undefined
+            }
           />
           <TextInput
             defaultValue={toText(workoutSet.weight)}
@@ -117,10 +138,21 @@ export function WorkoutSetRow({
               },
             ]}
             onEndEditing={(event) => {
-              onUpdate(workoutSet.id, {
-                weight: toNumber(event.nativeEvent.text),
-              });
+              if (!commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  weight: toNumber(event.nativeEvent.text),
+                });
+              }
             }}
+            onChangeText={
+              commitOnChange
+                ? (value) => {
+                    onUpdate(workoutSet.id, {
+                      weight: toNumber(value),
+                    });
+                  }
+                : undefined
+            }
           />
         </>
       )}
