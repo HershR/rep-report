@@ -101,6 +101,7 @@ export function useWorkoutSession(sessionId?: string) {
     mutationFn: () => deleteWorkoutSession(sessionId as string),
     onSuccess: async () => {
       queryClient.setQueryData(queryKey(sessionId), null);
+      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       if (sessionId) await invalidateHistoryForSession(sessionId);
     },
   });

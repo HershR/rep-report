@@ -2,10 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import type { NavigationAction } from "@react-navigation/native";
 import { format } from "date-fns";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { CustomButton, CustomCard, CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -68,6 +68,7 @@ function getFormDefaults(session: WorkoutSessionDetails | null): WorkoutDetailFo
 export default function WorkoutDetailScreen() {
   const params = useLocalSearchParams<{ workoutId: string }>();
   const navigation = useNavigation();
+  const router = useRouter();
   const colors = useThemeColors();
   const {
     workoutSession,
@@ -80,6 +81,7 @@ export default function WorkoutDetailScreen() {
     updateSet,
     deleteSet,
     updateCompletedWorkout,
+    deleteWorkoutSession,
   } = useWorkoutSession(params.workoutId);
   const { favorites } = useFavoriteExercises();
 
@@ -377,6 +379,22 @@ export default function WorkoutDetailScreen() {
     }
   };
 
+  const onDeleteWorkout = () => {
+    Alert.alert("Delete workout?", "This will permanently remove this completed workout.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          void (async () => {
+            await deleteWorkoutSession();
+            router.replace("/(tabs)/home");
+          })();
+        },
+      },
+    ]);
+  };
+
   return (
     <CustomScreen scroll contentContainerStyle={styles.container}>
       <CustomText variant="title">Workout Detail</CustomText>
@@ -463,6 +481,11 @@ export default function WorkoutDetailScreen() {
       </View>
 
       <CustomButton label="Save All" loading={isSaving || isSavingAll} onPress={() => void onSaveAll()} />
+      <CustomButton
+        label="Delete Workout"
+        loading={isSaving || isSavingAll}
+        onPress={onDeleteWorkout}
+      />
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}

@@ -124,6 +124,25 @@ async function getNextSetOrderIndex(workoutSessionExerciseId: string): Promise<n
   return (rows[0]?.orderIndex ?? -1) + 1;
 }
 
+async function deleteWorkoutSessionGraph(sessionId: string): Promise<void> {
+  const sessionExercises = await db
+    .select({ id: workoutSessionExercises.id })
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
+
+  const sessionExerciseIds = sessionExercises.map((row) => row.id);
+  if (sessionExerciseIds.length > 0) {
+    await db
+      .delete(workoutSets)
+      .where(inArray(workoutSets.workoutSessionExerciseId, sessionExerciseIds));
+  }
+
+  await db
+    .delete(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
+  await db.delete(workoutSessions).where(eq(workoutSessions.id, sessionId));
+}
+
 export async function createWorkoutSession(input: {
   name: string;
   templateId?: string | null;
@@ -305,15 +324,8 @@ export async function updateCompletedWorkout(
 }
 
 export async function cancelWorkout(sessionId: string): Promise<WorkoutSession | null> {
-  await db
-    .update(workoutSessions)
-    .set({
-      status: "cancelled",
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutSessions.id, sessionId));
-
-  return getWorkoutSessionById(sessionId);
+  await deleteWorkoutSessionGraph(sessionId);
+  return null;
 }
 
 export async function addExerciseToWorkout(input: {
@@ -516,5 +528,5 @@ export async function deleteWorkoutSession(id: string): Promise<void> {
   if (current.status === "active") {
     throw new Error("Cannot delete active workout session");
   }
-  await db.delete(workoutSessions).where(eq(workoutSessions.id, id));
+  await deleteWorkoutSessionGraph(id);
 }
