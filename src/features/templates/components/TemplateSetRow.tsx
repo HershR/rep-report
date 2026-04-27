@@ -16,6 +16,40 @@ type TemplateSetRowProps = {
   onDelete: () => void;
 };
 
+function formatDurationInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 6);
+  if (digits.length === 0) return "";
+  const padded = digits.padStart(6, "0");
+  const hh = Number(padded.slice(0, 2));
+  const mm = Number(padded.slice(2, 4));
+  const ss = Number(padded.slice(4, 6));
+  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
+  return String(ss);
+}
+
+function secondsToFormatted(value: string): string {
+  const totalSeconds = Number(value || "0");
+  const safe = Number.isFinite(totalSeconds)
+    ? Math.max(0, Math.floor(totalSeconds))
+    : 0;
+  if (safe === 0) return "";
+  const hh = Math.floor(safe / 3600);
+  const mm = Math.floor((safe % 3600) / 60);
+  const ss = safe % 60;
+  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
+  return String(ss);
+}
+
+function formattedToSeconds(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 6).padStart(6, "0");
+  const hh = Number(digits.slice(0, 2));
+  const mm = Number(digits.slice(2, 4));
+  const ss = Number(digits.slice(4, 6));
+  return String(hh * 3600 + mm * 60 + ss);
+}
+
 export function TemplateSetRow({
   index,
   repsText,
@@ -28,42 +62,11 @@ export function TemplateSetRow({
   onDelete,
 }: TemplateSetRowProps) {
   const colors = useThemeColors();
-  const [hours, setHours] = useState("0");
-  const [minutes, setMinutes] = useState("0");
-  const [seconds, setSeconds] = useState("0");
+  const [durationInput, setDurationInput] = useState("");
 
   useEffect(() => {
-    const totalSeconds = Number(durationText || "0");
-    const safe = Number.isFinite(totalSeconds)
-      ? Math.max(0, Math.floor(totalSeconds))
-      : 0;
-    setHours(String(Math.floor(safe / 3600)));
-    setMinutes(String(Math.floor((safe % 3600) / 60)));
-    setSeconds(String(safe % 60));
+    setDurationInput(secondsToFormatted(durationText));
   }, [durationText]);
-
-  const commitDuration = (
-    nextHours: string,
-    nextMinutes: string,
-    nextSeconds: string,
-  ) => {
-    const parsedHours = Number(nextHours.trim() || "0");
-    const parsedMinutes = Number(nextMinutes.trim() || "0");
-    const parsedSeconds = Number(nextSeconds.trim() || "0");
-    if (
-      !Number.isFinite(parsedHours) ||
-      !Number.isFinite(parsedMinutes) ||
-      !Number.isFinite(parsedSeconds)
-    )
-      return;
-    const total = Math.max(
-      0,
-      Math.floor(parsedHours) * 3600 +
-        Math.floor(parsedMinutes) * 60 +
-        Math.floor(parsedSeconds),
-    );
-    onChangeDuration(String(total));
-  };
 
   return (
     <View
@@ -83,10 +86,10 @@ export function TemplateSetRow({
         {isCardio ? (
           <>
             <TextInput
-              value={hours}
-              onChangeText={setHours}
+              value={durationInput}
+              onChangeText={(value) => setDurationInput(formatDurationInput(value))}
               keyboardType="numeric"
-              placeholder="Hr"
+              placeholder="hh:mm:ss"
               placeholderTextColor={colors.textMuted}
               style={[
                 styles.input,
@@ -96,39 +99,7 @@ export function TemplateSetRow({
                   backgroundColor: colors.surface,
                 },
               ]}
-              onEndEditing={() => commitDuration(hours, minutes, seconds)}
-            />
-            <TextInput
-              value={minutes}
-              onChangeText={setMinutes}
-              keyboardType="numeric"
-              placeholder="Min"
-              placeholderTextColor={colors.textMuted}
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: colors.surface,
-                },
-              ]}
-              onEndEditing={() => commitDuration(hours, minutes, seconds)}
-            />
-            <TextInput
-              value={seconds}
-              onChangeText={setSeconds}
-              keyboardType="numeric"
-              placeholder="Sec"
-              placeholderTextColor={colors.textMuted}
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: colors.surface,
-                },
-              ]}
-              onEndEditing={() => commitDuration(hours, minutes, seconds)}
+              onEndEditing={() => onChangeDuration(formattedToSeconds(durationInput))}
             />
           </>
         ) : (

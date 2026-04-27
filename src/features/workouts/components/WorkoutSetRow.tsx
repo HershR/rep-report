@@ -32,6 +32,37 @@ function toNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function formatDurationInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 6);
+  if (digits.length === 0) return "";
+  const padded = digits.padStart(6, "0");
+  const hh = Number(padded.slice(0, 2));
+  const mm = Number(padded.slice(2, 4));
+  const ss = Number(padded.slice(4, 6));
+  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
+  return String(ss);
+}
+
+function secondsToFormatted(value: number | null): string {
+  if (value === null || value === 0) return "";
+  const safe = Math.max(0, Math.floor(value));
+  const hh = Math.floor(safe / 3600);
+  const mm = Math.floor((safe % 3600) / 60);
+  const ss = safe % 60;
+  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
+  return String(ss);
+}
+
+function formattedToSeconds(value: string): number {
+  const digits = value.replace(/\D/g, "").slice(0, 6).padStart(6, "0");
+  const hh = Number(digits.slice(0, 2));
+  const mm = Number(digits.slice(2, 4));
+  const ss = Number(digits.slice(4, 6));
+  return hh * 3600 + mm * 60 + ss;
+}
+
 export function WorkoutSetRow({
   index,
   workoutSet,
@@ -41,43 +72,11 @@ export function WorkoutSetRow({
 }: WorkoutSetRowProps) {
   const colors = useThemeColors();
   const isCompleted = workoutSet.isCompleted === 1;
-  const [hours, setHours] = useState("0");
-  const [minutes, setMinutes] = useState("0");
-  const [seconds, setSeconds] = useState("0");
+  const [durationInput, setDurationInput] = useState("");
 
   useEffect(() => {
-    const totalSeconds = workoutSet.durationSeconds ?? 0;
-    const nextHours = Math.floor(totalSeconds / 3600);
-    const nextMinutes = Math.floor((totalSeconds % 3600) / 60);
-    const nextSeconds = totalSeconds % 60;
-    setHours(String(nextHours));
-    setMinutes(String(nextMinutes));
-    setSeconds(String(nextSeconds));
+    setDurationInput(secondsToFormatted(workoutSet.durationSeconds));
   }, [workoutSet.durationSeconds, workoutSet.id]);
-
-  const commitDuration = (
-    nextHours: string,
-    nextMinutes: string,
-    nextSeconds: string,
-  ) => {
-    const parsedHours = Number(nextHours.trim() || "0");
-    const parsedMinutes = Number(nextMinutes.trim() || "0");
-    const parsedSeconds = Number(nextSeconds.trim() || "0");
-    if (
-      !Number.isFinite(parsedHours) ||
-      !Number.isFinite(parsedMinutes) ||
-      !Number.isFinite(parsedSeconds)
-    ) {
-      return;
-    }
-    const total = Math.max(
-      0,
-      Math.floor(parsedHours) * 3600 +
-        Math.floor(parsedMinutes) * 60 +
-        Math.floor(parsedSeconds),
-    );
-    onUpdate(workoutSet.id, { durationSeconds: total });
-  };
 
   return (
     <View style={styles.row}>
@@ -85,10 +84,10 @@ export function WorkoutSetRow({
       {isCardio ? (
         <>
           <TextInput
-            value={hours}
-            onChangeText={setHours}
+            value={durationInput}
+            onChangeText={(value) => setDurationInput(formatDurationInput(value))}
             keyboardType="number-pad"
-            placeholder="Hr"
+            placeholder="hh:mm:ss"
             placeholderTextColor={colors.textMuted}
             style={[
               styles.input,
@@ -99,43 +98,9 @@ export function WorkoutSetRow({
               },
             ]}
             onEndEditing={() => {
-              commitDuration(hours, minutes, seconds);
-            }}
-          />
-          <TextInput
-            value={minutes}
-            onChangeText={setMinutes}
-            keyboardType="number-pad"
-            placeholder="Min"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onEndEditing={() => {
-              commitDuration(hours, minutes, seconds);
-            }}
-          />
-          <TextInput
-            value={seconds}
-            onChangeText={setSeconds}
-            keyboardType="number-pad"
-            placeholder="Sec"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onEndEditing={() => {
-              commitDuration(hours, minutes, seconds);
+              onUpdate(workoutSet.id, {
+                durationSeconds: formattedToSeconds(durationInput),
+              });
             }}
           />
         </>
