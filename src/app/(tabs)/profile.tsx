@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 
-import { CustomButton, CustomCard, CustomScreen, CustomText } from "@/components/common";
+import {
+  CustomButton,
+  CustomCard,
+  CustomScreen,
+  CustomText,
+} from "@/components/common";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
@@ -19,7 +26,7 @@ function toDisplayWeight(
   weightUnit: "kg" | "lb",
 ): { value: number; unit: "kg" | "lb" } {
   if (weightUnit === "lb") {
-    return { value: valueInKg * 2.2046226218, unit: "lb" };
+    return { value: Number((valueInKg * 2.2046226218).toFixed(2)), unit: "lb" };
   }
   return { value: valueInKg, unit: "kg" };
 }
@@ -29,14 +36,11 @@ function toMetricHeight(value: number, unit: string): number {
   return value;
 }
 
-function toDisplayHeightCm(
-  valueInCm: number,
-  heightUnit: "cm" | "in",
-): string {
+function toDisplayHeightCm(valueInCm: number, heightUnit: "cm" | "in"): string {
   if (heightUnit === "in") {
     const totalInches = valueInCm / 2.54;
     const feet = Math.floor(totalInches / 12);
-    const inches = Math.round(totalInches - feet * 12);
+    const inches = Number((totalInches - feet * 12).toFixed(1));
     return `${feet} ft ${inches} in`;
   }
   return `${Number(valueInCm.toFixed(2))} cm`;
@@ -46,8 +50,16 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const { appSettings, updateAppSettings } = useAppSettings();
   const { profile, saveProfile, isSaving } = useProfile();
-  const { latest: latestWeight, history: weightHistory, addMeasurement: addWeight } = useMeasurements("weight");
-  const { latest: latestHeight, history: heightHistory, addMeasurement: addHeight } = useMeasurements("height");
+  const {
+    latest: latestWeight,
+    history: weightHistory,
+    addMeasurement: addWeight,
+  } = useMeasurements("weight");
+  const {
+    latest: latestHeight,
+    history: heightHistory,
+    addMeasurement: addHeight,
+  } = useMeasurements("height");
   const [displayName, setDisplayName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [showDobPicker, setShowDobPicker] = useState(false);
@@ -111,10 +123,18 @@ export default function ProfileScreen() {
 
   const onSwitchUnitSystem = async (system: "metric" | "imperial") => {
     if (system === "metric") {
-      await updateAppSettings({ weightUnit: "kg", heightUnit: "cm", distanceUnit: "km" });
+      await updateAppSettings({
+        weightUnit: "kg",
+        heightUnit: "cm",
+        distanceUnit: "km",
+      });
       return;
     }
-    await updateAppSettings({ weightUnit: "lb", heightUnit: "in", distanceUnit: "mi" });
+    await updateAppSettings({
+      weightUnit: "lb",
+      heightUnit: "in",
+      distanceUnit: "mi",
+    });
   };
 
   return (
@@ -133,13 +153,23 @@ export default function ProfileScreen() {
               style={[
                 styles.segment,
                 appSettings?.heightUnit === "cm"
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.border },
+                  ? {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    }
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
               ]}
             >
               <CustomText
                 muted={appSettings?.heightUnit !== "cm"}
-                style={appSettings?.heightUnit === "cm" ? { color: colors.primaryText } : undefined}
+                style={
+                  appSettings?.heightUnit === "cm"
+                    ? { color: colors.primaryText }
+                    : undefined
+                }
               >
                 Metric
               </CustomText>
@@ -149,13 +179,23 @@ export default function ProfileScreen() {
               style={[
                 styles.segment,
                 appSettings?.heightUnit === "in"
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.border },
+                  ? {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    }
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
               ]}
             >
               <CustomText
                 muted={appSettings?.heightUnit !== "in"}
-                style={appSettings?.heightUnit === "in" ? { color: colors.primaryText } : undefined}
+                style={
+                  appSettings?.heightUnit === "in"
+                    ? { color: colors.primaryText }
+                    : undefined
+                }
               >
                 Imperial
               </CustomText>
@@ -166,10 +206,21 @@ export default function ProfileScreen() {
             onChangeText={setDisplayName}
             placeholder="Display name"
             placeholderTextColor={colors.textMuted}
-            style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.surface,
+              },
+            ]}
           />
           <CustomButton
-            label={dateOfBirth ? `DOB ${format(dateOfBirth, "PPP")}` : "Set Date of Birth (optional)"}
+            label={
+              dateOfBirth
+                ? `DOB ${format(dateOfBirth, "PPP")}`
+                : "Set Date of Birth (optional)"
+            }
             onPress={() => setShowDobPicker(true)}
           />
           {showDobPicker ? (
@@ -179,7 +230,11 @@ export default function ProfileScreen() {
               onChange={onChangeDob}
             />
           ) : null}
-          <CustomButton label="Save Profile" loading={isSaving} onPress={() => void onSaveProfile()} />
+          <CustomButton
+            label="Save Profile"
+            loading={isSaving}
+            onPress={() => void onSaveProfile()}
+          />
         </CustomCard>
 
         <CustomCard style={styles.card}>
@@ -188,8 +243,14 @@ export default function ProfileScreen() {
             {`Latest ${
               latestWeight
                 ? (() => {
-                    const metricValue = toMetricWeight(latestWeight.value, latestWeight.unit);
-                    const display = toDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
+                    const metricValue = toMetricWeight(
+                      latestWeight.value,
+                      latestWeight.unit,
+                    );
+                    const display = toDisplayWeight(
+                      metricValue,
+                      appSettings?.weightUnit ?? "kg",
+                    );
                     return `${Number(display.value.toFixed(2))} ${display.unit}`;
                   })()
                 : "N/A"
@@ -202,19 +263,33 @@ export default function ProfileScreen() {
               placeholder={`Weight (${appSettings?.weightUnit ?? "kg"})`}
               keyboardType="decimal-pad"
               placeholderTextColor={colors.textMuted}
-              style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+              style={[
+                styles.input,
+                styles.flex,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                },
+              ]}
             />
             <CustomButton label="Add" onPress={() => void onAddWeight()} />
           </View>
-          {weightHistory.slice(-5).reverse().map((item) => (
-            <CustomText key={item.id} muted>
-              {`${format(new Date(item.measuredAt), "PP")} • ${(() => {
-                const metricValue = toMetricWeight(item.value, item.unit);
-                const display = toDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
-                return `${Number(display.value.toFixed(2))} ${display.unit}`;
-              })()}`}
-            </CustomText>
-          ))}
+          {weightHistory
+            .slice(-5)
+            .reverse()
+            .map((item) => (
+              <CustomText key={item.id} muted>
+                {`${format(new Date(item.measuredAt), "PP")} • ${(() => {
+                  const metricValue = toMetricWeight(item.value, item.unit);
+                  const display = toDisplayWeight(
+                    metricValue,
+                    appSettings?.weightUnit ?? "kg",
+                  );
+                  return `${Number(display.value.toFixed(2))} ${display.unit}`;
+                })()}`}
+              </CustomText>
+            ))}
         </CustomCard>
 
         <CustomCard style={styles.card}>
@@ -238,7 +313,15 @@ export default function ProfileScreen() {
                   placeholder="Feet"
                   keyboardType="number-pad"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.input,
+                    styles.flex,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                 />
                 <TextInput
                   value={heightInches}
@@ -246,7 +329,15 @@ export default function ProfileScreen() {
                   placeholder="Inches"
                   keyboardType="number-pad"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.input,
+                    styles.flex,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                 />
               </>
             ) : (
@@ -256,19 +347,30 @@ export default function ProfileScreen() {
                 placeholder="Height"
                 keyboardType="decimal-pad"
                 placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                style={[
+                  styles.input,
+                  styles.flex,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
               />
             )}
             <CustomButton label="Add" onPress={() => void onAddHeight()} />
           </View>
-          {heightHistory.slice(-5).reverse().map((item) => (
-            <CustomText key={item.id} muted>
-              {`${format(new Date(item.measuredAt), "PP")} • ${toDisplayHeightCm(
-                toMetricHeight(item.value, item.unit),
-                appSettings?.heightUnit ?? "cm",
-              )}`}
-            </CustomText>
-          ))}
+          {heightHistory
+            .slice(-5)
+            .reverse()
+            .map((item) => (
+              <CustomText key={item.id} muted>
+                {`${format(new Date(item.measuredAt), "PP")} • ${toDisplayHeightCm(
+                  toMetricHeight(item.value, item.unit),
+                  appSettings?.heightUnit ?? "cm",
+                )}`}
+              </CustomText>
+            ))}
         </CustomCard>
       </View>
     </CustomScreen>
