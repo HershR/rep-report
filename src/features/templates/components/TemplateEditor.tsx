@@ -57,7 +57,12 @@ function textToNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-export function TemplateEditor({ initialTemplate, favorites, isSaving = false, onSave }: TemplateEditorProps) {
+export function TemplateEditor({
+  initialTemplate,
+  favorites,
+  isSaving = false,
+  onSave,
+}: TemplateEditorProps) {
   const colors = useThemeColors();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -87,8 +92,6 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
     );
   }, [initialTemplate]);
 
-  const selectedExerciseIds = useMemo(() => exercises.map((item) => item.exerciseId), [exercises]);
-
   const onAddExercise = (exercise: Exercise) => {
     setExercises((prev) => [
       ...prev,
@@ -100,7 +103,6 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
         sets: [],
       },
     ]);
-    setShowAddExerciseSheet(false);
   };
 
   const onAddSet = (exerciseLocalId: string) => {
@@ -126,10 +128,12 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
 
   const onDeleteExercise = (exerciseLocalId: string) => {
     setExercises((prev) =>
-      prev.filter((exercise) => exercise.localId !== exerciseLocalId).map((exercise, index) => ({
-        ...exercise,
-        orderIndex: index,
-      })),
+      prev
+        .filter((exercise) => exercise.localId !== exerciseLocalId)
+        .map((exercise, index) => ({
+          ...exercise,
+          orderIndex: index,
+        })),
     );
   };
 
@@ -137,7 +141,10 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
     setExercises((prev) =>
       prev.map((exercise) =>
         exercise.localId === exerciseLocalId
-          ? { ...exercise, sets: exercise.sets.filter((set) => set.localId !== setLocalId) }
+          ? {
+              ...exercise,
+              sets: exercise.sets.filter((set) => set.localId !== setLocalId),
+            }
           : exercise,
       ),
     );
@@ -166,7 +173,9 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
   const onPressSave = async () => {
     const nameValidation = templateNameSchema.safeParse(name);
     if (!nameValidation.success) {
-      setErrorMessage(nameValidation.error.issues[0]?.message ?? "Template name is required.");
+      setErrorMessage(
+        nameValidation.error.issues[0]?.message ?? "Template name is required.",
+      );
       return;
     }
 
@@ -179,7 +188,10 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
         };
         const result = templateSetSchema.safeParse(parsed);
         if (!result.success) {
-          setErrorMessage(result.error.issues[0]?.message ?? "Set values must be 0 or greater.");
+          setErrorMessage(
+            result.error.issues[0]?.message ??
+              "Set values must be 0 or greater.",
+          );
           return;
         }
       }
@@ -200,14 +212,31 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
         onChangeText={setName}
         placeholder="Template name"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+        style={[
+          styles.input,
+          {
+            borderColor: colors.border,
+            color: colors.text,
+            backgroundColor: colors.surface,
+          },
+        ]}
       />
       <TextInput
+        textAlignVertical="top"
+        numberOfLines={3}
+        multiline
         value={description}
         onChangeText={setDescription}
         placeholder="Description (optional)"
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+        style={[
+          styles.input,
+          {
+            borderColor: colors.border,
+            color: colors.text,
+            backgroundColor: colors.surface,
+          },
+        ]}
       />
 
       {errorMessage ? <CustomText muted>{errorMessage}</CustomText> : null}
@@ -229,7 +258,9 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
             sets={exercise.sets}
             onAddSet={() => onAddSet(exercise.localId)}
             onDeleteExercise={() => onDeleteExercise(exercise.localId)}
-            onDeleteSet={(setLocalId) => onDeleteSet(exercise.localId, setLocalId)}
+            onDeleteSet={(setLocalId) =>
+              onDeleteSet(exercise.localId, setLocalId)
+            }
             onUpdateSet={(setLocalId, field, value) =>
               onUpdateSet(exercise.localId, setLocalId, field, value)
             }
@@ -237,12 +268,15 @@ export function TemplateEditor({ initialTemplate, favorites, isSaving = false, o
         ))
       )}
 
-      <CustomButton label="Save Template" loading={isSaving} onPress={() => void onPressSave()} />
+      <CustomButton
+        label="Save Template"
+        loading={isSaving}
+        onPress={() => void onPressSave()}
+      />
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
         favorites={favorites}
-        selectedExerciseIds={selectedExerciseIds}
         onClose={() => setShowAddExerciseSheet(false)}
         onAddExercise={onAddExercise}
       />

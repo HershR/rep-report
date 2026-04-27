@@ -3,11 +3,11 @@ import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
 import { CustomCard, CustomText } from "@/components/common";
 import type { Exercise } from "@/features/exercises/types";
 import { spacing, useThemeColors } from "@/theme";
+import { FlashList } from "@shopify/flash-list";
 
 type AddSavedExerciseSheetProps = {
   visible: boolean;
   favorites: Exercise[];
-  selectedExerciseIds: string[];
   onClose: () => void;
   onAddExercise: (exercise: Exercise) => void;
 };
@@ -15,16 +15,25 @@ type AddSavedExerciseSheetProps = {
 export function AddSavedExerciseSheet({
   visible,
   favorites,
-  selectedExerciseIds,
   onClose,
   onAddExercise,
 }: AddSavedExerciseSheetProps) {
   const colors = useThemeColors();
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
-        <CustomCard style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <CustomCard
+          style={[
+            styles.sheet,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.header}>
             <CustomText>Add Saved Exercise</CustomText>
             <Pressable onPress={onClose}>
@@ -36,27 +45,25 @@ export function AddSavedExerciseSheet({
             <CustomText muted>No saved exercises available.</CustomText>
           ) : (
             <View style={styles.listContainer}>
-              <FlatList
+              <FlashList
                 data={favorites}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => {
-                  const alreadySelected = selectedExerciseIds.includes(item.id);
                   return (
                     <Pressable
-                      disabled={alreadySelected}
                       onPress={() => onAddExercise(item)}
                       style={({ pressed }) => [
                         styles.row,
                         {
                           borderColor: colors.border,
                           backgroundColor: colors.background,
-                          opacity: alreadySelected ? 0.5 : pressed ? 0.8 : 1,
+                          opacity: pressed ? 0.8 : 1,
                         },
                       ]}
                     >
                       <CustomText>{item.name}</CustomText>
-                      <CustomText muted>{alreadySelected ? "Added" : "Add"}</CustomText>
+                      <CustomText muted>Add</CustomText>
                     </Pressable>
                   );
                 }}
