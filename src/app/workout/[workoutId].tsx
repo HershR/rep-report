@@ -13,6 +13,7 @@ import {
   CustomText,
 } from "@/components/common";
 import { useWorkoutSession } from "@/features/workouts/hooks/useWorkoutSession";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import { spacing, useThemeColors } from "@/theme";
 
 function toText(value: number | null): string {
@@ -197,26 +198,28 @@ export default function WorkoutDetailScreen() {
                     });
                   }}
                 />
-                <TextInput
-                  defaultValue={toText(set.durationSeconds)}
-                  keyboardType="number-pad"
-                  placeholder="Sec"
-                  placeholderTextColor={colors.textMuted}
-                  style={[
-                    styles.setInput,
-                    {
-                      borderColor: colors.border,
-                      color: colors.text,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                  onEndEditing={(event) => {
-                    void updateSet({
-                      setId: set.id,
-                      durationSeconds: toNumber(event.nativeEvent.text),
-                    });
-                  }}
-                />
+                {isCardioExercise(exercise.exercise.category, exercise.exercise.name) ? (
+                  <TextInput
+                    defaultValue={toText(set.durationSeconds)}
+                    keyboardType="number-pad"
+                    placeholder="Sec"
+                    placeholderTextColor={colors.textMuted}
+                    style={[
+                      styles.setInput,
+                      {
+                        borderColor: colors.border,
+                        color: colors.text,
+                        backgroundColor: colors.surface,
+                      },
+                    ]}
+                    onEndEditing={(event) => {
+                      void updateSet({
+                        setId: set.id,
+                        durationSeconds: toNumber(event.nativeEvent.text),
+                      });
+                    }}
+                  />
+                ) : null}
                 <Pressable onPress={() => void deleteSet(set.id)}>
                   <CustomText muted>Remove</CustomText>
                 </Pressable>

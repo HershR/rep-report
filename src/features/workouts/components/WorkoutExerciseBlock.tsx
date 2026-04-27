@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomText } from "@/components/common";
 import { WorkoutSetRow } from "@/features/workouts/components/WorkoutSetRow";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import type { WorkoutSessionExerciseWithDetails } from "@/features/workouts/types";
 import { spacing } from "@/theme";
 
@@ -28,6 +29,11 @@ export function WorkoutExerciseBlock({
   onUpdateSet,
   onDeleteSet,
 }: WorkoutExerciseBlockProps) {
+  const showDuration = isCardioExercise(
+    workoutExercise.exercise.category,
+    workoutExercise.exercise.name,
+  );
+
   return (
     <CustomCard style={styles.card}>
       <View style={styles.header}>
@@ -51,6 +57,7 @@ export function WorkoutExerciseBlock({
               key={workoutSet.id}
               index={index}
               workoutSet={workoutSet}
+              showDuration={showDuration}
               onUpdate={onUpdateSet}
               onDelete={onDeleteSet}
             />

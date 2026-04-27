@@ -25,6 +25,7 @@ type EditorExercise = {
   localId: string;
   exerciseId: string;
   exerciseName: string;
+  exerciseCategory: string | null;
   orderIndex: number;
   sets: EditorSet[];
 };
@@ -80,6 +81,7 @@ export function TemplateEditor({
         localId: createLocalId(),
         exerciseId: templateExercise.exerciseId,
         exerciseName: templateExercise.exercise.name,
+        exerciseCategory: templateExercise.exercise.category,
         orderIndex: templateExercise.orderIndex,
         sets: templateExercise.sets.map((set) => ({
           id: set.id,
@@ -99,6 +101,7 @@ export function TemplateEditor({
         localId: createLocalId(),
         exerciseId: exercise.id,
         exerciseName: exercise.name,
+        exerciseCategory: exercise.category,
         orderIndex: prev.length,
         sets: [],
       },
@@ -255,6 +258,7 @@ export function TemplateEditor({
           <TemplateExerciseBlock
             key={exercise.localId}
             exerciseName={exercise.exerciseName}
+            exerciseCategory={exercise.exerciseCategory}
             sets={exercise.sets}
             onAddSet={() => onAddSet(exercise.localId)}
             onDeleteExercise={() => onDeleteExercise(exercise.localId)}

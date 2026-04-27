@@ -8,6 +8,7 @@ type TemplateSetRowProps = {
   repsText: string;
   weightText: string;
   durationText: string;
+  showDuration: boolean;
   onChangeReps: (value: string) => void;
   onChangeWeight: (value: string) => void;
   onChangeDuration: (value: string) => void;
@@ -19,6 +20,7 @@ export function TemplateSetRow({
   repsText,
   weightText,
   durationText,
+  showDuration,
   onChangeReps,
   onChangeWeight,
   onChangeDuration,
@@ -52,14 +54,16 @@ export function TemplateSetRow({
           placeholderTextColor={colors.textMuted}
           style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
         />
-        <TextInput
-          value={durationText}
-          onChangeText={onChangeDuration}
-          keyboardType="numeric"
-          placeholder="Duration(s)"
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-        />
+        {showDuration ? (
+          <TextInput
+            value={durationText}
+            onChangeText={onChangeDuration}
+            keyboardType="numeric"
+            placeholder="Duration(s)"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+          />
+        ) : null}
       </View>
     </View>
   );

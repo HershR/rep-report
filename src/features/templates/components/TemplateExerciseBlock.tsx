@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomText } from "@/components/common";
 import { TemplateSetRow } from "@/features/templates/components/TemplateSetRow";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import { spacing } from "@/theme";
 
 type EditableSet = {
@@ -13,6 +14,7 @@ type EditableSet = {
 
 type TemplateExerciseBlockProps = {
   exerciseName: string;
+  exerciseCategory: string | null;
   sets: EditableSet[];
   onAddSet: () => void;
   onDeleteExercise: () => void;
@@ -26,12 +28,15 @@ type TemplateExerciseBlockProps = {
 
 export function TemplateExerciseBlock({
   exerciseName,
+  exerciseCategory,
   sets,
   onAddSet,
   onDeleteExercise,
   onDeleteSet,
   onUpdateSet,
 }: TemplateExerciseBlockProps) {
+  const showDuration = isCardioExercise(exerciseCategory, exerciseName);
+
   return (
     <CustomCard style={styles.card}>
       <View style={styles.header}>
@@ -48,6 +53,7 @@ export function TemplateExerciseBlock({
           repsText={set.repsText}
           weightText={set.weightText}
           durationText={set.durationText}
+          showDuration={showDuration}
           onDelete={() => onDeleteSet(set.localId)}
           onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
           onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}

@@ -7,6 +7,7 @@ import { spacing, useThemeColors } from "@/theme";
 type WorkoutSetRowProps = {
   index: number;
   workoutSet: WorkoutSessionSet;
+  showDuration: boolean;
   onUpdate: (
     setId: string,
     input: {
@@ -30,7 +31,13 @@ function toNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function WorkoutSetRow({ index, workoutSet, onUpdate, onDelete }: WorkoutSetRowProps) {
+export function WorkoutSetRow({
+  index,
+  workoutSet,
+  showDuration,
+  onUpdate,
+  onDelete,
+}: WorkoutSetRowProps) {
   const colors = useThemeColors();
   const isCompleted = workoutSet.isCompleted === 1;
 
@@ -57,16 +64,18 @@ export function WorkoutSetRow({ index, workoutSet, onUpdate, onDelete }: Workout
           onUpdate(workoutSet.id, { weight: toNumber(event.nativeEvent.text) });
         }}
       />
-      <TextInput
-        defaultValue={toText(workoutSet.durationSeconds)}
-        keyboardType="number-pad"
-        placeholder="Sec"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-        onEndEditing={(event) => {
-          onUpdate(workoutSet.id, { durationSeconds: toNumber(event.nativeEvent.text) });
-        }}
-      />
+      {showDuration ? (
+        <TextInput
+          defaultValue={toText(workoutSet.durationSeconds)}
+          keyboardType="number-pad"
+          placeholder="Sec"
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+          onEndEditing={(event) => {
+            onUpdate(workoutSet.id, { durationSeconds: toNumber(event.nativeEvent.text) });
+          }}
+        />
+      ) : null}
       <Pressable onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}>
         <CustomText muted={!isCompleted}>{isCompleted ? "Done" : "Mark"}</CustomText>
       </Pressable>
