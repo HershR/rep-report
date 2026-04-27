@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 
@@ -11,7 +11,7 @@ import { spacing, useThemeColors } from "@/theme";
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
-  const { appSettings } = useAppSettings();
+  const { appSettings, updateAppSettings } = useAppSettings();
   const { profile, saveProfile, isSaving } = useProfile();
   const { latest: latestWeight, history: weightHistory, addMeasurement: addWeight } = useMeasurements("weight");
   const { latest: latestHeight, history: heightHistory, addMeasurement: addHeight } = useMeasurements("height");
@@ -50,7 +50,7 @@ export default function ProfileScreen() {
   const onAddWeight = async () => {
     const value = Number(weightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
-    await addWeight({ value, unit: "kg" });
+    await addWeight({ value, unit: appSettings?.weightUnit ?? "kg" });
     setWeightValue("");
   };
 
@@ -74,6 +74,14 @@ export default function ProfileScreen() {
     setHeightValue("");
   };
 
+  const onSwitchUnitSystem = async (system: "metric" | "imperial") => {
+    if (system === "metric") {
+      await updateAppSettings({ weightUnit: "kg", heightUnit: "cm", distanceUnit: "km" });
+      return;
+    }
+    await updateAppSettings({ weightUnit: "lb", heightUnit: "in", distanceUnit: "mi" });
+  };
+
   return (
     <CustomScreen scroll>
       <CustomText variant="title">Profile</CustomText>
@@ -83,6 +91,41 @@ export default function ProfileScreen() {
       <View style={styles.gap}>
         <CustomCard style={styles.card}>
           <CustomText>Profile</CustomText>
+          <CustomText muted>Unit System</CustomText>
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => void onSwitchUnitSystem("metric")}
+              style={[
+                styles.segment,
+                appSettings?.heightUnit === "cm"
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <CustomText
+                muted={appSettings?.heightUnit !== "cm"}
+                style={appSettings?.heightUnit === "cm" ? { color: colors.primaryText } : undefined}
+              >
+                Metric
+              </CustomText>
+            </Pressable>
+            <Pressable
+              onPress={() => void onSwitchUnitSystem("imperial")}
+              style={[
+                styles.segment,
+                appSettings?.heightUnit === "in"
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <CustomText
+                muted={appSettings?.heightUnit !== "in"}
+                style={appSettings?.heightUnit === "in" ? { color: colors.primaryText } : undefined}
+              >
+                Imperial
+              </CustomText>
+            </Pressable>
+          </View>
           <TextInput
             value={displayName}
             onChangeText={setDisplayName}
@@ -111,7 +154,7 @@ export default function ProfileScreen() {
             <TextInput
               value={weightValue}
               onChangeText={setWeightValue}
-              placeholder="Weight"
+              placeholder={`Weight (${appSettings?.weightUnit ?? "kg"})`}
               keyboardType="decimal-pad"
               placeholderTextColor={colors.textMuted}
               style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
@@ -197,4 +240,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   flex: { flex: 1 },
+  segment: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: spacing.sm,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+  },
 });
