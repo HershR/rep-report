@@ -171,7 +171,6 @@ export function TemplateEditor({
     field: "repsText" | "weightText" | "durationText",
     value: string,
   ) => {
-    console.log(field, value);
     setExercises((prev) =>
       prev.map((exercise) =>
         exercise.localId === exerciseLocalId
@@ -197,9 +196,6 @@ export function TemplateEditor({
 
     for (const exercise of exercises) {
       for (const set of exercise.sets) {
-        if (set.durationText !== "") {
-          console.log(set.durationText);
-        }
         const parsed = {
           targetReps: textToNumber(set.repsText),
           targetWeight: textToNumber(set.weightText),
