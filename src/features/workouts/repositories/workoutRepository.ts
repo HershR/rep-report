@@ -155,6 +155,27 @@ export async function getWorkoutSessionById(id: string): Promise<WorkoutSession 
   return row ?? null;
 }
 
+export async function getCompletedWorkoutsByDate(date: string): Promise<WorkoutSessionDetails[]> {
+  const startLocal = new Date(`${date}T00:00:00`);
+  const endLocal = new Date(`${date}T23:59:59.999`);
+  const startUtcIso = startLocal.toISOString();
+  const endUtcIso = endLocal.toISOString();
+
+  const rows = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.status, "completed"))
+    .orderBy(desc(workoutSessions.completedAt));
+
+  const filtered = rows.filter((row) => {
+    if (!row.completedAt) return false;
+    return row.completedAt >= startUtcIso && row.completedAt <= endUtcIso;
+  });
+
+  const hydrated = await Promise.all(filtered.map((row) => hydrateWorkoutSession(row.id)));
+  return hydrated.filter((row): row is WorkoutSessionDetails => Boolean(row));
+}
+
 export async function getWorkoutSessionDetailsById(id: string): Promise<WorkoutSessionDetails | null> {
   return hydrateWorkoutSession(id);
 }
@@ -252,6 +273,35 @@ export async function completeWorkout(
     .where(eq(workoutSessions.id, sessionId));
 
   return getWorkoutSessionById(sessionId);
+}
+
+export async function updateCompletedWorkout(
+  id: string,
+  input: {
+    name?: string;
+    notes?: string | null;
+    completedAt?: string | null;
+    durationSeconds?: number | null;
+  },
+): Promise<WorkoutSessionDetails | null> {
+  const current = await getWorkoutSessionById(id);
+  if (!current) return null;
+  if (current.status !== "completed") {
+    throw new Error("Can only edit completed workouts");
+  }
+
+  await db
+    .update(workoutSessions)
+    .set({
+      ...(input.name !== undefined ? { name: input.name.trim() || "Workout" } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.completedAt !== undefined ? { completedAt: input.completedAt } : {}),
+      ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+      updatedAt: nowUtc(),
+    })
+    .where(eq(workoutSessions.id, id));
+
+  return hydrateWorkoutSession(id);
 }
 
 export async function cancelWorkout(sessionId: string): Promise<WorkoutSession | null> {
@@ -458,4 +508,13 @@ export async function ensureWorkoutIsActive(workoutSessionId: string): Promise<b
     .where(and(eq(workoutSessions.id, workoutSessionId), eq(workoutSessions.status, "active")))
     .limit(1);
   return Boolean(row);
+}
+
+export async function deleteWorkoutSession(id: string): Promise<void> {
+  const current = await getWorkoutSessionById(id);
+  if (!current) return;
+  if (current.status === "active") {
+    throw new Error("Cannot delete active workout session");
+  }
+  await db.delete(workoutSessions).where(eq(workoutSessions.id, id));
 }

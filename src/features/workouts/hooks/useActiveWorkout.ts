@@ -54,6 +54,7 @@ export function useActiveWorkout() {
     },
     onSuccess: () => {
       setActiveWorkoutCache(null);
+      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
     },
   });
 
@@ -61,6 +62,7 @@ export function useActiveWorkout() {
     mutationFn: (sessionId: string) => cancelWorkout(sessionId),
     onSuccess: () => {
       setActiveWorkoutCache(null);
+      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
     },
   });
 
