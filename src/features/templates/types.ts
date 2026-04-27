@@ -47,6 +47,36 @@ export type UpdateWorkoutTemplateInput = {
   description?: string | null;
 };
 
+export type TemplateEditorSet = {
+  id?: string;
+  localId: string;
+  repsText: string;
+  weightText: string;
+  durationText: string;
+};
+
+export type TemplateEditorExercise = {
+  id?: string;
+  localId: string;
+  exerciseId: string;
+  exerciseName: string;
+  exerciseCategory: string | null;
+  orderIndex: number;
+  sets: TemplateEditorSet[];
+};
+
+export type TemplateEditorFormValues = {
+  name: string;
+  description: string;
+  exercises: TemplateEditorExercise[];
+};
+
+export type TemplateEditorValue = {
+  name: string;
+  description: string | null;
+  exercises: TemplateEditorExercise[];
+};
+
 export const templateNameSchema = z
   .string()
   .trim()
@@ -61,3 +91,43 @@ export const templateSetSchema = z.object({
   targetWeight: nonNegativeNumberSchema,
   targetDurationSeconds: nonNegativeNumberSchema,
 });
+
+const optionalNonNegativeTextSchema = z
+  .string()
+  .refine((value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) && parsed >= 0;
+  }, "Value must be 0 or greater");
+
+export const templateEditorSetSchema = z.object({
+  id: z.string().optional(),
+  localId: z.string(),
+  repsText: optionalNonNegativeTextSchema,
+  weightText: optionalNonNegativeTextSchema,
+  durationText: optionalNonNegativeTextSchema,
+});
+
+export const templateEditorExerciseSchema = z.object({
+  id: z.string().optional(),
+  localId: z.string(),
+  exerciseId: z.string().min(1),
+  exerciseName: z.string().min(1),
+  exerciseCategory: z.string().nullable(),
+  orderIndex: z.number().int().min(0),
+  sets: z.array(templateEditorSetSchema),
+});
+
+export const templateEditorFormSchema = z.object({
+  name: templateNameSchema,
+  description: z.string(),
+  exercises: z.array(templateEditorExerciseSchema),
+});
+
+export function parseTemplateNumberText(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}

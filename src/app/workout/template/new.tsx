@@ -3,19 +3,16 @@ import { useRouter, type Href } from "expo-router";
 
 import { CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
-import { TemplateEditor, type TemplateEditorValue } from "@/features/templates/components/TemplateEditor";
+import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
+import {
+  parseTemplateNumberText,
+  type TemplateEditorValue,
+} from "@/features/templates/types";
 import {
   addExerciseToTemplate,
   addSetToTemplateExercise,
   createWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-
-function parseValue(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export default function NewTemplateScreen() {
   const router = useRouter();
@@ -39,9 +36,9 @@ export default function NewTemplateScreen() {
         await addSetToTemplateExercise({
           templateExerciseId: addedExercise.id,
           orderIndex: setIndex,
-          targetReps: parseValue(set.repsText),
-          targetWeight: parseValue(set.weightText),
-          targetDurationSeconds: parseValue(set.durationText),
+          targetReps: parseTemplateNumberText(set.repsText),
+          targetWeight: parseTemplateNumberText(set.weightText),
+          targetDurationSeconds: parseTemplateNumberText(set.durationText),
         });
       }
     }

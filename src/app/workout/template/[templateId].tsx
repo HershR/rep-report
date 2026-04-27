@@ -4,8 +4,12 @@ import { Pressable } from "react-native";
 
 import { CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
-import { TemplateEditor, type TemplateEditorValue } from "@/features/templates/components/TemplateEditor";
+import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
 import { useWorkoutTemplate } from "@/features/templates/hooks/useWorkoutTemplate";
+import {
+  parseTemplateNumberText,
+  type TemplateEditorValue,
+} from "@/features/templates/types";
 import {
   addExerciseToTemplate,
   addSetToTemplateExercise,
@@ -16,13 +20,6 @@ import {
   updateTemplateSet,
   updateWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-
-function parseValue(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export default function TemplateDetailScreen() {
   const router = useRouter();
@@ -66,17 +63,17 @@ export default function TemplateDetailScreen() {
           if (set.id) {
             await updateTemplateSet(set.id, {
               orderIndex: setIndex,
-              targetReps: parseValue(set.repsText),
-              targetWeight: parseValue(set.weightText),
-              targetDurationSeconds: parseValue(set.durationText),
+              targetReps: parseTemplateNumberText(set.repsText),
+              targetWeight: parseTemplateNumberText(set.weightText),
+              targetDurationSeconds: parseTemplateNumberText(set.durationText),
             });
           } else {
             await addSetToTemplateExercise({
               templateExerciseId: exercise.id,
               orderIndex: setIndex,
-              targetReps: parseValue(set.repsText),
-              targetWeight: parseValue(set.weightText),
-              targetDurationSeconds: parseValue(set.durationText),
+              targetReps: parseTemplateNumberText(set.repsText),
+              targetWeight: parseTemplateNumberText(set.weightText),
+              targetDurationSeconds: parseTemplateNumberText(set.durationText),
             });
           }
         }
@@ -90,9 +87,9 @@ export default function TemplateDetailScreen() {
           await addSetToTemplateExercise({
             templateExerciseId: addedExercise.id,
             orderIndex: setIndex,
-            targetReps: parseValue(set.repsText),
-            targetWeight: parseValue(set.weightText),
-            targetDurationSeconds: parseValue(set.durationText),
+            targetReps: parseTemplateNumberText(set.repsText),
+            targetWeight: parseTemplateNumberText(set.weightText),
+            targetDurationSeconds: parseTemplateNumberText(set.durationText),
           });
         }
       }
