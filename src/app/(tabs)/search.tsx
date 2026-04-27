@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { CustomCard, CustomScreen, CustomText } from "@/components/common";
@@ -19,6 +19,8 @@ export default function SearchScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pendingPage, setPendingPage] = useState<number | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<number[]>([]);
@@ -54,17 +56,27 @@ export default function SearchScreen() {
   const filters = useMemo(
     () => ({
       query,
-      page: 1,
+      page,
       limit: 20,
       categoryIds: selectedCategoryIds,
       equipmentIds: selectedEquipmentIds,
       muscleIds: selectedMuscleIds,
     }),
-    [query, selectedCategoryIds, selectedEquipmentIds, selectedMuscleIds],
+    [query, page, selectedCategoryIds, selectedEquipmentIds, selectedMuscleIds],
   );
 
-  const { items, isLoading, isError, error, debouncedQuery, refetch } =
-    useExerciseSearch(filters);
+  const {
+    items,
+    total,
+    nextPage,
+    previousPage,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    debouncedQuery,
+    refetch,
+  } = useExerciseSearch(filters);
   const { saveFavoriteExercise, removeFavoriteExercise } =
     useFavoriteExercises();
 
@@ -80,6 +92,21 @@ export default function SearchScreen() {
     setSelectedCategoryIds([]);
     setSelectedEquipmentIds([]);
     setSelectedMuscleIds([]);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / 20));
+
+  useEffect(() => {
+    if (!isFetching) {
+      setPendingPage(null);
+    }
+  }, [isFetching]);
+
+  const onChangeQuery = (value: string) => {
+    setQuery(value);
+    setPage(1);
+    setPendingPage(null);
   };
 
   const activeFilterCount =
@@ -96,7 +123,7 @@ export default function SearchScreen() {
 
       <TextInput
         value={query}
-        onChangeText={setQuery}
+        onChangeText={onChangeQuery}
         placeholder="Search exercises"
         placeholderTextColor={colors.textMuted}
         style={[
@@ -156,6 +183,12 @@ export default function SearchScreen() {
       )}
 
       <View style={styles.results}>
+        {!isLoading && !isError && items.length > 0 ? (
+          <View style={styles.paginationHeader}>
+            <CustomText muted>{`Showing ${items.length} of ${total}`}</CustomText>
+            <CustomText muted>{`Page ${page} of ${totalPages}`}</CustomText>
+          </View>
+        ) : null}
         <FlashList
           data={items}
           keyExtractor={(exercise) => String(exercise.wgerExerciseId)}
@@ -181,6 +214,54 @@ export default function SearchScreen() {
               }}
             />
           )}
+          ListFooterComponent={
+            pendingPage !== null && isFetching && !isLoading ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <CustomText muted>Loading page...</CustomText>
+              </View>
+            ) : !isLoading && !isError && items.length > 0 ? (
+              <View style={styles.numberedPagination}>
+                <Pressable
+                  onPress={() => {
+                    if (!previousPage) return;
+                    setPendingPage(previousPage);
+                    setPage(previousPage);
+                  }}
+                  disabled={!previousPage}
+                  style={[
+                    styles.pageButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                      opacity: previousPage ? 1 : 0.5,
+                    },
+                  ]}
+                >
+                  <CustomText>Previous</CustomText>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    if (!nextPage) return;
+                    setPendingPage(nextPage);
+                    setPage(nextPage);
+                  }}
+                  disabled={!nextPage}
+                  style={[
+                    styles.pageButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                      opacity: nextPage ? 1 : 0.5,
+                    },
+                  ]}
+                >
+                  <CustomText>Next</CustomText>
+                </Pressable>
+              </View>
+            ) : null
+          }
         />
       </View>
       <ExerciseFilterModal
@@ -239,6 +320,29 @@ const styles = StyleSheet.create({
   results: {
     marginTop: spacing.md,
     gap: spacing.sm,
+  },
+  paginationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  footerLoading: {
+    marginTop: spacing.md,
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  numberedPagination: {
+    marginTop: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  pageButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: spacing.sm,
+    alignItems: "center",
+    paddingVertical: spacing.sm,
   },
   retryButton: {
     marginTop: spacing.sm,
