@@ -1,10 +1,17 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Calendar } from "react-native-calendars";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 
-import { CustomButton, CustomCard, CustomScreen, CustomText } from "@/components/common";
+import {
+  CustomButton,
+  CustomCard,
+  CustomScreen,
+  CustomText,
+} from "@/components/common";
 import { useWorkoutSession } from "@/features/workouts/hooks/useWorkoutSession";
 import { spacing, useThemeColors } from "@/theme";
 
@@ -22,19 +29,20 @@ function toNumber(value: string): number | null {
 export default function WorkoutDetailScreen() {
   const params = useLocalSearchParams<{ workoutId: string }>();
   const colors = useThemeColors();
-  const { workoutSession, isLoading, updateSet, deleteSet, updateCompletedWorkout } = useWorkoutSession(
-    params.workoutId,
-  );
+  const {
+    workoutSession,
+    isLoading,
+    updateSet,
+    deleteSet,
+    updateCompletedWorkout,
+  } = useWorkoutSession(params.workoutId);
   const [nameDraft, setNameDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
+  const [showCompletedAtPicker, setShowCompletedAtPicker] = useState(false);
 
-  const completedDateKey = useMemo(() => {
-    if (!workoutSession?.completedAt) return "";
-    const day = new Date(workoutSession.completedAt);
-    return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(
-      2,
-      "0",
-    )}`;
+  const completedAtDate = useMemo(() => {
+    if (!workoutSession?.completedAt) return null;
+    return new Date(workoutSession.completedAt);
   }, [workoutSession?.completedAt]);
 
   useEffect(() => {
@@ -58,6 +66,21 @@ export default function WorkoutDetailScreen() {
     });
   };
 
+  const onChangeCompletedAt = async (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    if (event.type === "dismissed") {
+      setShowCompletedAtPicker(false);
+      return;
+    }
+    if (!selectedDate) return;
+    setShowCompletedAtPicker(false);
+    await updateCompletedWorkout({
+      completedAt: selectedDate.toISOString(),
+    });
+  };
+
   return (
     <CustomScreen scroll contentContainerStyle={styles.container}>
       <CustomText variant="title">Workout Detail</CustomText>
@@ -67,7 +90,14 @@ export default function WorkoutDetailScreen() {
         <TextInput
           value={nameDraft}
           onChangeText={setNameDraft}
-          style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+          style={[
+            styles.input,
+            {
+              borderColor: colors.border,
+              color: colors.text,
+              backgroundColor: colors.surface,
+            },
+          ]}
           placeholder="Workout name"
           placeholderTextColor={colors.textMuted}
         />
@@ -79,7 +109,15 @@ export default function WorkoutDetailScreen() {
           multiline
           numberOfLines={3}
           textAlignVertical="top"
-          style={[styles.input, styles.notesInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+          style={[
+            styles.input,
+            styles.notesInput,
+            {
+              borderColor: colors.border,
+              color: colors.text,
+              backgroundColor: colors.surface,
+            },
+          ]}
           placeholder="Workout notes"
           placeholderTextColor={colors.textMuted}
         />
@@ -88,25 +126,19 @@ export default function WorkoutDetailScreen() {
       </CustomCard>
 
       <CustomCard style={styles.card}>
-        <CustomText>{`Completed ${workoutSession.completedAt ? format(new Date(workoutSession.completedAt), "PPP p") : "N/A"}`}</CustomText>
-        <CustomText muted>{`Duration ${workoutSession.durationSeconds ?? 0}s`}</CustomText>
-        {completedDateKey ? (
-          <Calendar
-            current={completedDateKey}
-            markedDates={{
-              [completedDateKey]: {
-                selected: true,
-                selectedColor: colors.primary,
-              },
-            }}
-            disableAllTouchEventsForDisabledDays
-            onDayPress={() => {}}
-            theme={{
-              calendarBackground: colors.surface,
-              dayTextColor: colors.text,
-              monthTextColor: colors.text,
-              textDisabledColor: colors.textMuted,
-              arrowColor: colors.primary,
+        <CustomText>{`Completed ${completedAtDate ? format(completedAtDate, "PPP p") : "N/A"}`}</CustomText>
+        <CustomText
+          muted
+        >{`Duration ${workoutSession.durationSeconds ?? 0}s`}</CustomText>
+        <Pressable onPress={() => setShowCompletedAtPicker(true)}>
+          <CustomText muted>Edit completed date/time</CustomText>
+        </Pressable>
+        {showCompletedAtPicker && completedAtDate ? (
+          <DateTimePicker
+            mode="date"
+            value={completedAtDate}
+            onChange={(event, date) => {
+              void onChangeCompletedAt(event, date);
             }}
           />
         ) : null}
@@ -116,18 +148,33 @@ export default function WorkoutDetailScreen() {
         {workoutSession.exercises.map((exercise) => (
           <CustomCard key={exercise.id} style={styles.card}>
             <CustomText>{exercise.exercise.name}</CustomText>
-            {exercise.sets.length === 0 ? <CustomText muted>No sets.</CustomText> : null}
+            {exercise.sets.length === 0 ? (
+              <CustomText muted>No sets.</CustomText>
+            ) : null}
             {exercise.sets.map((set, index) => (
               <View key={set.id} style={styles.setRow}>
-                <CustomText muted style={styles.setIndex}>{`#${index + 1}`}</CustomText>
+                <CustomText
+                  muted
+                  style={styles.setIndex}
+                >{`#${index + 1}`}</CustomText>
                 <TextInput
                   defaultValue={toText(set.reps)}
                   keyboardType="number-pad"
                   placeholder="Reps"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.setInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.setInput,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onEndEditing={(event) => {
-                    void updateSet({ setId: set.id, reps: toNumber(event.nativeEvent.text) });
+                    void updateSet({
+                      setId: set.id,
+                      reps: toNumber(event.nativeEvent.text),
+                    });
                   }}
                 />
                 <TextInput
@@ -135,9 +182,19 @@ export default function WorkoutDetailScreen() {
                   keyboardType="decimal-pad"
                   placeholder="Wt"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.setInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.setInput,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onEndEditing={(event) => {
-                    void updateSet({ setId: set.id, weight: toNumber(event.nativeEvent.text) });
+                    void updateSet({
+                      setId: set.id,
+                      weight: toNumber(event.nativeEvent.text),
+                    });
                   }}
                 />
                 <TextInput
@@ -145,9 +202,19 @@ export default function WorkoutDetailScreen() {
                   keyboardType="number-pad"
                   placeholder="Sec"
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.setInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.setInput,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onEndEditing={(event) => {
-                    void updateSet({ setId: set.id, durationSeconds: toNumber(event.nativeEvent.text) });
+                    void updateSet({
+                      setId: set.id,
+                      durationSeconds: toNumber(event.nativeEvent.text),
+                    });
                   }}
                 />
                 <Pressable onPress={() => void deleteSet(set.id)}>
