@@ -1,4 +1,4 @@
-import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 
 import { CustomCard, CustomText } from "@/components/common";
 import type { Exercise } from "@/features/exercises/types";
