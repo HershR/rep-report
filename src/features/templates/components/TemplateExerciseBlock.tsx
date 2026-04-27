@@ -53,7 +53,7 @@ export function TemplateExerciseBlock({
           repsText={set.repsText}
           weightText={set.weightText}
           durationText={set.durationText}
-          showDuration={showDuration}
+          isCardio={showDuration}
           onDelete={() => onDeleteSet(set.localId)}
           onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
           onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}

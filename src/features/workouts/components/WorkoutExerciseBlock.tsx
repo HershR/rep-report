@@ -57,7 +57,7 @@ export function WorkoutExerciseBlock({
               key={workoutSet.id}
               index={index}
               workoutSet={workoutSet}
-              showDuration={showDuration}
+              isCardio={showDuration}
               onUpdate={onUpdateSet}
               onDelete={onDeleteSet}
             />
