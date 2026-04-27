@@ -1,16 +1,128 @@
-import { eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
 import {
   type SetType,
+  exercises,
+  workoutTemplateExercises,
+  workoutTemplateSets,
   workoutSessionExercises,
   workoutSessions,
   workoutSets,
   type WorkoutSession,
-  type WorkoutSessionExercise,
-  type WorkoutSet,
 } from "@/db/schema";
+import type { Exercise } from "@/features/exercises/types";
+import type { WorkoutSessionDetails, WorkoutSessionExerciseWithDetails } from "@/features/workouts/types";
+
+function parseJsonArray(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function toExercise(row: typeof exercises.$inferSelect): Exercise {
+  return {
+    id: row.id,
+    wgerExerciseId: row.wgerExerciseId,
+    name: row.name,
+    description: row.description,
+    category: row.category,
+    equipment: parseJsonArray(row.equipment),
+    primaryMuscles: parseJsonArray(row.primaryMuscles),
+    secondaryMuscles: parseJsonArray(row.secondaryMuscles),
+    imageUrl: row.imageUrl,
+    source: row.source,
+    isFavorite: row.isFavorite === 1,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+async function hydrateWorkoutSession(sessionId: string): Promise<WorkoutSessionDetails | null> {
+  const [session] = await db.select().from(workoutSessions).where(eq(workoutSessions.id, sessionId)).limit(1);
+  if (!session) return null;
+
+  const sessionExerciseRows = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId))
+    .orderBy(asc(workoutSessionExercises.orderIndex));
+
+  if (sessionExerciseRows.length === 0) {
+    return { ...session, exercises: [] };
+  }
+
+  const exerciseRows = await db
+    .select()
+    .from(exercises)
+    .where(
+      inArray(
+        exercises.id,
+        sessionExerciseRows.map((row) => row.exerciseId),
+      ),
+    );
+
+  const setRows = await db
+    .select()
+    .from(workoutSets)
+    .where(
+      inArray(
+        workoutSets.workoutSessionExerciseId,
+        sessionExerciseRows.map((row) => row.id),
+      ),
+    )
+    .orderBy(asc(workoutSets.orderIndex));
+
+  const exerciseMap = new Map(exerciseRows.map((row) => [row.id, toExercise(row)]));
+  const setsBySessionExerciseId = new Map<string, typeof setRows>();
+  for (const set of setRows) {
+    const list = setsBySessionExerciseId.get(set.workoutSessionExerciseId) ?? [];
+    list.push(set);
+    setsBySessionExerciseId.set(set.workoutSessionExerciseId, list);
+  }
+
+  const hydratedExercises: WorkoutSessionExerciseWithDetails[] = sessionExerciseRows
+    .map((sessionExercise) => {
+      const exercise = exerciseMap.get(sessionExercise.exerciseId);
+      if (!exercise) return null;
+      return {
+        ...sessionExercise,
+        exercise,
+        sets: setsBySessionExerciseId.get(sessionExercise.id) ?? [],
+      };
+    })
+    .filter((item): item is WorkoutSessionExerciseWithDetails => Boolean(item));
+
+  return {
+    ...session,
+    exercises: hydratedExercises,
+  };
+}
+
+async function getNextExerciseOrderIndex(workoutSessionId: string): Promise<number> {
+  const rows = await db
+    .select({ orderIndex: workoutSessionExercises.orderIndex })
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId))
+    .orderBy(desc(workoutSessionExercises.orderIndex))
+    .limit(1);
+  return (rows[0]?.orderIndex ?? -1) + 1;
+}
+
+async function getNextSetOrderIndex(workoutSessionExerciseId: string): Promise<number> {
+  const rows = await db
+    .select({ orderIndex: workoutSets.orderIndex })
+    .from(workoutSets)
+    .where(eq(workoutSets.workoutSessionExerciseId, workoutSessionExerciseId))
+    .orderBy(desc(workoutSets.orderIndex))
+    .limit(1);
+  return (rows[0]?.orderIndex ?? -1) + 1;
+}
 
 export async function createWorkoutSession(input: {
   name: string;
@@ -43,6 +155,88 @@ export async function getWorkoutSessionById(id: string): Promise<WorkoutSession 
   return row ?? null;
 }
 
+export async function getWorkoutSessionDetailsById(id: string): Promise<WorkoutSessionDetails | null> {
+  return hydrateWorkoutSession(id);
+}
+
+export async function getActiveWorkoutSession(): Promise<WorkoutSessionDetails | null> {
+  const [active] = await db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.status, "active"))
+    .orderBy(desc(workoutSessions.startedAt))
+    .limit(1);
+
+  if (!active) return null;
+  return hydrateWorkoutSession(active.id);
+}
+
+export async function resumeWorkout(sessionId?: string): Promise<WorkoutSessionDetails | null> {
+  if (sessionId) return hydrateWorkoutSession(sessionId);
+  return getActiveWorkoutSession();
+}
+
+export async function startWorkout(input?: {
+  name?: string;
+  templateId?: string | null;
+  notes?: string | null;
+}): Promise<WorkoutSessionDetails> {
+  const templateId = input?.templateId ?? null;
+  const now = nowUtc();
+  const session = await createWorkoutSession({
+    name: input?.name?.trim() || "Workout",
+    templateId,
+    notes: input?.notes ?? null,
+  });
+
+  if (templateId) {
+    const templateExerciseRows = await db
+      .select()
+      .from(workoutTemplateExercises)
+      .where(eq(workoutTemplateExercises.templateId, templateId))
+      .orderBy(asc(workoutTemplateExercises.orderIndex));
+
+    for (const templateExercise of templateExerciseRows) {
+      const sessionExerciseId = createUuid();
+      await db.insert(workoutSessionExercises).values({
+        id: sessionExerciseId,
+        workoutSessionId: session.id,
+        exerciseId: templateExercise.exerciseId,
+        orderIndex: templateExercise.orderIndex,
+        notes: templateExercise.notes,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const templateSetRows = await db
+        .select()
+        .from(workoutTemplateSets)
+        .where(eq(workoutTemplateSets.templateExerciseId, templateExercise.id))
+        .orderBy(asc(workoutTemplateSets.orderIndex));
+
+      for (const templateSet of templateSetRows) {
+        await db.insert(workoutSets).values({
+          id: createUuid(),
+          workoutSessionExerciseId: sessionExerciseId,
+          orderIndex: templateSet.orderIndex,
+          reps: templateSet.targetReps,
+          weight: templateSet.targetWeight,
+          durationSeconds: templateSet.targetDurationSeconds,
+          distance: null,
+          isCompleted: 0,
+          setType: templateSet.setType,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+  }
+
+  const hydrated = await hydrateWorkoutSession(session.id);
+  if (!hydrated) throw new Error("Failed start workout");
+  return hydrated;
+}
+
 export async function completeWorkout(
   sessionId: string,
   input?: { completedAt?: string; durationSeconds?: number | null },
@@ -60,36 +254,70 @@ export async function completeWorkout(
   return getWorkoutSessionById(sessionId);
 }
 
-export async function addExerciseToWorkoutSession(input: {
+export async function cancelWorkout(sessionId: string): Promise<WorkoutSession | null> {
+  await db
+    .update(workoutSessions)
+    .set({
+      status: "cancelled",
+      updatedAt: nowUtc(),
+    })
+    .where(eq(workoutSessions.id, sessionId));
+
+  return getWorkoutSessionById(sessionId);
+}
+
+export async function addExerciseToWorkout(input: {
   workoutSessionId: string;
   exerciseId: string;
   orderIndex?: number;
   notes?: string | null;
-}): Promise<WorkoutSessionExercise> {
+}): Promise<WorkoutSessionDetails> {
   const id = createUuid();
   const timestamp = nowUtc();
+  const orderIndex = input.orderIndex ?? (await getNextExerciseOrderIndex(input.workoutSessionId));
 
   await db.insert(workoutSessionExercises).values({
     id,
     workoutSessionId: input.workoutSessionId,
     exerciseId: input.exerciseId,
-    orderIndex: input.orderIndex ?? 0,
+    orderIndex,
     notes: input.notes ?? null,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
 
-  const [row] = await db
-    .select()
-    .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.id, id))
-    .limit(1);
-
-  if (!row) throw new Error("Failed add exercise to workout session");
-  return row;
+  const hydrated = await hydrateWorkoutSession(input.workoutSessionId);
+  if (!hydrated) throw new Error("Failed add exercise to workout");
+  return hydrated;
 }
 
-export async function addWorkoutSet(input: {
+export async function removeExerciseFromWorkout(
+  workoutSessionId: string,
+  workoutSessionExerciseId: string,
+): Promise<WorkoutSessionDetails> {
+  await db.delete(workoutSessionExercises).where(eq(workoutSessionExercises.id, workoutSessionExerciseId));
+  const rows = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId))
+    .orderBy(asc(workoutSessionExercises.orderIndex));
+
+  const timestamp = nowUtc();
+  for (const [index, row] of rows.entries()) {
+    if (row.orderIndex !== index) {
+      await db
+        .update(workoutSessionExercises)
+        .set({ orderIndex: index, updatedAt: timestamp })
+        .where(eq(workoutSessionExercises.id, row.id));
+    }
+  }
+
+  const hydrated = await hydrateWorkoutSession(workoutSessionId);
+  if (!hydrated) throw new Error("Failed remove exercise from workout");
+  return hydrated;
+}
+
+export async function addSetToWorkout(input: {
   workoutSessionExerciseId: string;
   orderIndex?: number;
   reps?: number | null;
@@ -98,14 +326,15 @@ export async function addWorkoutSet(input: {
   distance?: number | null;
   isCompleted?: boolean;
   setType?: SetType;
-}): Promise<WorkoutSet> {
+}): Promise<WorkoutSessionDetails> {
   const id = createUuid();
   const timestamp = nowUtc();
+  const orderIndex = input.orderIndex ?? (await getNextSetOrderIndex(input.workoutSessionExerciseId));
 
   await db.insert(workoutSets).values({
     id,
     workoutSessionExerciseId: input.workoutSessionExerciseId,
-    orderIndex: input.orderIndex ?? 0,
+    orderIndex,
     reps: input.reps ?? null,
     weight: input.weight ?? null,
     durationSeconds: input.durationSeconds ?? null,
@@ -116,7 +345,117 @@ export async function addWorkoutSet(input: {
     updatedAt: timestamp,
   });
 
-  const [row] = await db.select().from(workoutSets).where(eq(workoutSets.id, id)).limit(1);
-  if (!row) throw new Error("Failed add workout set");
-  return row;
+  const [sessionExercise] = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.id, input.workoutSessionExerciseId))
+    .limit(1);
+  if (!sessionExercise) throw new Error("Workout exercise not found");
+
+  const hydrated = await hydrateWorkoutSession(sessionExercise.workoutSessionId);
+  if (!hydrated) throw new Error("Failed add workout set");
+  return hydrated;
+}
+
+export async function updateSet(
+  setId: string,
+  input: {
+    orderIndex?: number;
+    reps?: number | null;
+    weight?: number | null;
+    durationSeconds?: number | null;
+    distance?: number | null;
+    isCompleted?: boolean;
+    setType?: SetType;
+  },
+): Promise<WorkoutSessionDetails> {
+  await db
+    .update(workoutSets)
+    .set({
+      ...(input.orderIndex !== undefined ? { orderIndex: input.orderIndex } : {}),
+      ...(input.reps !== undefined ? { reps: input.reps } : {}),
+      ...(input.weight !== undefined ? { weight: input.weight } : {}),
+      ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+      ...(input.distance !== undefined ? { distance: input.distance } : {}),
+      ...(input.isCompleted !== undefined ? { isCompleted: input.isCompleted ? 1 : 0 } : {}),
+      ...(input.setType !== undefined ? { setType: input.setType } : {}),
+      updatedAt: nowUtc(),
+    })
+    .where(eq(workoutSets.id, setId));
+
+  const [setRow] = await db.select().from(workoutSets).where(eq(workoutSets.id, setId)).limit(1);
+  if (!setRow) throw new Error("Workout set not found");
+
+  const [sessionExercise] = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.id, setRow.workoutSessionExerciseId))
+    .limit(1);
+  if (!sessionExercise) throw new Error("Workout exercise not found");
+
+  const hydrated = await hydrateWorkoutSession(sessionExercise.workoutSessionId);
+  if (!hydrated) throw new Error("Failed update workout set");
+  return hydrated;
+}
+
+export async function deleteSet(setId: string): Promise<WorkoutSessionDetails> {
+  const [setRow] = await db.select().from(workoutSets).where(eq(workoutSets.id, setId)).limit(1);
+  if (!setRow) throw new Error("Workout set not found");
+
+  const [sessionExercise] = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.id, setRow.workoutSessionExerciseId))
+    .limit(1);
+  if (!sessionExercise) throw new Error("Workout exercise not found");
+
+  await db.delete(workoutSets).where(eq(workoutSets.id, setId));
+  const rows = await db
+    .select()
+    .from(workoutSets)
+    .where(eq(workoutSets.workoutSessionExerciseId, setRow.workoutSessionExerciseId))
+    .orderBy(asc(workoutSets.orderIndex));
+  const timestamp = nowUtc();
+  for (const [index, row] of rows.entries()) {
+    if (row.orderIndex !== index) {
+      await db.update(workoutSets).set({ orderIndex: index, updatedAt: timestamp }).where(eq(workoutSets.id, row.id));
+    }
+  }
+
+  const hydrated = await hydrateWorkoutSession(sessionExercise.workoutSessionId);
+  if (!hydrated) throw new Error("Failed delete workout set");
+  return hydrated;
+}
+
+export async function updateWorkoutExerciseNotes(
+  workoutSessionExerciseId: string,
+  notes: string | null,
+): Promise<WorkoutSessionDetails> {
+  await db
+    .update(workoutSessionExercises)
+    .set({
+      notes,
+      updatedAt: nowUtc(),
+    })
+    .where(eq(workoutSessionExercises.id, workoutSessionExerciseId));
+
+  const [sessionExercise] = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.id, workoutSessionExerciseId))
+    .limit(1);
+  if (!sessionExercise) throw new Error("Workout exercise not found");
+
+  const hydrated = await hydrateWorkoutSession(sessionExercise.workoutSessionId);
+  if (!hydrated) throw new Error("Failed update exercise notes");
+  return hydrated;
+}
+
+export async function ensureWorkoutIsActive(workoutSessionId: string): Promise<boolean> {
+  const [row] = await db
+    .select()
+    .from(workoutSessions)
+    .where(and(eq(workoutSessions.id, workoutSessionId), eq(workoutSessions.status, "active")))
+    .limit(1);
+  return Boolean(row);
 }

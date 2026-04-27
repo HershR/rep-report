@@ -7,7 +7,7 @@ export type ExerciseSource = (typeof EXERCISE_SOURCES)[number];
 export const SET_TYPES = ["normal", "warmup", "drop", "failure"] as const;
 export type SetType = (typeof SET_TYPES)[number];
 
-export const WORKOUT_SESSION_STATUSES = ["active", "completed"] as const;
+export const WORKOUT_SESSION_STATUSES = ["active", "completed", "cancelled"] as const;
 export type WorkoutSessionStatus = (typeof WORKOUT_SESSION_STATUSES)[number];
 
 export const WEIGHT_UNITS = ["lb", "kg"] as const;

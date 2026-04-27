@@ -1,0 +1,166 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
+
+import { CustomButton, CustomScreen, CustomText } from "@/components/common";
+import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
+import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
+import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
+import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import { spacing } from "@/theme";
+
+export default function ActiveWorkoutScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ templateId?: string; name?: string; sessionId?: string }>();
+  const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const { favorites } = useFavoriteExercises();
+  const {
+    activeWorkout,
+    isLoading,
+    startWorkout,
+    resumeWorkout,
+    completeWorkout,
+    cancelWorkout,
+    addExerciseToWorkout,
+    addSetToWorkout,
+    removeExerciseFromWorkout,
+    updateSet,
+    deleteSet,
+  } = useActiveWorkout();
+
+  useEffect(() => {
+    if (activeWorkout?.status === "active") return;
+    if (params.sessionId) {
+      void resumeWorkout(params.sessionId);
+      return;
+    }
+    void startWorkout({
+      name: params.name ?? "Workout",
+      templateId: params.templateId ?? null,
+    });
+  }, [
+    activeWorkout?.id,
+    activeWorkout?.status,
+    params.name,
+    params.sessionId,
+    params.templateId,
+    resumeWorkout,
+    startWorkout,
+  ]);
+
+  useEffect(() => {
+    if (!activeWorkout?.startedAt) return;
+    const tick = () => {
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - Date.parse(activeWorkout.startedAt)) / 1000)),
+      );
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [activeWorkout?.startedAt]);
+
+  const canComplete = useMemo(() => Boolean(activeWorkout && activeWorkout.exercises.length > 0), [activeWorkout]);
+
+  if (isLoading || !activeWorkout) {
+    return (
+      <CustomScreen>
+        <CustomText muted>Loading workout...</CustomText>
+      </CustomScreen>
+    );
+  }
+
+  const onComplete = async () => {
+    if (!canComplete) {
+      Alert.alert("Add at least one exercise", "Workout needs one exercise before completing.");
+      return;
+    }
+    await completeWorkout(activeWorkout.id);
+    router.replace("/(tabs)/home");
+  };
+
+  const onCancel = async () => {
+    await cancelWorkout(activeWorkout.id);
+    router.replace("/(tabs)/home");
+  };
+
+  return (
+    <CustomScreen scroll contentContainerStyle={styles.container}>
+      <WorkoutTimerHeader workoutName={activeWorkout.name} elapsedSeconds={elapsedSeconds} />
+
+      <View style={styles.actions}>
+        <CustomButton label="Complete Workout" onPress={() => void onComplete()} />
+        <Pressable onPress={() => void onCancel()}>
+          <CustomText muted>Cancel Workout</CustomText>
+        </Pressable>
+      </View>
+
+      <View style={styles.exerciseHeader}>
+        <CustomText>Exercises</CustomText>
+        <Pressable onPress={() => setShowAddExerciseSheet(true)}>
+          <CustomText muted>Add Saved Exercise</CustomText>
+        </Pressable>
+      </View>
+
+      {activeWorkout.exercises.length === 0 ? <CustomText muted>No exercises yet.</CustomText> : null}
+
+      <View style={styles.exerciseList}>
+        {activeWorkout.exercises.map((workoutExercise) => (
+          <WorkoutExerciseBlock
+            key={workoutExercise.id}
+            workoutExercise={workoutExercise}
+            onAddSet={(workoutSessionExerciseId) => {
+              void addSetToWorkout({ workoutSessionExerciseId });
+            }}
+            onRemoveExercise={(workoutSessionExerciseId) => {
+              void removeExerciseFromWorkout({
+                workoutSessionId: activeWorkout.id,
+                workoutSessionExerciseId,
+              });
+            }}
+            onUpdateSet={(setId, input) => {
+              void updateSet({ setId, ...input });
+            }}
+            onDeleteSet={(setId) => {
+              void deleteSet(setId);
+            }}
+          />
+        ))}
+      </View>
+
+      <AddSavedExerciseSheet
+        visible={showAddExerciseSheet}
+        favorites={favorites}
+        onClose={() => setShowAddExerciseSheet(false)}
+        onAddExercise={(exercise) => {
+          setShowAddExerciseSheet(false);
+          void addExerciseToWorkout({
+            workoutSessionId: activeWorkout.id,
+            exerciseId: exercise.id,
+          });
+        }}
+      />
+    </CustomScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    gap: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  actions: {
+    gap: spacing.sm,
+  },
+  exerciseHeader: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  exerciseList: {
+    gap: spacing.sm,
+  },
+});
