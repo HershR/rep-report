@@ -1,8 +1,15 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
 import { measurements, type Measurement } from "@/db/schema";
+
+export const SUPPORTED_MEASUREMENT_TYPES = ["weight", "height"] as const;
+export type SupportedMeasurementType = (typeof SUPPORTED_MEASUREMENT_TYPES)[number];
+
+function isSupportedType(value: string): value is SupportedMeasurementType {
+  return value === "weight" || value === "height";
+}
 
 export async function createMeasurement(input: {
   measurementType: string;
@@ -11,6 +18,10 @@ export async function createMeasurement(input: {
   measuredAt?: string;
   notes?: string | null;
 }): Promise<Measurement> {
+  if (!isSupportedType(input.measurementType)) {
+    throw new Error("Unsupported measurement type");
+  }
+
   const id = createUuid();
   const timestamp = nowUtc();
 
@@ -37,7 +48,15 @@ export async function getMeasurementById(id: string): Promise<Measurement | null
 
 export async function listMeasurements(measurementType?: string): Promise<Measurement[]> {
   if (!measurementType) {
-    return db.select().from(measurements).orderBy(asc(measurements.measuredAt));
+    return db
+      .select()
+      .from(measurements)
+      .where(eq(measurements.measurementType, "weight"))
+      .orderBy(asc(measurements.measuredAt));
+  }
+
+  if (!isSupportedType(measurementType)) {
+    return [];
   }
 
   return db
@@ -45,4 +64,16 @@ export async function listMeasurements(measurementType?: string): Promise<Measur
     .from(measurements)
     .where(eq(measurements.measurementType, measurementType))
     .orderBy(asc(measurements.measuredAt));
+}
+
+export async function getLatestMeasurementByType(
+  measurementType: SupportedMeasurementType,
+): Promise<Measurement | null> {
+  const [row] = await db
+    .select()
+    .from(measurements)
+    .where(eq(measurements.measurementType, measurementType))
+    .orderBy(desc(measurements.measuredAt))
+    .limit(1);
+  return row ?? null;
 }
