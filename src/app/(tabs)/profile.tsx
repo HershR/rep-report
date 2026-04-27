@@ -5,11 +5,13 @@ import { format } from "date-fns";
 
 import { CustomButton, CustomCard, CustomScreen, CustomText } from "@/components/common";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { spacing, useThemeColors } from "@/theme";
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
+  const { appSettings } = useAppSettings();
   const { profile, saveProfile, isSaving } = useProfile();
   const { latest: latestWeight, history: weightHistory, addMeasurement: addWeight } = useMeasurements("weight");
   const { latest: latestHeight, history: heightHistory, addMeasurement: addHeight } = useMeasurements("height");
@@ -18,6 +20,8 @@ export default function ProfileScreen() {
   const [showDobPicker, setShowDobPicker] = useState(false);
   const [weightValue, setWeightValue] = useState("");
   const [heightValue, setHeightValue] = useState("");
+  const [heightFeet, setHeightFeet] = useState("");
+  const [heightInches, setHeightInches] = useState("");
 
   useEffect(() => {
     if (!profile) return;
@@ -51,9 +55,22 @@ export default function ProfileScreen() {
   };
 
   const onAddHeight = async () => {
+    if (appSettings?.heightUnit === "in") {
+      const feet = Number(heightFeet.trim() || "0");
+      const inches = Number(heightInches.trim() || "0");
+      if (!Number.isFinite(feet) || !Number.isFinite(inches)) return;
+      if (feet < 0 || inches < 0) return;
+      const totalInches = feet * 12 + inches;
+      if (totalInches <= 0) return;
+      await addHeight({ value: totalInches, unit: "in" });
+      setHeightFeet("");
+      setHeightInches("");
+      return;
+    }
+
     const value = Number(heightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
-    await addHeight({ value, unit: "cm" });
+    await addHeight({ value, unit: appSettings?.heightUnit ?? "cm" });
     setHeightValue("");
   };
 
@@ -108,20 +125,55 @@ export default function ProfileScreen() {
 
         <CustomCard style={styles.card}>
           <CustomText>Height</CustomText>
-          <CustomText muted>{`Latest ${latestHeight ? `${latestHeight.value} ${latestHeight.unit}` : "N/A"}`}</CustomText>
+          <CustomText muted>
+            {`Latest ${
+              latestHeight
+                ? latestHeight.unit === "in"
+                  ? `${Math.floor(latestHeight.value / 12)} ft ${latestHeight.value % 12} in`
+                  : `${latestHeight.value} ${latestHeight.unit}`
+                : "N/A"
+            }`}
+          </CustomText>
           <View style={styles.row}>
-            <TextInput
-              value={heightValue}
-              onChangeText={setHeightValue}
-              placeholder="Height"
-              keyboardType="decimal-pad"
-              placeholderTextColor={colors.textMuted}
-              style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-            />
+            {appSettings?.heightUnit === "in" ? (
+              <>
+                <TextInput
+                  value={heightFeet}
+                  onChangeText={setHeightFeet}
+                  placeholder="Feet"
+                  keyboardType="number-pad"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                />
+                <TextInput
+                  value={heightInches}
+                  onChangeText={setHeightInches}
+                  placeholder="Inches"
+                  keyboardType="number-pad"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                />
+              </>
+            ) : (
+              <TextInput
+                value={heightValue}
+                onChangeText={setHeightValue}
+                placeholder="Height"
+                keyboardType="decimal-pad"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.flex, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+              />
+            )}
             <CustomButton label="Add" onPress={() => void onAddHeight()} />
           </View>
           {heightHistory.slice(-5).reverse().map((item) => (
-            <CustomText key={item.id} muted>{`${format(new Date(item.measuredAt), "PP")} • ${item.value} ${item.unit}`}</CustomText>
+            <CustomText key={item.id} muted>
+              {`${format(new Date(item.measuredAt), "PP")} • ${
+                item.unit === "in"
+                  ? `${Math.floor(item.value / 12)} ft ${item.value % 12} in`
+                  : `${item.value} ${item.unit}`
+              }`}
+            </CustomText>
           ))}
         </CustomCard>
       </View>
