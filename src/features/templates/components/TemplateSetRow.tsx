@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { CustomText } from "@/components/common";
+import {
+  durationDisplayToSeconds,
+  formatDurationInput,
+  secondsToDurationDisplay,
+} from "@/features/workouts/utils/durationInput";
 import { spacing, useThemeColors } from "@/theme";
 
 type TemplateSetRowProps = {
@@ -15,40 +20,6 @@ type TemplateSetRowProps = {
   onChangeDuration: (value: string) => void;
   onDelete: () => void;
 };
-
-function formatDurationInput(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 6);
-  if (digits.length === 0) return "";
-  const padded = digits.padStart(6, "0");
-  const hh = Number(padded.slice(0, 2));
-  const mm = Number(padded.slice(2, 4));
-  const ss = Number(padded.slice(4, 6));
-  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
-  return String(ss);
-}
-
-function secondsToFormatted(value: string): string {
-  const totalSeconds = Number(value || "0");
-  const safe = Number.isFinite(totalSeconds)
-    ? Math.max(0, Math.floor(totalSeconds))
-    : 0;
-  if (safe === 0) return "";
-  const hh = Math.floor(safe / 3600);
-  const mm = Math.floor((safe % 3600) / 60);
-  const ss = safe % 60;
-  if (hh > 0) return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-  if (mm > 0) return `${mm}:${String(ss).padStart(2, "0")}`;
-  return String(ss);
-}
-
-function formattedToSeconds(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 6).padStart(6, "0");
-  const hh = Number(digits.slice(0, 2));
-  const mm = Number(digits.slice(2, 4));
-  const ss = Number(digits.slice(4, 6));
-  return String(hh * 3600 + mm * 60 + ss);
-}
 
 export function TemplateSetRow({
   index,
@@ -65,8 +36,19 @@ export function TemplateSetRow({
   const [durationInput, setDurationInput] = useState("");
 
   useEffect(() => {
-    setDurationInput(secondsToFormatted(durationText));
+    const secondsValue = Number(durationText || "0");
+    setDurationInput(secondsToDurationDisplay(Number.isFinite(secondsValue) ? secondsValue : 0));
   }, [durationText]);
+
+  const commitDuration = () => {
+    onChangeDuration(String(durationDisplayToSeconds(durationInput)));
+  };
+
+  const onChangeDurationInput = (value: string) => {
+    const formatted = formatDurationInput(value);
+    setDurationInput(formatted);
+    onChangeDuration(String(durationDisplayToSeconds(formatted)));
+  };
 
   return (
     <View
@@ -87,7 +69,7 @@ export function TemplateSetRow({
           <>
             <TextInput
               value={durationInput}
-              onChangeText={(value) => setDurationInput(formatDurationInput(value))}
+              onChangeText={onChangeDurationInput}
               keyboardType="numeric"
               placeholder="hh:mm:ss"
               placeholderTextColor={colors.textMuted}
@@ -99,7 +81,9 @@ export function TemplateSetRow({
                   backgroundColor: colors.surface,
                 },
               ]}
-              onEndEditing={() => onChangeDuration(formattedToSeconds(durationInput))}
+              onEndEditing={commitDuration}
+              onBlur={commitDuration}
+              onSubmitEditing={commitDuration}
             />
           </>
         ) : (

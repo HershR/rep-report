@@ -58,6 +58,18 @@ function textToNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
+function durationTextToSeconds(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const digits = trimmed.replace(/\D/g, "").slice(0, 6).padStart(6, "0");
+  const hh = Number(digits.slice(0, 2));
+  const mm = Number(digits.slice(2, 4));
+  const ss = Number(digits.slice(4, 6));
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss))
+    return Number.NaN;
+  return hh * 3600 + mm * 60 + ss;
+}
+
 export function TemplateEditor({
   initialTemplate,
   favorites,
@@ -159,6 +171,7 @@ export function TemplateEditor({
     field: "repsText" | "weightText" | "durationText",
     value: string,
   ) => {
+    console.log(field, value);
     setExercises((prev) =>
       prev.map((exercise) =>
         exercise.localId === exerciseLocalId
@@ -184,10 +197,13 @@ export function TemplateEditor({
 
     for (const exercise of exercises) {
       for (const set of exercise.sets) {
+        if (set.durationText !== "") {
+          console.log(set.durationText);
+        }
         const parsed = {
           targetReps: textToNumber(set.repsText),
           targetWeight: textToNumber(set.weightText),
-          targetDurationSeconds: textToNumber(set.durationText),
+          targetDurationSeconds: durationTextToSeconds(set.durationText),
         };
         const result = templateSetSchema.safeParse(parsed);
         if (!result.success) {
