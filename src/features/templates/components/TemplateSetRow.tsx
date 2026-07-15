@@ -8,6 +8,7 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
+import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
 import { spacing, useThemeColors } from "@/theme";
 
 type TemplateSetRowProps = {
@@ -40,14 +41,35 @@ export function TemplateSetRow({
   const colors = useThemeColors();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
+
   const [durationInput, setDurationInput] = useState("");
+  const [isDurationFocused, setIsDurationFocused] = useState(false);
+  const [distanceInput, setDistanceInput] = useState("");
+  const [isDistanceFocused, setIsDistanceFocused] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
+  const [isWeightFocused, setIsWeightFocused] = useState(false);
 
   useEffect(() => {
+    if (isDurationFocused) return;
     const secondsValue = Number(durationText || "0");
     setDurationInput(secondsToDurationDisplay(Number.isFinite(secondsValue) ? secondsValue : 0));
-  }, [durationText]);
+  }, [durationText, isDurationFocused]);
+
+  useEffect(() => {
+    if (isDistanceFocused) return;
+    const kmValue = Number(distanceText || "0");
+    setDistanceInput(distanceToText(Number.isFinite(kmValue) && kmValue > 0 ? kmValue : null, distanceUnit));
+  }, [distanceText, distanceUnit, isDistanceFocused]);
+
+  useEffect(() => {
+    if (isWeightFocused) return;
+    const kgValue = Number(weightText || "0");
+    setWeightInput(weightToText(Number.isFinite(kgValue) && kgValue > 0 ? kgValue : null, weightUnit));
+  }, [weightText, weightUnit, isWeightFocused]);
 
   const commitDuration = () => {
+    setIsDurationFocused(false);
     onChangeDuration(String(durationDisplayToSeconds(durationInput)));
   };
 
@@ -55,6 +77,30 @@ export function TemplateSetRow({
     const formatted = formatDurationInput(value);
     setDurationInput(formatted);
     onChangeDuration(String(durationDisplayToSeconds(formatted)));
+  };
+
+  const commitDistance = () => {
+    setIsDistanceFocused(false);
+    const metricValue = textToMetricDistance(distanceInput, distanceUnit);
+    onChangeDistance(metricValue === null ? "" : String(metricValue));
+  };
+
+  const onChangeDistanceInput = (value: string) => {
+    setDistanceInput(value);
+    const metricValue = textToMetricDistance(value, distanceUnit);
+    onChangeDistance(metricValue === null ? "" : String(metricValue));
+  };
+
+  const commitWeight = () => {
+    setIsWeightFocused(false);
+    const metricValue = textToMetricWeight(weightInput, weightUnit);
+    onChangeWeight(metricValue === null ? "" : String(metricValue));
+  };
+
+  const onChangeWeightInput = (value: string) => {
+    setWeightInput(value);
+    const metricValue = textToMetricWeight(value, weightUnit);
+    onChangeWeight(metricValue === null ? "" : String(metricValue));
   };
 
   return (
@@ -88,13 +134,14 @@ export function TemplateSetRow({
                   backgroundColor: colors.surface,
                 },
               ]}
+              onFocus={() => setIsDurationFocused(true)}
               onEndEditing={commitDuration}
               onBlur={commitDuration}
               onSubmitEditing={commitDuration}
             />
             <TextInput
-              value={distanceText}
-              onChangeText={onChangeDistance}
+              value={distanceInput}
+              onChangeText={onChangeDistanceInput}
               keyboardType="decimal-pad"
               placeholder={`Dist (${distanceUnit})`}
               placeholderTextColor={colors.textMuted}
@@ -106,6 +153,10 @@ export function TemplateSetRow({
                   backgroundColor: colors.surface,
                 },
               ]}
+              onFocus={() => setIsDistanceFocused(true)}
+              onEndEditing={commitDistance}
+              onBlur={commitDistance}
+              onSubmitEditing={commitDistance}
             />
           </>
         ) : (
@@ -126,10 +177,10 @@ export function TemplateSetRow({
               ]}
             />
             <TextInput
-              value={weightText}
-              onChangeText={onChangeWeight}
-              keyboardType="numeric"
-              placeholder="Weight"
+              value={weightInput}
+              onChangeText={onChangeWeightInput}
+              keyboardType="decimal-pad"
+              placeholder={`Weight (${weightUnit})`}
               placeholderTextColor={colors.textMuted}
               style={[
                 styles.input,
@@ -139,6 +190,10 @@ export function TemplateSetRow({
                   backgroundColor: colors.surface,
                 },
               ]}
+              onFocus={() => setIsWeightFocused(true)}
+              onEndEditing={commitWeight}
+              onBlur={commitWeight}
+              onSubmitEditing={commitWeight}
             />
           </>
         )}

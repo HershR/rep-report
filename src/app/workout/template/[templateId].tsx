@@ -21,7 +21,7 @@ import {
   updateTemplateSet,
   updateWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-import { textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
+import { textToMetricWeight } from "@/lib/units";
 
 export default function TemplateDetailScreen() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function TemplateDetailScreen() {
   const { favorites } = useFavoriteExercises();
   const { template, isLoading, error } = useWorkoutTemplate(templateId);
   const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
 
   const onSave = async (value: TemplateEditorValue) => {
     if (!templateId || !template) return;
@@ -68,18 +68,18 @@ export default function TemplateDetailScreen() {
             await updateTemplateSet(set.id, {
               orderIndex: setIndex,
               targetReps: parseTemplateNumberText(set.repsText),
-              targetWeight: parseTemplateNumberText(set.weightText),
+              targetWeight: textToMetricWeight(set.weightText, weightUnit),
               targetDurationSeconds: parseTemplateNumberText(set.durationText),
-              targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
+              targetDistance: parseTemplateNumberText(set.distanceText),
             });
           } else {
             await addSetToTemplateExercise({
               templateExerciseId: exercise.id,
               orderIndex: setIndex,
               targetReps: parseTemplateNumberText(set.repsText),
-              targetWeight: parseTemplateNumberText(set.weightText),
+              targetWeight: textToMetricWeight(set.weightText, weightUnit),
               targetDurationSeconds: parseTemplateNumberText(set.durationText),
-              targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
+              targetDistance: parseTemplateNumberText(set.distanceText),
             });
           }
         }
@@ -94,9 +94,9 @@ export default function TemplateDetailScreen() {
             templateExerciseId: addedExercise.id,
             orderIndex: setIndex,
             targetReps: parseTemplateNumberText(set.repsText),
-            targetWeight: parseTemplateNumberText(set.weightText),
+            targetWeight: textToMetricWeight(set.weightText, weightUnit),
             targetDurationSeconds: parseTemplateNumberText(set.durationText),
-            targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
+            targetDistance: parseTemplateNumberText(set.distanceText),
           });
         }
       }

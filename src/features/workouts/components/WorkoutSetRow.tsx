@@ -9,7 +9,7 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
-import { distanceToText, textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
+import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
 import { spacing, useThemeColors } from "@/theme";
 
 type WorkoutSetRowProps = {
@@ -52,27 +52,49 @@ export function WorkoutSetRow({
   const colors = useThemeColors();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
+
   const [durationInput, setDurationInput] = useState("");
+  const [isDurationFocused, setIsDurationFocused] = useState(false);
   const [distanceInput, setDistanceInput] = useState("");
+  const [isDistanceFocused, setIsDistanceFocused] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
+  const [isWeightFocused, setIsWeightFocused] = useState(false);
 
   useEffect(() => {
+    if (isDurationFocused) return;
     setDurationInput(secondsToDurationDisplay(workoutSet.durationSeconds));
-  }, [workoutSet.durationSeconds, workoutSet.id]);
+  }, [workoutSet.durationSeconds, workoutSet.id, isDurationFocused]);
 
   useEffect(() => {
+    if (isDistanceFocused) return;
     setDistanceInput(distanceToText(workoutSet.distance, distanceUnit));
-  }, [workoutSet.distance, workoutSet.id, distanceUnit]);
+  }, [workoutSet.distance, workoutSet.id, distanceUnit, isDistanceFocused]);
+
+  useEffect(() => {
+    if (isWeightFocused) return;
+    setWeightInput(weightToText(workoutSet.weight, weightUnit));
+  }, [workoutSet.weight, workoutSet.id, weightUnit, isWeightFocused]);
 
   const commitDuration = () => {
+    setIsDurationFocused(false);
     onUpdate(workoutSet.id, {
       durationSeconds: durationDisplayToSeconds(durationInput),
     });
   };
 
   const commitDistance = () => {
+    setIsDistanceFocused(false);
     onUpdate(workoutSet.id, {
       distance: textToMetricDistance(distanceInput, distanceUnit),
+    });
+  };
+
+  const commitWeight = () => {
+    setIsWeightFocused(false);
+    onUpdate(workoutSet.id, {
+      weight: textToMetricWeight(weightInput, weightUnit),
     });
   };
 
@@ -103,6 +125,7 @@ export function WorkoutSetRow({
                 backgroundColor: colors.surface,
               },
             ]}
+            onFocus={() => setIsDurationFocused(true)}
             onEndEditing={commitDuration}
             onBlur={commitDuration}
             onSubmitEditing={commitDuration}
@@ -128,6 +151,7 @@ export function WorkoutSetRow({
                 backgroundColor: colors.surface,
               },
             ]}
+            onFocus={() => setIsDistanceFocused(true)}
             onEndEditing={commitDistance}
             onBlur={commitDistance}
             onSubmitEditing={commitDistance}
@@ -166,9 +190,17 @@ export function WorkoutSetRow({
             }
           />
           <TextInput
-            defaultValue={toText(workoutSet.weight)}
+            value={weightInput}
+            onChangeText={(value) => {
+              setWeightInput(value);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  weight: textToMetricWeight(value, weightUnit),
+                });
+              }
+            }}
             keyboardType="decimal-pad"
-            placeholder="Wt"
+            placeholder={`Wt (${weightUnit})`}
             placeholderTextColor={colors.textMuted}
             style={[
               styles.input,
@@ -178,22 +210,10 @@ export function WorkoutSetRow({
                 backgroundColor: colors.surface,
               },
             ]}
-            onEndEditing={(event) => {
-              if (!commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  weight: toNumber(event.nativeEvent.text),
-                });
-              }
-            }}
-            onChangeText={
-              commitOnChange
-                ? (value) => {
-                    onUpdate(workoutSet.id, {
-                      weight: toNumber(value),
-                    });
-                  }
-                : undefined
-            }
+            onFocus={() => setIsWeightFocused(true)}
+            onEndEditing={commitWeight}
+            onBlur={commitWeight}
+            onSubmitEditing={commitWeight}
           />
         </>
       )}

@@ -14,14 +14,14 @@ import {
   addSetToTemplateExercise,
   createWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-import { textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
+import { textToMetricWeight } from "@/lib/units";
 
 export default function NewTemplateScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
   const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
 
   const onSave = async (value: TemplateEditorValue) => {
     const created = await createWorkoutTemplate({
@@ -41,9 +41,9 @@ export default function NewTemplateScreen() {
           templateExerciseId: addedExercise.id,
           orderIndex: setIndex,
           targetReps: parseTemplateNumberText(set.repsText),
-          targetWeight: parseTemplateNumberText(set.weightText),
+          targetWeight: textToMetricWeight(set.weightText, weightUnit),
           targetDurationSeconds: parseTemplateNumberText(set.durationText),
-          targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
+          targetDistance: parseTemplateNumberText(set.distanceText),
         });
       }
     }

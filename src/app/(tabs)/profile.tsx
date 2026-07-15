@@ -14,21 +14,15 @@ import {
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
+import type { WeightUnit } from "@/db/schema";
+import { toMetricWeight, toDisplayWeight } from "@/lib/units";
 import { spacing, useThemeColors } from "@/theme";
 
-function toMetricWeight(value: number, unit: string): number {
-  if (unit === "lb") return value * 0.45359237;
-  return value;
-}
-
-function toDisplayWeight(
+function formatDisplayWeight(
   valueInKg: number,
-  weightUnit: "kg" | "lb",
-): { value: number; unit: "kg" | "lb" } {
-  if (weightUnit === "lb") {
-    return { value: Number((valueInKg * 2.2046226218).toFixed(2)), unit: "lb" };
-  }
-  return { value: valueInKg, unit: "kg" };
+  weightUnit: WeightUnit,
+): { value: number; unit: WeightUnit } {
+  return { value: Number(toDisplayWeight(valueInKg, weightUnit).toFixed(2)), unit: weightUnit };
 }
 
 function toMetricHeight(value: number, unit: string): number {
@@ -245,9 +239,9 @@ export default function ProfileScreen() {
                 ? (() => {
                     const metricValue = toMetricWeight(
                       latestWeight.value,
-                      latestWeight.unit,
+                      latestWeight.unit as WeightUnit,
                     );
-                    const display = toDisplayWeight(
+                    const display = formatDisplayWeight(
                       metricValue,
                       appSettings?.weightUnit ?? "kg",
                     );
@@ -281,8 +275,8 @@ export default function ProfileScreen() {
             .map((item) => (
               <CustomText key={item.id} muted>
                 {`${format(new Date(item.measuredAt), "PP")} • ${(() => {
-                  const metricValue = toMetricWeight(item.value, item.unit);
-                  const display = toDisplayWeight(
+                  const metricValue = toMetricWeight(item.value, item.unit as WeightUnit);
+                  const display = formatDisplayWeight(
                     metricValue,
                     appSettings?.weightUnit ?? "kg",
                   );

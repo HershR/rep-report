@@ -37,10 +37,10 @@ Additionally, `workout_template_sets` has no `targetDistance` column at all (`sr
 
 **Steps:**
 - [x] Add `targetDistance: real("target_distance")` to `workout_template_sets` in `src/db/schema.ts`, generate a Drizzle migration (`0001_silky_jack_power.sql`), and register it.
-- [x] Update `TemplateEditor.tsx` / `TemplateExerciseBlock.tsx` / `TemplateSetRow.tsx` to accept a target distance field, following the same pattern as reps/weight (plain display-unit text, converted to canonical km only at the `new.tsx`/`[templateId].tsx` save boundary).
+- [x] Update `TemplateEditor.tsx` / `TemplateExerciseBlock.tsx` / `TemplateSetRow.tsx` to accept a target distance field. Form state (`distanceText`) holds the canonical km value as plain text, same as `durationText` holds raw seconds — all unit conversion/rounding happens only in `TemplateSetRow`'s local display state, converted back to canonical km only at commit (blur/every keystroke, matching this file's existing fields) and parsed plainly at the `new.tsx`/`[templateId].tsx` save boundary.
 - [x] Reused `isCardioExercise` as the single gate rather than adding a new classifier — cardio-classified exercises now show **both** duration and distance fields together (covers timed runs, distance-only rows, and duration-only cardio without a fragile new keyword classifier).
 - [x] Added a distance `TextInput` to `WorkoutSetRow.tsx` (and by extension the completed-workout edit screen, which shares the same component), wired to `onUpdate`'s `distance` field.
-- [x] Distance displays/converts using `appSettings.distanceUnit`, via a new shared `src/features/workouts/utils/distanceUnit.ts` utility (mirrors `toMetricWeight`/`toDisplayWeight` in `profile.tsx`) — canonical storage is km, converted at the input/display boundary.
+- [x] Distance displays/converts using `appSettings.distanceUnit`, via a shared `src/lib/units.ts` utility — canonical storage is km, converted at the input/display boundary only.
 - [x] Updated `WorkoutExerciseBlock.tsx`/`active.tsx`/`[workoutId].tsx` prop types to pass `distance` through alongside reps/weight/duration.
 - [x] `workoutRepository.ts`'s `startWorkout` now copies `templateSet.targetDistance` into new session sets instead of hardcoding `null`.
 
@@ -49,7 +49,12 @@ Additionally, `workout_template_sets` has no `targetDistance` column at all (`sr
 - Templates can define a target distance per set, and starting a workout from that template carries the target distance into the new session's sets (same as reps/weight/duration today). ✅
 - Distance values respect the user's `mi`/`km` setting from Profile. ✅
 
-`npx tsc --noEmit` and `npx expo lint` both pass clean. Manual QA per the implementation plan's verification steps is still recommended (add a cardio exercise's target distance in a template, start a workout from it, confirm conversion is correct when switching units, edit a completed workout's distance).
+**Follow-up fixes (found during a later review of unit-conversion correctness across the whole app):**
+- A precision-loss bug in the first version of the template distance feature: `getDefaultValues` was pre-rounding to the display unit, and `new.tsx`/`[templateId].tsx` unconditionally re-converted that rounded value back to km on **every** save, even for untouched sets — silently degrading precision on every open+save cycle. Fixed by making template form state hold canonical, unrounded km throughout (see steps above).
+- Weight was **never converted at all** for workout sets or template targets (only Profile's body-weight tracking converted lb/kg) — fixed by extending the same canonical-storage + display-boundary-conversion pattern to weight, and consolidating weight/distance conversion into `src/lib/units.ts` (also refactored `profile.tsx` to use it instead of a private duplicate).
+- Added an `isFocused` guard on every field using local display state (duration, distance, weight, in both `WorkoutSetRow.tsx` and `TemplateSetRow.tsx`): since mi/km and lb/kg conversion is lossy, without this guard an in-flight commit (debounced in the active-workout screen, immediate in templates) could resync the display mid-typing to a slightly different rounded value than what the user just typed. The guard skips the canonical-resync effect while a field is focused, so the box only ever normalizes to the rounded value after blur.
+
+`npx tsc --noEmit` and `npx expo lint` both pass clean. Manual QA per the implementation plan's verification steps is still recommended (weight/distance conversion round-trips, the precision-regression check, and the focus-guard typing check).
 
 ---
 

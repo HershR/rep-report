@@ -12,7 +12,6 @@ import {
 } from "react-hook-form";
 
 import { CustomButton, CustomText } from "@/components/common";
-import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { TemplateExerciseBlock } from "@/features/templates/components/TemplateExerciseBlock";
 import {
@@ -23,8 +22,6 @@ import {
   type WorkoutTemplate,
 } from "@/features/templates/types";
 import type { Exercise } from "@/features/exercises/types";
-import type { DistanceUnit } from "@/db/schema";
-import { distanceToText } from "@/features/workouts/utils/distanceUnit";
 import { spacing, useThemeColors } from "@/theme";
 
 type TemplateEditorProps = {
@@ -42,10 +39,7 @@ function numberToText(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
-function getDefaultValues(
-  template: WorkoutTemplate | null | undefined,
-  distanceUnit: DistanceUnit,
-): TemplateEditorFormValues {
+function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorFormValues {
   if (!template) {
     return {
       name: "",
@@ -70,7 +64,7 @@ function getDefaultValues(
         repsText: numberToText(set.targetReps),
         weightText: numberToText(set.targetWeight),
         durationText: numberToText(set.targetDurationSeconds),
-        distanceText: distanceToText(set.targetDistance, distanceUnit),
+        distanceText: numberToText(set.targetDistance),
       })),
     })),
   };
@@ -179,8 +173,6 @@ export function TemplateEditor({
   onSave,
 }: TemplateEditorProps) {
   const colors = useThemeColors();
-  const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const {
     control,
@@ -190,7 +182,7 @@ export function TemplateEditor({
     formState: { errors },
   } = useForm<TemplateEditorFormValues>({
     resolver: zodResolver(templateEditorFormSchema),
-    defaultValues: getDefaultValues(initialTemplate, distanceUnit),
+    defaultValues: getDefaultValues(initialTemplate),
   });
 
   const { fields: exerciseFields, append, remove } = useFieldArray({
@@ -199,8 +191,8 @@ export function TemplateEditor({
   });
 
   useEffect(() => {
-    reset(getDefaultValues(initialTemplate, distanceUnit));
-  }, [initialTemplate, distanceUnit, reset]);
+    reset(getDefaultValues(initialTemplate));
+  }, [initialTemplate, reset]);
 
   const onAddExercise = (exercise: Exercise) => {
     append({
