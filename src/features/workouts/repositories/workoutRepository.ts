@@ -489,6 +489,29 @@ export async function deleteSet(setId: string): Promise<WorkoutSessionDetails> {
   return hydrated;
 }
 
+export async function removeIncompleteSets(workoutSessionId: string): Promise<WorkoutSessionDetails> {
+  const sessionExercises = await db
+    .select({ id: workoutSessionExercises.id })
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId));
+
+  const sessionExerciseIds = sessionExercises.map((row) => row.id);
+  if (sessionExerciseIds.length > 0) {
+    await db
+      .delete(workoutSets)
+      .where(
+        and(
+          inArray(workoutSets.workoutSessionExerciseId, sessionExerciseIds),
+          eq(workoutSets.isCompleted, 0),
+        ),
+      );
+  }
+
+  const hydrated = await hydrateWorkoutSession(workoutSessionId);
+  if (!hydrated) throw new Error("Failed remove incomplete sets");
+  return hydrated;
+}
+
 export async function updateWorkoutExerciseNotes(
   workoutSessionExerciseId: string,
   notes: string | null,

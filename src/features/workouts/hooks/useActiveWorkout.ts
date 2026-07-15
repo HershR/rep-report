@@ -6,6 +6,7 @@ import {
   cancelWorkout,
   completeWorkout,
   removeExerciseFromWorkout,
+  removeIncompleteSets,
   deleteSet,
   getActiveWorkoutSession,
   resumeWorkout,
@@ -102,6 +103,13 @@ export function useActiveWorkout() {
     },
   });
 
+  const removeIncompleteSetsMutation = useMutation({
+    mutationFn: (sessionId: string) => removeIncompleteSets(sessionId),
+    onSuccess: (data) => {
+      setActiveWorkoutCache(data);
+    },
+  });
+
   return {
     activeWorkout: activeQuery.data ?? null,
     isLoading: activeQuery.isLoading,
@@ -116,6 +124,7 @@ export function useActiveWorkout() {
     removeExerciseFromWorkout: removeExerciseMutation.mutateAsync,
     updateSet: updateSetMutation.mutateAsync,
     deleteSet: deleteSetMutation.mutateAsync,
+    removeIncompleteSets: removeIncompleteSetsMutation.mutateAsync,
     isSaving:
       startMutation.isPending ||
       resumeMutation.isPending ||
@@ -125,6 +134,7 @@ export function useActiveWorkout() {
       addSetMutation.isPending ||
       removeExerciseMutation.isPending ||
       updateSetMutation.isPending ||
-      deleteSetMutation.isPending,
+      deleteSetMutation.isPending ||
+      removeIncompleteSetsMutation.isPending,
   };
 }

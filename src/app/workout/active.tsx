@@ -28,6 +28,7 @@ export default function ActiveWorkoutScreen() {
     removeExerciseFromWorkout,
     updateSet,
     deleteSet,
+    removeIncompleteSets,
   } = useActiveWorkout();
 
   useEffect(() => {
@@ -77,8 +78,44 @@ export default function ActiveWorkoutScreen() {
       Alert.alert("Add at least one exercise", "Workout needs one exercise before completing.");
       return;
     }
-    await completeWorkout(activeWorkout.id);
-    router.replace("/(tabs)/home");
+
+    const hasIncompleteSets = activeWorkout.exercises.some((exercise) =>
+      exercise.sets.some((set) => set.isCompleted === 0),
+    );
+
+    if (!hasIncompleteSets) {
+      await completeWorkout(activeWorkout.id);
+      router.replace("/(tabs)/home");
+      return;
+    }
+
+    Alert.alert(
+      "Incomplete sets",
+      "Some sets in this workout haven't been marked complete. What would you like to do?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Keep all sets",
+          onPress: () => {
+            void (async () => {
+              await completeWorkout(activeWorkout.id);
+              router.replace("/(tabs)/home");
+            })();
+          },
+        },
+        {
+          text: "Remove incomplete sets",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              await removeIncompleteSets(activeWorkout.id);
+              await completeWorkout(activeWorkout.id);
+              router.replace("/(tabs)/home");
+            })();
+          },
+        },
+      ],
+    );
   };
 
   const onCancel = async () => {
