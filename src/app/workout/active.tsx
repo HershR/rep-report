@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { CustomButton, CustomScreen, CustomText } from "@/components/common";
@@ -8,7 +8,12 @@ import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedE
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import type { WorkoutSetInput } from "@/features/workouts/types";
 import { spacing } from "@/theme";
+
+const SET_UPDATE_DEBOUNCE_MS = 400;
+
+type PendingSetInput = Pick<WorkoutSetInput, "reps" | "weight" | "durationSeconds">;
 
 export default function ActiveWorkoutScreen() {
   const router = useRouter();
@@ -65,6 +70,58 @@ export default function ActiveWorkoutScreen() {
 
   const canComplete = useMemo(() => Boolean(activeWorkout && activeWorkout.exercises.length > 0), [activeWorkout]);
 
+  const pendingSetInputsRef = useRef<Map<string, PendingSetInput>>(new Map());
+  const pendingSetTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const updateSetRef = useRef(updateSet);
+
+  useEffect(() => {
+    updateSetRef.current = updateSet;
+  }, [updateSet]);
+
+  const flushPendingSetUpdates = async () => {
+    const pending = Array.from(pendingSetInputsRef.current.entries());
+    pendingSetInputsRef.current.clear();
+    for (const timer of pendingSetTimersRef.current.values()) {
+      clearTimeout(timer);
+    }
+    pendingSetTimersRef.current.clear();
+
+    await Promise.all(pending.map(([setId, input]) => updateSetRef.current({ setId, ...input })));
+  };
+
+  const cancelPendingSetUpdates = () => {
+    for (const timer of pendingSetTimersRef.current.values()) {
+      clearTimeout(timer);
+    }
+    pendingSetTimersRef.current.clear();
+    pendingSetInputsRef.current.clear();
+  };
+
+  const scheduleSetUpdate = (setId: string, input: PendingSetInput) => {
+    const merged = { ...pendingSetInputsRef.current.get(setId), ...input };
+    pendingSetInputsRef.current.set(setId, merged);
+
+    const existingTimer = pendingSetTimersRef.current.get(setId);
+    if (existingTimer) clearTimeout(existingTimer);
+
+    const timer = setTimeout(() => {
+      const latest = pendingSetInputsRef.current.get(setId);
+      pendingSetInputsRef.current.delete(setId);
+      pendingSetTimersRef.current.delete(setId);
+      if (latest) {
+        void updateSetRef.current({ setId, ...latest });
+      }
+    }, SET_UPDATE_DEBOUNCE_MS);
+
+    pendingSetTimersRef.current.set(setId, timer);
+  };
+
+  useEffect(() => {
+    return () => {
+      void flushPendingSetUpdates();
+    };
+  }, []);
+
   if (isLoading || !activeWorkout) {
     return (
       <CustomScreen>
@@ -74,6 +131,8 @@ export default function ActiveWorkoutScreen() {
   }
 
   const onComplete = async () => {
+    await flushPendingSetUpdates();
+
     if (!canComplete) {
       Alert.alert("Add at least one exercise", "Workout needs one exercise before completing.");
       return;
@@ -119,6 +178,7 @@ export default function ActiveWorkoutScreen() {
   };
 
   const onCancel = async () => {
+    cancelPendingSetUpdates();
     await cancelWorkout(activeWorkout.id);
     router.replace("/(tabs)/home");
   };
@@ -148,6 +208,7 @@ export default function ActiveWorkoutScreen() {
           <WorkoutExerciseBlock
             key={workoutExercise.id}
             workoutExercise={workoutExercise}
+            commitSetChangesOnChange
             onAddSet={(workoutSessionExerciseId) => {
               void addSetToWorkout({ workoutSessionExerciseId });
             }}
@@ -158,7 +219,11 @@ export default function ActiveWorkoutScreen() {
               });
             }}
             onUpdateSet={(setId, input) => {
-              void updateSet({ setId, ...input });
+              if (input.isCompleted !== undefined) {
+                void updateSet({ setId, ...input });
+                return;
+              }
+              scheduleSetUpdate(setId, input);
             }}
             onDeleteSet={(setId) => {
               void deleteSet(setId);
