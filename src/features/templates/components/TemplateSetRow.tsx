@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { CustomText } from "@/components/common";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import {
   durationDisplayToSeconds,
   formatDurationInput,
@@ -14,10 +15,12 @@ type TemplateSetRowProps = {
   repsText: string;
   weightText: string;
   durationText: string;
+  distanceText: string;
   isCardio: boolean;
   onChangeReps: (value: string) => void;
   onChangeWeight: (value: string) => void;
   onChangeDuration: (value: string) => void;
+  onChangeDistance: (value: string) => void;
   onDelete: () => void;
 };
 
@@ -26,13 +29,17 @@ export function TemplateSetRow({
   repsText,
   weightText,
   durationText,
+  distanceText,
   isCardio,
   onChangeReps,
   onChangeWeight,
   onChangeDuration,
+  onChangeDistance,
   onDelete,
 }: TemplateSetRowProps) {
   const colors = useThemeColors();
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const [durationInput, setDurationInput] = useState("");
 
   useEffect(() => {
@@ -84,6 +91,21 @@ export function TemplateSetRow({
               onEndEditing={commitDuration}
               onBlur={commitDuration}
               onSubmitEditing={commitDuration}
+            />
+            <TextInput
+              value={distanceText}
+              onChangeText={onChangeDistance}
+              keyboardType="decimal-pad"
+              placeholder={`Dist (${distanceUnit})`}
+              placeholderTextColor={colors.textMuted}
+              style={[
+                styles.input,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                },
+              ]}
             />
           </>
         ) : (

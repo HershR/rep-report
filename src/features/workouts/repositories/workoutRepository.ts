@@ -262,7 +262,7 @@ export async function startWorkout(input?: {
           reps: templateSet.targetReps,
           weight: templateSet.targetWeight,
           durationSeconds: templateSet.targetDurationSeconds,
-          distance: null,
+          distance: templateSet.targetDistance,
           isCompleted: 0,
           setType: templateSet.setType,
           createdAt: now,

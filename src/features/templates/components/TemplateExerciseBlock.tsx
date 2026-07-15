@@ -10,6 +10,7 @@ type EditableSet = {
   repsText: string;
   weightText: string;
   durationText: string;
+  distanceText: string;
 };
 
 type TemplateExerciseBlockProps = {
@@ -21,7 +22,7 @@ type TemplateExerciseBlockProps = {
   onDeleteSet: (setLocalId: string) => void;
   onUpdateSet: (
     setLocalId: string,
-    field: "repsText" | "weightText" | "durationText",
+    field: "repsText" | "weightText" | "durationText" | "distanceText",
     value: string,
   ) => void;
 };
@@ -53,11 +54,13 @@ export function TemplateExerciseBlock({
           repsText={set.repsText}
           weightText={set.weightText}
           durationText={set.durationText}
+          distanceText={set.distanceText}
           isCardio={showDuration}
           onDelete={() => onDeleteSet(set.localId)}
           onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
           onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}
           onChangeDuration={(value) => onUpdateSet(set.localId, "durationText", value)}
+          onChangeDistance={(value) => onUpdateSet(set.localId, "distanceText", value)}
         />
       ))}
 

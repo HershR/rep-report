@@ -11,6 +11,7 @@ export type WorkoutTemplateSet = {
   targetReps: number | null;
   targetWeight: number | null;
   targetDurationSeconds: number | null;
+  targetDistance: number | null;
   setType: TemplateSetType;
   createdAt: string;
   updatedAt: string;
@@ -53,6 +54,7 @@ export type TemplateEditorSet = {
   repsText: string;
   weightText: string;
   durationText: string;
+  distanceText: string;
 };
 
 export type TemplateEditorExercise = {
@@ -107,6 +109,7 @@ export const templateEditorSetSchema = z.object({
   repsText: optionalNonNegativeTextSchema,
   weightText: optionalNonNegativeTextSchema,
   durationText: optionalNonNegativeTextSchema,
+  distanceText: optionalNonNegativeTextSchema,
 });
 
 export const templateEditorExerciseSchema = z.object({

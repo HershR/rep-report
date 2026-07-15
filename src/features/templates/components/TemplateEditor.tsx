@@ -12,6 +12,7 @@ import {
 } from "react-hook-form";
 
 import { CustomButton, CustomText } from "@/components/common";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { TemplateExerciseBlock } from "@/features/templates/components/TemplateExerciseBlock";
 import {
@@ -22,6 +23,8 @@ import {
   type WorkoutTemplate,
 } from "@/features/templates/types";
 import type { Exercise } from "@/features/exercises/types";
+import type { DistanceUnit } from "@/db/schema";
+import { distanceToText } from "@/features/workouts/utils/distanceUnit";
 import { spacing, useThemeColors } from "@/theme";
 
 type TemplateEditorProps = {
@@ -39,7 +42,10 @@ function numberToText(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
-function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorFormValues {
+function getDefaultValues(
+  template: WorkoutTemplate | null | undefined,
+  distanceUnit: DistanceUnit,
+): TemplateEditorFormValues {
   if (!template) {
     return {
       name: "",
@@ -64,6 +70,7 @@ function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorForm
         repsText: numberToText(set.targetReps),
         weightText: numberToText(set.targetWeight),
         durationText: numberToText(set.targetDurationSeconds),
+        distanceText: distanceToText(set.targetDistance, distanceUnit),
       })),
     })),
   };
@@ -98,6 +105,7 @@ function getErrorMessage(errors: FieldErrors<TemplateEditorFormValues>): string 
       if (setError.repsText?.message) return setError.repsText.message;
       if (setError.weightText?.message) return setError.weightText.message;
       if (setError.durationText?.message) return setError.durationText.message;
+      if (setError.distanceText?.message) return setError.distanceText.message;
     }
   }
 
@@ -128,12 +136,13 @@ function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseF
       repsText: "",
       weightText: "",
       durationText: "",
+      distanceText: "",
     });
   };
 
   const onUpdateSet = (
     setIndex: number,
-    field: keyof Pick<TemplateEditorSet, "repsText" | "weightText" | "durationText">,
+    field: keyof Pick<TemplateEditorSet, "repsText" | "weightText" | "durationText" | "distanceText">,
     value: string,
   ) => {
     setValue(`exercises.${index}.sets.${setIndex}.${field}`, value, {
@@ -170,6 +179,8 @@ export function TemplateEditor({
   onSave,
 }: TemplateEditorProps) {
   const colors = useThemeColors();
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const {
     control,
@@ -179,7 +190,7 @@ export function TemplateEditor({
     formState: { errors },
   } = useForm<TemplateEditorFormValues>({
     resolver: zodResolver(templateEditorFormSchema),
-    defaultValues: getDefaultValues(initialTemplate),
+    defaultValues: getDefaultValues(initialTemplate, distanceUnit),
   });
 
   const { fields: exerciseFields, append, remove } = useFieldArray({
@@ -188,8 +199,8 @@ export function TemplateEditor({
   });
 
   useEffect(() => {
-    reset(getDefaultValues(initialTemplate));
-  }, [initialTemplate, reset]);
+    reset(getDefaultValues(initialTemplate, distanceUnit));
+  }, [initialTemplate, distanceUnit, reset]);
 
   const onAddExercise = (exercise: Exercise) => {
     append({

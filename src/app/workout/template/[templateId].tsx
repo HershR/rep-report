@@ -4,6 +4,7 @@ import { Pressable } from "react-native";
 
 import { CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
 import { useWorkoutTemplate } from "@/features/templates/hooks/useWorkoutTemplate";
 import {
@@ -20,6 +21,7 @@ import {
   updateTemplateSet,
   updateWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
+import { textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
 
 export default function TemplateDetailScreen() {
   const router = useRouter();
@@ -28,6 +30,8 @@ export default function TemplateDetailScreen() {
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
   const { template, isLoading, error } = useWorkoutTemplate(templateId);
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
 
   const onSave = async (value: TemplateEditorValue) => {
     if (!templateId || !template) return;
@@ -66,6 +70,7 @@ export default function TemplateDetailScreen() {
               targetReps: parseTemplateNumberText(set.repsText),
               targetWeight: parseTemplateNumberText(set.weightText),
               targetDurationSeconds: parseTemplateNumberText(set.durationText),
+              targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
             });
           } else {
             await addSetToTemplateExercise({
@@ -74,6 +79,7 @@ export default function TemplateDetailScreen() {
               targetReps: parseTemplateNumberText(set.repsText),
               targetWeight: parseTemplateNumberText(set.weightText),
               targetDurationSeconds: parseTemplateNumberText(set.durationText),
+              targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
             });
           }
         }
@@ -90,6 +96,7 @@ export default function TemplateDetailScreen() {
             targetReps: parseTemplateNumberText(set.repsText),
             targetWeight: parseTemplateNumberText(set.weightText),
             targetDurationSeconds: parseTemplateNumberText(set.durationText),
+            targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
           });
         }
       }

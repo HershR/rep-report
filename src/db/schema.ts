@@ -84,6 +84,7 @@ export const workoutTemplateSets = sqliteTable(
     targetReps: integer("target_reps"),
     targetWeight: real("target_weight"),
     targetDurationSeconds: integer("target_duration_seconds"),
+    targetDistance: real("target_distance"),
     setType: text("set_type", { enum: SET_TYPES }).notNull().default("normal"),
     ...timestampColumns,
   },

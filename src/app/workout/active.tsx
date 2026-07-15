@@ -13,7 +13,7 @@ import { spacing } from "@/theme";
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
 
-type PendingSetInput = Pick<WorkoutSetInput, "reps" | "weight" | "durationSeconds">;
+type PendingSetInput = Pick<WorkoutSetInput, "reps" | "weight" | "durationSeconds" | "distance">;
 
 export default function ActiveWorkoutScreen() {
   const router = useRouter();

@@ -27,7 +27,7 @@ Actionable follow-ups from an MVP audit against `DESIGN.MD` section 2.1 (MVP Goa
 
 ---
 
-### 2. Distance-based set logging isn't exposed in the UI
+### 2. Distance-based set logging isn't exposed in the UI — ✅ Done
 
 **Issue:** The schema and repository already support a `distance` value on `workout_sets` (`src/db/schema.ts:140`, `addSetToWorkout`/`updateSet` in [`workoutRepository.ts`](src/features/workouts/repositories/workoutRepository.ts)), but [`WorkoutSetRow.tsx`](src/features/workouts/components/WorkoutSetRow.tsx) only ever renders **either** reps+weight **or** a duration field, based on `isCardioExercise`. There is no input for distance anywhere in the app. A distance-tracked exercise (e.g. running, rowing for distance) has no way to actually log its distance, even though DESIGN.MD explicitly requires "reps, weight, time, **or distance**."
 
@@ -36,17 +36,20 @@ Additionally, `workout_template_sets` has no `targetDistance` column at all (`sr
 **Improvement needed:** Add a distance input to the active/completed workout set row, and add distance targets to templates, using the app's configured `distanceUnit` (`mi`/`km`) from `app_settings`.
 
 **Steps:**
-- [ ] Add `targetDistance: real("target_distance")` to `workout_template_sets` in `src/db/schema.ts`, generate a Drizzle migration, and apply it.
-- [ ] Update `TemplateEditor.tsx` / `TemplateExerciseBlock.tsx` to accept a target distance field, following the same pattern as `targetDurationSeconds`.
-- [ ] Update `isCardioExercise` (or introduce a distinct classification) so exercises can be flagged as distance-based, not just duration-based cardio — some exercises may want both duration and distance.
-- [ ] Add a distance `TextInput` to `WorkoutSetRow.tsx`, wired to `onUpdate`'s existing `distance` field (already passed through by `updateSet`/`addSetToWorkout`).
-- [ ] Display distance using `appSettings.distanceUnit`, matching the unit-conversion pattern already used for weight/height in `profile.tsx`.
-- [ ] Update `WorkoutExerciseBlock.tsx` prop types to pass `distance` through `onUpdateSet`/`onAddSet` alongside reps/weight/duration.
+- [x] Add `targetDistance: real("target_distance")` to `workout_template_sets` in `src/db/schema.ts`, generate a Drizzle migration (`0001_silky_jack_power.sql`), and register it.
+- [x] Update `TemplateEditor.tsx` / `TemplateExerciseBlock.tsx` / `TemplateSetRow.tsx` to accept a target distance field, following the same pattern as reps/weight (plain display-unit text, converted to canonical km only at the `new.tsx`/`[templateId].tsx` save boundary).
+- [x] Reused `isCardioExercise` as the single gate rather than adding a new classifier — cardio-classified exercises now show **both** duration and distance fields together (covers timed runs, distance-only rows, and duration-only cardio without a fragile new keyword classifier).
+- [x] Added a distance `TextInput` to `WorkoutSetRow.tsx` (and by extension the completed-workout edit screen, which shares the same component), wired to `onUpdate`'s `distance` field.
+- [x] Distance displays/converts using `appSettings.distanceUnit`, via a new shared `src/features/workouts/utils/distanceUnit.ts` utility (mirrors `toMetricWeight`/`toDisplayWeight` in `profile.tsx`) — canonical storage is km, converted at the input/display boundary.
+- [x] Updated `WorkoutExerciseBlock.tsx`/`active.tsx`/`[workoutId].tsx` prop types to pass `distance` through alongside reps/weight/duration.
+- [x] `workoutRepository.ts`'s `startWorkout` now copies `templateSet.targetDistance` into new session sets instead of hardcoding `null`.
 
 **Definition of done:**
-- A user can add a set to a distance-based exercise and enter/save a distance value; it persists after app restart and appears correctly in workout history and the workout detail edit screen.
-- Templates can define a target distance per set, and starting a workout from that template carries the target distance into the new session's sets (same as reps/weight/duration today).
-- Distance values respect the user's `mi`/`km` setting from Profile.
+- A user can add a set to a distance-based exercise and enter/save a distance value; it persists after app restart and appears correctly in workout history and the workout detail edit screen. ✅
+- Templates can define a target distance per set, and starting a workout from that template carries the target distance into the new session's sets (same as reps/weight/duration today). ✅
+- Distance values respect the user's `mi`/`km` setting from Profile. ✅
+
+`npx tsc --noEmit` and `npx expo lint` both pass clean. Manual QA per the implementation plan's verification steps is still recommended (add a cardio exercise's target distance in a template, start a workout from it, confirm conversion is correct when switching units, edit a completed workout's distance).
 
 ---
 

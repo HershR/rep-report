@@ -1,0 +1,1 @@
+ALTER TABLE `workout_template_sets` ADD `target_distance` real;

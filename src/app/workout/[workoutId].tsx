@@ -220,6 +220,7 @@ export default function WorkoutDetailScreen() {
       reps?: number | null;
       weight?: number | null;
       durationSeconds?: number | null;
+      distance?: number | null;
       isCompleted?: boolean;
     },
   ) => {
@@ -237,6 +238,7 @@ export default function WorkoutDetailScreen() {
           ...(input.reps !== undefined ? { reps: input.reps } : {}),
           ...(input.weight !== undefined ? { weight: input.weight } : {}),
           ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+          ...(input.distance !== undefined ? { distance: input.distance } : {}),
           ...(input.isCompleted !== undefined ? { isCompleted: input.isCompleted ? 1 : 0 } : {}),
         },
         {

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { CustomText } from "@/components/common";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
   durationDisplayToSeconds,
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
+import { distanceToText, textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
 import { spacing, useThemeColors } from "@/theme";
 
 type WorkoutSetRowProps = {
@@ -21,6 +23,7 @@ type WorkoutSetRowProps = {
       reps?: number | null;
       weight?: number | null;
       durationSeconds?: number | null;
+      distance?: number | null;
       isCompleted?: boolean;
     },
   ) => void;
@@ -47,16 +50,29 @@ export function WorkoutSetRow({
   onDelete,
 }: WorkoutSetRowProps) {
   const colors = useThemeColors();
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const isCompleted = workoutSet.isCompleted === 1;
   const [durationInput, setDurationInput] = useState("");
+  const [distanceInput, setDistanceInput] = useState("");
 
   useEffect(() => {
     setDurationInput(secondsToDurationDisplay(workoutSet.durationSeconds));
   }, [workoutSet.durationSeconds, workoutSet.id]);
 
+  useEffect(() => {
+    setDistanceInput(distanceToText(workoutSet.distance, distanceUnit));
+  }, [workoutSet.distance, workoutSet.id, distanceUnit]);
+
   const commitDuration = () => {
     onUpdate(workoutSet.id, {
       durationSeconds: durationDisplayToSeconds(durationInput),
+    });
+  };
+
+  const commitDistance = () => {
+    onUpdate(workoutSet.id, {
+      distance: textToMetricDistance(distanceInput, distanceUnit),
     });
   };
 
@@ -90,6 +106,31 @@ export function WorkoutSetRow({
             onEndEditing={commitDuration}
             onBlur={commitDuration}
             onSubmitEditing={commitDuration}
+          />
+          <TextInput
+            value={distanceInput}
+            onChangeText={(value) => {
+              setDistanceInput(value);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  distance: textToMetricDistance(value, distanceUnit),
+                });
+              }
+            }}
+            keyboardType="decimal-pad"
+            placeholder={`Dist (${distanceUnit})`}
+            placeholderTextColor={colors.textMuted}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.surface,
+              },
+            ]}
+            onEndEditing={commitDistance}
+            onBlur={commitDistance}
+            onSubmitEditing={commitDistance}
           />
         </>
       ) : (
@@ -174,6 +215,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: spacing.xs,
   },
   index: {

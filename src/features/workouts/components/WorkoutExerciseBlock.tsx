@@ -17,6 +17,7 @@ type WorkoutExerciseBlockProps = {
       reps?: number | null;
       weight?: number | null;
       durationSeconds?: number | null;
+      distance?: number | null;
       isCompleted?: boolean;
     },
   ) => void;

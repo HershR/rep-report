@@ -3,6 +3,7 @@ import { useRouter, type Href } from "expo-router";
 
 import { CustomScreen, CustomText } from "@/components/common";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
 import {
   parseTemplateNumberText,
@@ -13,11 +14,14 @@ import {
   addSetToTemplateExercise,
   createWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
+import { textToMetricDistance } from "@/features/workouts/utils/distanceUnit";
 
 export default function NewTemplateScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
 
   const onSave = async (value: TemplateEditorValue) => {
     const created = await createWorkoutTemplate({
@@ -39,6 +43,7 @@ export default function NewTemplateScreen() {
           targetReps: parseTemplateNumberText(set.repsText),
           targetWeight: parseTemplateNumberText(set.weightText),
           targetDurationSeconds: parseTemplateNumberText(set.durationText),
+          targetDistance: textToMetricDistance(set.distanceText, distanceUnit),
         });
       }
     }

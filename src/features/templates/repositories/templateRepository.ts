@@ -214,6 +214,7 @@ export async function addSetToTemplateExercise(input: {
   targetReps?: number | null;
   targetWeight?: number | null;
   targetDurationSeconds?: number | null;
+  targetDistance?: number | null;
   setType?: SetType;
 }): Promise<WorkoutTemplateSet> {
   const id = createUuid();
@@ -226,6 +227,7 @@ export async function addSetToTemplateExercise(input: {
     targetReps: input.targetReps ?? null,
     targetWeight: input.targetWeight ?? null,
     targetDurationSeconds: input.targetDurationSeconds ?? null,
+    targetDistance: input.targetDistance ?? null,
     setType: input.setType ?? "normal",
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -243,6 +245,7 @@ export async function updateTemplateSet(
     targetReps?: number | null;
     targetWeight?: number | null;
     targetDurationSeconds?: number | null;
+    targetDistance?: number | null;
     setType?: SetType;
   },
 ): Promise<WorkoutTemplateSet | null> {
@@ -255,6 +258,7 @@ export async function updateTemplateSet(
       ...(input.targetDurationSeconds !== undefined
         ? { targetDurationSeconds: input.targetDurationSeconds }
         : {}),
+      ...(input.targetDistance !== undefined ? { targetDistance: input.targetDistance } : {}),
       ...(input.setType !== undefined ? { setType: input.setType } : {}),
       updatedAt: nowUtc(),
     })
