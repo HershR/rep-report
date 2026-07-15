@@ -6,24 +6,26 @@ Actionable follow-ups from an MVP audit against `DESIGN.MD` section 2.1 (MVP Goa
 
 ## Part 1 — Incomplete / Improvable Features
 
-### 1. Onboarding is missing entirely
+### 1. Onboarding is missing entirely — ✅ Done
 
 **Issue:** [`src/app/index.tsx`](src/app/index.tsx) redirects straight to `(tabs)/home` on launch. There is no first-run flow, no welcome screen, and nothing prompts a new user to set up their profile. A brand-new user lands on an empty Home tab with no explanation of what to do first.
 
 **Improvement needed:** A lightweight, one-time onboarding flow that welcomes the user, briefly explains the app, and collects the initial profile (display name, optional date of birth) before dropping them into the tab bar. Must stay beginner-friendly per section 3 (encouraging tone, no dense screens).
 
 **Steps:**
-- [ ] Add an `isOnboarded` flag to `app_settings` (or a dedicated `onboarding` table) — persisted in SQLite, not just in-memory state.
-- [ ] Build `src/app/onboarding.tsx` (or a small stack under `src/app/onboarding/`) with: welcome/encouragement copy → display name + optional DOB form (reuse `react-hook-form` + `zod`, same validation as the Profile screen) → "Let's go" CTA.
-- [ ] In `src/app/index.tsx`, check `isOnboarded` on launch: if false, redirect to `/onboarding`; if true, redirect to `(tabs)/home` as today.
-- [ ] On onboarding completion, save the profile via the existing `profileRepository`, set `isOnboarded = true`, and redirect to Home.
-- [ ] Add an empty-state nudge on Home ("Ready for your first Rep Report?") for users who skip profile fields, consistent with section 14.1 copy.
+- [x] No schema change needed after all — `profileRepository.ts`'s existing `getProfile()` already returns `null` until a profile row exists, and `displayName` is `NOT NULL`, so "does a profile exist" is a reliable, self-consistent onboarding-complete signal with nothing to desync (a separate `isOnboarded` flag would just be a second thing that could get out of sync with the actual data).
+- [x] Built [`src/app/onboarding.tsx`](src/app/onboarding.tsx): welcome/encouragement copy → display name (required) + optional DOB picker (reusing the exact `DateTimePicker` pattern from `profile.tsx`) → "Let's Go" CTA. Uses plain `useState`, matching how `profile.tsx` actually implements these two fields (not react-hook-form/zod, which TODO.md incorrectly assumed it used).
+- [x] [`src/app/index.tsx`](src/app/index.tsx) now awaits DB init + calls `getProfile()` directly, redirecting to `/onboarding` or `/(tabs)/home` accordingly, with a brief blank themed screen while checking.
+- [x] Onboarding completion calls the existing `useProfile()` hook's `saveProfile` (`upsertProfile` repository function, unchanged) and `router.replace`s to Home.
+- [x] Home's greeting is now personalized (`"Hi {displayName}!"`) instead of a generic nudge — since onboarding gates Home entirely, there's no longer a "skipped profile" state to nudge about.
+- [x] Fixed a related concurrency risk in [`src/db/init.ts`](src/db/init.ts): `initializeDatabase()` now caches its in-flight promise so a second caller (the new `index.tsx` check) safely awaits the same run instead of risking a second concurrent `migrate()` call. Also removed the long-standing unused `runDatabaseSmokeTest` import while in this file.
 
 **Definition of done:**
-- A fresh install (empty DB) shows the onboarding flow before any tab is reachable.
-- Completing onboarding writes a profile row and persists `isOnboarded = true`, so relaunching the app skips straight to Home.
-- Skipping optional fields (DOB) doesn't block completion.
-- Manual QA: uninstall/reinstall (or clear app data) and confirm the flow appears exactly once.
+- A fresh install (empty `profile` table) shows the onboarding flow before any tab is reachable. ✅
+- Completing onboarding writes a profile row, so relaunching the app skips straight to Home (no flag to keep in sync — profile existing *is* the signal). ✅
+- Skipping the optional DOB field doesn't block completion; leaving display name empty does (button is disabled until non-empty). ✅
+
+`npx tsc --noEmit` and `npx expo lint` both pass with zero errors and zero warnings. Manual QA (fresh install, relaunch-skips-onboarding, empty-name guard) is still recommended in the running app.
 
 ---
 

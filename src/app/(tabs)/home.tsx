@@ -7,6 +7,7 @@ import {
   CustomScreen,
   CustomText,
 } from "@/components/common";
+import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import { spacing } from "@/theme";
@@ -15,10 +16,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const { templates } = useWorkoutTemplates();
   const { activeWorkout } = useActiveWorkout();
+  const { profile } = useProfile();
 
   return (
     <CustomScreen scroll>
-      <CustomText variant="title">Home</CustomText>
+      <CustomText variant="title">
+        {profile ? `Hi ${profile.displayName}!` : "Home"}
+      </CustomText>
       <CustomText muted style={styles.subtitle}>
         Ready to train?
       </CustomText>
