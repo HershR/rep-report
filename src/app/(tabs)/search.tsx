@@ -1,8 +1,16 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Search, X } from "lucide-react-native";
+import { ActivityIndicator, Pressable, useColorScheme, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+
+import { CustomScreen } from "@/components/common";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
 import { ExerciseFilterModal } from "@/features/exercises/components/ExerciseFilterModal";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -13,10 +21,11 @@ import {
   wgerEquipment,
   wgerMuscles,
 } from "@/services/wger/constants";
-import { spacing, useThemeColors } from "@/theme";
+import { THEME } from "@/lib/theme";
 
 export default function SearchScreen() {
-  const colors = useThemeColors();
+  const scheme = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -73,7 +82,6 @@ export default function SearchScreen() {
     isLoading,
     isFetching,
     isError,
-    error,
     debouncedQuery,
     refetch,
   } = useExerciseSearch(filters);
@@ -114,86 +122,111 @@ export default function SearchScreen() {
     selectedEquipmentIds.length +
     selectedMuscleIds.length;
 
+  const activeFilterChips = [
+    ...selectedCategoryIds.map((id) => ({
+      key: `category-${id}`,
+      label: categoryOptions.find((option) => option.id === id)?.name ?? "Category",
+      onRemove: () => setSelectedCategoryIds((prev) => prev.filter((item) => item !== id)),
+    })),
+    ...selectedEquipmentIds.map((id) => ({
+      key: `equipment-${id}`,
+      label: equipmentOptions.find((option) => option.id === id)?.name ?? "Equipment",
+      onRemove: () => setSelectedEquipmentIds((prev) => prev.filter((item) => item !== id)),
+    })),
+    ...selectedMuscleIds.map((id) => ({
+      key: `muscle-${id}`,
+      label: muscleOptions.find((option) => option.id === id)?.name ?? "Muscle",
+      onRemove: () => setSelectedMuscleIds((prev) => prev.filter((item) => item !== id)),
+    })),
+  ];
+
   return (
     <CustomScreen scroll>
-      <CustomText variant="title">Search</CustomText>
-      <CustomText muted style={styles.subtitle}>
-        Find exercises from WGER.
-      </CustomText>
+      <Text variant="h2">Search</Text>
+      <Text variant="muted">Find exercises from WGER.</Text>
 
-      <TextInput
-        value={query}
-        onChangeText={onChangeQuery}
-        placeholder="Search exercises"
-        placeholderTextColor={colors.textMuted}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            color: colors.text,
-            backgroundColor: colors.surface,
-          },
-        ]}
-      />
+      <View className="border-input bg-background mt-4 flex-row items-center gap-2 rounded-md border px-3">
+        <Icon as={Search} className="text-muted-foreground" />
+        <Input
+          className="flex-1 border-0 bg-transparent px-0 shadow-none"
+          value={query}
+          onChangeText={onChangeQuery}
+          placeholder="Search exercises"
+        />
+      </View>
 
-      <View style={styles.filtersHeader}>
-        <Pressable
-          onPress={() => setFilterModalVisible(true)}
-          style={[
-            styles.openFilterButton,
-            { borderColor: colors.border, backgroundColor: colors.surface },
-          ]}
-        >
-          <CustomText>{`Filters (${activeFilterCount})`}</CustomText>
-        </Pressable>
+      <View className="mt-4 flex-row items-center justify-between">
+        <Button variant="outline" onPress={() => setFilterModalVisible(true)}>
+          <Text>Filters</Text>
+          {activeFilterCount > 0 ? (
+            <Badge variant="secondary">
+              <Text>{activeFilterCount}</Text>
+            </Badge>
+          ) : null}
+        </Button>
 
         {activeFilterCount > 0 ? (
-          <Pressable onPress={clearFilters}>
-            <CustomText muted>Clear</CustomText>
-          </Pressable>
+          <Button variant="ghost" size="sm" onPress={clearFilters}>
+            <Text>Clear</Text>
+          </Button>
         ) : null}
       </View>
 
-      {isLoading && (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
+      {activeFilterChips.length > 0 ? (
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          {activeFilterChips.map((chip) => (
+            <Badge key={chip.key} variant="secondary" className="flex-row items-center gap-1 pr-1">
+              <Text>{chip.label}</Text>
+              <Pressable onPress={chip.onRemove} hitSlop={8}>
+                <Icon as={X} className="text-secondary-foreground size-3" />
+              </Pressable>
+            </Badge>
+          ))}
+        </View>
+      ) : null}
+
+      {isLoading ? (
+        <View className="mt-8 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      )}
+      ) : null}
 
-      {isError && (
-        <CustomCard style={styles.gap}>
-          <CustomText>Could not load search results right now.</CustomText>
-          <CustomText muted>{error?.message ?? "Unknown error"}</CustomText>
-          <Pressable onPress={refetch} style={styles.retryButton}>
-            <CustomText>Retry</CustomText>
-          </Pressable>
-        </CustomCard>
-      )}
+      {isError ? (
+        <Card className="mt-4">
+          <CardContent className="gap-2">
+            <Text>We couldn&apos;t load exercises right now.</Text>
+            <Text variant="muted">Check your connection and try again.</Text>
+            <Button variant="outline" size="sm" className="self-start" onPress={() => void refetch()}>
+              <Text>Retry</Text>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
-      {!isLoading && !isError && items.length === 0 && (
-        <CustomCard style={styles.gap}>
-          <CustomText>
-            {debouncedQuery
-              ? "No exercises found. Try another keyword."
-              : "Type exercise name to start searching."}
-          </CustomText>
-        </CustomCard>
-      )}
+      {!isLoading && !isError && items.length === 0 ? (
+        <Card className="mt-4">
+          <CardContent>
+            <Text variant="muted">
+              {debouncedQuery
+                ? "No exercises found. Try another keyword."
+                : "Type an exercise name to start searching."}
+            </Text>
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <View style={styles.results}>
+      <View className="mt-4 gap-2">
         {!isLoading && !isError && items.length > 0 ? (
-          <View style={styles.paginationHeader}>
-            <CustomText muted>{`Showing ${items.length} of ${total}`}</CustomText>
-            <CustomText muted>{`Page ${page} of ${totalPages}`}</CustomText>
+          <View className="flex-row items-center justify-between">
+            <Text variant="muted">{`Showing ${items.length} of ${total}`}</Text>
+            <Text variant="muted">{`Page ${page} of ${totalPages}`}</Text>
           </View>
         ) : null}
         <FlashList
           data={items}
           keyExtractor={(exercise) => String(exercise.wgerExerciseId)}
-          contentContainerStyle={{ gap: spacing.sm }}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          contentContainerStyle={{ gap: 8 }}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           renderItem={({ item: exercise }) => (
             <ExerciseCard
               name={exercise.name}
@@ -216,54 +249,43 @@ export default function SearchScreen() {
           )}
           ListFooterComponent={
             pendingPage !== null && isFetching && !isLoading ? (
-              <View style={styles.footerLoading}>
+              <View className="mt-4 items-center gap-1">
                 <ActivityIndicator size="small" color={colors.primary} />
-                <CustomText muted>Loading page...</CustomText>
+                <Text variant="muted">Loading page...</Text>
               </View>
             ) : !isLoading && !isError && items.length > 0 ? (
-              <View style={styles.numberedPagination}>
-                <Pressable
+              <View className="mt-4 flex-row gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={!previousPage}
                   onPress={() => {
                     if (!previousPage) return;
                     setPendingPage(previousPage);
                     setPage(previousPage);
                   }}
-                  disabled={!previousPage}
-                  style={[
-                    styles.pageButton,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                      opacity: previousPage ? 1 : 0.5,
-                    },
-                  ]}
                 >
-                  <CustomText>Previous</CustomText>
-                </Pressable>
+                  <Text>Previous</Text>
+                </Button>
 
-                <Pressable
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={!nextPage}
                   onPress={() => {
                     if (!nextPage) return;
                     setPendingPage(nextPage);
                     setPage(nextPage);
                   }}
-                  disabled={!nextPage}
-                  style={[
-                    styles.pageButton,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                      opacity: nextPage ? 1 : 0.5,
-                    },
-                  ]}
                 >
-                  <CustomText>Next</CustomText>
-                </Pressable>
+                  <Text>Next</Text>
+                </Button>
               </View>
             ) : null
           }
         />
       </View>
+
       <ExerciseFilterModal
         visible={filterModalVisible}
         onClose={() => setFilterModalVisible(false)}
@@ -293,61 +315,3 @@ export default function SearchScreen() {
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  subtitle: { marginTop: spacing.xs },
-  gap: { marginTop: spacing.md },
-  input: {
-    marginTop: spacing.md,
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  filtersHeader: {
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  openFilterButton: {
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  results: {
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  paginationHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  footerLoading: {
-    marginTop: spacing.md,
-    alignItems: "center",
-    gap: spacing.xs,
-  },
-  numberedPagination: {
-    marginTop: spacing.md,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
-  pageButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  retryButton: {
-    marginTop: spacing.sm,
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-});
