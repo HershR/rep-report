@@ -1,189 +1,241 @@
-import React, { useEffect, useState } from "react";
-import { FlatList, TouchableOpacity, View } from "react-native";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/src/components/ui/tabs";
-import SearchBar from "@/src/components/SearchBar";
-import { useRouter } from "expo-router";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import ExerciseList from "@/src/components/lists/ExerciseList";
-import ActivityLoader from "@/src/components/ActivityLoader";
-//db
-import { useSQLiteContext } from "expo-sqlite";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src//db/schema";
-import { eq } from "drizzle-orm";
-//utils
-import { dateNameLong } from "@/src/utils/dateUtils";
-//ui
-import { Text } from "@/src/components/ui/text";
-import { Button } from "@/src/components/ui/button";
-import { CircleX } from "~/lib/icons/CircleX";
-import { Card, CardDescription, CardTitle } from "@/src/components/ui/card";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { useRouter, type Href } from "expo-router";
+import { useState } from "react";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native";
 
-const Saved = () => {
+import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
+import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import type { Exercise } from "@/features/exercises/types";
+import { TemplateCard } from "@/features/templates/components/TemplateCard";
+import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import type { WorkoutTemplate } from "@/features/templates/types";
+import { spacing, useThemeColors } from "@/theme";
+import { FlashList } from "@shopify/flash-list";
+
+export default function SavedScreen() {
   const router = useRouter();
-
-  const [tab, setTab] = useState("favorites");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
+  const colors = useThemeColors();
+  const { favorites, isLoading, error, removeFavoriteExercise } =
+    useFavoriteExercises();
   const {
-    data: favorites,
-    updatedAt: favoritesLoaded,
-    error: favoritesError,
-  } = useLiveQuery(
-    drizzleDb.query.exercises.findMany({
-      where: (exercises) => eq(exercises.is_favorite, true),
-      orderBy: (exercises, { asc }) => [asc(exercises.name)],
-    })
-  );
+    templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+    deleteWorkoutTemplate,
+  } = useWorkoutTemplates();
+  const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
 
-  const {
-    data: routines,
-    updatedAt: routinesLoaded,
-    error: routineError,
-  } = useLiveQuery(
-    drizzleDb.query.routines.findMany({
-      orderBy: (routines, { desc }) => [desc(routines.last_updated)],
-      with: { routineExercises: true, routineSchedule: true },
-    })
-  );
-  useEffect(() => {
-    if (favoritesError) {
-      console.log("Saved Favorites Fetch Error: ", favoritesError);
-    }
-  }, [favoritesError]);
-  useEffect(() => {
-    if (routineError) {
-      console.log("Saved Routine Fetch Error: ", routineError);
-    }
-  }, [routineError]);
+  const closeRemoveModal = () => setExerciseToRemove(null);
+
+  const confirmRemoveFavorite = async () => {
+    if (!exerciseToRemove) return;
+    await removeFavoriteExercise({ id: exerciseToRemove.id });
+    closeRemoveModal();
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    await deleteWorkoutTemplate(templateToDelete.id);
+    setTemplateToDelete(null);
+  };
 
   return (
-    <SafeAreaWrapper hasTabBar viewStyle="my-5">
-      <Tabs
-        value={tab}
-        onValueChange={(value) => {
-          setSearchQuery("");
-          setTab(value);
-        }}
-        className="flex-1"
-      >
-        <TabsList className="flex-row w-full max-w-[400px] self-center">
-          <TabsTrigger value="favorites" className="flex-1">
-            <Text>Favorites</Text>
-          </TabsTrigger>
-          <TabsTrigger value="routines" className="flex-1">
-            <Text>Routines</Text>
-          </TabsTrigger>
-        </TabsList>
-        <View className="my-4">
-          <SearchBar
-            placeholder={
-              tab === "favorites" ? "Search favorites..." : "Search routines..."
-            }
-            value={searchQuery}
-            onChangeText={(text: string) => {
-              setSearchQuery(text);
-            }}
-          />
+    <CustomScreen scroll>
+      <CustomText variant="title">Saved</CustomText>
+      <CustomText muted style={styles.subtitle}>Manage saved exercises and templates.</CustomText>
+
+      <View style={styles.sectionHeader}>
+        <CustomText>Saved Exercises</CustomText>
+      </View>
+
+      {isLoading && (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-        <TabsContent style={{ flex: 1 }} value="favorites">
-          {!favoritesLoaded ? (
-            <ActivityLoader />
-          ) : (
-            <View className="flex-1 justify-start">
-              <ExerciseList
-                exercises={
-                  searchQuery
-                    ? favorites.filter((x) =>
-                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                    : favorites
-                }
-                emptyListComp={
-                  <View className="flex-1 items-center justify-center">
-                    <Text>No Favorites Added</Text>
-                  </View>
-                }
-              />
-            </View>
-          )}
-        </TabsContent>
-        <TabsContent className="flex-1" value="routines">
-          {!routinesLoaded ? (
-            <ActivityLoader />
-          ) : (
-            <View className="flex-1">
-              <FlatList
-                data={
-                  searchQuery
-                    ? routines.filter((x) =>
-                        x.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                    : routines
-                }
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerClassName="gap-y-4"
-                ListEmptyComponent={
-                  <View className="flex-1 items-center justify-center">
-                    <Text>No Routines</Text>
-                  </View>
-                }
-                renderItem={({ item }) => (
-                  <Card className="flex-1 justify-center items-center p-4">
-                    <TouchableOpacity
-                      className="flex-row justify-between items-center"
-                      onPress={() => router.push(`/routine/${item.id}`)}
-                    >
-                      <View className="flex-1 mx-4 max-h-32 overflow-hidden">
-                        <CardTitle>{item.name}</CardTitle>
-                        {item?.routineSchedule?.length > 0 && (
-                          <CardDescription className="flex-row font-medium">
-                            {item.routineSchedule
-                              .map((x, index) => dateNameLong[x.day])
-                              .join(" | ")}
-                          </CardDescription>
-                        )}
+      )}
 
-                        <CardDescription>
-                          Exercises: {item?.routineExercises?.length}
-                        </CardDescription>
-                        {item.description && (
-                          <CardDescription>{item.description}</CardDescription>
-                        )}
-                      </View>
-                      <ChevronRight className="color-primary" size={30} />
-                    </TouchableOpacity>
-                  </Card>
-                )}
-              ></FlatList>
-              <Button
-                className="absolute bottom-0 right-2 rounded-full h-14 w-14"
-                size={"icon"}
-                onPress={() =>
-                  router.push({
-                    pathname: "../routine/create",
-                  })
-                }
-              >
-                <CircleX
-                  size={40}
-                  className="color-background rotate-45"
-                ></CircleX>
-              </Button>
-            </View>
+      {!isLoading && error && (
+        <CustomCard style={styles.gap}>
+          <CustomText>Could not load saved exercises.</CustomText>
+        </CustomCard>
+      )}
+
+      {!isLoading && !error && favorites.length === 0 && (
+        <CustomCard style={styles.gap}>
+          <CustomText>
+            No saved exercises yet. Search and tap Favorite.
+          </CustomText>
+        </CustomCard>
+      )}
+
+      <View style={styles.gap}>
+        <FlashList
+          data={favorites}
+          keyExtractor={(exercise) => String(exercise.id)}
+          contentContainerStyle={{ gap: spacing.sm }}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          renderItem={({ item: exercise }) => (
+            <ExerciseCard
+              name={exercise.name}
+              category={exercise.category}
+              imageUrl={exercise.imageUrl}
+              isFavorite
+              onPress={() =>
+                router.push({
+                  pathname: "/exercise/[exerciseId]",
+                  params: {
+                    exerciseId: exercise.id,
+                    source: "local",
+                  },
+                })
+              }
+              onToggleFavorite={() => {
+                setExerciseToRemove(exercise);
+              }}
+            />
           )}
-        </TabsContent>
-      </Tabs>
-    </SafeAreaWrapper>
+        />
+      </View>
+
+      <View style={styles.sectionHeader}>
+        <CustomText>Workout Templates</CustomText>
+        <Pressable onPress={() => router.push("/workout/template/new" as Href)}>
+          <CustomText muted>Create New</CustomText>
+        </Pressable>
+      </View>
+
+      {templatesLoading ? (
+        <View style={{ alignItems: "center", marginTop: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : null}
+
+      {!templatesLoading && templatesError ? (
+        <CustomCard style={styles.gap}>
+          <CustomText>Could not load templates.</CustomText>
+        </CustomCard>
+      ) : null}
+
+      {!templatesLoading && !templatesError && templates.length === 0 ? (
+        <CustomCard style={styles.gap}>
+          <CustomText>No workout templates yet. Create one to start faster.</CustomText>
+        </CustomCard>
+      ) : null}
+
+      <View style={styles.gap}>
+        {templates.map((template) => (
+          <TemplateCard
+            key={template.id}
+            template={template}
+            onPress={() => {
+              router.push({
+                pathname: "/workout/template/[templateId]",
+                params: { templateId: template.id },
+              } as unknown as Href);
+            }}
+            onDelete={() => setTemplateToDelete(template)}
+          />
+        ))}
+      </View>
+
+      <Modal
+        transparent
+        visible={Boolean(exerciseToRemove)}
+        animationType="fade"
+        onRequestClose={closeRemoveModal}
+      >
+        <View style={styles.modalOverlay}>
+          <CustomCard
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <CustomText>Remove from favorites?</CustomText>
+            <CustomText muted style={styles.modalCopy}>
+              {exerciseToRemove
+                ? `${exerciseToRemove.name} will be removed from favorites.`
+                : "This exercise will be removed from favorites."}
+            </CustomText>
+
+            <View style={styles.modalActions}>
+              <Pressable onPress={closeRemoveModal} style={styles.modalButton}>
+                <CustomText muted>Cancel</CustomText>
+              </Pressable>
+              <Pressable onPress={() => void confirmRemoveFavorite()} style={styles.modalButton}>
+                <CustomText>Remove</CustomText>
+              </Pressable>
+            </View>
+          </CustomCard>
+        </View>
+      </Modal>
+
+      <Modal
+        transparent
+        visible={Boolean(templateToDelete)}
+        animationType="fade"
+        onRequestClose={() => setTemplateToDelete(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <CustomCard
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <CustomText>Delete template?</CustomText>
+            <CustomText muted style={styles.modalCopy}>
+              {templateToDelete
+                ? `${templateToDelete.name} will be permanently removed.`
+                : "This template will be permanently removed."}
+            </CustomText>
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setTemplateToDelete(null)} style={styles.modalButton}>
+                <CustomText muted>Cancel</CustomText>
+              </Pressable>
+              <Pressable onPress={() => void confirmDeleteTemplate()} style={styles.modalButton}>
+                <CustomText>Delete</CustomText>
+              </Pressable>
+            </View>
+          </CustomCard>
+        </View>
+      </Modal>
+    </CustomScreen>
   );
-};
+}
 
-export default Saved;
+const styles = StyleSheet.create({
+  subtitle: { marginTop: spacing.xs },
+  gap: { marginTop: spacing.lg },
+  sectionHeader: {
+    marginTop: spacing.lg,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    padding: spacing.lg,
+  },
+  modalCard: {
+    gap: spacing.sm,
+  },
+  modalCopy: {
+    marginTop: spacing.xs,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  modalButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+});

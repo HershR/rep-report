@@ -1,0 +1,44 @@
+import type { DistanceUnit, WeightUnit } from "@/db/schema";
+
+const KM_PER_MILE = 1.609344;
+const KG_PER_LB = 0.45359237;
+
+export function toMetricDistance(value: number, unit: DistanceUnit): number {
+  return unit === "mi" ? value * KM_PER_MILE : value;
+}
+
+export function toDisplayDistance(valueInKm: number, unit: DistanceUnit): number {
+  return unit === "mi" ? valueInKm / KM_PER_MILE : valueInKm;
+}
+
+export function distanceToText(valueInKm: number | null, unit: DistanceUnit): string {
+  if (valueInKm === null) return "";
+  return String(Number(toDisplayDistance(valueInKm, unit).toFixed(2)));
+}
+
+export function textToMetricDistance(text: string, unit: DistanceUnit): number | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? toMetricDistance(parsed, unit) : null;
+}
+
+export function toMetricWeight(value: number, unit: WeightUnit): number {
+  return unit === "lb" ? value * KG_PER_LB : value;
+}
+
+export function toDisplayWeight(valueInKg: number, unit: WeightUnit): number {
+  return unit === "lb" ? valueInKg / KG_PER_LB : valueInKg;
+}
+
+export function weightToText(valueInKg: number | null, unit: WeightUnit): string {
+  if (valueInKg === null) return "";
+  return String(Number(toDisplayWeight(valueInKg, unit).toFixed(2)));
+}
+
+export function textToMetricWeight(text: string, unit: WeightUnit): number | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? toMetricWeight(parsed, unit) : null;
+}

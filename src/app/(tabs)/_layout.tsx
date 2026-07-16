@@ -1,112 +1,68 @@
-import { View } from "react-native";
-import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Text } from "@/src/components/ui/text";
-import { LucideIcon } from "lucide-react-native";
-import { Search } from "~/lib/icons/Search";
-import { House } from "~/lib/icons/House";
-import { User } from "~/lib/icons/User";
-import { Bookmark } from "~/lib/icons/Bookmark";
-import { Dumbbell } from "~/lib/icons/Dumbbell";
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import { NAV_THEME } from "~/lib/constants";
-interface TabIconProps {
-  title: string;
-  Icon: LucideIcon;
-  focused: boolean;
+
+import { useThemeColors } from "@/theme";
+
+type IconName = keyof typeof Ionicons.glyphMap;
+
+function tabIcon(name: IconName) {
+  return function TabBarIcon({ color, size }: { color: string; size: number }) {
+    return <Ionicons name={name} color={color} size={size} />;
+  };
 }
 
-const TabIcon = ({ title, Icon, focused }: TabIconProps) => {
-  if (focused)
-    return (
-      <View className="flex-1 flex-row w-full min-w-28 min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden">
-        <Icon className="color-primary" size={20} />
-        <Text className="font-semibold ml-2">{title}</Text>
-      </View>
-    );
-  return (
-    <View className="size-full justify-center items-center mt-4 rounded-full">
-      <Icon className="color-primary/50" size={20} />
-    </View>
-  );
-};
-const _Layout = () => {
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
+export default function TabLayout() {
+  const colors = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarShowLabel: false,
-        tabBarItemStyle: {
-          width: "100%",
-          height: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        },
-
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: `${
-            isDarkColorScheme
-              ? NAV_THEME.dark.background
-              : NAV_THEME.light.background
-          }`,
-          overflow: "hidden",
-          position: "absolute",
-          height: 56,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
         },
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.text,
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="home"
         options={{
           title: "Home",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Home" Icon={House} focused={focused} />
-          ),
+          tabBarIcon: tabIcon("home-outline"),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Search",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Search" Icon={Search} focused={focused} />
-          ),
+          tabBarIcon: tabIcon("search-outline"),
         }}
       />
       <Tabs.Screen
-        name="home"
+        name="dashboard"
         options={{
-          title: "Workouts",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Workouts" Icon={Dumbbell} focused={focused} />
-          ),
+          title: "Dashboard",
+          tabBarIcon: tabIcon("bar-chart-outline"),
         }}
       />
       <Tabs.Screen
         name="saved"
         options={{
           title: "Saved",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Saved" Icon={Bookmark} focused={focused} />
-          ),
+          tabBarIcon: tabIcon("bookmark-outline"),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Profile" Icon={User} focused={focused} />
-          ),
+          tabBarIcon: tabIcon("person-outline"),
         }}
       />
     </Tabs>
   );
-};
-export default _Layout;
+}

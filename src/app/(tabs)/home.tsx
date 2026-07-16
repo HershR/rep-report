@@ -1,230 +1,88 @@
-import { DateTime } from "luxon";
 import { useRouter } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { DateData, Direction } from "react-native-calendars/src/types";
-import { CalendarProvider, ExpandableCalendar } from "react-native-calendars";
-import { twMerge } from "tailwind-merge";
-import SearchBar from "@/src/components/SearchBar";
-import ActivityLoader from "@/src/components/ActivityLoader";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
-//db
-import * as schema from "@/src/db/schema";
-import { workouts } from "@/src/db/schema";
-import { between, desc } from "drizzle-orm";
-import { useSQLiteContext } from "expo-sqlite";
-import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-//ui
-import { Text } from "~/components/ui/text";
-import { NAV_THEME } from "~/lib/constants";
-import { useColorScheme } from "~/lib/useColorScheme";
-import { Separator } from "@/src/components/ui/separator";
-import { CalendarDays } from "@/src/lib/icons/CalendarDays";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { StyleSheet, View } from "react-native";
 
-export default function Home() {
+import {
+  CustomButton,
+  CustomCard,
+  CustomScreen,
+  CustomText,
+} from "@/components/common";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import { spacing } from "@/theme";
+
+export default function HomeScreen() {
   const router = useRouter();
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
-  const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
-  const [selectedDate, setSelectedDate] = useState(DateTime.now());
-  const [selectedMonth, setSelectedMonth] = useState(
-    DateTime.now().toISODate()
-  );
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
+  const { templates } = useWorkoutTemplates();
+  const { activeWorkout } = useActiveWorkout();
+  const { profile } = useProfile();
 
-  useDrizzleStudio(db);
-
-  const {
-    data: monthsWorkouts,
-    updatedAt: workoutLoaded,
-    error: workoutError,
-  } = useLiveQuery(
-    drizzleDb.query.workouts.findMany({
-      where: between(
-        workouts.date,
-        selectedDate.startOf("month").toISODate(),
-        selectedDate.endOf("month").toISODate()
-      ),
-      with: {
-        exercise: true,
-        sets: true,
-      },
-      orderBy: desc(workouts.last_updated),
-    }),
-    [selectedMonth]
-  );
-
-  useEffect(() => {
-    if (workoutError) {
-      console.error("Error fetching workouts:", workoutError);
-    }
-  }, [workoutError]);
-  useEffect(() => {
-    if (monthsWorkouts) {
-      setDaysWorkouts(
-        monthsWorkouts.filter((x) => x.date === selectedDate.toISODate())
-      );
-    }
-  }, [selectedDate, monthsWorkouts]);
-
-  useEffect(() => {
-    const splitDate = selectedMonth.split("-");
-    const month = splitDate[1];
-    const year = splitDate[0];
-    if (
-      parseInt(month) !== selectedDate.month ||
-      parseInt(year) !== selectedDate.year
-    ) {
-      setSelectedMonth(selectedDate.toISODate());
-    }
-  }, [selectedDate]);
-
-  const onDayPress = useCallback((day: DateData) => {
-    // console.log("onDayPress", day);
-    setSelectedDate(
-      selectedDate.set({ day: day.day, month: day.month, year: day.year })
-    );
-  }, []);
-
-  const toggleCalendarExpansion = useCallback(() => {
-    calendarRef.current?.toggleCalendarPosition();
-  }, []);
-
-  const renderHeader = useCallback((date: Date) => {
-    return (
-      <TouchableOpacity
-        className="flex-row justify-center items-center m-3 gap-x-4"
-        onPress={toggleCalendarExpansion}
-      >
-        <Text className="text-2xl font-medium">
-          {DateTime.fromISO(date.toISOString()).toFormat("LLLL yyyy")}
-        </Text>
-        <CalendarDays className="color-primary" size={26} />
-      </TouchableOpacity>
-    );
-  }, []);
-
-  const renderArrow = (direction: Direction) => {
-    return (
-      <ChevronRight
-        className={twMerge(
-          "color-primary",
-          direction === "left" ? "rotate-180" : ""
-        )}
-        size={24}
-      />
-    );
-  };
-  const marked = useMemo(() => {
-    const dates = new Set(monthsWorkouts.map((x) => x.date));
-    const markedDates: { [key: string]: any } = {};
-    dates.forEach(
-      (x) =>
-        (markedDates[x] = {
-          marked: true,
-        })
-    );
-
-    return {
-      ...markedDates,
-      [selectedDate.toISODate()]: {
-        selected: true,
-        disableTouchEvent: true,
-      },
-    };
-  }, [selectedDate, daysWorkouts]);
-
-  const CALENDARTHEME = {
-    backgroundColor: NAV_THEME[colorScheme].background,
-    calendarBackground: NAV_THEME[colorScheme].background,
-    selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
-    selectedDayTextColor: NAV_THEME[colorScheme].border,
-    dotColor: NAV_THEME[colorScheme].primary,
-    arrowColor: NAV_THEME[colorScheme].primary,
-    monthTextColor: NAV_THEME[colorScheme].text,
-    textDisabledColor: NAV_THEME[colorScheme].border,
-    dayTextColor: NAV_THEME[colorScheme].text,
-    todayTextColor: NAV_THEME[colorScheme].text,
-    todayDotColor: NAV_THEME[colorScheme].text,
-    todayBackgroundColor: NAV_THEME[colorScheme].border,
-  };
   return (
-    <>
-      <CalendarProvider
-        date={selectedDate.toISODate()}
-        onDateChanged={(date) => {
-          const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
-          //@ts-ignore
-          setSelectedDate(newDate);
-        }}
-        onMonthChange={onDayPress}
-      >
-        <SafeAreaView
-          edges={["top", "left", "right"]}
-          onLayout={() => {
-            setShowCalendar(true);
-          }}
-        >
-          {showCalendar && (
-            <ExpandableCalendar
-              ref={calendarRef}
-              key={colorScheme}
-              theme={CALENDARTHEME}
-              firstDay={1}
-              renderHeader={renderHeader}
-              renderArrow={renderArrow}
-              current={selectedDate.toISODate()}
-              markedDates={marked}
-              onDayPress={onDayPress}
-              allowShadow={false}
-              enableSwipeMonths={false}
-              closeOnDayPress={false}
-              hideKnob
-              disablePan
-              disableWeekScroll
-              disableArrowLeft={false}
-              disableArrowRight={false}
-              disableAllTouchEventsForDisabledDays
-            />
-          )}
-        </SafeAreaView>
+    <CustomScreen scroll>
+      <CustomText variant="title">
+        {profile ? `Hi ${profile.displayName}!` : "Home"}
+      </CustomText>
+      <CustomText muted style={styles.subtitle}>
+        Ready to train?
+      </CustomText>
+      <View style={styles.gap}>
+        <CustomCard>
+          <CustomText variant="caption" muted>
+            Every set counts.
+          </CustomText>
+        </CustomCard>
 
-        <Separator className="mt-2 mb-4" />
-        <SafeAreaWrapper hasTabBar hasHeader viewStyle="mt-0">
-          {!workoutLoaded ? (
-            <ActivityLoader />
-          ) : workoutError ? (
-            <Text>Failed to Load Workouts</Text>
+        <CustomButton
+          label="Start Workout"
+          onPress={() =>
+            router.push({
+              pathname: "/workout/active",
+              params: { name: "Workout" },
+            })
+          }
+        />
+
+        {activeWorkout?.status === "active" ? (
+          <CustomButton
+            label="Resume Workout"
+            onPress={() =>
+              router.push({
+                pathname: "/workout/active",
+                params: { sessionId: activeWorkout.id },
+              })
+            }
+          />
+        ) : null}
+
+        <View style={styles.templateSection}>
+          <CustomText>Start From Template</CustomText>
+          {templates.length === 0 ? (
+            <CustomText muted>No templates yet. Create one in Saved tab.</CustomText>
           ) : (
-            <View className="flex-1 gap-y-2">
-              <SearchBar
-                placeholder={"Add exercise"}
-                value={""}
-                onPress={() => router.push("/search")}
+            templates.slice(0, 3).map((template) => (
+              <CustomButton
+                key={template.id}
+                label={template.name}
+                onPress={() =>
+                  router.push({
+                    pathname: "/workout/active",
+                    params: { templateId: template.id, name: template.name },
+                  })
+                }
               />
-              {!workoutLoaded ? (
-                <ActivityLoader />
-              ) : (
-                <>
-                  <Text className="text-xl font-semibold mt-2 mb-2">
-                    {selectedDate?.toISODate() === DateTime.now().toISODate()
-                      ? "Today's Workouts"
-                      : selectedDate?.toFormat("LLL dd, yyyy")}
-                    :
-                  </Text>
-                  <CompletedWorkoutList workouts={daysWorkouts} />
-                </>
-              )}
-            </View>
+            ))
           )}
-        </SafeAreaWrapper>
-      </CalendarProvider>
-    </>
+        </View>
+      </View>
+    </CustomScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  subtitle: { marginTop: spacing.xs },
+  gap: { marginTop: spacing.lg, gap: spacing.md },
+  templateSection: {
+    gap: spacing.sm,
+  },
+});

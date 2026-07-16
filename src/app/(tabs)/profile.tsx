@@ -1,286 +1,397 @@
 import { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { format } from "date-fns";
+
 import {
-  convertHeightString,
-  convertWeightString,
-} from "@/src/utils/measurementConversion";
-import HeightSelectorModal from "@/src/components/HeightSelectorModal";
-//db
-import * as schema from "@/src//db/schema";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { updateUserSetting } from "@/src/db/dbHelpers";
-//ui
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import { NAV_THEME } from "@/src/lib/constants";
-import { Text } from "@/src/components/ui/text";
-import { Switch } from "@/src/components/ui/switch";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { Separator } from "~/components/ui/separator";
-//icons
-import { User } from "@/src/lib/icons/User";
-import { MoonStar } from "@/src/lib/icons/MoonStar";
-import { Sun } from "@/src/lib/icons/Sun";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
-import { Ruler } from "@/src/lib/icons/Ruler";
-import { Cake } from "@/src/lib/icons/Cake";
-import { eq } from "drizzle-orm";
-import { utcToLocalMidnight } from "@/src/utils/datetimeConversion";
-import { seedDatabase } from "@/src/db/seed";
+  CustomButton,
+  CustomCard,
+  CustomScreen,
+  CustomText,
+} from "@/components/common";
+import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import type { WeightUnit } from "@/db/schema";
+import { toMetricWeight, toDisplayWeight } from "@/lib/units";
+import { spacing, useThemeColors } from "@/theme";
 
-const Profile = () => {
-  const [age, setAge] = useState<number | null>();
-  const [height, setHeight] = useState<number | null>();
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isHeightModalVisible, setHeightModalVisibility] = useState(false);
+function formatDisplayWeight(
+  valueInKg: number,
+  weightUnit: WeightUnit,
+): { value: number; unit: WeightUnit } {
+  return { value: Number(toDisplayWeight(valueInKg, weightUnit).toFixed(2)), unit: weightUnit };
+}
 
-  const { colorScheme, isDarkColorScheme, toggleColorScheme } =
-    useColorScheme();
-  const router = useRouter();
-  const { unit, toggleUnit } = useMeasurementUnit();
+function toMetricHeight(value: number, unit: string): number {
+  if (unit === "in") return value * 2.54;
+  return value;
+}
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  const { data: weight } = useLiveQuery(
-    drizzleDb.query.weightHistory.findFirst({
-      orderBy: (weight_history, { desc }) => [
-        desc(weight_history.date_created),
-      ],
-    })
-  );
-  const { data: userDob } = useLiveQuery(
-    drizzleDb.query.userSettings.findFirst({
-      where: eq(schema.userSettings.key, "dob"),
-    })
-  );
+function toDisplayHeightCm(valueInCm: number, heightUnit: "cm" | "in"): string {
+  if (heightUnit === "in") {
+    const totalInches = valueInCm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Number((totalInches - feet * 12).toFixed(1));
+    return `${feet} ft ${inches} in`;
+  }
+  return `${Number(valueInCm.toFixed(2))} cm`;
+}
 
-  const { data: userHeight } = useLiveQuery(
-    drizzleDb.query.userSettings.findFirst({
-      where: eq(schema.userSettings.key, "height"),
-    })
-  );
+export default function ProfileScreen() {
+  const colors = useThemeColors();
+  const { appSettings, updateAppSettings } = useAppSettings();
+  const { profile, saveProfile, isSaving } = useProfile();
+  const {
+    latest: latestWeight,
+    history: weightHistory,
+    addMeasurement: addWeight,
+  } = useMeasurements("weight");
+  const {
+    latest: latestHeight,
+    history: heightHistory,
+    addMeasurement: addHeight,
+  } = useMeasurements("height");
+  const [displayName, setDisplayName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const [weightValue, setWeightValue] = useState("");
+  const [heightValue, setHeightValue] = useState("");
+  const [heightFeet, setHeightFeet] = useState("");
+  const [heightInches, setHeightInches] = useState("");
 
   useEffect(() => {
-    if (userDob) {
-      const date = new Date(userDob.value);
-      const today = new Date();
-      const age = today.getFullYear() - date.getFullYear();
-      const monthDiff = today.getMonth() - date.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < date.getDate())
-      ) {
-        setAge(age - 1);
-      } else {
-        setAge(age);
-      }
-    } else {
-      setAge(0);
-    }
-  }, [userDob]);
+    if (!profile) return;
+    setDisplayName(profile.displayName);
+    setDateOfBirth(profile.dateOfBirth ? new Date(profile.dateOfBirth) : null);
+  }, [profile]);
 
-  useEffect(() => {
-    const getHeight = async () => {
-      if (userHeight) {
-        setHeight(parseFloat(userHeight.value));
-      } else {
-        setHeight(0);
-      }
-    };
-    getHeight();
-  }, [userHeight]);
-
-  const setUnit = async (unit: Unit) => {
-    await AsyncStorage.setItem("measurementUnit", unit);
+  const onSaveProfile = async () => {
+    if (!displayName.trim()) return;
+    await saveProfile({
+      displayName: displayName.trim(),
+      dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : null,
+    });
   };
-  const setTheme = async (theme: string) => {
-    await AsyncStorage.setItem("theme", theme);
+
+  const onChangeDob = (event: DateTimePickerEvent, selected?: Date) => {
+    if (event.type === "dismissed") {
+      setShowDobPicker(false);
+      return;
+    }
+    if (!selected) return;
+    setDateOfBirth(selected);
+    setShowDobPicker(false);
+  };
+
+  const onAddWeight = async () => {
+    const value = Number(weightValue.trim());
+    if (!Number.isFinite(value) || value <= 0) return;
+    const unit = appSettings?.weightUnit ?? "kg";
+    const metricValue = toMetricWeight(value, unit);
+    await addWeight({ value: metricValue, unit: "kg" });
+    setWeightValue("");
+  };
+
+  const onAddHeight = async () => {
+    if (appSettings?.heightUnit === "in") {
+      const feet = Number(heightFeet.trim() || "0");
+      const inches = Number(heightInches.trim() || "0");
+      if (!Number.isFinite(feet) || !Number.isFinite(inches)) return;
+      if (feet < 0 || inches < 0) return;
+      const totalInches = feet * 12 + inches;
+      if (totalInches <= 0) return;
+      await addHeight({ value: toMetricHeight(totalInches, "in"), unit: "cm" });
+      setHeightFeet("");
+      setHeightInches("");
+      return;
+    }
+
+    const value = Number(heightValue.trim());
+    if (!Number.isFinite(value) || value <= 0) return;
+    await addHeight({ value: toMetricHeight(value, "cm"), unit: "cm" });
+    setHeightValue("");
+  };
+
+  const onSwitchUnitSystem = async (system: "metric" | "imperial") => {
+    if (system === "metric") {
+      await updateAppSettings({
+        weightUnit: "kg",
+        heightUnit: "cm",
+        distanceUnit: "km",
+      });
+      return;
+    }
+    await updateAppSettings({
+      weightUnit: "lb",
+      heightUnit: "in",
+      distanceUnit: "mi",
+    });
   };
 
   return (
-    <>
-      <SafeAreaWrapper hasTabBar viewStyle="my-5">
-        <View className="flex-1 max-w-screen-md pt-6 mt-4">
-          <View className="flex-row gap-x-10">
-            <View className="flex justify-center items-center">
-              <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
-                <User className="color-primary" size={80}></User>
-              </View>
-            </View>
-            <View className="flex-1 justify-center">
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Age</Text>
-                <Text className="text-xl font-medium text-right">{age} yr</Text>
-              </View>
-              <Separator className="" />
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Height</Text>
-                <Text className="text-xl font-medium text-right">
-                  {height ? convertHeightString(height, "metric", unit) : "NA"}
-                </Text>
-              </View>
-              <Separator className="" />
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Weight</Text>
-                <Text className="text-xl font-medium text-right">
-                  {weight?.weight
-                    ? convertWeightString(weight.weight, "imperial", unit)
-                    : "NA"}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <Separator className="my-4" />
-          <View className="flex-1">
-            <ScrollView
-              className="flex-1 w-full"
-              showsVerticalScrollIndicator={false}
-              contentContainerClassName="gap-y-4"
-            >
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">App Theme</Text>
-                <View className="flex-row items-center gap-x-2">
-                  <Sun className="color-primary" size={24} />
-                  <Switch
-                    checked={isDarkColorScheme}
-                    onCheckedChange={async () => {
-                      await setTheme(
-                        colorScheme === "light" ? "dark" : "light"
-                      );
-                      toggleColorScheme();
-                    }}
-                  />
-                  <MoonStar className="color-primary" size={24} />
-                </View>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Units</Text>
-                <View className="flex-row items-center gap-x-2">
-                  <Text className="min-w-6 text-center text-xl font-semibold">
-                    Lb
-                  </Text>
-                  <Switch
-                    checked={unit === "metric"}
-                    onCheckedChange={async () => {
-                      await setUnit(
-                        unit === "imperial" ? "metric" : "imperial"
-                      );
-                      toggleUnit();
-                    }}
-                  />
-                  <Text className="min-w-6 text-center text-xl font-semibold">
-                    Kg
-                  </Text>
-                </View>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">My Weight</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => router.push("/weight")}
-                >
-                  <Ionicons
-                    name="scale"
-                    size={24}
-                    color={
-                      colorScheme === "light"
-                        ? NAV_THEME.light.primary
-                        : NAV_THEME.dark.primary
+    <CustomScreen scroll>
+      <CustomText variant="title">Profile</CustomText>
+      <CustomText muted style={styles.subtitle}>
+        Profile + weight/height tracking.
+      </CustomText>
+      <View style={styles.gap}>
+        <CustomCard style={styles.card}>
+          <CustomText>Profile</CustomText>
+          <CustomText muted>Unit System</CustomText>
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => void onSwitchUnitSystem("metric")}
+              style={[
+                styles.segment,
+                appSettings?.heightUnit === "cm"
+                  ? {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
                     }
-                  />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Update Height</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => setHeightModalVisibility(true)}
-                >
-                  <Ruler className="color-primary" />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Update Age</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => setDatePickerVisibility(true)}
-                >
-                  <Cake className="color-primary" />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              {/* <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Seed Database</Text>
-                <Button onPress={async () => seedDatabase(drizzleDb)}>
-                  <Text>Seed</Text>
-                </Button>
-              </View> */}
-            </ScrollView>
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+              ]}
+            >
+              <CustomText
+                muted={appSettings?.heightUnit !== "cm"}
+                style={
+                  appSettings?.heightUnit === "cm"
+                    ? { color: colors.primaryText }
+                    : undefined
+                }
+              >
+                Metric
+              </CustomText>
+            </Pressable>
+            <Pressable
+              onPress={() => void onSwitchUnitSystem("imperial")}
+              style={[
+                styles.segment,
+                appSettings?.heightUnit === "in"
+                  ? {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    }
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+              ]}
+            >
+              <CustomText
+                muted={appSettings?.heightUnit !== "in"}
+                style={
+                  appSettings?.heightUnit === "in"
+                    ? { color: colors.primaryText }
+                    : undefined
+                }
+              >
+                Imperial
+              </CustomText>
+            </Pressable>
           </View>
-        </View>
-      </SafeAreaWrapper>
-      <View className="flex">
-        <HeightSelectorModal
-          isVisable={isHeightModalVisible}
-          defaultHeight={height || 0}
-          unit={unit}
-          onSubmit={async (height: number) => {
-            if (height) {
-              await updateUserSetting(drizzleDb, "height", height.toString());
+          <TextInput
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="Display name"
+            placeholderTextColor={colors.textMuted}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.surface,
+              },
+            ]}
+          />
+          <CustomButton
+            label={
+              dateOfBirth
+                ? `DOB ${format(dateOfBirth, "PPP")}`
+                : "Set Date of Birth (optional)"
             }
-            setHeightModalVisibility(false);
-          }}
-          onClose={() => {
-            setHeightModalVisibility(false);
-          }}
-        />
+            onPress={() => setShowDobPicker(true)}
+          />
+          {showDobPicker ? (
+            <DateTimePicker
+              mode="date"
+              value={dateOfBirth ?? new Date(2000, 0, 1)}
+              onChange={onChangeDob}
+            />
+          ) : null}
+          <CustomButton
+            label="Save Profile"
+            loading={isSaving}
+            onPress={() => void onSaveProfile()}
+          />
+        </CustomCard>
+
+        <CustomCard style={styles.card}>
+          <CustomText>Weight</CustomText>
+          <CustomText muted>
+            {`Latest ${
+              latestWeight
+                ? (() => {
+                    const metricValue = toMetricWeight(
+                      latestWeight.value,
+                      latestWeight.unit as WeightUnit,
+                    );
+                    const display = formatDisplayWeight(
+                      metricValue,
+                      appSettings?.weightUnit ?? "kg",
+                    );
+                    return `${Number(display.value.toFixed(2))} ${display.unit}`;
+                  })()
+                : "N/A"
+            }`}
+          </CustomText>
+          <View style={styles.row}>
+            <TextInput
+              value={weightValue}
+              onChangeText={setWeightValue}
+              placeholder={`Weight (${appSettings?.weightUnit ?? "kg"})`}
+              keyboardType="decimal-pad"
+              placeholderTextColor={colors.textMuted}
+              style={[
+                styles.input,
+                styles.flex,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+            />
+            <CustomButton label="Add" onPress={() => void onAddWeight()} />
+          </View>
+          {weightHistory
+            .slice(-5)
+            .reverse()
+            .map((item) => (
+              <CustomText key={item.id} muted>
+                {`${format(new Date(item.measuredAt), "PP")} • ${(() => {
+                  const metricValue = toMetricWeight(item.value, item.unit as WeightUnit);
+                  const display = formatDisplayWeight(
+                    metricValue,
+                    appSettings?.weightUnit ?? "kg",
+                  );
+                  return `${Number(display.value.toFixed(2))} ${display.unit}`;
+                })()}`}
+              </CustomText>
+            ))}
+        </CustomCard>
+
+        <CustomCard style={styles.card}>
+          <CustomText>Height</CustomText>
+          <CustomText muted>
+            {`Latest ${
+              latestHeight
+                ? toDisplayHeightCm(
+                    toMetricHeight(latestHeight.value, latestHeight.unit),
+                    appSettings?.heightUnit ?? "cm",
+                  )
+                : "N/A"
+            }`}
+          </CustomText>
+          <View style={styles.row}>
+            {appSettings?.heightUnit === "in" ? (
+              <>
+                <TextInput
+                  value={heightFeet}
+                  onChangeText={setHeightFeet}
+                  placeholder="Feet"
+                  keyboardType="number-pad"
+                  placeholderTextColor={colors.textMuted}
+                  style={[
+                    styles.input,
+                    styles.flex,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
+                />
+                <TextInput
+                  value={heightInches}
+                  onChangeText={setHeightInches}
+                  placeholder="Inches"
+                  keyboardType="number-pad"
+                  placeholderTextColor={colors.textMuted}
+                  style={[
+                    styles.input,
+                    styles.flex,
+                    {
+                      borderColor: colors.border,
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
+                />
+              </>
+            ) : (
+              <TextInput
+                value={heightValue}
+                onChangeText={setHeightValue}
+                placeholder="Height"
+                keyboardType="decimal-pad"
+                placeholderTextColor={colors.textMuted}
+                style={[
+                  styles.input,
+                  styles.flex,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+              />
+            )}
+            <CustomButton label="Add" onPress={() => void onAddHeight()} />
+          </View>
+          {heightHistory
+            .slice(-5)
+            .reverse()
+            .map((item) => (
+              <CustomText key={item.id} muted>
+                {`${format(new Date(item.measuredAt), "PP")} • ${toDisplayHeightCm(
+                  toMetricHeight(item.value, item.unit),
+                  appSettings?.heightUnit ?? "cm",
+                )}`}
+              </CustomText>
+            ))}
+        </CustomCard>
       </View>
-
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        isDarkModeEnabled={isDarkColorScheme}
-        is24Hour={true}
-        date={userDob?.value ? new Date(userDob.value) : new Date()}
-        onConfirm={async (date) => {
-          if (date) {
-            const tzDate = utcToLocalMidnight(date);
-            await updateUserSetting(drizzleDb, "dob", tzDate.toISOString());
-          }
-          setDatePickerVisibility(false);
-        }}
-        onCancel={() => {
-          setDatePickerVisibility(false);
-        }}
-        minimumDate={new Date(1900, 0, 1)}
-        maximumDate={new Date()}
-        timePickerModeAndroid="spinner"
-        modalPropsIOS={{
-          presentationStyle: "formSheet",
-        }}
-      />
-    </>
+    </CustomScreen>
   );
-};
+}
 
-export default Profile;
+const styles = StyleSheet.create({
+  subtitle: { marginTop: spacing.xs },
+  gap: { marginTop: spacing.lg, gap: spacing.md },
+  card: { gap: spacing.sm },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  flex: { flex: 1 },
+  segment: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: spacing.sm,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+  },
+});
