@@ -1,20 +1,34 @@
 import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 
-import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
 import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import type { Exercise } from "@/features/exercises/types";
 import { TemplateCard } from "@/features/templates/components/TemplateCard";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import type { WorkoutTemplate } from "@/features/templates/types";
-import { spacing, useThemeColors } from "@/theme";
-import { FlashList } from "@shopify/flash-list";
+import { THEME } from "@/lib/theme";
+
+type SavedRow =
+  | { key: string; kind: "section-header"; title: string; count?: number; action?: { label: string; onPress: () => void } }
+  | { key: string; kind: "loading" }
+  | { key: string; kind: "error"; message: string }
+  | { key: string; kind: "empty"; message: string }
+  | { key: string; kind: "exercise"; exercise: Exercise }
+  | { key: string; kind: "template"; template: WorkoutTemplate };
 
 export default function SavedScreen() {
   const router = useRouter();
-  const colors = useThemeColors();
+  const scheme = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
   const {
@@ -26,216 +40,181 @@ export default function SavedScreen() {
   const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
 
-  const closeRemoveModal = () => setExerciseToRemove(null);
-
   const confirmRemoveFavorite = async () => {
     if (!exerciseToRemove) return;
     await removeFavoriteExercise({ id: exerciseToRemove.id });
-    closeRemoveModal();
   };
 
   const confirmDeleteTemplate = async () => {
     if (!templateToDelete) return;
     await deleteWorkoutTemplate(templateToDelete.id);
-    setTemplateToDelete(null);
   };
 
+  const rows: SavedRow[] = [
+    {
+      key: "exercises-header",
+      kind: "section-header",
+      title: "Saved Exercises",
+      count: !isLoading && !error ? favorites.length : undefined,
+    },
+    ...(isLoading
+      ? [{ key: "exercises-loading", kind: "loading" } as const]
+      : error
+        ? [{ key: "exercises-error", kind: "error", message: "Could not load saved exercises." } as const]
+        : favorites.length === 0
+          ? [
+              {
+                key: "exercises-empty",
+                kind: "empty",
+                message: "No saved exercises yet. Search and tap Favorite.",
+              } as const,
+            ]
+          : favorites.map((exercise) => ({ key: `exercise-${exercise.id}`, kind: "exercise" as const, exercise }))),
+    {
+      key: "templates-header",
+      kind: "section-header",
+      title: "Workout Templates",
+      count: !templatesLoading && !templatesError ? templates.length : undefined,
+      action: { label: "Create New", onPress: () => router.push("/workout/template/new" as Href) },
+    },
+    ...(templatesLoading
+      ? [{ key: "templates-loading", kind: "loading" } as const]
+      : templatesError
+        ? [{ key: "templates-error", kind: "error", message: "Could not load templates." } as const]
+        : templates.length === 0
+          ? [
+              {
+                key: "templates-empty",
+                kind: "empty",
+                message: "No workout templates yet. Create one to start faster.",
+              } as const,
+            ]
+          : templates.map((template) => ({ key: `template-${template.id}`, kind: "template" as const, template }))),
+  ];
+
   return (
-    <CustomScreen scroll>
-      <CustomText variant="title">Saved</CustomText>
-      <CustomText muted style={styles.subtitle}>Manage saved exercises and templates.</CustomText>
+    <CustomScreen>
+      <FlashList
+        data={rows}
+        keyExtractor={(row) => row.key}
+        getItemType={(row) => row.kind}
+        style={{ flex: 1 }}
+        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        ListHeaderComponent={
+          <View className="mb-2">
+            <Text variant="h2">Saved</Text>
+            <Text variant="muted">Manage saved exercises and templates.</Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          switch (item.kind) {
+            case "section-header":
+              return (
+                <View className="flex-row items-center gap-2 pb-2 pt-4">
+                  <Text variant="large">{item.title}</Text>
+                  {item.count !== undefined ? (
+                    <Badge variant="secondary">
+                      <Text>{item.count}</Text>
+                    </Badge>
+                  ) : null}
+                  {item.action ? (
+                    <Button variant="ghost" size="sm" className="ml-auto" onPress={item.action.onPress}>
+                      <Text>{item.action.label}</Text>
+                    </Button>
+                  ) : null}
+                </View>
+              );
+            case "loading":
+              return (
+                <View className="items-center py-4">
+                  <ActivityIndicator color={colors.primary} />
+                </View>
+              );
+            case "error":
+              return (
+                <Card>
+                  <CardContent>
+                    <Text>{item.message}</Text>
+                  </CardContent>
+                </Card>
+              );
+            case "empty":
+              return (
+                <Card>
+                  <CardContent>
+                    <Text variant="muted">{item.message}</Text>
+                  </CardContent>
+                </Card>
+              );
+            case "exercise":
+              return (
+                <ExerciseCard
+                  name={item.exercise.name}
+                  category={item.exercise.category}
+                  imageUrl={item.exercise.imageUrl}
+                  isFavorite
+                  onPress={() =>
+                    router.push({
+                      pathname: "/exercise/[exerciseId]",
+                      params: {
+                        exerciseId: item.exercise.id,
+                        source: "local",
+                      },
+                    })
+                  }
+                  onToggleFavorite={() => setExerciseToRemove(item.exercise)}
+                />
+              );
+            case "template":
+              return (
+                <TemplateCard
+                  template={item.template}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/workout/template/[templateId]",
+                      params: { templateId: item.template.id },
+                    } as unknown as Href);
+                  }}
+                  onDelete={() => setTemplateToDelete(item.template)}
+                />
+              );
+          }
+        }}
+      />
 
-      <View style={styles.sectionHeader}>
-        <CustomText>Saved Exercises</CustomText>
-      </View>
+      <ConfirmDialog
+        open={Boolean(exerciseToRemove)}
+        onOpenChange={(open) => !open && setExerciseToRemove(null)}
+        title="Remove from favorites?"
+        description={
+          exerciseToRemove
+            ? `${exerciseToRemove.name} will be removed from favorites.`
+            : "This exercise will be removed from favorites."
+        }
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          setExerciseToRemove(null);
+          void confirmRemoveFavorite();
+        }}
+      />
 
-      {isLoading && (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      )}
-
-      {!isLoading && error && (
-        <CustomCard style={styles.gap}>
-          <CustomText>Could not load saved exercises.</CustomText>
-        </CustomCard>
-      )}
-
-      {!isLoading && !error && favorites.length === 0 && (
-        <CustomCard style={styles.gap}>
-          <CustomText>
-            No saved exercises yet. Search and tap Favorite.
-          </CustomText>
-        </CustomCard>
-      )}
-
-      <View style={styles.gap}>
-        <FlashList
-          data={favorites}
-          keyExtractor={(exercise) => String(exercise.id)}
-          contentContainerStyle={{ gap: spacing.sm }}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-          renderItem={({ item: exercise }) => (
-            <ExerciseCard
-              name={exercise.name}
-              category={exercise.category}
-              imageUrl={exercise.imageUrl}
-              isFavorite
-              onPress={() =>
-                router.push({
-                  pathname: "/exercise/[exerciseId]",
-                  params: {
-                    exerciseId: exercise.id,
-                    source: "local",
-                  },
-                })
-              }
-              onToggleFavorite={() => {
-                setExerciseToRemove(exercise);
-              }}
-            />
-          )}
-        />
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <CustomText>Workout Templates</CustomText>
-        <Pressable onPress={() => router.push("/workout/template/new" as Href)}>
-          <CustomText muted>Create New</CustomText>
-        </Pressable>
-      </View>
-
-      {templatesLoading ? (
-        <View style={{ alignItems: "center", marginTop: spacing.md }}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      ) : null}
-
-      {!templatesLoading && templatesError ? (
-        <CustomCard style={styles.gap}>
-          <CustomText>Could not load templates.</CustomText>
-        </CustomCard>
-      ) : null}
-
-      {!templatesLoading && !templatesError && templates.length === 0 ? (
-        <CustomCard style={styles.gap}>
-          <CustomText>No workout templates yet. Create one to start faster.</CustomText>
-        </CustomCard>
-      ) : null}
-
-      <View style={styles.gap}>
-        {templates.map((template) => (
-          <TemplateCard
-            key={template.id}
-            template={template}
-            onPress={() => {
-              router.push({
-                pathname: "/workout/template/[templateId]",
-                params: { templateId: template.id },
-              } as unknown as Href);
-            }}
-            onDelete={() => setTemplateToDelete(template)}
-          />
-        ))}
-      </View>
-
-      <Modal
-        transparent
-        visible={Boolean(exerciseToRemove)}
-        animationType="fade"
-        onRequestClose={closeRemoveModal}
-      >
-        <View style={styles.modalOverlay}>
-          <CustomCard
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <CustomText>Remove from favorites?</CustomText>
-            <CustomText muted style={styles.modalCopy}>
-              {exerciseToRemove
-                ? `${exerciseToRemove.name} will be removed from favorites.`
-                : "This exercise will be removed from favorites."}
-            </CustomText>
-
-            <View style={styles.modalActions}>
-              <Pressable onPress={closeRemoveModal} style={styles.modalButton}>
-                <CustomText muted>Cancel</CustomText>
-              </Pressable>
-              <Pressable onPress={() => void confirmRemoveFavorite()} style={styles.modalButton}>
-                <CustomText>Remove</CustomText>
-              </Pressable>
-            </View>
-          </CustomCard>
-        </View>
-      </Modal>
-
-      <Modal
-        transparent
-        visible={Boolean(templateToDelete)}
-        animationType="fade"
-        onRequestClose={() => setTemplateToDelete(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <CustomCard
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <CustomText>Delete template?</CustomText>
-            <CustomText muted style={styles.modalCopy}>
-              {templateToDelete
-                ? `${templateToDelete.name} will be permanently removed.`
-                : "This template will be permanently removed."}
-            </CustomText>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setTemplateToDelete(null)} style={styles.modalButton}>
-                <CustomText muted>Cancel</CustomText>
-              </Pressable>
-              <Pressable onPress={() => void confirmDeleteTemplate()} style={styles.modalButton}>
-                <CustomText>Delete</CustomText>
-              </Pressable>
-            </View>
-          </CustomCard>
-        </View>
-      </Modal>
+      <ConfirmDialog
+        open={Boolean(templateToDelete)}
+        onOpenChange={(open) => !open && setTemplateToDelete(null)}
+        title="Delete template?"
+        description={
+          templateToDelete
+            ? `${templateToDelete.name} will be permanently removed.`
+            : "This template will be permanently removed."
+        }
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          setTemplateToDelete(null);
+          void confirmDeleteTemplate();
+        }}
+      />
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  subtitle: { marginTop: spacing.xs },
-  gap: { marginTop: spacing.lg },
-  sectionHeader: {
-    marginTop: spacing.lg,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-    justifyContent: "center",
-    padding: spacing.lg,
-  },
-  modalCard: {
-    gap: spacing.sm,
-  },
-  modalCopy: {
-    marginTop: spacing.xs,
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  modalButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-});
