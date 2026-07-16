@@ -12,7 +12,7 @@ Brand color continuity: the app's blue (`#2563EB` light / `#3B82F6` dark) is alr
 | 2 | Fate of `src/theme/*` (8 hex tokens) | Retire immediately in Phase 1 (not gradually) — `_layout.tsx` already reads both systems at once today. |
 | 3 | `CustomText` replacement | A thin `src/components/ui/text.tsx` (RNR pattern, `@rn-primitives/slot`-based), not bare `<Text className=.../>` everywhere. |
 | 4 | Icons: Ionicons vs. `lucide-react-native` | Adopt `lucide-react-native` for all new RNR component internals. Only swap existing `Ionicons` call sites when that file is naturally touched by a later phase; do a final convergence pass in Phase 10. |
-| 5 | Bottom sheets | Use RNR's own Portal-based `Sheet`. Do not add `@gorhom/bottom-sheet`. |
+| 5 | Bottom sheets | **Correction (Phase 5):** RNR's registry has no `sheet.tsx` — unlike shadcn/ui web, there's no dedicated Sheet file to copy. Built `src/components/ui/sheet.tsx` ourselves on top of `@rn-primitives/dialog` (bottom-anchored, slide-in, same Portal foundation as Dialog/AlertDialog) rather than a second overlay library, which is what this decision actually intended. Reuse that file — don't re-derive it or add `@gorhom/bottom-sheet`. |
 | 6 | Brand color | No change — already correct in `src/lib/theme.ts`. |
 | 7 | `@rn-primitives/*` install cadence | Install each primitive package in the same PR that first uses it, not all up front. |
 | 8 | Deferred (explicitly out of scope) | Exposing the unused `setType` field in set rows; converting search pagination to infinite scroll; any charts/analytics work. |

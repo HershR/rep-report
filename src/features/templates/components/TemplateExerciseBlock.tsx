@@ -1,9 +1,11 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Plus, Trash2 } from "lucide-react-native";
 
-import { CustomCard, CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
 import { TemplateSetRow } from "@/features/templates/components/TemplateSetRow";
 import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
-import { spacing } from "@/theme";
 
 type EditableSet = {
   localId: string;
@@ -39,50 +41,37 @@ export function TemplateExerciseBlock({
   const showDuration = isCardioExercise(exerciseCategory, exerciseName);
 
   return (
-    <CustomCard style={styles.card}>
-      <View style={styles.header}>
-        <CustomText>{exerciseName}</CustomText>
-        <Pressable onPress={onDeleteExercise}>
-          <CustomText muted>Remove</CustomText>
-        </Pressable>
-      </View>
+    <Card>
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle className="flex-1">{exerciseName}</CardTitle>
+        <Button variant="ghost" size="icon" onPress={onDeleteExercise}>
+          <Icon as={Trash2} className="text-muted-foreground size-4" />
+        </Button>
+      </CardHeader>
 
-      {sets.map((set, index) => (
-        <TemplateSetRow
-          key={set.localId}
-          index={index}
-          repsText={set.repsText}
-          weightText={set.weightText}
-          durationText={set.durationText}
-          distanceText={set.distanceText}
-          isCardio={showDuration}
-          onDelete={() => onDeleteSet(set.localId)}
-          onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
-          onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}
-          onChangeDuration={(value) => onUpdateSet(set.localId, "durationText", value)}
-          onChangeDistance={(value) => onUpdateSet(set.localId, "distanceText", value)}
-        />
-      ))}
+      <CardContent className="gap-2">
+        {sets.map((set, index) => (
+          <TemplateSetRow
+            key={set.localId}
+            index={index}
+            repsText={set.repsText}
+            weightText={set.weightText}
+            durationText={set.durationText}
+            distanceText={set.distanceText}
+            isCardio={showDuration}
+            onDelete={() => onDeleteSet(set.localId)}
+            onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
+            onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}
+            onChangeDuration={(value) => onUpdateSet(set.localId, "durationText", value)}
+            onChangeDistance={(value) => onUpdateSet(set.localId, "distanceText", value)}
+          />
+        ))}
 
-      <Pressable onPress={onAddSet} style={styles.addSetButton}>
-        <CustomText muted>Add Target Set</CustomText>
-      </Pressable>
-    </CustomCard>
+        <Button variant="outline" size="sm" className="self-start" onPress={onAddSet}>
+          <Icon as={Plus} className="text-foreground size-4" />
+          <Text>Add Target Set</Text>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  addSetButton: {
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-});

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { View } from "react-native";
 import {
   Controller,
   useFieldArray,
@@ -11,7 +11,11 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 
-import { CustomButton, CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { TemplateExerciseBlock } from "@/features/templates/components/TemplateExerciseBlock";
 import {
@@ -22,7 +26,6 @@ import {
   type WorkoutTemplate,
 } from "@/features/templates/types";
 import type { Exercise } from "@/features/exercises/types";
-import { spacing, useThemeColors } from "@/theme";
 
 type TemplateEditorProps = {
   initialTemplate?: WorkoutTemplate | null;
@@ -172,7 +175,6 @@ export function TemplateEditor({
   isSaving = false,
   onSave,
 }: TemplateEditorProps) {
-  const colors = useThemeColors();
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const {
     control,
@@ -222,75 +224,57 @@ export function TemplateEditor({
   const errorMessage = getErrorMessage(errors);
 
   return (
-    <View style={styles.container}>
-      <Controller
-        control={control}
-        name="name"
-        render={({ field: { value, onChange } }) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Template name"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="description"
-        render={({ field: { value, onChange } }) => (
-          <TextInput
-            textAlignVertical="top"
-            numberOfLines={3}
-            multiline
-            value={value}
-            onChangeText={onChange}
-            placeholder="Description (optional)"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          />
-        )}
-      />
+    <View className="mt-4 gap-4 pb-8">
+      <View className="gap-2">
+        <Label>Template name</Label>
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { value, onChange } }) => (
+            <Input value={value} onChangeText={onChange} placeholder="Template name" />
+          )}
+        />
+      </View>
 
-      {errorMessage ? <CustomText muted>{errorMessage}</CustomText> : null}
+      <View className="gap-2">
+        <Label>Description (optional)</Label>
+        <Controller
+          control={control}
+          name="description"
+          render={({ field: { value, onChange } }) => (
+            <Textarea value={value} onChangeText={onChange} placeholder="Description (optional)" />
+          )}
+        />
+      </View>
 
-      <View style={styles.exerciseHeader}>
-        <CustomText>Exercises</CustomText>
-        <Pressable onPress={() => setShowAddExerciseSheet(true)}>
-          <CustomText muted>Add Saved Exercise</CustomText>
-        </Pressable>
+      {errorMessage ? <Text className="text-destructive text-sm">{errorMessage}</Text> : null}
+
+      <View className="flex-row items-center justify-between">
+        <Text variant="large">Exercises</Text>
+        <Button variant="outline" size="sm" onPress={() => setShowAddExerciseSheet(true)}>
+          <Text>Add Saved Exercise</Text>
+        </Button>
       </View>
 
       {exerciseFields.length === 0 ? (
-        <CustomText muted>No exercises added yet.</CustomText>
+        <Text variant="muted">No exercises added yet.</Text>
       ) : (
-        exerciseFields.map((exercise, index) => (
-          <ExerciseField
-            key={exercise.id}
-            control={control}
-            setValue={setValue}
-            index={index}
-            onDeleteExercise={() => onDeleteExercise(index)}
-          />
-        ))
+        <View className="gap-3">
+          {exerciseFields.map((exercise, index) => (
+            <ExerciseField
+              key={exercise.id}
+              control={control}
+              setValue={setValue}
+              index={index}
+              onDeleteExercise={() => onDeleteExercise(index)}
+            />
+          ))}
+        </View>
       )}
 
-      <CustomButton label="Save Template" loading={isSaving} onPress={() => void onSubmit()} />
+      <Button loading={isSaving} onPress={() => void onSubmit()}>
+        <Text>Save Template</Text>
+      </Button>
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
@@ -301,22 +285,3 @@ export function TemplateEditor({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing.md,
-    marginTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  exerciseHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-});
