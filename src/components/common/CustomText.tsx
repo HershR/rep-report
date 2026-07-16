@@ -9,6 +9,7 @@ type CustomTextProps = TextProps & {
   children: ReactNode;
 };
 
+/** @deprecated Use `Text` from `@/components/ui/text` instead (see UIMigration.md). */
 export function CustomText({
   variant = "body",
   muted = false,

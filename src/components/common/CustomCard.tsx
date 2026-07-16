@@ -7,6 +7,7 @@ type CustomCardProps = ViewProps & {
   children: ReactNode;
 };
 
+/** @deprecated Use `Card`/`CardHeader`/`CardContent`/`CardFooter` from `@/components/ui/card` instead (see UIMigration.md). */
 export function CustomCard({ style, children, ...rest }: CustomCardProps) {
   const colors = useThemeColors();
 

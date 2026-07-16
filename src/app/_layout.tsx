@@ -11,14 +11,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { initializeDatabase } from "@/db/init";
-import { NAV_THEME } from "@/lib/theme";
-import { getColors } from "@/theme";
+import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
   const scheme = useColorScheme();
-  const colors = getColors(scheme);
+  const colors = THEME[scheme ?? "light"];
 
   useEffect(() => {
     initializeDatabase().catch((error) => {
@@ -34,8 +33,8 @@ export default function RootLayout() {
             <StatusBar style={scheme === "dark" ? "light" : "dark"} />
             <Stack
               screenOptions={{
-                headerStyle: { backgroundColor: colors.surface },
-                headerTintColor: colors.text,
+                headerStyle: { backgroundColor: colors.card },
+                headerTintColor: colors.foreground,
                 headerShadowVisible: false,
                 contentStyle: { backgroundColor: colors.background },
                 headerShown: false,

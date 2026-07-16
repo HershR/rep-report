@@ -18,6 +18,7 @@ type CustomButtonProps = Omit<PressableProps, "children"> & {
   children?: ReactNode;
 };
 
+/** @deprecated Use `Button` from `@/components/ui/button` instead (see UIMigration.md). */
 export function CustomButton({
   label,
   loading = false,
