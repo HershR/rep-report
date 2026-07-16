@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { View } from "react-native";
+import { Trash2 } from "lucide-react-native";
 
-import { CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -10,7 +14,6 @@ import {
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
 import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
-import { spacing, useThemeColors } from "@/theme";
 
 type WorkoutSetRowProps = {
   index: number;
@@ -49,7 +52,6 @@ export function WorkoutSetRow({
   onUpdate,
   onDelete,
 }: WorkoutSetRowProps) {
-  const colors = useThemeColors();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
@@ -99,153 +101,109 @@ export function WorkoutSetRow({
   };
 
   return (
-    <View style={styles.row}>
-      <CustomText muted style={styles.index}>{`#${index + 1}`}</CustomText>
-      {isCardio ? (
-        <>
-          <TextInput
-            value={durationInput}
-            onChangeText={(value) => {
-              const formatted = formatDurationInput(value);
-              setDurationInput(formatted);
-              if (commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  durationSeconds: durationDisplayToSeconds(formatted),
-                });
+    <View className="bg-muted gap-2 rounded-md p-3">
+      <View className="flex-row items-center justify-between">
+        <Text variant="muted">{`Set ${index + 1}`}</Text>
+        <View className="flex-row items-center gap-2">
+          <Button
+            variant={isCompleted ? "default" : "outline"}
+            size="sm"
+            onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
+          >
+            <Text>{isCompleted ? "Done" : "Mark"}</Text>
+          </Button>
+          <Button variant="ghost" size="icon" onPress={() => onDelete(workoutSet.id)}>
+            <Icon as={Trash2} className="text-muted-foreground size-4" />
+          </Button>
+        </View>
+      </View>
+
+      <View className="flex-row gap-2">
+        {isCardio ? (
+          <>
+            <Input
+              className="flex-1"
+              value={durationInput}
+              onChangeText={(value) => {
+                const formatted = formatDurationInput(value);
+                setDurationInput(formatted);
+                if (commitOnChange) {
+                  onUpdate(workoutSet.id, {
+                    durationSeconds: durationDisplayToSeconds(formatted),
+                  });
+                }
+              }}
+              keyboardType="number-pad"
+              placeholder="hh:mm:ss"
+              onFocus={() => setIsDurationFocused(true)}
+              onEndEditing={commitDuration}
+              onBlur={commitDuration}
+              onSubmitEditing={commitDuration}
+            />
+            <Input
+              className="flex-1"
+              value={distanceInput}
+              onChangeText={(value) => {
+                setDistanceInput(value);
+                if (commitOnChange) {
+                  onUpdate(workoutSet.id, {
+                    distance: textToMetricDistance(value, distanceUnit),
+                  });
+                }
+              }}
+              keyboardType="decimal-pad"
+              placeholder={`Dist (${distanceUnit})`}
+              onFocus={() => setIsDistanceFocused(true)}
+              onEndEditing={commitDistance}
+              onBlur={commitDistance}
+              onSubmitEditing={commitDistance}
+            />
+          </>
+        ) : (
+          <>
+            <Input
+              className="flex-1"
+              defaultValue={toText(workoutSet.reps)}
+              keyboardType="number-pad"
+              placeholder="Reps"
+              onEndEditing={(event) => {
+                if (!commitOnChange) {
+                  onUpdate(workoutSet.id, {
+                    reps: toNumber(event.nativeEvent.text),
+                  });
+                }
+              }}
+              onChangeText={
+                commitOnChange
+                  ? (value) => {
+                      onUpdate(workoutSet.id, {
+                        reps: toNumber(value),
+                      });
+                    }
+                  : undefined
               }
-            }}
-            keyboardType="number-pad"
-            placeholder="hh:mm:ss"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onFocus={() => setIsDurationFocused(true)}
-            onEndEditing={commitDuration}
-            onBlur={commitDuration}
-            onSubmitEditing={commitDuration}
-          />
-          <TextInput
-            value={distanceInput}
-            onChangeText={(value) => {
-              setDistanceInput(value);
-              if (commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  distance: textToMetricDistance(value, distanceUnit),
-                });
-              }
-            }}
-            keyboardType="decimal-pad"
-            placeholder={`Dist (${distanceUnit})`}
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onFocus={() => setIsDistanceFocused(true)}
-            onEndEditing={commitDistance}
-            onBlur={commitDistance}
-            onSubmitEditing={commitDistance}
-          />
-        </>
-      ) : (
-        <>
-          <TextInput
-            defaultValue={toText(workoutSet.reps)}
-            keyboardType="number-pad"
-            placeholder="Reps"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onEndEditing={(event) => {
-              if (!commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  reps: toNumber(event.nativeEvent.text),
-                });
-              }
-            }}
-            onChangeText={
-              commitOnChange
-                ? (value) => {
-                    onUpdate(workoutSet.id, {
-                      reps: toNumber(value),
-                    });
-                  }
-                : undefined
-            }
-          />
-          <TextInput
-            value={weightInput}
-            onChangeText={(value) => {
-              setWeightInput(value);
-              if (commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  weight: textToMetricWeight(value, weightUnit),
-                });
-              }
-            }}
-            keyboardType="decimal-pad"
-            placeholder={`Wt (${weightUnit})`}
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-            onFocus={() => setIsWeightFocused(true)}
-            onEndEditing={commitWeight}
-            onBlur={commitWeight}
-            onSubmitEditing={commitWeight}
-          />
-        </>
-      )}
-      <Pressable
-        onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
-      >
-        <CustomText muted={!isCompleted}>
-          {isCompleted ? "Done" : "Mark"}
-        </CustomText>
-      </Pressable>
-      <Pressable onPress={() => onDelete(workoutSet.id)}>
-        <CustomText muted>Del</CustomText>
-      </Pressable>
+            />
+            <Input
+              className="flex-1"
+              value={weightInput}
+              onChangeText={(value) => {
+                setWeightInput(value);
+                if (commitOnChange) {
+                  onUpdate(workoutSet.id, {
+                    weight: textToMetricWeight(value, weightUnit),
+                  });
+                }
+              }}
+              keyboardType="decimal-pad"
+              placeholder={`Wt (${weightUnit})`}
+              onFocus={() => setIsWeightFocused(true)}
+              onEndEditing={commitWeight}
+              onBlur={commitWeight}
+              onSubmitEditing={commitWeight}
+            />
+          </>
+        )}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  index: {
-    width: 28,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
-    minWidth: 52,
-  },
-});
