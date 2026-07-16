@@ -2,7 +2,7 @@ import { TextClassContext } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { Platform, Pressable } from "react-native";
+import { ActivityIndicator, Platform, Pressable } from "react-native";
 
 const buttonVariants = cva(
   cn(
@@ -91,16 +91,23 @@ const buttonTextVariants = cva(
 
 type ButtonProps = React.ComponentProps<typeof Pressable> &
   React.RefAttributes<typeof Pressable> &
-  VariantProps<typeof buttonVariants>;
+  VariantProps<typeof buttonVariants> & {
+    /** Shows a spinner in place of `children` and disables presses. */
+    loading?: boolean;
+  };
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({ className, variant, size, loading = false, disabled, children, ...props }: ButtonProps) {
+  const isDisabled = disabled || loading;
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
-        className={cn(props.disabled && "opacity-50", buttonVariants({ variant, size }), className)}
+        className={cn(isDisabled && "opacity-50", buttonVariants({ variant, size }), className)}
         role="button"
+        disabled={isDisabled}
         {...props}
-      />
+      >
+        {loading ? <ActivityIndicator className={cn(buttonTextVariants({ variant, size }))} /> : children}
+      </Pressable>
     </TextClassContext.Provider>
   );
 }
