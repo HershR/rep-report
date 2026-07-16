@@ -1,68 +1,73 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, View } from "react-native";
-import { Calendar } from "react-native-calendars";
 import { format } from "date-fns";
+import { ChevronRight } from "lucide-react-native";
+import { Pressable, useColorScheme, View } from "react-native";
+import { Calendar } from "react-native-calendars";
 
-import { CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
 import { useWorkoutHistory } from "@/features/workouts/hooks/useWorkoutHistory";
-import { spacing, useThemeColors } from "@/theme";
+import { THEME } from "@/lib/theme";
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const colors = useThemeColors();
+  const scheme = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
   const { selectedDate, selectedDateKey, setSelectedDate, workouts, isLoading } = useWorkoutHistory();
 
   return (
     <CustomScreen scroll>
-      <CustomText variant="title">Dashboard</CustomText>
-      <CustomText muted style={styles.subtitle}>
-        Workout history by date.
-      </CustomText>
+      <Text variant="h2">Dashboard</Text>
+      <Text variant="muted">Workout history by date.</Text>
 
-      <View style={styles.gap}>
-        <CustomCard>
-          <Calendar
-            current={selectedDateKey}
-            onDayPress={(day) => setSelectedDate(new Date(`${day.dateString}T12:00:00`))}
-            markedDates={{
-              [selectedDateKey]: {
-                selected: true,
-                selectedColor: colors.primary,
-              },
-            }}
-            theme={{
-              calendarBackground: colors.surface,
-              dayTextColor: colors.text,
-              monthTextColor: colors.text,
-              textDisabledColor: colors.textMuted,
-              arrowColor: colors.primary,
-            }}
-          />
-        </CustomCard>
+      <View className="mt-6 gap-3">
+        <Card>
+          <CardContent>
+            <Calendar
+              current={selectedDateKey}
+              onDayPress={(day) => setSelectedDate(new Date(`${day.dateString}T12:00:00`))}
+              markedDates={{
+                [selectedDateKey]: {
+                  selected: true,
+                  selectedColor: colors.primary,
+                },
+              }}
+              theme={{
+                calendarBackground: colors.card,
+                dayTextColor: colors.foreground,
+                monthTextColor: colors.foreground,
+                textDisabledColor: colors.mutedForeground,
+                arrowColor: colors.primary,
+              }}
+            />
+          </CardContent>
+        </Card>
 
-        <CustomText muted>{`Selected ${format(selectedDate, "PPP")}`}</CustomText>
+        <Text variant="muted">{`Selected ${format(selectedDate, "PPP")}`}</Text>
 
-        {isLoading ? <CustomText muted>Loading workouts...</CustomText> : null}
+        {isLoading ? <Text variant="muted">Loading workouts...</Text> : null}
 
         {!isLoading && workouts.length === 0 ? (
-          <CustomCard>
-            <CustomText>No completed workouts on this date.</CustomText>
-          </CustomCard>
+          <Card>
+            <CardContent>
+              <Text>No completed workouts on this date.</Text>
+            </CardContent>
+          </Card>
         ) : null}
 
         {!isLoading
-          ? workouts.map((workout) => (
-              <CustomCard key={workout.id} style={styles.card}>
-                <CustomText>{workout.name}</CustomText>
-                <CustomText muted>
-                  {`${workout.exercises.length} exercises • ${workout.exercises.reduce(
-                    (total, exercise) => total + exercise.sets.length,
-                    0,
-                  )} sets`}
-                </CustomText>
-                <CustomText muted>{`Duration ${workout.durationSeconds ?? 0}s`}</CustomText>
-                <CustomText
-                  muted
+          ? workouts.map((workout) => {
+              const setCount = workout.exercises.reduce(
+                (total, exercise) => total + exercise.sets.length,
+                0
+              );
+              return (
+                <Pressable
+                  key={workout.id}
+                  className="active:opacity-80"
                   onPress={() =>
                     router.push({
                       pathname: "/workout/[workoutId]",
@@ -70,18 +75,30 @@ export default function DashboardScreen() {
                     })
                   }
                 >
-                  Open details
-                </CustomText>
-              </CustomCard>
-            ))
+                  <Card>
+                    <CardContent className="flex-row items-center gap-3">
+                      <View className="flex-1 gap-2">
+                        <Text>{workout.name}</Text>
+                        <View className="flex-row flex-wrap gap-2">
+                          <Badge variant="secondary">
+                            <Text>{`${workout.exercises.length} exercises`}</Text>
+                          </Badge>
+                          <Badge variant="secondary">
+                            <Text>{`${setCount} sets`}</Text>
+                          </Badge>
+                          <Badge variant="secondary">
+                            <Text>{`${workout.durationSeconds ?? 0}s`}</Text>
+                          </Badge>
+                        </View>
+                      </View>
+                      <Icon as={ChevronRight} className="text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Pressable>
+              );
+            })
           : null}
       </View>
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  subtitle: { marginTop: spacing.xs },
-  gap: { marginTop: spacing.lg, gap: spacing.sm },
-  card: { gap: spacing.xs },
-});
