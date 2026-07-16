@@ -44,3 +44,4 @@ nativewind-env.d.ts
 /.agents
 wger.yaml
 /.cursor
+/.claude
