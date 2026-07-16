@@ -44,6 +44,10 @@ export function useMeasurements(type: SupportedMeasurementType) {
     latest: latestQuery.data ?? null,
     isLoading: historyQuery.isLoading || latestQuery.isLoading,
     error: historyQuery.error ?? latestQuery.error ?? null,
+    refetch: () => {
+      void historyQuery.refetch();
+      void latestQuery.refetch();
+    },
     addMeasurement: addMeasurementMutation.mutateAsync,
     isAdding: addMeasurementMutation.isPending,
   };
