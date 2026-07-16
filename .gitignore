@@ -41,9 +41,6 @@ nativewind-env.d.ts
 .vscode/
 /android
 /.idea
+/.agents
 wger.yaml
-.drizzle/
-*.db
-.agents/
-.cursor/
-*.cursorignore
+/.cursor
