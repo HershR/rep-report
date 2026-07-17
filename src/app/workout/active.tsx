@@ -1,6 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { View } from "react-native";
+import { useColorScheme, View } from "react-native";
+import { toast } from "sonner-native";
 
 import { CustomScreen } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -13,14 +16,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
-import { WorkoutCompleteCelebration } from "@/features/workouts/components/WorkoutCompleteCelebration";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import type { WorkoutSetInput } from "@/features/workouts/types";
+import { THEME } from "@/lib/theme";
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
 
@@ -36,13 +40,14 @@ export default function ActiveWorkoutScreen() {
     name?: string;
     sessionId?: string;
   }>();
+  const scheme = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
     useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [noExerciseAlertOpen, setNoExerciseAlertOpen] = useState(false);
-  const [celebrating, setCelebrating] = useState(false);
   const { favorites } = useFavoriteExercises();
   const {
     activeWorkout,
@@ -167,7 +172,12 @@ export default function ActiveWorkoutScreen() {
 
   const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
     await finish();
-    setCelebrating(true);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast.success("Nice work!", {
+      icon: <Icon as={Check} size={18} color={colors.chart2} />,
+      duration: 2500,
+    });
+    router.replace("/(tabs)/home");
   };
 
   const onComplete = async () => {
@@ -210,152 +220,141 @@ export default function ActiveWorkoutScreen() {
   };
 
   return (
-    <>
-      <CustomScreen
-        scroll
-        contentContainerStyle={{ gap: 16, paddingBottom: 32 }}
-      >
-        <WorkoutTimerHeader
-          workoutName={activeWorkout.name}
-          elapsedSeconds={elapsedSeconds}
-        />
+    <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
+      <WorkoutTimerHeader
+        workoutName={activeWorkout.name}
+        elapsedSeconds={elapsedSeconds}
+      />
 
-        <View className="gap-2">
-          <Button onPress={() => void onComplete()}>
-            <Text>Complete Workout</Text>
-          </Button>
-          <Button variant="ghost" onPress={() => setCancelConfirmOpen(true)}>
-            <Text>Cancel Workout</Text>
-          </Button>
-        </View>
+      <View className="gap-2">
+        <Button onPress={() => void onComplete()}>
+          <Text>Complete Workout</Text>
+        </Button>
+        <Button variant="ghost" onPress={() => setCancelConfirmOpen(true)}>
+          <Text>Cancel Workout</Text>
+        </Button>
+      </View>
 
-        <View className="flex-row items-center justify-between">
-          <Text variant="large">Exercises</Text>
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={() => setShowAddExerciseSheet(true)}
-          >
-            <Text>Add Saved Exercise</Text>
-          </Button>
-        </View>
-
-        {activeWorkout.exercises.length === 0 ? (
-          <Text variant="muted">No exercises yet.</Text>
-        ) : null}
-
-        <View className="gap-3">
-          {activeWorkout.exercises.map((workoutExercise) => (
-            <WorkoutExerciseBlock
-              key={workoutExercise.id}
-              workoutExercise={workoutExercise}
-              commitSetChangesOnChange
-              onAddSet={(workoutSessionExerciseId) => {
-                void addSetToWorkout({ workoutSessionExerciseId });
-              }}
-              onRemoveExercise={(workoutSessionExerciseId) => {
-                void removeExerciseFromWorkout({
-                  workoutSessionId: activeWorkout.id,
-                  workoutSessionExerciseId,
-                });
-              }}
-              onUpdateSet={(setId, input) => {
-                if (input.isCompleted !== undefined) {
-                  void updateSet({ setId, ...input });
-                  return;
-                }
-                scheduleSetUpdate(setId, input);
-              }}
-              onDeleteSet={(setId) => {
-                void deleteSet(setId);
-              }}
-            />
-          ))}
-        </View>
-
-        <AddSavedExerciseSheet
-          visible={showAddExerciseSheet}
-          favorites={favorites}
-          onClose={() => setShowAddExerciseSheet(false)}
-          onAddExercise={(exercise) => {
-            setShowAddExerciseSheet(false);
-            void addExerciseToWorkout({
-              workoutSessionId: activeWorkout.id,
-              exerciseId: exercise.id,
-            });
-          }}
-        />
-
-        <AlertDialog
-          open={noExerciseAlertOpen}
-          onOpenChange={setNoExerciseAlertOpen}
+      <View className="flex-row items-center justify-between">
+        <Text variant="large">Exercises</Text>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => setShowAddExerciseSheet(true)}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Add at least one exercise</AlertDialogTitle>
-              <AlertDialogDescription>
-                Workout needs one exercise before completing.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <Button onPress={() => setNoExerciseAlertOpen(false)}>
-                <Text>OK</Text>
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          <Text>Add Saved Exercise</Text>
+        </Button>
+      </View>
 
-        <AlertDialog
-          open={incompleteSetsDialogOpen}
-          onOpenChange={setIncompleteSetsDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Incomplete sets</AlertDialogTitle>
-              <AlertDialogDescription>
-                Some sets in this workout haven&apos;t been marked complete.
-                What would you like to do?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <Button
-                variant="outline"
-                onPress={() => setIncompleteSetsDialogOpen(false)}
-              >
-                <Text>Cancel</Text>
-              </Button>
-              <Button
-                variant="destructive"
-                onPress={() => void onRemoveIncompleteSetsAndComplete()}
-              >
-                <Text>Remove incomplete sets</Text>
-              </Button>
-              <Button onPress={() => void onKeepAllSetsAndComplete()}>
-                <Text>Keep all sets</Text>
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <ConfirmDialog
-          open={cancelConfirmOpen}
-          onOpenChange={setCancelConfirmOpen}
-          title="Cancel this workout?"
-          description="This will discard the entire session — nothing will be saved. This can't be undone."
-          confirmLabel="Cancel Workout"
-          destructive
-          onConfirm={() => {
-            setCancelConfirmOpen(false);
-            void onCancel();
-          }}
-        />
-      </CustomScreen>
-
-      {celebrating ? (
-        <WorkoutCompleteCelebration
-          onDone={() => router.replace("/(tabs)/home")}
-        />
+      {activeWorkout.exercises.length === 0 ? (
+        <Text variant="muted">No exercises yet.</Text>
       ) : null}
-    </>
+
+      <View className="gap-3">
+        {activeWorkout.exercises.map((workoutExercise) => (
+          <WorkoutExerciseBlock
+            key={workoutExercise.id}
+            workoutExercise={workoutExercise}
+            commitSetChangesOnChange
+            onAddSet={(workoutSessionExerciseId) => {
+              void addSetToWorkout({ workoutSessionExerciseId });
+            }}
+            onRemoveExercise={(workoutSessionExerciseId) => {
+              void removeExerciseFromWorkout({
+                workoutSessionId: activeWorkout.id,
+                workoutSessionExerciseId,
+              });
+            }}
+            onUpdateSet={(setId, input) => {
+              if (input.isCompleted !== undefined) {
+                void updateSet({ setId, ...input });
+                return;
+              }
+              scheduleSetUpdate(setId, input);
+            }}
+            onDeleteSet={(setId) => {
+              void deleteSet(setId);
+            }}
+          />
+        ))}
+      </View>
+
+      <AddSavedExerciseSheet
+        visible={showAddExerciseSheet}
+        favorites={favorites}
+        onClose={() => setShowAddExerciseSheet(false)}
+        onAddExercise={(exercise) => {
+          setShowAddExerciseSheet(false);
+          void addExerciseToWorkout({
+            workoutSessionId: activeWorkout.id,
+            exerciseId: exercise.id,
+          });
+        }}
+      />
+
+      <AlertDialog
+        open={noExerciseAlertOpen}
+        onOpenChange={setNoExerciseAlertOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add at least one exercise</AlertDialogTitle>
+            <AlertDialogDescription>
+              Workout needs one exercise before completing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button onPress={() => setNoExerciseAlertOpen(false)}>
+              <Text>OK</Text>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={incompleteSetsDialogOpen}
+        onOpenChange={setIncompleteSetsDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Incomplete sets</AlertDialogTitle>
+            <AlertDialogDescription>
+              Some sets in this workout haven&apos;t been marked complete. What
+              would you like to do?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onPress={() => setIncompleteSetsDialogOpen(false)}
+            >
+              <Text>Cancel</Text>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={() => void onRemoveIncompleteSetsAndComplete()}
+            >
+              <Text>Remove incomplete sets</Text>
+            </Button>
+            <Button onPress={() => void onKeepAllSetsAndComplete()}>
+              <Text>Keep all sets</Text>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        onOpenChange={setCancelConfirmOpen}
+        title="Cancel this workout?"
+        description="This will discard the entire session — nothing will be saved. This can't be undone."
+        confirmLabel="Cancel Workout"
+        destructive
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          void onCancel();
+        }}
+      />
+    </CustomScreen>
   );
 }

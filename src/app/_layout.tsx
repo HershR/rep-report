@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Toaster } from "sonner-native";
 
 import { initializeDatabase } from "@/db/init";
 import { NAV_THEME, THEME } from "@/lib/theme";
@@ -41,6 +42,7 @@ export default function RootLayout() {
               }}
             />
             <PortalHost />
+            <Toaster theme={scheme ?? "light"} position="top-center" />
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
