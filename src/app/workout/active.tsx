@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -32,6 +32,7 @@ export default function ActiveWorkoutScreen() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [noExerciseAlertOpen, setNoExerciseAlertOpen] = useState(false);
   const { favorites } = useFavoriteExercises();
   const {
     activeWorkout,
@@ -146,7 +147,7 @@ export default function ActiveWorkoutScreen() {
     await flushPendingSetUpdates();
 
     if (!canComplete) {
-      Alert.alert("Add at least one exercise", "Workout needs one exercise before completing.");
+      setNoExerciseAlertOpen(true);
       return;
     }
 
@@ -245,6 +246,20 @@ export default function ActiveWorkoutScreen() {
           });
         }}
       />
+
+      <AlertDialog open={noExerciseAlertOpen} onOpenChange={setNoExerciseAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add at least one exercise</AlertDialogTitle>
+            <AlertDialogDescription>Workout needs one exercise before completing.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button onPress={() => setNoExerciseAlertOpen(false)}>
+              <Text>OK</Text>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={incompleteSetsDialogOpen} onOpenChange={setIncompleteSetsDialogOpen}>
         <AlertDialogContent>

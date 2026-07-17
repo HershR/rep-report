@@ -194,3 +194,32 @@ Sequenced last deliberately: it's the highest-risk screen (live elapsed timer, d
 - Every list/data screen has a real loading state (`Skeleton`) and a real error state with a retry action, instead of silently rendering blank or showing a raw error string.
 - Filter/picker interactions (exercise search, add-exercise-to-workout) use a consistent bottom `Sheet` pattern instead of three visually-different hand-rolled modals.
 - The app keeps its existing blue brand identity throughout — this is a component-library and consistency upgrade, not a rebrand.
+
+## Changelog
+
+**Phase 1** — Built the Tier-1 primitives (`Text`, `Button`, `Card`, `Input`, `Label`, `Separator`, `AlertDialog`, `ConfirmDialog`) under `src/components/ui/`. Remapped `src/app/_layout.tsx` off the legacy theme onto `THEME`/`NAV_THEME`. Marked `CustomButton`/`CustomCard`/`CustomText` `@deprecated` (not deleted yet — still relied on by every unmigrated screen at the time).
+
+**Phase 2** — `index.tsx` (branded spinner instead of a blank splash), `onboarding.tsx` (Card form + inline name-validation message instead of a silently-disabled button), `(tabs)/home.tsx` (Card actions + first `Skeleton` loading state). Extended `Button` with a `loading` prop — upstream RNR's bare `Button` has none, but the Tier-1 spec called for it.
+
+**Phase 3** — `(tabs)/dashboard.tsx`: workout rows became full tappable `Card`s with `Badge` stat chips and a trailing chevron, fixing the low-affordance plain-text "Open details" link. First screen needing a net-new icon (not an existing Ionicons site), so `lucide-react-native` was installed here per decision #4.
+
+**Phase 4** — `(tabs)/profile.tsx`, all 3 sub-steps: `Skeleton`/error+Retry states added to all 3 sections (previously none existed anywhere on this screen), segmented control replaced with real `Tabs`, trackers moved to `Input`. Added a `refetch` field to `useMeasurements` since the hook didn't expose one but the plan required a Retry action. Deliberately skipped `Switch` — no actual boolean setting exists on this screen.
+
+**Phase 5** — Templates: `TemplateSetRow`/`TemplateExerciseBlock`/`TemplateEditor`/`AddSavedExerciseSheet`, then both template screens. **Correction:** decision #5 assumed RNR ships a `Sheet` component like shadcn/ui web — it doesn't (checked the full registry file list directly). Built `src/components/ui/sheet.tsx` ourselves on `@rn-primitives/dialog` (bottom-anchored, slide-in) instead. Added `Textarea` for the multiline description field. Landed the "Delete Template" confirmation fix.
+
+**Phase 6** — Exercises: `search.tsx`, `ExerciseFilterModal` (→ `Sheet` + new `Checkbox`), `ExerciseCard`, `exercise/[exerciseId].tsx`. Added active-filter `Badge` chips (net-new affordance). Fixed both flagged detail-screen bugs: real exercise name as the heading, favorite button always visible (disabled, not hidden, when there's no WGER link — confirmed at the repository layer that's a genuine data-layer limit, not a UI oversight). Caught and avoided a Label+Checkbox double-toggle bug before it shipped.
+
+**Phase 7** — `(tabs)/saved.tsx` restructured onto a single `FlashList` (discriminated-union rows + `getItemType`) to eliminate the nested-VirtualizedList-in-ScrollView anti-pattern, rather than papering over it with a bounded height. Both hand-rolled confirm modals converged onto `ConfirmDialog`. `TemplateCard` → `Card` + `Badge` + icon `Button`.
+
+**Phase 8** — `workout/[workoutId].tsx` (completed workout editor), all 4 sub-steps: `WorkoutExerciseBlock`/`WorkoutSetRow` now mirror the Phase 5 template pair structurally (the Reps field's pre-existing `defaultValue`/asymmetric-commit quirk was preserved, not fixed — out of scope). `errors.name?.message` finally surfaced under the Name field. Delete → `ConfirmDialog`. Unsaved-changes flow → new `Dialog` component (Tier-2, first introduced here).
+
+**Phase 9** — `workout/active.tsx`, done last as planned, all 4 sub-steps: `WorkoutTimerHeader` restyled only. Confirmed (not rebuilt) that Phase 8's set-row components work under this screen's debounced/commit-on-change mode. 3-way complete-with-incomplete-sets branch → `AlertDialog` with 3 manually-closed `Button`s (verified logic-equivalent to the original branch-by-branch). **The migration's single highest-value fix**: "Cancel Workout" now requires confirming through a destructive `ConfirmDialog` — previously one accidental tap discarded an entire live session with no way back.
+
+**Phase 10** — Cleanup: deleted `CustomButton`/`CustomCard`/`CustomText` (confirmed zero importers). Finished retiring `src/theme/*` entirely — its last consumer, `CustomScreen` (which itself has no RNR equivalent and stays permanently), was moved onto `THEME`/`useColorScheme`. Remapped the tab bar (`(tabs)/_layout.tsx`) off the legacy theme and swapped its `Ionicons` for `lucide-react-native` (`Home`/`Search`/`BarChart3`/`Bookmark`/`User`) — the last Ionicons site in the app. Converted the one remaining `Alert.alert` (a single-button "add an exercise first" info message in `active.tsx`, deliberately left out of Phase 9c's scope) to an `AlertDialog`. Net result: zero remaining `src/components/common/*` imports beyond `CustomScreen`, zero remaining hand-rolled `Modal`/`Alert.alert`, zero remaining `Ionicons`/legacy-theme imports anywhere in `src/`. iOS bundle size dropped (~9.59MB → ~9.16MB) from the dead-code and unused-font-asset removal.
+
+### Deferred items (still open, not lost)
+
+- **Exposing the `setType` field** (normal/warmup/drop/failure) in `TemplateSetRow`/`WorkoutSetRow` UI — schema support exists, no UI ever surfaced it, and this migration didn't add it (flagged explicitly in Phase 5).
+- **Search pagination** — still numbered Previous/Next; converting to infinite scroll was explicitly out of scope (flagged in Phase 6).
+- **Charts/analytics** — untouched, per `DESIGN.MD`'s MVP scope. `chart1`–`chart5` HSL tokens already exist in `src/lib/theme.ts` for whenever that work starts.
+- **`@expo/vector-icons` package** — left installed in `package.json` even though nothing in `src/` imports it anymore post-cleanup; not removed since that's a dependency change beyond this migration's stated scope, not an app-code change.

@@ -1,66 +1,66 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { BarChart3, Bookmark, Home, Search, User, type LucideIcon } from "lucide-react-native";
+import { useColorScheme } from "react-native";
 
-import { useThemeColors } from "@/theme";
+import { THEME } from "@/lib/theme";
 
-type IconName = keyof typeof Ionicons.glyphMap;
-
-function tabIcon(name: IconName) {
+function tabIcon(IconComponent: LucideIcon) {
   return function TabBarIcon({ color, size }: { color: string; size: number }) {
-    return <Ionicons name={name} color={color} size={size} />;
+    return <IconComponent color={color} size={size} />;
   };
 }
 
 export default function TabLayout() {
-  const colors = useThemeColors();
+  const scheme = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
         },
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.foreground,
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: tabIcon("home-outline"),
+          tabBarIcon: tabIcon(Home),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Search",
-          tabBarIcon: tabIcon("search-outline"),
+          tabBarIcon: tabIcon(Search),
         }}
       />
       <Tabs.Screen
         name="dashboard"
         options={{
           title: "Dashboard",
-          tabBarIcon: tabIcon("bar-chart-outline"),
+          tabBarIcon: tabIcon(BarChart3),
         }}
       />
       <Tabs.Screen
         name="saved"
         options={{
           title: "Saved",
-          tabBarIcon: tabIcon("bookmark-outline"),
+          tabBarIcon: tabIcon(Bookmark),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: tabIcon("person-outline"),
+          tabBarIcon: tabIcon(User),
         }}
       />
     </Tabs>
