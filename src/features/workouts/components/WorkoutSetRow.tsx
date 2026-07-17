@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Trash2 } from "lucide-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -13,7 +20,12 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
-import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
+import {
+  distanceToText,
+  textToMetricDistance,
+  weightToText,
+  textToMetricWeight,
+} from "@/lib/units";
 
 type WorkoutSetRowProps = {
   index: number;
@@ -56,6 +68,25 @@ export function WorkoutSetRow({
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
+
+  const reducedMotion = useReducedMotion();
+  const completeButtonScale = useSharedValue(1);
+  const wasCompletedRef = useRef(isCompleted);
+
+  useEffect(() => {
+    // Pop only on the incomplete → complete transition, never on mount or when un-marking.
+    if (isCompleted && !wasCompletedRef.current && !reducedMotion) {
+      completeButtonScale.value = withSequence(
+        withTiming(1.06, { duration: 80 }),
+        withTiming(1, { duration: 100 }),
+      );
+    }
+    wasCompletedRef.current = isCompleted;
+  }, [isCompleted, reducedMotion, completeButtonScale]);
+
+  const completeButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: completeButtonScale.value }],
+  }));
 
   const [durationInput, setDurationInput] = useState("");
   const [isDurationFocused, setIsDurationFocused] = useState(false);
@@ -105,14 +136,22 @@ export function WorkoutSetRow({
       <View className="flex-row items-center justify-between">
         <Text variant="muted">{`Set ${index + 1}`}</Text>
         <View className="flex-row items-center gap-2">
+          <Animated.View style={completeButtonAnimatedStyle}>
+            <Button
+              variant={isCompleted ? "default" : "outline"}
+              size="sm"
+              onPress={() =>
+                onUpdate(workoutSet.id, { isCompleted: !isCompleted })
+              }
+            >
+              <Text>{isCompleted ? "Done" : "Mark"}</Text>
+            </Button>
+          </Animated.View>
           <Button
-            variant={isCompleted ? "default" : "outline"}
-            size="sm"
-            onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
+            variant="ghost"
+            size="icon"
+            onPress={() => onDelete(workoutSet.id)}
           >
-            <Text>{isCompleted ? "Done" : "Mark"}</Text>
-          </Button>
-          <Button variant="ghost" size="icon" onPress={() => onDelete(workoutSet.id)}>
             <Icon as={Trash2} className="text-muted-foreground size-4" />
           </Button>
         </View>
