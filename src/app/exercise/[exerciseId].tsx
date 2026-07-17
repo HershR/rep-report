@@ -8,6 +8,7 @@ import { CustomScreen } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -31,11 +32,15 @@ function MuscleGroup({ title, muscles }: { title: string; muscles: string[] }) {
 }
 
 export default function ExerciseDetailScreen() {
-  const params = useLocalSearchParams<{ exerciseId: string; source?: "local" | "wger" }>();
+  const params = useLocalSearchParams<{
+    exerciseId: string;
+    source?: "local" | "wger";
+  }>();
   const source = params.source ?? "wger";
   const exerciseId = params.exerciseId;
 
-  const { saveFavoriteExercise, removeFavoriteExercise } = useFavoriteExercises();
+  const { saveFavoriteExercise, removeFavoriteExercise } =
+    useFavoriteExercises();
 
   const query = useQuery({
     queryKey: ["exercise-detail", source, exerciseId],
@@ -101,44 +106,56 @@ export default function ExerciseDetailScreen() {
       ) : null}
 
       {item ? (
-        <Card className="mt-4 gap-0 overflow-hidden p-0">
-          {item.imageUrl ? (
-            <ExpoImage
-              source={{ uri: item.imageUrl }}
-              style={{ width: "100%", height: 200 }}
-              contentFit="contain"
-            />
-          ) : null}
+        <FadeInView>
+          <Card className="mt-4 gap-0 overflow-hidden p-0">
+            {item.imageUrl ? (
+              <ExpoImage
+                source={{ uri: item.imageUrl }}
+                style={{ width: "100%", height: 200 }}
+                contentFit="contain"
+              />
+            ) : null}
 
-          <CardContent className="gap-3 p-4">
-            <View className="flex-row items-center">
-              {item.category ? (
-                <Badge variant="secondary">
-                  <Text>{item.category}</Text>
-                </Badge>
+            <CardContent className="gap-3 p-4">
+              <View className="flex-row items-center">
+                {item.category ? (
+                  <Badge variant="secondary">
+                    <Text>{item.category}</Text>
+                  </Badge>
+                ) : null}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto"
+                  disabled={!canFavorite}
+                  onPress={() => void onToggleFavorite()}
+                >
+                  <Icon
+                    as={Heart}
+                    className={
+                      item.isFavorite ? "text-red-500" : "text-muted-foreground"
+                    }
+                    fill={item.isFavorite ? "currentColor" : "none"}
+                  />
+                </Button>
+              </View>
+
+              {item.description ? (
+                <Text variant="muted">{item.description}</Text>
               ) : null}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-auto"
-                disabled={!canFavorite}
-                onPress={() => void onToggleFavorite()}
-              >
-                <Icon
-                  as={Heart}
-                  className={item.isFavorite ? "text-red-500" : "text-muted-foreground"}
-                  fill={item.isFavorite ? "currentColor" : "none"}
-                />
-              </Button>
-            </View>
 
-            {item.description ? <Text variant="muted">{item.description}</Text> : null}
-
-            <MuscleGroup title="Equipment" muscles={item.equipment} />
-            <MuscleGroup title="Primary muscles" muscles={item.primaryMuscles} />
-            <MuscleGroup title="Secondary muscles" muscles={item.secondaryMuscles} />
-          </CardContent>
-        </Card>
+              <MuscleGroup title="Equipment" muscles={item.equipment} />
+              <MuscleGroup
+                title="Primary muscles"
+                muscles={item.primaryMuscles}
+              />
+              <MuscleGroup
+                title="Secondary muscles"
+                muscles={item.secondaryMuscles}
+              />
+            </CardContent>
+          </Card>
+        </FadeInView>
       ) : null}
     </CustomScreen>
   );

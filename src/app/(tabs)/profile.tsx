@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +31,10 @@ function formatDisplayWeight(
   valueInKg: number,
   weightUnit: WeightUnit,
 ): { value: number; unit: WeightUnit } {
-  return { value: Number(toDisplayWeight(valueInKg, weightUnit).toFixed(2)), unit: weightUnit };
+  return {
+    value: Number(toDisplayWeight(valueInKg, weightUnit).toFixed(2)),
+    unit: weightUnit,
+  };
 }
 
 function toMetricHeight(value: number, unit: string): number {
@@ -48,7 +52,13 @@ function toDisplayHeightCm(valueInCm: number, heightUnit: "cm" | "in"): string {
   return `${Number(valueInCm.toFixed(2))} cm`;
 }
 
-function ErrorRetry({ message, onRetry }: { message: string; onRetry: () => void }) {
+function ErrorRetry({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
   return (
     <View className="gap-2">
       <Text className="text-destructive text-sm">{message}</Text>
@@ -173,8 +183,14 @@ export default function ProfileScreen() {
 
   const weightLatestText = latestWeight
     ? (() => {
-        const metricValue = toMetricWeight(latestWeight.value, latestWeight.unit as WeightUnit);
-        const display = formatDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
+        const metricValue = toMetricWeight(
+          latestWeight.value,
+          latestWeight.unit as WeightUnit,
+        );
+        const display = formatDisplayWeight(
+          metricValue,
+          appSettings?.weightUnit ?? "kg",
+        );
         return `${Number(display.value.toFixed(2))} ${display.unit}`;
       })()
     : "N/A";
@@ -214,56 +230,73 @@ export default function ProfileScreen() {
               />
             </CardContent>
           ) : (
-            <>
-              <CardContent className="gap-4">
-                <View className="gap-2">
-                  <Label>Unit system</Label>
-                  <Tabs
-                    value={appSettings?.heightUnit === "in" ? "imperial" : "metric"}
-                    onValueChange={(value) => void onSwitchUnitSystem(value as "metric" | "imperial")}
-                  >
-                    <TabsList className="w-full">
-                      <TabsTrigger value="metric" className="flex-1">
-                        <Text>Metric</Text>
-                      </TabsTrigger>
-                      <TabsTrigger value="imperial" className="flex-1">
-                        <Text>Imperial</Text>
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="metric" />
-                    <TabsContent value="imperial" />
-                  </Tabs>
-                </View>
+            <FadeInView>
+              <View className="gap-6">
+                <CardContent className="gap-4">
+                  <View className="gap-2">
+                    <Label>Unit system</Label>
+                    <Tabs
+                      value={
+                        appSettings?.heightUnit === "in" ? "imperial" : "metric"
+                      }
+                      onValueChange={(value) =>
+                        void onSwitchUnitSystem(value as "metric" | "imperial")
+                      }
+                    >
+                      <TabsList className="w-full">
+                        <TabsTrigger value="metric" className="flex-1">
+                          <Text>Metric</Text>
+                        </TabsTrigger>
+                        <TabsTrigger value="imperial" className="flex-1">
+                          <Text>Imperial</Text>
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="metric" />
+                      <TabsContent value="imperial" />
+                    </Tabs>
+                  </View>
 
-                <View className="gap-2">
-                  <Label>What should we call you?</Label>
-                  <Input
-                    value={displayName}
-                    onChangeText={setDisplayName}
-                    placeholder="Display name"
-                  />
-                </View>
-
-                <View className="gap-2">
-                  <Label>Date of birth (optional)</Label>
-                  <Button variant="outline" onPress={() => setShowDobPicker(true)}>
-                    <Text>{dateOfBirth ? format(dateOfBirth, "PPP") : "Set date of birth"}</Text>
-                  </Button>
-                  {showDobPicker ? (
-                    <DateTimePicker
-                      mode="date"
-                      value={dateOfBirth ?? new Date(2000, 0, 1)}
-                      onChange={onChangeDob}
+                  <View className="gap-2">
+                    <Label>What should we call you?</Label>
+                    <Input
+                      value={displayName}
+                      onChangeText={setDisplayName}
+                      placeholder="Display name"
                     />
-                  ) : null}
-                </View>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" loading={isSaving} onPress={() => void onSaveProfile()}>
-                  <Text>Save Profile</Text>
-                </Button>
-              </CardFooter>
-            </>
+                  </View>
+
+                  <View className="gap-2">
+                    <Label>Date of birth (optional)</Label>
+                    <Button
+                      variant="outline"
+                      onPress={() => setShowDobPicker(true)}
+                    >
+                      <Text>
+                        {dateOfBirth
+                          ? format(dateOfBirth, "PPP")
+                          : "Set date of birth"}
+                      </Text>
+                    </Button>
+                    {showDobPicker ? (
+                      <DateTimePicker
+                        mode="date"
+                        value={dateOfBirth ?? new Date(2000, 0, 1)}
+                        onChange={onChangeDob}
+                      />
+                    ) : null}
+                  </View>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    loading={isSaving}
+                    onPress={() => void onSaveProfile()}
+                  >
+                    <Text>Save Profile</Text>
+                  </Button>
+                </CardFooter>
+              </View>
+            </FadeInView>
           )}
         </Card>
 
@@ -282,37 +315,53 @@ export default function ProfileScreen() {
                 <Skeleton className="h-8 w-full" />
               </View>
             ) : weightError ? (
-              <ErrorRetry message="Couldn't load weight history." onRetry={refetchWeight} />
+              <ErrorRetry
+                message="Couldn't load weight history."
+                onRetry={refetchWeight}
+              />
             ) : (
-              <>
-                <View className="flex-row items-center gap-2">
-                  <Input
-                    className="flex-1"
-                    value={weightValue}
-                    onChangeText={setWeightValue}
-                    placeholder={`Weight (${appSettings?.weightUnit ?? "kg"})`}
-                    keyboardType="decimal-pad"
-                  />
-                  <Button onPress={() => void onAddWeight()}>
-                    <Text>Add</Text>
-                  </Button>
+              <FadeInView>
+                <View className="gap-3">
+                  <View className="flex-row items-center gap-2">
+                    <Input
+                      className="flex-1"
+                      value={weightValue}
+                      onChangeText={setWeightValue}
+                      placeholder={`Weight (${appSettings?.weightUnit ?? "kg"})`}
+                      keyboardType="decimal-pad"
+                    />
+                    <Button onPress={() => void onAddWeight()}>
+                      <Text>Add</Text>
+                    </Button>
+                  </View>
+                  <View className="gap-2">
+                    {weightHistory
+                      .slice(-5)
+                      .reverse()
+                      .map((item) => {
+                        const metricValue = toMetricWeight(
+                          item.value,
+                          item.unit as WeightUnit,
+                        );
+                        const display = formatDisplayWeight(
+                          metricValue,
+                          appSettings?.weightUnit ?? "kg",
+                        );
+                        return (
+                          <Card
+                            key={item.id}
+                            className="flex-row items-center justify-between px-4 py-3"
+                          >
+                            <Text variant="muted">
+                              {format(new Date(item.measuredAt), "PP")}
+                            </Text>
+                            <Text variant="muted">{`${Number(display.value.toFixed(2))} ${display.unit}`}</Text>
+                          </Card>
+                        );
+                      })}
+                  </View>
                 </View>
-                <View className="gap-2">
-                  {weightHistory
-                    .slice(-5)
-                    .reverse()
-                    .map((item) => {
-                      const metricValue = toMetricWeight(item.value, item.unit as WeightUnit);
-                      const display = formatDisplayWeight(metricValue, appSettings?.weightUnit ?? "kg");
-                      return (
-                        <Card key={item.id} className="flex-row items-center justify-between px-4 py-3">
-                          <Text variant="muted">{format(new Date(item.measuredAt), "PP")}</Text>
-                          <Text variant="muted">{`${Number(display.value.toFixed(2))} ${display.unit}`}</Text>
-                        </Card>
-                      );
-                    })}
-                </View>
-              </>
+              </FadeInView>
             )}
           </CardContent>
         </Card>
@@ -332,57 +381,67 @@ export default function ProfileScreen() {
                 <Skeleton className="h-8 w-full" />
               </View>
             ) : heightError ? (
-              <ErrorRetry message="Couldn't load height history." onRetry={refetchHeight} />
+              <ErrorRetry
+                message="Couldn't load height history."
+                onRetry={refetchHeight}
+              />
             ) : (
-              <>
-                <View className="flex-row items-center gap-2">
-                  {appSettings?.heightUnit === "in" ? (
-                    <>
+              <FadeInView>
+                <View className="gap-3">
+                  <View className="flex-row items-center gap-2">
+                    {appSettings?.heightUnit === "in" ? (
+                      <>
+                        <Input
+                          className="flex-1"
+                          value={heightFeet}
+                          onChangeText={setHeightFeet}
+                          placeholder="Feet"
+                          keyboardType="number-pad"
+                        />
+                        <Input
+                          className="flex-1"
+                          value={heightInches}
+                          onChangeText={setHeightInches}
+                          placeholder="Inches"
+                          keyboardType="number-pad"
+                        />
+                      </>
+                    ) : (
                       <Input
                         className="flex-1"
-                        value={heightFeet}
-                        onChangeText={setHeightFeet}
-                        placeholder="Feet"
-                        keyboardType="number-pad"
+                        value={heightValue}
+                        onChangeText={setHeightValue}
+                        placeholder="Height"
+                        keyboardType="decimal-pad"
                       />
-                      <Input
-                        className="flex-1"
-                        value={heightInches}
-                        onChangeText={setHeightInches}
-                        placeholder="Inches"
-                        keyboardType="number-pad"
-                      />
-                    </>
-                  ) : (
-                    <Input
-                      className="flex-1"
-                      value={heightValue}
-                      onChangeText={setHeightValue}
-                      placeholder="Height"
-                      keyboardType="decimal-pad"
-                    />
-                  )}
-                  <Button onPress={() => void onAddHeight()}>
-                    <Text>Add</Text>
-                  </Button>
+                    )}
+                    <Button onPress={() => void onAddHeight()}>
+                      <Text>Add</Text>
+                    </Button>
+                  </View>
+                  <View className="gap-2">
+                    {heightHistory
+                      .slice(-5)
+                      .reverse()
+                      .map((item) => (
+                        <Card
+                          key={item.id}
+                          className="flex-row items-center justify-between px-4 py-3"
+                        >
+                          <Text variant="muted">
+                            {format(new Date(item.measuredAt), "PP")}
+                          </Text>
+                          <Text variant="muted">
+                            {toDisplayHeightCm(
+                              toMetricHeight(item.value, item.unit),
+                              appSettings?.heightUnit ?? "cm",
+                            )}
+                          </Text>
+                        </Card>
+                      ))}
+                  </View>
                 </View>
-                <View className="gap-2">
-                  {heightHistory
-                    .slice(-5)
-                    .reverse()
-                    .map((item) => (
-                      <Card key={item.id} className="flex-row items-center justify-between px-4 py-3">
-                        <Text variant="muted">{format(new Date(item.measuredAt), "PP")}</Text>
-                        <Text variant="muted">
-                          {toDisplayHeightCm(
-                            toMetricHeight(item.value, item.unit),
-                            appSettings?.heightUnit ?? "cm",
-                          )}
-                        </Text>
-                      </Card>
-                    ))}
-                </View>
-              </>
+              </FadeInView>
             )}
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { CustomScreen } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
@@ -18,7 +19,9 @@ export default function HomeScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">{profile ? `Hi ${profile.displayName}!` : "Home"}</Text>
+      <Text variant="h2">
+        {profile ? `Hi ${profile.displayName}!` : "Home"}
+      </Text>
       <Text variant="muted">Ready to train?</Text>
 
       <View className="mt-6 gap-4">
@@ -61,22 +64,33 @@ export default function HomeScreen() {
               <Skeleton className="h-10 w-full" />
             </View>
           ) : templates.length === 0 ? (
-            <Text variant="muted">No templates yet. Create one in the Saved tab.</Text>
+            <FadeInView>
+              <Text variant="muted">
+                No templates yet. Create one in the Saved tab.
+              </Text>
+            </FadeInView>
           ) : (
-            templates.slice(0, 3).map((template) => (
-              <Button
-                key={template.id}
-                variant="outline"
-                onPress={() =>
-                  router.push({
-                    pathname: "/workout/active",
-                    params: { templateId: template.id, name: template.name },
-                  })
-                }
-              >
-                <Text>{template.name}</Text>
-              </Button>
-            ))
+            <FadeInView>
+              <View className="gap-2">
+                {templates.slice(0, 3).map((template) => (
+                  <Button
+                    key={template.id}
+                    variant="outline"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/workout/active",
+                        params: {
+                          templateId: template.id,
+                          name: template.name,
+                        },
+                      })
+                    }
+                  >
+                    <Text>{template.name}</Text>
+                  </Button>
+                ))}
+              </View>
+            </FadeInView>
           )}
         </View>
       </View>
