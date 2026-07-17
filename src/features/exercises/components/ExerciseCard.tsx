@@ -26,7 +26,7 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   return (
     <Card className="overflow-hidden p-0">
-      <Pressable className="flex-row items-center gap-3 p-4" onPress={onPress}>
+      <Pressable className="flex-row items-center gap-3 p-4 active:opacity-80" onPress={onPress}>
         <View className="border-border h-14 w-14 overflow-hidden rounded-md border">
           {imageUrl ? (
             <ExpoImage source={{ uri: imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="contain" />

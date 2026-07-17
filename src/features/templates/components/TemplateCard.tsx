@@ -18,7 +18,7 @@ export function TemplateCard({ template, onPress, onDelete }: TemplateCardProps)
   return (
     <Card className="p-0">
       <View className="flex-row items-start gap-3 p-4">
-        <Pressable className="flex-1 gap-1" onPress={onPress}>
+        <Pressable className="flex-1 gap-1 active:opacity-80" onPress={onPress}>
           <Text>{template.name}</Text>
           {template.description ? <Text variant="muted">{template.description}</Text> : null}
           <Badge variant="secondary" className="mt-1 self-start">
