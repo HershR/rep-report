@@ -5,7 +5,7 @@ Plans produced by `improve-animations plan <description>` for: "Implement a cele
 | # | Title | Severity | Status |
 | --- | --- | --- | --- |
 | [001](001-workout-complete-celebration.md) | Add a celebration moment when a workout is completed | N/A (missed opportunity) | SUPERSEDED — see note below |
-| [002](002-set-complete-haptic.md) | Add a haptic tick when a set is marked complete | N/A (missed opportunity) | TODO |
+| [002](002-set-complete-haptic.md) | Add a haptic tick when a set is marked complete | N/A (missed opportunity) | DONE |
 
 ## Recommended execution order
 

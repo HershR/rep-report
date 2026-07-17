@@ -1,6 +1,6 @@
 # 002 — Add a haptic tick when a set is marked complete
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 9bd106c
 - **Severity**: N/A (missed opportunity / additive, not a regression)
 - **Category**: 8. Missed opportunities (rewarding a completed action with only one sensory channel)

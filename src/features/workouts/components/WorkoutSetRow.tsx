@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Trash2 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
@@ -75,11 +76,14 @@ export function WorkoutSetRow({
 
   useEffect(() => {
     // Pop only on the incomplete → complete transition, never on mount or when un-marking.
-    if (isCompleted && !wasCompletedRef.current && !reducedMotion) {
-      completeButtonScale.value = withSequence(
-        withTiming(1.06, { duration: 80 }),
-        withTiming(1, { duration: 100 }),
-      );
+    if (isCompleted && !wasCompletedRef.current) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (!reducedMotion) {
+        completeButtonScale.value = withSequence(
+          withTiming(1.06, { duration: 80 }),
+          withTiming(1, { duration: 100 }),
+        );
+      }
     }
     wasCompletedRef.current = isCompleted;
   }, [isCompleted, reducedMotion, completeButtonScale]);
