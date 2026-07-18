@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Trash2 } from "lucide-react-native";
+import { Check, Trash2 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -136,117 +137,124 @@ export function WorkoutSetRow({
   };
 
   return (
-    <View className="bg-muted gap-2 rounded-md p-3">
-      <View className="flex-row items-center justify-between">
-        <Text variant="muted">{`Set ${index + 1}`}</Text>
-        <View className="flex-row items-center gap-2">
-          <Animated.View style={completeButtonAnimatedStyle}>
-            <Button
-              variant={isCompleted ? "default" : "outline"}
-              size="sm"
-              onPress={() =>
-                onUpdate(workoutSet.id, { isCompleted: !isCompleted })
-              }
-            >
-              <Text>{isCompleted ? "Done" : "Mark"}</Text>
-            </Button>
-          </Animated.View>
-          <Button
-            variant="ghost"
-            size="icon"
-            onPress={() => onDelete(workoutSet.id)}
-          >
-            <Icon as={Trash2} className="text-muted-foreground size-4" />
-          </Button>
-        </View>
+    <View
+      className={cn(
+        "flex-row items-center gap-2 rounded-md px-2 py-1.5",
+        isCompleted && "bg-primary/10",
+      )}
+    >
+      <View className="w-6 items-center">
+        <Text variant="muted" className="text-sm">
+          {index + 1}
+        </Text>
       </View>
 
-      <View className="flex-row gap-2">
-        {isCardio ? (
-          <>
-            <Input
-              className="flex-1"
-              value={durationInput}
-              onChangeText={(value) => {
-                const formatted = formatDurationInput(value);
-                setDurationInput(formatted);
-                if (commitOnChange) {
-                  onUpdate(workoutSet.id, {
-                    durationSeconds: durationDisplayToSeconds(formatted),
-                  });
-                }
-              }}
-              keyboardType="number-pad"
-              placeholder="hh:mm:ss"
-              onFocus={() => setIsDurationFocused(true)}
-              onEndEditing={commitDuration}
-              onBlur={commitDuration}
-              onSubmitEditing={commitDuration}
-            />
-            <Input
-              className="flex-1"
-              value={distanceInput}
-              onChangeText={(value) => {
-                setDistanceInput(value);
-                if (commitOnChange) {
-                  onUpdate(workoutSet.id, {
-                    distance: textToMetricDistance(value, distanceUnit),
-                  });
-                }
-              }}
-              keyboardType="decimal-pad"
-              placeholder={`Dist (${distanceUnit})`}
-              onFocus={() => setIsDistanceFocused(true)}
-              onEndEditing={commitDistance}
-              onBlur={commitDistance}
-              onSubmitEditing={commitDistance}
-            />
-          </>
-        ) : (
-          <>
-            <Input
-              className="flex-1"
-              defaultValue={toText(workoutSet.reps)}
-              keyboardType="number-pad"
-              placeholder="Reps"
-              onEndEditing={(event) => {
-                if (!commitOnChange) {
-                  onUpdate(workoutSet.id, {
-                    reps: toNumber(event.nativeEvent.text),
-                  });
-                }
-              }}
-              onChangeText={
-                commitOnChange
-                  ? (value) => {
-                      onUpdate(workoutSet.id, {
-                        reps: toNumber(value),
-                      });
-                    }
-                  : undefined
+      {isCardio ? (
+        <>
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={durationInput}
+            onChangeText={(value) => {
+              const formatted = formatDurationInput(value);
+              setDurationInput(formatted);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  durationSeconds: durationDisplayToSeconds(formatted),
+                });
               }
-            />
-            <Input
-              className="flex-1"
-              value={weightInput}
-              onChangeText={(value) => {
-                setWeightInput(value);
-                if (commitOnChange) {
-                  onUpdate(workoutSet.id, {
-                    weight: textToMetricWeight(value, weightUnit),
-                  });
-                }
-              }}
-              keyboardType="decimal-pad"
-              placeholder={`Wt (${weightUnit})`}
-              onFocus={() => setIsWeightFocused(true)}
-              onEndEditing={commitWeight}
-              onBlur={commitWeight}
-              onSubmitEditing={commitWeight}
-            />
-          </>
-        )}
-      </View>
+            }}
+            keyboardType="number-pad"
+            onFocus={() => setIsDurationFocused(true)}
+            onEndEditing={commitDuration}
+            onBlur={commitDuration}
+            onSubmitEditing={commitDuration}
+          />
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={distanceInput}
+            onChangeText={(value) => {
+              setDistanceInput(value);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  distance: textToMetricDistance(value, distanceUnit),
+                });
+              }
+            }}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsDistanceFocused(true)}
+            onEndEditing={commitDistance}
+            onBlur={commitDistance}
+            onSubmitEditing={commitDistance}
+          />
+        </>
+      ) : (
+        <>
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            defaultValue={toText(workoutSet.reps)}
+            keyboardType="number-pad"
+            onEndEditing={(event) => {
+              if (!commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  reps: toNumber(event.nativeEvent.text),
+                });
+              }
+            }}
+            onChangeText={
+              commitOnChange
+                ? (value) => {
+                    onUpdate(workoutSet.id, {
+                      reps: toNumber(value),
+                    });
+                  }
+                : undefined
+            }
+          />
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={weightInput}
+            onChangeText={(value) => {
+              setWeightInput(value);
+              if (commitOnChange) {
+                onUpdate(workoutSet.id, {
+                  weight: textToMetricWeight(value, weightUnit),
+                });
+              }
+            }}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsWeightFocused(true)}
+            onEndEditing={commitWeight}
+            onBlur={commitWeight}
+            onSubmitEditing={commitWeight}
+          />
+        </>
+      )}
+
+      <Animated.View style={completeButtonAnimatedStyle}>
+        <Button
+          variant={isCompleted ? "default" : "outline"}
+          size="icon"
+          className="h-9 w-9"
+          onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
+        >
+          <Icon
+            as={Check}
+            className={cn(
+              "size-4",
+              isCompleted ? "text-primary-foreground" : "text-muted-foreground",
+            )}
+          />
+        </Button>
+      </Animated.View>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-8"
+        onPress={() => onDelete(workoutSet.id)}
+      >
+        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+      </Button>
     </View>
   );
 }

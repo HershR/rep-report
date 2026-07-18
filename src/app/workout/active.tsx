@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
@@ -252,31 +253,33 @@ export default function ActiveWorkoutScreen() {
       ) : null}
 
       <View className="gap-3">
-        {activeWorkout.exercises.map((workoutExercise) => (
-          <WorkoutExerciseBlock
-            key={workoutExercise.id}
-            workoutExercise={workoutExercise}
-            commitSetChangesOnChange
-            onAddSet={(workoutSessionExerciseId) => {
-              void addSetToWorkout({ workoutSessionExerciseId });
-            }}
-            onRemoveExercise={(workoutSessionExerciseId) => {
-              void removeExerciseFromWorkout({
-                workoutSessionId: activeWorkout.id,
-                workoutSessionExerciseId,
-              });
-            }}
-            onUpdateSet={(setId, input) => {
-              if (input.isCompleted !== undefined) {
-                void updateSet({ setId, ...input });
-                return;
-              }
-              scheduleSetUpdate(setId, input);
-            }}
-            onDeleteSet={(setId) => {
-              void deleteSet(setId);
-            }}
-          />
+        {activeWorkout.exercises.map((workoutExercise, index) => (
+          <View key={workoutExercise.id} className="gap-3">
+            {index > 0 ? <Separator /> : null}
+            <WorkoutExerciseBlock
+              workoutExercise={workoutExercise}
+              commitSetChangesOnChange
+              onAddSet={(workoutSessionExerciseId) => {
+                void addSetToWorkout({ workoutSessionExerciseId });
+              }}
+              onRemoveExercise={(workoutSessionExerciseId) => {
+                void removeExerciseFromWorkout({
+                  workoutSessionId: activeWorkout.id,
+                  workoutSessionExerciseId,
+                });
+              }}
+              onUpdateSet={(setId, input) => {
+                if (input.isCompleted !== undefined) {
+                  void updateSet({ setId, ...input });
+                  return;
+                }
+                scheduleSetUpdate(setId, input);
+              }}
+              onDeleteSet={(setId) => {
+                void deleteSet(setId);
+              }}
+            />
+          </View>
         ))}
       </View>
 

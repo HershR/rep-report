@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -525,16 +526,18 @@ export default function WorkoutDetailScreen() {
             <Text>Add Saved Exercise</Text>
           </Button>
         </View>
-        {watchedExercises.map((exercise) => (
-          <WorkoutExerciseBlock
-            key={exercise.id}
-            workoutExercise={exercise}
-            commitSetChangesOnChange
-            onAddSet={onAddSetDraft}
-            onRemoveExercise={onRemoveExerciseDraft}
-            onUpdateSet={onUpdateSetDraft}
-            onDeleteSet={onDeleteSetDraft}
-          />
+        {watchedExercises.map((exercise, index) => (
+          <View key={exercise.id} className="gap-3">
+            {index > 0 ? <Separator /> : null}
+            <WorkoutExerciseBlock
+              workoutExercise={exercise}
+              commitSetChangesOnChange
+              onAddSet={onAddSetDraft}
+              onRemoveExercise={onRemoveExerciseDraft}
+              onUpdateSet={onUpdateSetDraft}
+              onDeleteSet={onDeleteSetDraft}
+            />
+          </View>
         ))}
       </View>
 
