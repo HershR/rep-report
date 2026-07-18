@@ -174,7 +174,7 @@ export default function ActiveWorkoutScreen() {
     await finish();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success("Nice work!", {
-      icon: <Icon as={Check} size={18} color={colors.chart2} />,
+      icon: <Icon as={Check} size={18} color={colors.chart3} />,
       duration: 2500,
     });
     router.replace("/(tabs)/home");
