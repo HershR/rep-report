@@ -1,5 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import type { NavigationAction } from "@react-navigation/native";
 import { format } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
@@ -54,7 +56,9 @@ function areSetsEqual(a: WorkoutSessionSet, b: WorkoutSessionSet) {
   );
 }
 
-function getFormDefaults(session: WorkoutSessionDetails | null): WorkoutDetailFormValues {
+function getFormDefaults(
+  session: WorkoutSessionDetails | null,
+): WorkoutDetailFormValues {
   if (!session) {
     return {
       name: "",
@@ -117,7 +121,11 @@ export default function WorkoutDetailScreen() {
     defaultValues: getFormDefaults(workoutSession ?? null),
   });
 
-  const { fields: exerciseFields, append, remove } = useFieldArray({
+  const {
+    fields: exerciseFields,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: "exercises",
   });
@@ -157,7 +165,10 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const onChangeCompletedAt = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  const onChangeCompletedAt = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
     if (event.type === "dismissed") {
       setShowCompletedAtPicker(false);
       return;
@@ -192,7 +203,9 @@ export default function WorkoutDetailScreen() {
 
   const onRemoveExerciseDraft = (workoutSessionExerciseId: string) => {
     const current = getValues("exercises");
-    const index = current.findIndex((exercise) => exercise.id === workoutSessionExerciseId);
+    const index = current.findIndex(
+      (exercise) => exercise.id === workoutSessionExerciseId,
+    );
     if (index < 0) return;
 
     remove(index);
@@ -208,7 +221,9 @@ export default function WorkoutDetailScreen() {
   const onAddSetDraft = (workoutSessionExerciseId: string) => {
     const now = new Date().toISOString();
     const exercises = getValues("exercises");
-    const exerciseIndex = exercises.findIndex((exercise) => exercise.id === workoutSessionExerciseId);
+    const exerciseIndex = exercises.findIndex(
+      (exercise) => exercise.id === workoutSessionExerciseId,
+    );
     if (exerciseIndex < 0) return;
 
     const nextSet: WorkoutDetailFormSet = {
@@ -225,10 +240,14 @@ export default function WorkoutDetailScreen() {
       updatedAt: now,
     };
 
-    setValue(`exercises.${exerciseIndex}.sets`, [...exercises[exerciseIndex].sets, nextSet], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    setValue(
+      `exercises.${exerciseIndex}.sets`,
+      [...exercises[exerciseIndex].sets, nextSet],
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
   };
 
   const onUpdateSetDraft = (
@@ -243,8 +262,14 @@ export default function WorkoutDetailScreen() {
   ) => {
     const exercises = getValues("exercises");
 
-    for (let exerciseIndex = 0; exerciseIndex < exercises.length; exerciseIndex += 1) {
-      const setIndex = exercises[exerciseIndex].sets.findIndex((set) => set.id === setId);
+    for (
+      let exerciseIndex = 0;
+      exerciseIndex < exercises.length;
+      exerciseIndex += 1
+    ) {
+      const setIndex = exercises[exerciseIndex].sets.findIndex(
+        (set) => set.id === setId,
+      );
       if (setIndex < 0) continue;
 
       const currentSet = exercises[exerciseIndex].sets[setIndex];
@@ -254,9 +279,13 @@ export default function WorkoutDetailScreen() {
           ...currentSet,
           ...(input.reps !== undefined ? { reps: input.reps } : {}),
           ...(input.weight !== undefined ? { weight: input.weight } : {}),
-          ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+          ...(input.durationSeconds !== undefined
+            ? { durationSeconds: input.durationSeconds }
+            : {}),
           ...(input.distance !== undefined ? { distance: input.distance } : {}),
-          ...(input.isCompleted !== undefined ? { isCompleted: input.isCompleted ? 1 : 0 } : {}),
+          ...(input.isCompleted !== undefined
+            ? { isCompleted: input.isCompleted ? 1 : 0 }
+            : {}),
         },
         {
           shouldDirty: true,
@@ -270,8 +299,14 @@ export default function WorkoutDetailScreen() {
   const onDeleteSetDraft = (setId: string) => {
     const exercises = getValues("exercises");
 
-    for (let exerciseIndex = 0; exerciseIndex < exercises.length; exerciseIndex += 1) {
-      const setIndex = exercises[exerciseIndex].sets.findIndex((set) => set.id === setId);
+    for (
+      let exerciseIndex = 0;
+      exerciseIndex < exercises.length;
+      exerciseIndex += 1
+    ) {
+      const setIndex = exercises[exerciseIndex].sets.findIndex(
+        (set) => set.id === setId,
+      );
       if (setIndex < 0) continue;
 
       const nextSets = exercises[exerciseIndex].sets
@@ -298,10 +333,14 @@ export default function WorkoutDetailScreen() {
       });
 
       const originalExerciseMap = new Map(
-        workoutSession.exercises.map((exercise) => [exercise.id, exercise] as const),
+        workoutSession.exercises.map(
+          (exercise) => [exercise.id, exercise] as const,
+        ),
       );
       const nextExerciseIds = new Set(
-        formValues.exercises.filter((exercise) => !isTempId(exercise.id)).map((exercise) => exercise.id),
+        formValues.exercises
+          .filter((exercise) => !isTempId(exercise.id))
+          .map((exercise) => exercise.id),
       );
 
       for (const exercise of workoutSession.exercises) {
@@ -314,7 +353,10 @@ export default function WorkoutDetailScreen() {
       const knownExerciseIds = new Set(originalExerciseMap.keys());
 
       for (const draftExercise of formValues.exercises) {
-        if (!isTempId(draftExercise.id) && originalExerciseMap.has(draftExercise.id)) {
+        if (
+          !isTempId(draftExercise.id) &&
+          originalExerciseMap.has(draftExercise.id)
+        ) {
           resolvedExerciseIds.set(draftExercise.id, draftExercise.id);
           continue;
         }
@@ -334,9 +376,12 @@ export default function WorkoutDetailScreen() {
       }
 
       for (const draftExercise of formValues.exercises) {
-        const realExerciseId = resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id;
+        const realExerciseId =
+          resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id;
         const originalExercise = originalExerciseMap.get(realExerciseId);
-        const originalSetMap = new Map((originalExercise?.sets ?? []).map((set) => [set.id, set] as const));
+        const originalSetMap = new Map(
+          (originalExercise?.sets ?? []).map((set) => [set.id, set] as const),
+        );
 
         const nextSetIds = new Set(
           draftExercise.sets
@@ -400,7 +445,7 @@ export default function WorkoutDetailScreen() {
 
   const onDeleteWorkout = async () => {
     await deleteWorkoutSession();
-    router.replace("/(tabs)/home");
+    router.back();
   };
 
   return (
@@ -415,11 +460,17 @@ export default function WorkoutDetailScreen() {
               control={control}
               name="name"
               render={({ field: { value, onChange } }) => (
-                <Input value={value} onChangeText={onChange} placeholder="Workout name" />
+                <Input
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Workout name"
+                />
               )}
             />
             {errors.name?.message ? (
-              <Text className="text-destructive text-sm">{errors.name.message}</Text>
+              <Text className="text-destructive text-sm">
+                {errors.name.message}
+              </Text>
             ) : null}
           </View>
 
@@ -429,7 +480,12 @@ export default function WorkoutDetailScreen() {
               control={control}
               name="notes"
               render={({ field: { value, onChange } }) => (
-                <Textarea value={value} onChangeText={onChange} placeholder="Workout notes" />
+                <Textarea
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Workout notes"
+                  placeholderClassName="text-muted-foreground/50"
+                />
               )}
             />
           </View>
@@ -449,7 +505,11 @@ export default function WorkoutDetailScreen() {
             <Text>Edit completed date/time</Text>
           </Button>
           {showCompletedAtPicker && completedAtDate ? (
-            <DateTimePicker mode="date" value={completedAtDate} onChange={onChangeCompletedAt} />
+            <DateTimePicker
+              mode="date"
+              value={completedAtDate}
+              onChange={onChangeCompletedAt}
+            />
           ) : null}
         </CardContent>
       </Card>
@@ -457,7 +517,11 @@ export default function WorkoutDetailScreen() {
       <View className="gap-3">
         <View className="flex-row items-center justify-between">
           <Text variant="large">Exercises</Text>
-          <Button variant="outline" size="sm" onPress={() => setShowAddExerciseSheet(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={() => setShowAddExerciseSheet(true)}
+          >
             <Text>Add Saved Exercise</Text>
           </Button>
         </View>
@@ -474,7 +538,10 @@ export default function WorkoutDetailScreen() {
         ))}
       </View>
 
-      <Button loading={isSaving || isSavingAll} onPress={() => void onSaveAll()}>
+      <Button
+        loading={isSaving || isSavingAll}
+        onPress={() => void onSaveAll()}
+      >
         <Text>Save All</Text>
       </Button>
       <Button
@@ -509,7 +576,9 @@ export default function WorkoutDetailScreen() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Unsaved changes</DialogTitle>
-            <DialogDescription>Save changes before leaving this workout?</DialogDescription>
+            <DialogDescription>
+              Save changes before leaving this workout?
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onPress={() => setShowExitModal(false)}>

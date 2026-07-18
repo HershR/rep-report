@@ -1,6 +1,13 @@
 import { Tabs } from "expo-router";
-import { BarChart3, Bookmark, Home, Search, User, type LucideIcon } from "lucide-react-native";
-import { useColorScheme } from "react-native";
+import {
+  BarChart3,
+  Bookmark,
+  Home,
+  Search,
+  User,
+  type LucideIcon,
+} from "lucide-react-native";
+import { useColorScheme } from "nativewind";
 
 import { THEME } from "@/lib/theme";
 
@@ -11,7 +18,7 @@ function tabIcon(IconComponent: LucideIcon) {
 }
 
 export default function TabLayout() {
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
 
   return (

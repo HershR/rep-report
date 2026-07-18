@@ -2,7 +2,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useColorScheme, View } from "react-native";
+import { useColorScheme } from "nativewind";
+import { View } from "react-native";
 import { toast } from "sonner-native";
 
 import { CustomScreen } from "@/components/common";
@@ -40,7 +41,7 @@ export default function ActiveWorkoutScreen() {
     name?: string;
     sessionId?: string;
   }>();
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);

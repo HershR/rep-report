@@ -1,12 +1,8 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react-native";
-import {
-  ActivityIndicator,
-  Pressable,
-  useColorScheme,
-  View,
-} from "react-native";
+import { useColorScheme } from "nativewind";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
 import { CustomScreen } from "@/components/common";
@@ -29,7 +25,7 @@ import {
 import { THEME } from "@/lib/theme";
 
 export default function SearchScreen() {
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -164,10 +160,10 @@ export default function SearchScreen() {
       <Text variant="h2">Search</Text>
       <Text variant="muted">Find exercises from WGER.</Text>
 
-      <View className="border-input bg-background mt-4 flex-row items-center gap-2 rounded-md border px-3">
+      <View className="border-input bg-black mt-4 flex-row items-center gap-2 rounded-md border-2 px-3">
         <Icon as={Search} className="text-muted-foreground" />
         <Input
-          className="flex-1 border-0 bg-transparent px-0 shadow-none"
+          className="flex-1 border-0 px-0 shadow-none"
           value={query}
           onChangeText={onChangeQuery}
           placeholder="Search exercises"

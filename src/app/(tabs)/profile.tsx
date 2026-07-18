@@ -1,5 +1,6 @@
+import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Switch, View } from "react-native";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -25,6 +26,7 @@ import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import type { WeightUnit } from "@/db/schema";
+import { THEME } from "@/lib/theme";
 import { toMetricWeight, toDisplayWeight } from "@/lib/units";
 
 function formatDisplayWeight(
@@ -70,6 +72,8 @@ function ErrorRetry({
 }
 
 export default function ProfileScreen() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const colors = THEME[colorScheme ?? "light"];
   const {
     appSettings,
     updateAppSettings,
@@ -160,6 +164,12 @@ export default function ProfileScreen() {
     if (!Number.isFinite(value) || value <= 0) return;
     await addHeight({ value: toMetricHeight(value, "cm"), unit: "cm" });
     setHeightValue("");
+  };
+
+  const onToggleDarkMode = (dark: boolean) => {
+    const mode = dark ? "dark" : "light";
+    setColorScheme(mode);
+    void updateAppSettings({ themeMode: mode });
   };
 
   const onSwitchUnitSystem = async (system: "metric" | "imperial") => {
@@ -254,6 +264,18 @@ export default function ProfileScreen() {
                       <TabsContent value="metric" />
                       <TabsContent value="imperial" />
                     </Tabs>
+                  </View>
+
+                  <View className="flex-row items-center justify-between">
+                    <Label>Dark mode</Label>
+                    <Switch
+                      value={colorScheme === "dark"}
+                      onValueChange={onToggleDarkMode}
+                      trackColor={{
+                        false: colors.border,
+                        true: colors.primary,
+                      }}
+                    />
                   </View>
 
                   <View className="gap-2">

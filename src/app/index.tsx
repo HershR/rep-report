@@ -1,6 +1,7 @@
 import { Redirect, type Href } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { Text } from "@/components/ui/text";
@@ -14,7 +15,7 @@ const ONBOARDING = "/onboarding" as Href;
 
 export default function Index() {
   const [destination, setDestination] = useState<Href | null>(null);
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
 
   useEffect(() => {
     let cancelled = false;

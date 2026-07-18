@@ -42,7 +42,9 @@ function numberToText(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
-function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorFormValues {
+function getDefaultValues(
+  template?: WorkoutTemplate | null,
+): TemplateEditorFormValues {
   if (!template) {
     return {
       name: "",
@@ -73,7 +75,9 @@ function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorForm
   };
 }
 
-function mapFormToEditorValue(value: TemplateEditorFormValues): TemplateEditorValue {
+function mapFormToEditorValue(
+  value: TemplateEditorFormValues,
+): TemplateEditorValue {
   return {
     name: value.name.trim(),
     description: value.description.trim() || null,
@@ -84,18 +88,25 @@ function mapFormToEditorValue(value: TemplateEditorFormValues): TemplateEditorVa
   };
 }
 
-function getErrorMessage(errors: FieldErrors<TemplateEditorFormValues>): string | null {
+function getErrorMessage(
+  errors: FieldErrors<TemplateEditorFormValues>,
+): string | null {
   if (errors.name?.message) return errors.name.message;
   if (errors.description?.message) return errors.description.message;
   if (errors.exercises?.message) return errors.exercises.message;
 
-  const exerciseErrors = Array.isArray(errors.exercises) ? errors.exercises : [];
+  const exerciseErrors = Array.isArray(errors.exercises)
+    ? errors.exercises
+    : [];
   for (const exerciseError of exerciseErrors) {
     if (!exerciseError) continue;
     if (exerciseError.message) return exerciseError.message;
-    if (exerciseError.exerciseName?.message) return exerciseError.exerciseName.message;
+    if (exerciseError.exerciseName?.message)
+      return exerciseError.exerciseName.message;
 
-    const setErrors = Array.isArray(exerciseError.sets) ? exerciseError.sets : [];
+    const setErrors = Array.isArray(exerciseError.sets)
+      ? exerciseError.sets
+      : [];
     for (const setError of setErrors) {
       if (!setError) continue;
       if (setError.message) return setError.message;
@@ -116,7 +127,12 @@ type ExerciseFieldProps = {
   onDeleteExercise: () => void;
 };
 
-function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseFieldProps) {
+function ExerciseField({
+  control,
+  setValue,
+  index,
+  onDeleteExercise,
+}: ExerciseFieldProps) {
   const exercise = useWatch({
     control,
     name: `exercises.${index}`,
@@ -139,7 +155,10 @@ function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseF
 
   const onUpdateSet = (
     setIndex: number,
-    field: keyof Pick<TemplateEditorSet, "repsText" | "weightText" | "durationText" | "distanceText">,
+    field: keyof Pick<
+      TemplateEditorSet,
+      "repsText" | "weightText" | "durationText" | "distanceText"
+    >,
     value: string,
   ) => {
     setValue(`exercises.${index}.sets.${setIndex}.${field}`, value, {
@@ -158,11 +177,15 @@ function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseF
       onAddSet={onAddSet}
       onDeleteExercise={onDeleteExercise}
       onDeleteSet={(setLocalId) => {
-        const setIndex = exercise.sets.findIndex((set) => set.localId === setLocalId);
+        const setIndex = exercise.sets.findIndex(
+          (set) => set.localId === setLocalId,
+        );
         if (setIndex >= 0) remove(setIndex);
       }}
       onUpdateSet={(setLocalId, field, value) => {
-        const setIndex = exercise.sets.findIndex((set) => set.localId === setLocalId);
+        const setIndex = exercise.sets.findIndex(
+          (set) => set.localId === setLocalId,
+        );
         if (setIndex >= 0) onUpdateSet(setIndex, field, value);
       }}
     />
@@ -187,7 +210,11 @@ export function TemplateEditor({
     defaultValues: getDefaultValues(initialTemplate),
   });
 
-  const { fields: exerciseFields, append, remove } = useFieldArray({
+  const {
+    fields: exerciseFields,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: "exercises",
   });
@@ -231,7 +258,11 @@ export function TemplateEditor({
           control={control}
           name="name"
           render={({ field: { value, onChange } }) => (
-            <Input value={value} onChangeText={onChange} placeholder="Template name" />
+            <Input
+              value={value}
+              onChangeText={onChange}
+              placeholder="Template name"
+            />
           )}
         />
       </View>
@@ -242,16 +273,26 @@ export function TemplateEditor({
           control={control}
           name="description"
           render={({ field: { value, onChange } }) => (
-            <Textarea value={value} onChangeText={onChange} placeholder="Description (optional)" />
+            <Textarea
+              value={value}
+              onChangeText={onChange}
+              placeholder="Description (optional)"
+            />
           )}
         />
       </View>
 
-      {errorMessage ? <Text className="text-destructive text-sm">{errorMessage}</Text> : null}
+      {errorMessage ? (
+        <Text className="text-destructive text-sm">{errorMessage}</Text>
+      ) : null}
 
       <View className="flex-row items-center justify-between">
         <Text variant="large">Exercises</Text>
-        <Button variant="outline" size="sm" onPress={() => setShowAddExerciseSheet(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => setShowAddExerciseSheet(true)}
+        >
           <Text>Add Saved Exercise</Text>
         </Button>
       </View>

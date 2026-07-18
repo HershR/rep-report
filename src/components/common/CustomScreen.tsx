@@ -1,5 +1,6 @@
+import { useColorScheme } from "nativewind";
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, useColorScheme, View, type ViewStyle } from "react-native";
+import { ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { THEME } from "@/lib/theme";
@@ -23,7 +24,7 @@ export function CustomScreen({
   scroll = false,
   contentContainerStyle,
 }: CustomScreenProps) {
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
 
   const inner = scroll ? (

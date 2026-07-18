@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react-native";
-import { Pressable, useColorScheme, View } from "react-native";
+import { useColorScheme } from "nativewind";
+import { Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 import { CustomScreen } from "@/components/common";
@@ -14,9 +15,15 @@ import { THEME } from "@/lib/theme";
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
+  const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
-  const { selectedDate, selectedDateKey, setSelectedDate, workouts, isLoading } = useWorkoutHistory();
+  const {
+    selectedDate,
+    selectedDateKey,
+    setSelectedDate,
+    workouts,
+    isLoading,
+  } = useWorkoutHistory();
 
   return (
     <CustomScreen scroll>
@@ -28,7 +35,9 @@ export default function DashboardScreen() {
           <CardContent>
             <Calendar
               current={selectedDateKey}
-              onDayPress={(day) => setSelectedDate(new Date(`${day.dateString}T12:00:00`))}
+              onDayPress={(day) =>
+                setSelectedDate(new Date(`${day.dateString}T12:00:00`))
+              }
               markedDates={{
                 [selectedDateKey]: {
                   selected: true,
@@ -62,7 +71,7 @@ export default function DashboardScreen() {
           ? workouts.map((workout) => {
               const setCount = workout.exercises.reduce(
                 (total, exercise) => total + exercise.sets.length,
-                0
+                0,
               );
               return (
                 <Pressable
@@ -91,7 +100,10 @@ export default function DashboardScreen() {
                           </Badge>
                         </View>
                       </View>
-                      <Icon as={ChevronRight} className="text-muted-foreground" />
+                      <Icon
+                        as={ChevronRight}
+                        className="text-muted-foreground"
+                      />
                     </CardContent>
                   </Card>
                 </Pressable>
