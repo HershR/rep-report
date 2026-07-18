@@ -1,11 +1,22 @@
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import type { ExerciseFilterOption } from "@/features/exercises/types";
+import { cn } from "@/lib/utils";
 
 type ExerciseFilterModalProps = {
   visible: boolean;
@@ -22,12 +33,43 @@ type ExerciseFilterModalProps = {
   onClearAll: () => void;
 };
 
+function FilterChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={cn(
+        "rounded-full border px-3 py-1.5 active:opacity-80",
+        selected ? "border-primary bg-primary" : "border-border bg-transparent",
+      )}
+    >
+      <Text
+        className={cn(
+          "text-sm",
+          selected ? "text-primary-foreground" : "text-foreground",
+        )}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function FilterSection({
+  value,
   title,
   options,
   selectedIds,
   onToggle,
 }: {
+  value: string;
   title: string;
   options: ExerciseFilterOption[];
   selectedIds: number[];
@@ -36,24 +78,21 @@ function FilterSection({
   if (options.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text variant="muted">{title}</Text>
-      <View className="gap-1">
-        {options.map((option) => {
-          const checked = selectedIds.includes(option.id);
-          return (
-            <Label
+    <AccordionItem value={value}>
+      <AccordionTrigger>{title}</AccordionTrigger>
+      <AccordionContent>
+        <View className="flex-row flex-wrap gap-2">
+          {options.map((option) => (
+            <FilterChip
               key={option.id}
+              label={option.name}
+              selected={selectedIds.includes(option.id)}
               onPress={() => onToggle(option.id)}
-              className="flex-row items-center justify-between rounded-md p-2"
-            >
-              <Text className="font-normal">{option.name}</Text>
-              <Checkbox checked={checked} onCheckedChange={() => {}} pointerEvents="none" />
-            </Label>
-          );
-        })}
-      </View>
-    </View>
+            />
+          ))}
+        </View>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -72,7 +111,10 @@ export function ExerciseFilterModal({
   onClearAll,
 }: ExerciseFilterModalProps) {
   return (
-    <Sheet open={visible} onOpenChange={(open) => (!open ? onClose() : undefined)}>
+    <Sheet
+      open={visible}
+      onOpenChange={(open) => (!open ? onClose() : undefined)}
+    >
       <SheetContent>
         <SheetHeader className="flex-row items-center justify-between">
           <SheetTitle>Filters</SheetTitle>
@@ -82,26 +124,33 @@ export function ExerciseFilterModal({
         </SheetHeader>
 
         <ScrollView className="gap-4">
-          <View className="gap-4">
+          <Accordion
+            type="multiple"
+            collapsible
+            defaultValue={["categories", "equipment", "muscles"]}
+          >
             <FilterSection
+              value="categories"
               title="Categories"
               options={categoryOptions}
               selectedIds={selectedCategoryIds}
               onToggle={onToggleCategory}
             />
             <FilterSection
+              value="equipment"
               title="Equipment"
               options={equipmentOptions}
               selectedIds={selectedEquipmentIds}
               onToggle={onToggleEquipment}
             />
             <FilterSection
+              value="muscles"
               title="Muscles"
               options={muscleOptions}
               selectedIds={selectedMuscleIds}
               onToggle={onToggleMuscle}
             />
-          </View>
+          </Accordion>
         </ScrollView>
 
         <SheetFooter>
