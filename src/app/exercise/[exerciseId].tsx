@@ -14,6 +14,8 @@ import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
 import { getWgerExerciseById } from "@/services/wger/client";
+const blurhash =
+  "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
 function MuscleGroup({ title, muscles }: { title: string; muscles: string[] }) {
   if (muscles.length === 0) return null;
@@ -111,8 +113,9 @@ export default function ExerciseDetailScreen() {
             {item.imageUrl ? (
               <ExpoImage
                 source={{ uri: item.imageUrl }}
-                style={{ width: "100%", height: 200 }}
-                contentFit="contain"
+                style={{ width: "100%", aspectRatio: 1 }}
+                contentFit={"cover"}
+                placeholder={blurhash}
               />
             ) : null}
 
