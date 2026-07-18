@@ -1,7 +1,12 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react-native";
-import { ActivityIndicator, Pressable, useColorScheme, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  useColorScheme,
+  View,
+} from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
 import { CustomScreen } from "@/components/common";
@@ -32,33 +37,41 @@ export default function SearchScreen() {
   const [pendingPage, setPendingPage] = useState<number | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
-  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<number[]>([]);
+  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<number[]>(
+    [],
+  );
   const [selectedMuscleIds, setSelectedMuscleIds] = useState<number[]>([]);
 
   const categoryOptions = useMemo<ExerciseFilterOption[]>(
     () =>
-      Object.entries(wgerCategories).map(([id, name]) => ({
-        id: Number(id),
-        name,
-      })),
+      Object.entries(wgerCategories)
+        .map(([id, name]) => ({
+          id: Number(id),
+          name,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [],
   );
 
   const equipmentOptions = useMemo<ExerciseFilterOption[]>(
     () =>
-      Object.entries(wgerEquipment).map(([id, name]) => ({
-        id: Number(id),
-        name,
-      })),
+      Object.entries(wgerEquipment)
+        .map(([id, name]) => ({
+          id: Number(id),
+          name,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [],
   );
 
   const muscleOptions = useMemo<ExerciseFilterOption[]>(
     () =>
-      wgerMuscles.map((item) => ({
-        id: item.id,
-        name: item.name_en || item.name,
-      })),
+      wgerMuscles
+        .map((item) => ({
+          id: item.id,
+          name: item.name_en || item.name,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [],
   );
 
@@ -125,18 +138,24 @@ export default function SearchScreen() {
   const activeFilterChips = [
     ...selectedCategoryIds.map((id) => ({
       key: `category-${id}`,
-      label: categoryOptions.find((option) => option.id === id)?.name ?? "Category",
-      onRemove: () => setSelectedCategoryIds((prev) => prev.filter((item) => item !== id)),
+      label:
+        categoryOptions.find((option) => option.id === id)?.name ?? "Category",
+      onRemove: () =>
+        setSelectedCategoryIds((prev) => prev.filter((item) => item !== id)),
     })),
     ...selectedEquipmentIds.map((id) => ({
       key: `equipment-${id}`,
-      label: equipmentOptions.find((option) => option.id === id)?.name ?? "Equipment",
-      onRemove: () => setSelectedEquipmentIds((prev) => prev.filter((item) => item !== id)),
+      label:
+        equipmentOptions.find((option) => option.id === id)?.name ??
+        "Equipment",
+      onRemove: () =>
+        setSelectedEquipmentIds((prev) => prev.filter((item) => item !== id)),
     })),
     ...selectedMuscleIds.map((id) => ({
       key: `muscle-${id}`,
       label: muscleOptions.find((option) => option.id === id)?.name ?? "Muscle",
-      onRemove: () => setSelectedMuscleIds((prev) => prev.filter((item) => item !== id)),
+      onRemove: () =>
+        setSelectedMuscleIds((prev) => prev.filter((item) => item !== id)),
     })),
   ];
 
@@ -175,7 +194,11 @@ export default function SearchScreen() {
       {activeFilterChips.length > 0 ? (
         <View className="mt-3 flex-row flex-wrap gap-2">
           {activeFilterChips.map((chip) => (
-            <Badge key={chip.key} variant="secondary" className="flex-row items-center gap-1 pr-1">
+            <Badge
+              key={chip.key}
+              variant="secondary"
+              className="flex-row items-center gap-1 pr-1"
+            >
               <Text>{chip.label}</Text>
               <Pressable onPress={chip.onRemove} hitSlop={8}>
                 <Icon as={X} className="text-secondary-foreground size-3" />
@@ -196,7 +219,12 @@ export default function SearchScreen() {
           <CardContent className="gap-2">
             <Text>We couldn&apos;t load exercises right now.</Text>
             <Text variant="muted">Check your connection and try again.</Text>
-            <Button variant="outline" size="sm" className="self-start" onPress={() => void refetch()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onPress={() => void refetch()}
+            >
               <Text>Retry</Text>
             </Button>
           </CardContent>
@@ -297,17 +325,23 @@ export default function SearchScreen() {
         selectedMuscleIds={selectedMuscleIds}
         onToggleCategory={(id) =>
           setSelectedCategoryIds((prev) =>
-            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+            prev.includes(id)
+              ? prev.filter((item) => item !== id)
+              : [...prev, id],
           )
         }
         onToggleEquipment={(id) =>
           setSelectedEquipmentIds((prev) =>
-            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+            prev.includes(id)
+              ? prev.filter((item) => item !== id)
+              : [...prev, id],
           )
         }
         onToggleMuscle={(id) =>
           setSelectedMuscleIds((prev) =>
-            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+            prev.includes(id)
+              ? prev.filter((item) => item !== id)
+              : [...prev, id],
           )
         }
         onClearAll={clearFilters}

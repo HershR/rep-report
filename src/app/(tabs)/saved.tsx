@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -17,8 +18,9 @@ import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTempla
 import type { WorkoutTemplate } from "@/features/templates/types";
 import { THEME } from "@/lib/theme";
 
+type SavedTab = "exercises" | "templates";
+
 type SavedRow =
-  | { key: string; kind: "section-header"; title: string; count?: number; action?: { label: string; onPress: () => void } }
   | { key: string; kind: "loading" }
   | { key: string; kind: "error"; message: string }
   | { key: string; kind: "empty"; message: string }
@@ -29,6 +31,7 @@ export default function SavedScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
   const colors = THEME[scheme ?? "light"];
+  const [tab, setTab] = useState<SavedTab>("exercises");
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
   const {
@@ -37,8 +40,11 @@ export default function SavedScreen() {
     error: templatesError,
     deleteWorkoutTemplate,
   } = useWorkoutTemplates();
-  const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(null);
-  const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
+  const [exerciseToRemove, setExerciseToRemove] = useState<Exercise | null>(
+    null,
+  );
+  const [templateToDelete, setTemplateToDelete] =
+    useState<WorkoutTemplate | null>(null);
 
   const confirmRemoveFavorite = async () => {
     if (!exerciseToRemove) return;
@@ -50,50 +56,90 @@ export default function SavedScreen() {
     await deleteWorkoutTemplate(templateToDelete.id);
   };
 
-  const rows: SavedRow[] = [
-    {
-      key: "exercises-header",
-      kind: "section-header",
-      title: "Saved Exercises",
-      count: !isLoading && !error ? favorites.length : undefined,
-    },
-    ...(isLoading
-      ? [{ key: "exercises-loading", kind: "loading" } as const]
-      : error
-        ? [{ key: "exercises-error", kind: "error", message: "Could not load saved exercises." } as const]
-        : favorites.length === 0
-          ? [
-              {
-                key: "exercises-empty",
-                kind: "empty",
-                message: "No saved exercises yet. Search and tap Favorite.",
-              } as const,
-            ]
-          : favorites.map((exercise) => ({ key: `exercise-${exercise.id}`, kind: "exercise" as const, exercise }))),
-    {
-      key: "templates-header",
-      kind: "section-header",
-      title: "Workout Templates",
-      count: !templatesLoading && !templatesError ? templates.length : undefined,
-      action: { label: "Create New", onPress: () => router.push("/workout/template/new" as Href) },
-    },
-    ...(templatesLoading
-      ? [{ key: "templates-loading", kind: "loading" } as const]
-      : templatesError
-        ? [{ key: "templates-error", kind: "error", message: "Could not load templates." } as const]
-        : templates.length === 0
-          ? [
-              {
-                key: "templates-empty",
-                kind: "empty",
-                message: "No workout templates yet. Create one to start faster.",
-              } as const,
-            ]
-          : templates.map((template) => ({ key: `template-${template.id}`, kind: "template" as const, template }))),
-  ];
+  const exerciseRows: SavedRow[] = isLoading
+    ? [{ key: "exercises-loading", kind: "loading" }]
+    : error
+      ? [
+          {
+            key: "exercises-error",
+            kind: "error",
+            message: "Could not load saved exercises.",
+          },
+        ]
+      : favorites.length === 0
+        ? [
+            {
+              key: "exercises-empty",
+              kind: "empty",
+              message: "No saved exercises yet. Search and tap Favorite.",
+            },
+          ]
+        : favorites.map((exercise) => ({
+            key: `exercise-${exercise.id}`,
+            kind: "exercise" as const,
+            exercise,
+          }));
+
+  const templateRows: SavedRow[] = templatesLoading
+    ? [{ key: "templates-loading", kind: "loading" }]
+    : templatesError
+      ? [
+          {
+            key: "templates-error",
+            kind: "error",
+            message: "Could not load templates.",
+          },
+        ]
+      : templates.length === 0
+        ? [
+            {
+              key: "templates-empty",
+              kind: "empty",
+              message: "No workout templates yet. Create one to start faster.",
+            },
+          ]
+        : templates.map((template) => ({
+            key: `template-${template.id}`,
+            kind: "template" as const,
+            template,
+          }));
+
+  const rows = tab === "exercises" ? exerciseRows : templateRows;
+
+  const exerciseCount = !isLoading && !error ? favorites.length : undefined;
+  const templateCount =
+    !templatesLoading && !templatesError ? templates.length : undefined;
 
   return (
     <CustomScreen>
+      <View className="mb-3 gap-3">
+        <View>
+          <Text variant="h2">Saved</Text>
+          <Text variant="muted">Manage saved exercises and templates.</Text>
+        </View>
+
+        <Tabs value={tab} onValueChange={(value) => setTab(value as SavedTab)}>
+          <TabsList className="w-full">
+            <TabsTrigger value="exercises" className="flex-1">
+              <Text>Exercises</Text>
+              {exerciseCount !== undefined ? (
+                <Badge variant="secondary">
+                  <Text>{exerciseCount}</Text>
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="flex-1">
+              <Text>Templates</Text>
+              {templateCount !== undefined ? (
+                <Badge variant="secondary">
+                  <Text>{templateCount}</Text>
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </View>
+
       <FlashList
         data={rows}
         keyExtractor={(row) => row.key}
@@ -101,29 +147,20 @@ export default function SavedScreen() {
         style={{ flex: 1 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListHeaderComponent={
-          <View className="mb-2">
-            <Text variant="h2">Saved</Text>
-            <Text variant="muted">Manage saved exercises and templates.</Text>
-          </View>
+          tab === "templates" ? (
+            <View className="mb-2 flex-row justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => router.push("/workout/template/new" as Href)}
+              >
+                <Text>Create New</Text>
+              </Button>
+            </View>
+          ) : null
         }
         renderItem={({ item }) => {
           switch (item.kind) {
-            case "section-header":
-              return (
-                <View className="flex-row items-center gap-2 pb-2 pt-4">
-                  <Text variant="large">{item.title}</Text>
-                  {item.count !== undefined ? (
-                    <Badge variant="secondary">
-                      <Text>{item.count}</Text>
-                    </Badge>
-                  ) : null}
-                  {item.action ? (
-                    <Button variant="ghost" size="sm" className="ml-auto" onPress={item.action.onPress}>
-                      <Text>{item.action.label}</Text>
-                    </Button>
-                  ) : null}
-                </View>
-              );
             case "loading":
               return (
                 <View className="items-center py-4">

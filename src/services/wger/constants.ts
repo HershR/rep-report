@@ -18,7 +18,7 @@ export const wgerEquipment = {
   6: "Pull-up bar",
   2: "SZ-Bar",
   5: "Swiss Ball",
-  7: "none (bodyweight exercise)",
+  7: "Bodyweight",
 };
 export const wgerMuscles = [
   {
@@ -59,7 +59,7 @@ export const wgerMuscles = [
   {
     id: 14,
     name: "Obliquus externus abdominis",
-    name_en: "",
+    name_en: "Obliques",
   },
   {
     id: 4,
@@ -89,7 +89,7 @@ export const wgerMuscles = [
   {
     id: 9,
     name: "Trapezius",
-    name_en: "",
+    name_en: "Traps",
   },
   {
     id: 5,
