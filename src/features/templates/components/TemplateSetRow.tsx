@@ -12,7 +12,12 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
-import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
+import {
+  distanceToText,
+  textToMetricDistance,
+  weightToText,
+  textToMetricWeight,
+} from "@/lib/units";
 
 type TemplateSetRowProps = {
   index: number;
@@ -55,19 +60,33 @@ export function TemplateSetRow({
   useEffect(() => {
     if (isDurationFocused) return;
     const secondsValue = Number(durationText || "0");
-    setDurationInput(secondsToDurationDisplay(Number.isFinite(secondsValue) ? secondsValue : 0));
+    setDurationInput(
+      secondsToDurationDisplay(
+        Number.isFinite(secondsValue) ? secondsValue : 0,
+      ),
+    );
   }, [durationText, isDurationFocused]);
 
   useEffect(() => {
     if (isDistanceFocused) return;
     const kmValue = Number(distanceText || "0");
-    setDistanceInput(distanceToText(Number.isFinite(kmValue) && kmValue > 0 ? kmValue : null, distanceUnit));
+    setDistanceInput(
+      distanceToText(
+        Number.isFinite(kmValue) && kmValue > 0 ? kmValue : null,
+        distanceUnit,
+      ),
+    );
   }, [distanceText, distanceUnit, isDistanceFocused]);
 
   useEffect(() => {
     if (isWeightFocused) return;
     const kgValue = Number(weightText || "0");
-    setWeightInput(weightToText(Number.isFinite(kgValue) && kgValue > 0 ? kgValue : null, weightUnit));
+    setWeightInput(
+      weightToText(
+        Number.isFinite(kgValue) && kgValue > 0 ? kgValue : null,
+        weightUnit,
+      ),
+    );
   }, [weightText, weightUnit, isWeightFocused]);
 
   const commitDuration = () => {
@@ -106,63 +125,66 @@ export function TemplateSetRow({
   };
 
   return (
-    <View className="bg-muted gap-2 rounded-md p-3">
-      <View className="flex-row items-center justify-between">
-        <Text variant="muted">{`Set ${index + 1}`}</Text>
-        <Button variant="ghost" size="icon" onPress={onDelete}>
-          <Icon as={Trash2} className="text-muted-foreground size-4" />
-        </Button>
+    <View className="flex-row items-center gap-2 py-1.5">
+      <View className="w-6 items-center">
+        <Text variant="muted" className="text-sm">
+          {index + 1}
+        </Text>
       </View>
 
-      <View className="flex-row gap-2">
-        {isCardio ? (
-          <>
-            <Input
-              className="flex-1"
-              value={durationInput}
-              onChangeText={onChangeDurationInput}
-              keyboardType="numeric"
-              placeholder="hh:mm:ss"
-              onFocus={() => setIsDurationFocused(true)}
-              onEndEditing={commitDuration}
-              onBlur={commitDuration}
-              onSubmitEditing={commitDuration}
-            />
-            <Input
-              className="flex-1"
-              value={distanceInput}
-              onChangeText={onChangeDistanceInput}
-              keyboardType="decimal-pad"
-              placeholder={`Dist (${distanceUnit})`}
-              onFocus={() => setIsDistanceFocused(true)}
-              onEndEditing={commitDistance}
-              onBlur={commitDistance}
-              onSubmitEditing={commitDistance}
-            />
-          </>
-        ) : (
-          <>
-            <Input
-              className="flex-1"
-              value={repsText}
-              onChangeText={onChangeReps}
-              keyboardType="numeric"
-              placeholder="Reps"
-            />
-            <Input
-              className="flex-1"
-              value={weightInput}
-              onChangeText={onChangeWeightInput}
-              keyboardType="decimal-pad"
-              placeholder={`Weight (${weightUnit})`}
-              onFocus={() => setIsWeightFocused(true)}
-              onEndEditing={commitWeight}
-              onBlur={commitWeight}
-              onSubmitEditing={commitWeight}
-            />
-          </>
-        )}
-      </View>
+      {isCardio ? (
+        <>
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={durationInput}
+            onChangeText={onChangeDurationInput}
+            keyboardType="numeric"
+            onFocus={() => setIsDurationFocused(true)}
+            onEndEditing={commitDuration}
+            onBlur={commitDuration}
+            onSubmitEditing={commitDuration}
+            placeholder="00:00:00"
+          />
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={distanceInput}
+            onChangeText={onChangeDistanceInput}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsDistanceFocused(true)}
+            onEndEditing={commitDistance}
+            onBlur={commitDistance}
+            onSubmitEditing={commitDistance}
+          />
+        </>
+      ) : (
+        <>
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={repsText}
+            onChangeText={onChangeReps}
+            keyboardType="numeric"
+          />
+          <Input
+            className="h-9 flex-1 px-2 text-center"
+            value={weightInput}
+            onChangeText={onChangeWeightInput}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsWeightFocused(true)}
+            onEndEditing={commitWeight}
+            onBlur={commitWeight}
+            onSubmitEditing={commitWeight}
+          />
+        </>
+      )}
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onPress={onDelete}
+      >
+        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+      </Button>
     </View>
   );
 }

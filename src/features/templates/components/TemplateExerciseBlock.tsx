@@ -1,9 +1,11 @@
 import { Plus, Trash2 } from "lucide-react-native";
+import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateSetRow } from "@/features/templates/components/TemplateSetRow";
 import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 
@@ -38,40 +40,78 @@ export function TemplateExerciseBlock({
   onDeleteSet,
   onUpdateSet,
 }: TemplateExerciseBlockProps) {
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
   const showDuration = isCardioExercise(exerciseCategory, exerciseName);
 
+  const firstColumnLabel = showDuration ? "TIME" : "REPS";
+  const secondColumnLabel = showDuration
+    ? `DIST (${distanceUnit.toUpperCase()})`
+    : `WEIGHT (${weightUnit.toUpperCase()})`;
+
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex-1">{exerciseName}</CardTitle>
-        <Button variant="ghost" size="icon" onPress={onDeleteExercise}>
+    <View className="gap-2">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-primary font-semibold">{exerciseName}</Text>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onPress={onDeleteExercise}
+        >
           <Icon as={Trash2} className="text-muted-foreground size-4" />
         </Button>
-      </CardHeader>
+      </View>
 
-      <CardContent className="gap-2">
-        {sets.map((set, index) => (
-          <TemplateSetRow
-            key={set.localId}
-            index={index}
-            repsText={set.repsText}
-            weightText={set.weightText}
-            durationText={set.durationText}
-            distanceText={set.distanceText}
-            isCardio={showDuration}
-            onDelete={() => onDeleteSet(set.localId)}
-            onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
-            onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}
-            onChangeDuration={(value) => onUpdateSet(set.localId, "durationText", value)}
-            onChangeDistance={(value) => onUpdateSet(set.localId, "distanceText", value)}
-          />
-        ))}
+      {sets.length > 0 ? (
+        <>
+          <View className="flex-row items-center gap-2">
+            <View className="w-6" />
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {firstColumnLabel}
+            </Text>
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {secondColumnLabel}
+            </Text>
+            <View className="w-8" />
+          </View>
+          <Separator />
+        </>
+      ) : null}
 
-        <Button variant="outline" size="sm" className="self-start" onPress={onAddSet}>
-          <Icon as={Plus} className="text-foreground size-4" />
-          <Text>Add Target Set</Text>
-        </Button>
-      </CardContent>
-    </Card>
+      {sets.map((set, index) => (
+        <TemplateSetRow
+          key={set.localId}
+          index={index}
+          repsText={set.repsText}
+          weightText={set.weightText}
+          durationText={set.durationText}
+          distanceText={set.distanceText}
+          isCardio={showDuration}
+          onDelete={() => onDeleteSet(set.localId)}
+          onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
+          onChangeWeight={(value) =>
+            onUpdateSet(set.localId, "weightText", value)
+          }
+          onChangeDuration={(value) =>
+            onUpdateSet(set.localId, "durationText", value)
+          }
+          onChangeDistance={(value) =>
+            onUpdateSet(set.localId, "distanceText", value)
+          }
+        />
+      ))}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2 self-start"
+        onPress={onAddSet}
+      >
+        <Icon as={Plus} className="text-primary size-4" />
+        <Text className="text-primary">Add set</Text>
+      </Button>
+    </View>
   );
 }

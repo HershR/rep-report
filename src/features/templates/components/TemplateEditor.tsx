@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
@@ -251,7 +252,7 @@ export function TemplateEditor({
   const errorMessage = getErrorMessage(errors);
 
   return (
-    <View className="mt-4 gap-4 pb-8">
+    <View className="mt-4 gap-3 pb-8">
       <View className="gap-2">
         <Label>Template name</Label>
         <Controller
@@ -302,13 +303,15 @@ export function TemplateEditor({
       ) : (
         <View className="gap-3">
           {exerciseFields.map((exercise, index) => (
-            <ExerciseField
-              key={exercise.id}
-              control={control}
-              setValue={setValue}
-              index={index}
-              onDeleteExercise={() => onDeleteExercise(index)}
-            />
+            <View key={exercise.id} className="gap-3">
+              {index > 0 ? <Separator /> : null}
+              <ExerciseField
+                control={control}
+                setValue={setValue}
+                index={index}
+                onDeleteExercise={() => onDeleteExercise(index)}
+              />
+            </View>
           ))}
         </View>
       )}
