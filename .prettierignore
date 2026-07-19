@@ -4,3 +4,9 @@ dist
 web-build
 coverage
 *.lock
+android
+.agent
+.claude
+.cursor
+.idea
+.vscode
