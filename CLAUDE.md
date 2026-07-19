@@ -9,17 +9,21 @@ Rep Report — a local-first Expo/React Native workout tracking app for beginner
 ## Commands
 
 ```bash
-npx expo start          # dev server (then press i/a/w, or scan the QR code with Expo Go)
-npm run ios             # dev server, iOS
-npm run android         # dev server, Android
-npm run web             # dev server, web — NOTE: web is broken, see below
+npx expo start          # JS/Metro dev server — the normal day-to-day loop (press i/a/w, or scan the QR with Expo Go / a dev client)
+npm run ios             # `expo run:ios` — full NATIVE build + install of a dev client (needs Xcode); NOT just a dev server
+npm run android         # `expo run:android` — full NATIVE build + install of a dev client (needs Android SDK/emulator)
+npm run web             # `expo start --web` — NOTE: web is broken, see below
 npx tsc --noEmit        # type-check the whole project
-npx expo lint           # eslint (eslint-config-expo flat config)
+npx expo lint           # eslint (eslint-config-expo flat config); also `npm run lint`
 npm run format          # prettier --write .
 npx drizzle-kit generate   # generate a migration after editing src/db/schema.ts (uses drizzle.config.ts)
 ```
 
+`npx expo start` is what you normally want — it serves JS over Metro to whatever's already installed (Expo Go or a dev client). Reserve `npm run ios`/`android` for when native code/deps changed and the client binary must be rebuilt; they compile the native project, which is slow. (There's also a `reset-project` script — it scaffolds a blank app and is not part of normal work.)
+
 There is no test framework configured (no jest, no test script in `package.json`) — don't invent one or assume test commands exist.
+
+**Inspecting the DB**: the on-device SQLite database can be browsed live in dev via Drizzle Studio (the `expo-drizzle-studio-plugin` dependency) — open it from the Expo CLI dev-tools menu (`shift+m` in the `expo start` terminal). This is the fastest way to confirm what actually got written to disk (invaluable for data/unit-conversion bugs).
 
 ### Verifying changes — read this before testing anything
 
@@ -36,6 +40,8 @@ Be upfront that anything requiring an actual device — animation feel, haptics,
 - Never bump `react-native-worklets` itself to satisfy a peer range — it must stay at the exact version Expo Go's native binary was built against, or the app crashes at runtime with a TurboModule argument-count mismatch. If a new package's peer range conflicts with it, bypass with `--legacy-peer-deps` instead of upgrading worklets.
 
 ## Architecture
+
+Imports use the `@/` path alias for `src/` (e.g. `@/features/workouts/...`, `@/lib/units`) — configured in `tsconfig.json`; prefer it over long relative paths.
 
 ### Feature-based structure, not layer-based
 
