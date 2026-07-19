@@ -111,12 +111,14 @@ export default function ExerciseDetailScreen() {
         <FadeInView>
           <Card className="mt-4 gap-0 overflow-hidden p-0">
             {item.imageUrl ? (
-              <ExpoImage
-                source={{ uri: item.imageUrl }}
-                style={{ width: "100%", aspectRatio: 1 }}
-                contentFit={"cover"}
-                placeholder={blurhash}
-              />
+              <View className="bg-white">
+                <ExpoImage
+                  source={{ uri: item.imageUrl }}
+                  style={{ width: "100%", aspectRatio: 1 }}
+                  contentFit={"contain"}
+                  placeholder={blurhash}
+                />
+              </View>
             ) : null}
 
             <CardContent className="gap-3 p-4">
