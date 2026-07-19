@@ -5,7 +5,6 @@ import { useRouter, type Href } from "expo-router";
 import { CustomScreen } from "@/components/common";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
-import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
 import {
   parseTemplateNumberText,
@@ -16,14 +15,11 @@ import {
   addSetToTemplateExercise,
   createWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-import { textToMetricWeight } from "@/lib/units";
 
 export default function NewTemplateScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
   const [isSaving, setIsSaving] = useState(false);
 
   const onSave = async (value: TemplateEditorValue) => {
@@ -46,7 +42,7 @@ export default function NewTemplateScreen() {
             templateExerciseId: addedExercise.id,
             orderIndex: setIndex,
             targetReps: parseTemplateNumberText(set.repsText),
-            targetWeight: textToMetricWeight(set.weightText, weightUnit),
+            targetWeight: parseTemplateNumberText(set.weightText),
             targetDurationSeconds: parseTemplateNumberText(set.durationText),
             targetDistance: parseTemplateNumberText(set.distanceText),
           });

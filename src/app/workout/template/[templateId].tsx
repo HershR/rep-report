@@ -8,7 +8,6 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
-import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
 import { useWorkoutTemplate } from "@/features/templates/hooks/useWorkoutTemplate";
 import {
@@ -25,7 +24,6 @@ import {
   updateTemplateSet,
   updateWorkoutTemplate,
 } from "@/features/templates/repositories/templateRepository";
-import { textToMetricWeight } from "@/lib/units";
 
 export default function TemplateDetailScreen() {
   const router = useRouter();
@@ -34,8 +32,6 @@ export default function TemplateDetailScreen() {
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
   const { template, isLoading, error, refetch } = useWorkoutTemplate(templateId);
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
   const [isSaving, setIsSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
@@ -75,7 +71,7 @@ export default function TemplateDetailScreen() {
               await updateTemplateSet(set.id, {
                 orderIndex: setIndex,
                 targetReps: parseTemplateNumberText(set.repsText),
-                targetWeight: textToMetricWeight(set.weightText, weightUnit),
+                targetWeight: parseTemplateNumberText(set.weightText),
                 targetDurationSeconds: parseTemplateNumberText(set.durationText),
                 targetDistance: parseTemplateNumberText(set.distanceText),
               });
@@ -84,7 +80,7 @@ export default function TemplateDetailScreen() {
                 templateExerciseId: exercise.id,
                 orderIndex: setIndex,
                 targetReps: parseTemplateNumberText(set.repsText),
-                targetWeight: textToMetricWeight(set.weightText, weightUnit),
+                targetWeight: parseTemplateNumberText(set.weightText),
                 targetDurationSeconds: parseTemplateNumberText(set.durationText),
                 targetDistance: parseTemplateNumberText(set.distanceText),
               });
@@ -101,7 +97,7 @@ export default function TemplateDetailScreen() {
               templateExerciseId: addedExercise.id,
               orderIndex: setIndex,
               targetReps: parseTemplateNumberText(set.repsText),
-              targetWeight: textToMetricWeight(set.weightText, weightUnit),
+              targetWeight: parseTemplateNumberText(set.weightText),
               targetDurationSeconds: parseTemplateNumberText(set.durationText),
               targetDistance: parseTemplateNumberText(set.distanceText),
             });

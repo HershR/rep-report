@@ -160,7 +160,7 @@ export default function SearchScreen() {
       <Text variant="h2">Search</Text>
       <Text variant="muted">Find exercises from WGER.</Text>
 
-      <View className="border-input bg-black mt-4 flex-row items-center gap-2 rounded-md border-2 px-3">
+      <View className="border-input bg-background mt-4 flex-row items-center gap-2 rounded-md border-2 px-3">
         <Icon as={Search} className="text-muted-foreground" />
         <Input
           className="flex-1 border-0 px-0 shadow-none"

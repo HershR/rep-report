@@ -275,9 +275,11 @@ export function TemplateEditor({
           name="description"
           render={({ field: { value, onChange } }) => (
             <Textarea
+              className="bg-background dark:bg-input/30"
               value={value}
               onChangeText={onChange}
               placeholder="Description (optional)"
+              placeholderClassName="text-muted-foreground/50"
             />
           )}
         />
