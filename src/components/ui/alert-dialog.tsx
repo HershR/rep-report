@@ -3,6 +3,7 @@ import { NativeOnlyAnimatedView } from "@/components/ui/native-only-animated-vie
 import { TextClassContext } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import * as AlertDialogPrimitive from "@rn-primitives/alert-dialog";
+import { type VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { Platform, View, type ViewProps } from "react-native";
 import { FadeIn, FadeOut, ReduceMotion, ZoomIn } from "react-native-reanimated";
@@ -136,12 +137,15 @@ function AlertDialogDescription({
 
 function AlertDialogAction({
   className,
+  variant = "default",
+  size,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
+  VariantProps<typeof buttonVariants>) {
   return (
-    <TextClassContext.Provider value={buttonTextVariants({ className })}>
+    <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <AlertDialogPrimitive.Action
-        className={cn(buttonVariants(), className)}
+        className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       />
     </TextClassContext.Provider>
@@ -150,14 +154,15 @@ function AlertDialogAction({
 
 function AlertDialogCancel({
   className,
+  variant = "outline",
+  size,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
+  VariantProps<typeof buttonVariants>) {
   return (
-    <TextClassContext.Provider
-      value={buttonTextVariants({ className, variant: "outline" })}
-    >
+    <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <AlertDialogPrimitive.Cancel
-        className={cn(buttonVariants({ variant: "outline" }), className)}
+        className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       />
     </TextClassContext.Provider>
