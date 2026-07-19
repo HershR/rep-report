@@ -1,6 +1,13 @@
 import { useColorScheme } from "nativewind";
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { THEME } from "@/lib/theme";
@@ -50,7 +57,12 @@ export function CustomScreen({
       style={[styles.flex, { backgroundColor: colors.background }]}
       edges={["top", "left", "right"]}
     >
-      {inner}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {inner}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
