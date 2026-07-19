@@ -1,7 +1,5 @@
-import { StyleSheet } from "react-native";
-
-import { CustomCard, CustomText } from "@/components/common";
-import { spacing } from "@/theme";
+import { Card, CardContent } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
 
 type WorkoutTimerHeaderProps = {
   workoutName: string;
@@ -18,15 +16,11 @@ function formatElapsed(seconds: number): string {
 
 export function WorkoutTimerHeader({ workoutName, elapsedSeconds }: WorkoutTimerHeaderProps) {
   return (
-    <CustomCard style={styles.card}>
-      <CustomText variant="title">{workoutName}</CustomText>
-      <CustomText muted>{`Elapsed ${formatElapsed(elapsedSeconds)}`}</CustomText>
-    </CustomCard>
+    <Card>
+      <CardContent className="gap-1">
+        <Text variant="h3">{workoutName}</Text>
+        <Text variant="muted">{`Elapsed ${formatElapsed(elapsedSeconds)}`}</Text>
+      </CardContent>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.xs,
-  },
-});

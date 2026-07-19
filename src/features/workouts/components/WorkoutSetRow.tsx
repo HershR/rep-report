@@ -1,7 +1,20 @@
-import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { View } from "react-native";
+import * as Haptics from "expo-haptics";
+import { Check, Trash2 } from "lucide-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
-import { CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -9,8 +22,12 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
-import { distanceToText, textToMetricDistance, weightToText, textToMetricWeight } from "@/lib/units";
-import { spacing, useThemeColors } from "@/theme";
+import {
+  distanceToText,
+  textToMetricDistance,
+  weightToText,
+  textToMetricWeight,
+} from "@/lib/units";
 
 type WorkoutSetRowProps = {
   index: number;
@@ -49,11 +66,32 @@ export function WorkoutSetRow({
   onUpdate,
   onDelete,
 }: WorkoutSetRowProps) {
-  const colors = useThemeColors();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
+
+  const reducedMotion = useReducedMotion();
+  const completeButtonScale = useSharedValue(1);
+  const wasCompletedRef = useRef(isCompleted);
+
+  useEffect(() => {
+    // Pop only on the incomplete → complete transition, never on mount or when un-marking.
+    if (isCompleted && !wasCompletedRef.current) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (!reducedMotion) {
+        completeButtonScale.value = withSequence(
+          withTiming(1.06, { duration: 80 }),
+          withTiming(1, { duration: 100 }),
+        );
+      }
+    }
+    wasCompletedRef.current = isCompleted;
+  }, [isCompleted, reducedMotion, completeButtonScale]);
+
+  const completeButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: completeButtonScale.value }],
+  }));
 
   const [durationInput, setDurationInput] = useState("");
   const [isDurationFocused, setIsDurationFocused] = useState(false);
@@ -99,11 +137,22 @@ export function WorkoutSetRow({
   };
 
   return (
-    <View style={styles.row}>
-      <CustomText muted style={styles.index}>{`#${index + 1}`}</CustomText>
+    <View
+      className={cn(
+        "flex-row items-center gap-2 rounded-md px-2 py-1.5",
+        isCompleted && "bg-primary/10",
+      )}
+    >
+      <View className="w-6 items-center">
+        <Text variant="muted" className="text-sm">
+          {index + 1}
+        </Text>
+      </View>
+
       {isCardio ? (
         <>
-          <TextInput
+          <Input
+            className="h-9 flex-1 px-2 text-center"
             value={durationInput}
             onChangeText={(value) => {
               const formatted = formatDurationInput(value);
@@ -115,22 +164,13 @@ export function WorkoutSetRow({
               }
             }}
             keyboardType="number-pad"
-            placeholder="hh:mm:ss"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
             onFocus={() => setIsDurationFocused(true)}
             onEndEditing={commitDuration}
             onBlur={commitDuration}
             onSubmitEditing={commitDuration}
           />
-          <TextInput
+          <Input
+            className="h-9 flex-1 px-2 text-center"
             value={distanceInput}
             onChangeText={(value) => {
               setDistanceInput(value);
@@ -141,16 +181,6 @@ export function WorkoutSetRow({
               }
             }}
             keyboardType="decimal-pad"
-            placeholder={`Dist (${distanceUnit})`}
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
             onFocus={() => setIsDistanceFocused(true)}
             onEndEditing={commitDistance}
             onBlur={commitDistance}
@@ -159,19 +189,10 @@ export function WorkoutSetRow({
         </>
       ) : (
         <>
-          <TextInput
+          <Input
+            className="h-9 flex-1 px-2 text-center"
             defaultValue={toText(workoutSet.reps)}
             keyboardType="number-pad"
-            placeholder="Reps"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
             onEndEditing={(event) => {
               if (!commitOnChange) {
                 onUpdate(workoutSet.id, {
@@ -189,7 +210,8 @@ export function WorkoutSetRow({
                 : undefined
             }
           />
-          <TextInput
+          <Input
+            className="h-9 flex-1 px-2 text-center"
             value={weightInput}
             onChangeText={(value) => {
               setWeightInput(value);
@@ -200,16 +222,6 @@ export function WorkoutSetRow({
               }
             }}
             keyboardType="decimal-pad"
-            placeholder={`Wt (${weightUnit})`}
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
             onFocus={() => setIsWeightFocused(true)}
             onEndEditing={commitWeight}
             onBlur={commitWeight}
@@ -217,35 +229,32 @@ export function WorkoutSetRow({
           />
         </>
       )}
-      <Pressable
-        onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
+
+      <Animated.View style={completeButtonAnimatedStyle}>
+        <Button
+          variant={isCompleted ? "default" : "outline"}
+          size="icon"
+          className="h-9 w-9"
+          onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
+        >
+          <Icon
+            as={Check}
+            className={cn(
+              "size-4",
+              isCompleted ? "text-primary-foreground" : "text-muted-foreground",
+            )}
+          />
+        </Button>
+      </Animated.View>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-8"
+        onPress={() => onDelete(workoutSet.id)}
       >
-        <CustomText muted={!isCompleted}>
-          {isCompleted ? "Done" : "Mark"}
-        </CustomText>
-      </Pressable>
-      <Pressable onPress={() => onDelete(workoutSet.id)}>
-        <CustomText muted>Del</CustomText>
-      </Pressable>
+        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+      </Button>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  index: {
-    width: 28,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
-    minWidth: 52,
-  },
-});

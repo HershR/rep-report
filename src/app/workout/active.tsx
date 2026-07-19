@@ -1,25 +1,55 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { useColorScheme } from "nativewind";
+import { View } from "react-native";
+import { toast } from "sonner-native";
 
-import { CustomButton, CustomScreen, CustomText } from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import type { WorkoutSetInput } from "@/features/workouts/types";
-import { spacing } from "@/theme";
+import { THEME } from "@/lib/theme";
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
 
-type PendingSetInput = Pick<WorkoutSetInput, "reps" | "weight" | "durationSeconds" | "distance">;
+type PendingSetInput = Pick<
+  WorkoutSetInput,
+  "reps" | "weight" | "durationSeconds" | "distance"
+>;
 
 export default function ActiveWorkoutScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ templateId?: string; name?: string; sessionId?: string }>();
+  const params = useLocalSearchParams<{
+    templateId?: string;
+    name?: string;
+    sessionId?: string;
+  }>();
+  const { colorScheme: scheme } = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
+    useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [noExerciseAlertOpen, setNoExerciseAlertOpen] = useState(false);
   const { favorites } = useFavoriteExercises();
   const {
     activeWorkout,
@@ -60,7 +90,10 @@ export default function ActiveWorkoutScreen() {
     if (!activeWorkout?.startedAt) return;
     const tick = () => {
       setElapsedSeconds(
-        Math.max(0, Math.floor((Date.now() - Date.parse(activeWorkout.startedAt)) / 1000)),
+        Math.max(
+          0,
+          Math.floor((Date.now() - Date.parse(activeWorkout.startedAt)) / 1000),
+        ),
       );
     };
     tick();
@@ -68,10 +101,15 @@ export default function ActiveWorkoutScreen() {
     return () => clearInterval(timer);
   }, [activeWorkout?.startedAt]);
 
-  const canComplete = useMemo(() => Boolean(activeWorkout && activeWorkout.exercises.length > 0), [activeWorkout]);
+  const canComplete = useMemo(
+    () => Boolean(activeWorkout && activeWorkout.exercises.length > 0),
+    [activeWorkout],
+  );
 
   const pendingSetInputsRef = useRef<Map<string, PendingSetInput>>(new Map());
-  const pendingSetTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pendingSetTimersRef = useRef<
+    Map<string, ReturnType<typeof setTimeout>>
+  >(new Map());
   const updateSetRef = useRef(updateSet);
 
   useEffect(() => {
@@ -86,7 +124,11 @@ export default function ActiveWorkoutScreen() {
     }
     pendingSetTimersRef.current.clear();
 
-    await Promise.all(pending.map(([setId, input]) => updateSetRef.current({ setId, ...input })));
+    await Promise.all(
+      pending.map(([setId, input]) =>
+        updateSetRef.current({ setId, ...input }),
+      ),
+    );
   };
 
   const cancelPendingSetUpdates = () => {
@@ -125,16 +167,26 @@ export default function ActiveWorkoutScreen() {
   if (isLoading || !activeWorkout) {
     return (
       <CustomScreen>
-        <CustomText muted>Loading workout...</CustomText>
+        <Text variant="muted">Loading workout...</Text>
       </CustomScreen>
     );
   }
+
+  const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
+    await finish();
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast.success("Nice work!", {
+      icon: <Icon as={Check} size={18} color={colors.chart3} />,
+      duration: 2500,
+    });
+    router.replace("/(tabs)/home");
+  };
 
   const onComplete = async () => {
     await flushPendingSetUpdates();
 
     if (!canComplete) {
-      Alert.alert("Add at least one exercise", "Workout needs one exercise before completing.");
+      setNoExerciseAlertOpen(true);
       return;
     }
 
@@ -143,38 +195,24 @@ export default function ActiveWorkoutScreen() {
     );
 
     if (!hasIncompleteSets) {
-      await completeWorkout(activeWorkout.id);
-      router.replace("/(tabs)/home");
+      await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
       return;
     }
 
-    Alert.alert(
-      "Incomplete sets",
-      "Some sets in this workout haven't been marked complete. What would you like to do?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Keep all sets",
-          onPress: () => {
-            void (async () => {
-              await completeWorkout(activeWorkout.id);
-              router.replace("/(tabs)/home");
-            })();
-          },
-        },
-        {
-          text: "Remove incomplete sets",
-          style: "destructive",
-          onPress: () => {
-            void (async () => {
-              await removeIncompleteSets(activeWorkout.id);
-              await completeWorkout(activeWorkout.id);
-              router.replace("/(tabs)/home");
-            })();
-          },
-        },
-      ],
-    );
+    setIncompleteSetsDialogOpen(true);
+  };
+
+  const onKeepAllSetsAndComplete = async () => {
+    setIncompleteSetsDialogOpen(false);
+    await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
+  };
+
+  const onRemoveIncompleteSetsAndComplete = async () => {
+    setIncompleteSetsDialogOpen(false);
+    await finishAndCelebrate(async () => {
+      await removeIncompleteSets(activeWorkout.id);
+      await completeWorkout(activeWorkout.id);
+    });
   };
 
   const onCancel = async () => {
@@ -184,51 +222,64 @@ export default function ActiveWorkoutScreen() {
   };
 
   return (
-    <CustomScreen scroll contentContainerStyle={styles.container}>
-      <WorkoutTimerHeader workoutName={activeWorkout.name} elapsedSeconds={elapsedSeconds} />
+    <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
+      <WorkoutTimerHeader
+        workoutName={activeWorkout.name}
+        elapsedSeconds={elapsedSeconds}
+      />
 
-      <View style={styles.actions}>
-        <CustomButton label="Complete Workout" onPress={() => void onComplete()} />
-        <Pressable onPress={() => void onCancel()}>
-          <CustomText muted>Cancel Workout</CustomText>
-        </Pressable>
+      <View className="gap-2">
+        <Button onPress={() => void onComplete()}>
+          <Text>Complete Workout</Text>
+        </Button>
+        <Button variant="ghost" onPress={() => setCancelConfirmOpen(true)}>
+          <Text>Cancel Workout</Text>
+        </Button>
       </View>
 
-      <View style={styles.exerciseHeader}>
-        <CustomText>Exercises</CustomText>
-        <Pressable onPress={() => setShowAddExerciseSheet(true)}>
-          <CustomText muted>Add Saved Exercise</CustomText>
-        </Pressable>
+      <View className="flex-row items-center justify-between">
+        <Text variant="large">Exercises</Text>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => setShowAddExerciseSheet(true)}
+        >
+          <Text>Add Saved Exercise</Text>
+        </Button>
       </View>
 
-      {activeWorkout.exercises.length === 0 ? <CustomText muted>No exercises yet.</CustomText> : null}
+      {activeWorkout.exercises.length === 0 ? (
+        <Text variant="muted">No exercises yet.</Text>
+      ) : null}
 
-      <View style={styles.exerciseList}>
-        {activeWorkout.exercises.map((workoutExercise) => (
-          <WorkoutExerciseBlock
-            key={workoutExercise.id}
-            workoutExercise={workoutExercise}
-            commitSetChangesOnChange
-            onAddSet={(workoutSessionExerciseId) => {
-              void addSetToWorkout({ workoutSessionExerciseId });
-            }}
-            onRemoveExercise={(workoutSessionExerciseId) => {
-              void removeExerciseFromWorkout({
-                workoutSessionId: activeWorkout.id,
-                workoutSessionExerciseId,
-              });
-            }}
-            onUpdateSet={(setId, input) => {
-              if (input.isCompleted !== undefined) {
-                void updateSet({ setId, ...input });
-                return;
-              }
-              scheduleSetUpdate(setId, input);
-            }}
-            onDeleteSet={(setId) => {
-              void deleteSet(setId);
-            }}
-          />
+      <View className="gap-3">
+        {activeWorkout.exercises.map((workoutExercise, index) => (
+          <View key={workoutExercise.id} className="gap-3">
+            {index > 0 ? <Separator /> : null}
+            <WorkoutExerciseBlock
+              workoutExercise={workoutExercise}
+              commitSetChangesOnChange
+              onAddSet={(workoutSessionExerciseId) => {
+                void addSetToWorkout({ workoutSessionExerciseId });
+              }}
+              onRemoveExercise={(workoutSessionExerciseId) => {
+                void removeExerciseFromWorkout({
+                  workoutSessionId: activeWorkout.id,
+                  workoutSessionExerciseId,
+                });
+              }}
+              onUpdateSet={(setId, input) => {
+                if (input.isCompleted !== undefined) {
+                  void updateSet({ setId, ...input });
+                  return;
+                }
+                scheduleSetUpdate(setId, input);
+              }}
+              onDeleteSet={(setId) => {
+                void deleteSet(setId);
+              }}
+            />
+          </View>
         ))}
       </View>
 
@@ -244,25 +295,70 @@ export default function ActiveWorkoutScreen() {
           });
         }}
       />
+
+      <AlertDialog
+        open={noExerciseAlertOpen}
+        onOpenChange={setNoExerciseAlertOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add at least one exercise</AlertDialogTitle>
+            <AlertDialogDescription>
+              Workout needs one exercise before completing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button onPress={() => setNoExerciseAlertOpen(false)}>
+              <Text>OK</Text>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={incompleteSetsDialogOpen}
+        onOpenChange={setIncompleteSetsDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Incomplete sets</AlertDialogTitle>
+            <AlertDialogDescription>
+              Some sets in this workout haven&apos;t been marked complete. What
+              would you like to do?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onPress={() => setIncompleteSetsDialogOpen(false)}
+            >
+              <Text>Cancel</Text>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={() => void onRemoveIncompleteSetsAndComplete()}
+            >
+              <Text>Remove incomplete sets</Text>
+            </Button>
+            <Button onPress={() => void onKeepAllSetsAndComplete()}>
+              <Text>Keep all sets</Text>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        onOpenChange={setCancelConfirmOpen}
+        title="Cancel this workout?"
+        description="This will discard the entire session — nothing will be saved. This can't be undone."
+        confirmLabel="Cancel Workout"
+        destructive
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          void onCancel();
+        }}
+      />
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  actions: {
-    gap: spacing.sm,
-  },
-  exerciseHeader: {
-    marginTop: spacing.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  exerciseList: {
-    gap: spacing.sm,
-  },
-});

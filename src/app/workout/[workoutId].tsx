@@ -1,13 +1,31 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import type { NavigationAction } from "@react-navigation/native";
 import { format } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
-import { CustomButton, CustomCard, CustomScreen, CustomText } from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
@@ -19,7 +37,6 @@ import type {
   WorkoutSessionSet,
 } from "@/features/workouts/types";
 import { workoutDetailFormSchema } from "@/features/workouts/types";
-import { spacing, useThemeColors } from "@/theme";
 
 function createTempId(prefix: "exercise" | "set") {
   return `temp-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -40,7 +57,9 @@ function areSetsEqual(a: WorkoutSessionSet, b: WorkoutSessionSet) {
   );
 }
 
-function getFormDefaults(session: WorkoutSessionDetails | null): WorkoutDetailFormValues {
+function getFormDefaults(
+  session: WorkoutSessionDetails | null,
+): WorkoutDetailFormValues {
   if (!session) {
     return {
       name: "",
@@ -69,7 +88,6 @@ export default function WorkoutDetailScreen() {
   const params = useLocalSearchParams<{ workoutId: string }>();
   const navigation = useNavigation();
   const router = useRouter();
-  const colors = useThemeColors();
   const {
     workoutSession,
     isLoading,
@@ -88,6 +106,7 @@ export default function WorkoutDetailScreen() {
   const [showCompletedAtPicker, setShowCompletedAtPicker] = useState(false);
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const pendingNavigationActionRef = useRef<NavigationAction | null>(null);
 
@@ -97,13 +116,17 @@ export default function WorkoutDetailScreen() {
     reset,
     getValues,
     setValue,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<WorkoutDetailFormValues>({
     resolver: zodResolver(workoutDetailFormSchema),
     defaultValues: getFormDefaults(workoutSession ?? null),
   });
 
-  const { fields: exerciseFields, append, remove } = useFieldArray({
+  const {
+    fields: exerciseFields,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: "exercises",
   });
@@ -135,12 +158,18 @@ export default function WorkoutDetailScreen() {
   if (isLoading || !workoutSession) {
     return (
       <CustomScreen>
-        <CustomText muted>Loading workout...</CustomText>
+        <View className="flex-1 items-center justify-center gap-2">
+          <ActivityIndicator />
+          <Text variant="muted">Loading workout...</Text>
+        </View>
       </CustomScreen>
     );
   }
 
-  const onChangeCompletedAt = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  const onChangeCompletedAt = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
     if (event.type === "dismissed") {
       setShowCompletedAtPicker(false);
       return;
@@ -175,7 +204,9 @@ export default function WorkoutDetailScreen() {
 
   const onRemoveExerciseDraft = (workoutSessionExerciseId: string) => {
     const current = getValues("exercises");
-    const index = current.findIndex((exercise) => exercise.id === workoutSessionExerciseId);
+    const index = current.findIndex(
+      (exercise) => exercise.id === workoutSessionExerciseId,
+    );
     if (index < 0) return;
 
     remove(index);
@@ -191,7 +222,9 @@ export default function WorkoutDetailScreen() {
   const onAddSetDraft = (workoutSessionExerciseId: string) => {
     const now = new Date().toISOString();
     const exercises = getValues("exercises");
-    const exerciseIndex = exercises.findIndex((exercise) => exercise.id === workoutSessionExerciseId);
+    const exerciseIndex = exercises.findIndex(
+      (exercise) => exercise.id === workoutSessionExerciseId,
+    );
     if (exerciseIndex < 0) return;
 
     const nextSet: WorkoutDetailFormSet = {
@@ -208,10 +241,14 @@ export default function WorkoutDetailScreen() {
       updatedAt: now,
     };
 
-    setValue(`exercises.${exerciseIndex}.sets`, [...exercises[exerciseIndex].sets, nextSet], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    setValue(
+      `exercises.${exerciseIndex}.sets`,
+      [...exercises[exerciseIndex].sets, nextSet],
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
   };
 
   const onUpdateSetDraft = (
@@ -226,8 +263,14 @@ export default function WorkoutDetailScreen() {
   ) => {
     const exercises = getValues("exercises");
 
-    for (let exerciseIndex = 0; exerciseIndex < exercises.length; exerciseIndex += 1) {
-      const setIndex = exercises[exerciseIndex].sets.findIndex((set) => set.id === setId);
+    for (
+      let exerciseIndex = 0;
+      exerciseIndex < exercises.length;
+      exerciseIndex += 1
+    ) {
+      const setIndex = exercises[exerciseIndex].sets.findIndex(
+        (set) => set.id === setId,
+      );
       if (setIndex < 0) continue;
 
       const currentSet = exercises[exerciseIndex].sets[setIndex];
@@ -237,9 +280,13 @@ export default function WorkoutDetailScreen() {
           ...currentSet,
           ...(input.reps !== undefined ? { reps: input.reps } : {}),
           ...(input.weight !== undefined ? { weight: input.weight } : {}),
-          ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+          ...(input.durationSeconds !== undefined
+            ? { durationSeconds: input.durationSeconds }
+            : {}),
           ...(input.distance !== undefined ? { distance: input.distance } : {}),
-          ...(input.isCompleted !== undefined ? { isCompleted: input.isCompleted ? 1 : 0 } : {}),
+          ...(input.isCompleted !== undefined
+            ? { isCompleted: input.isCompleted ? 1 : 0 }
+            : {}),
         },
         {
           shouldDirty: true,
@@ -253,8 +300,14 @@ export default function WorkoutDetailScreen() {
   const onDeleteSetDraft = (setId: string) => {
     const exercises = getValues("exercises");
 
-    for (let exerciseIndex = 0; exerciseIndex < exercises.length; exerciseIndex += 1) {
-      const setIndex = exercises[exerciseIndex].sets.findIndex((set) => set.id === setId);
+    for (
+      let exerciseIndex = 0;
+      exerciseIndex < exercises.length;
+      exerciseIndex += 1
+    ) {
+      const setIndex = exercises[exerciseIndex].sets.findIndex(
+        (set) => set.id === setId,
+      );
       if (setIndex < 0) continue;
 
       const nextSets = exercises[exerciseIndex].sets
@@ -281,10 +334,14 @@ export default function WorkoutDetailScreen() {
       });
 
       const originalExerciseMap = new Map(
-        workoutSession.exercises.map((exercise) => [exercise.id, exercise] as const),
+        workoutSession.exercises.map(
+          (exercise) => [exercise.id, exercise] as const,
+        ),
       );
       const nextExerciseIds = new Set(
-        formValues.exercises.filter((exercise) => !isTempId(exercise.id)).map((exercise) => exercise.id),
+        formValues.exercises
+          .filter((exercise) => !isTempId(exercise.id))
+          .map((exercise) => exercise.id),
       );
 
       for (const exercise of workoutSession.exercises) {
@@ -297,7 +354,10 @@ export default function WorkoutDetailScreen() {
       const knownExerciseIds = new Set(originalExerciseMap.keys());
 
       for (const draftExercise of formValues.exercises) {
-        if (!isTempId(draftExercise.id) && originalExerciseMap.has(draftExercise.id)) {
+        if (
+          !isTempId(draftExercise.id) &&
+          originalExerciseMap.has(draftExercise.id)
+        ) {
           resolvedExerciseIds.set(draftExercise.id, draftExercise.id);
           continue;
         }
@@ -317,9 +377,12 @@ export default function WorkoutDetailScreen() {
       }
 
       for (const draftExercise of formValues.exercises) {
-        const realExerciseId = resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id;
+        const realExerciseId =
+          resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id;
         const originalExercise = originalExerciseMap.get(realExerciseId);
-        const originalSetMap = new Map((originalExercise?.sets ?? []).map((set) => [set.id, set] as const));
+        const originalSetMap = new Map(
+          (originalExercise?.sets ?? []).map((set) => [set.id, set] as const),
+        );
 
         const nextSetIds = new Set(
           draftExercise.sets
@@ -381,113 +444,116 @@ export default function WorkoutDetailScreen() {
     }
   };
 
-  const onDeleteWorkout = () => {
-    Alert.alert("Delete workout?", "This will permanently remove this completed workout.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          void (async () => {
-            await deleteWorkoutSession();
-            router.replace("/(tabs)/home");
-          })();
-        },
-      },
-    ]);
+  const onDeleteWorkout = async () => {
+    await deleteWorkoutSession();
+    router.back();
   };
 
   return (
-    <CustomScreen scroll contentContainerStyle={styles.container}>
-      <CustomText variant="title">Workout Detail</CustomText>
+    <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
+      <Text variant="h2">Workout Detail</Text>
 
-      <CustomCard style={styles.card}>
-        <CustomText muted>Name</CustomText>
-        <Controller
-          control={control}
-          name="name"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              value={value}
-              onChangeText={onChange}
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: colors.surface,
-                },
-              ]}
-              placeholder="Workout name"
-              placeholderTextColor={colors.textMuted}
+      <Card>
+        <CardContent className="gap-4">
+          <View className="gap-2">
+            <Label>Name</Label>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { value, onChange } }) => (
+                <Input
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Workout name"
+                />
+              )}
             />
-          )}
-        />
+            {errors.name?.message ? (
+              <Text className="text-destructive text-sm">
+                {errors.name.message}
+              </Text>
+            ) : null}
+          </View>
 
-        <CustomText muted>Notes</CustomText>
-        <Controller
-          control={control}
-          name="notes"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              value={value}
-              onChangeText={onChange}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              style={[
-                styles.input,
-                styles.notesInput,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: colors.surface,
-                },
-              ]}
-              placeholder="Workout notes"
-              placeholderTextColor={colors.textMuted}
+          <View className="gap-2">
+            <Label>Notes</Label>
+            <Controller
+              control={control}
+              name="notes"
+              render={({ field: { value, onChange } }) => (
+                <Textarea
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Workout notes"
+                  placeholderClassName="text-muted-foreground/50"
+                />
+              )}
             />
-          )}
-        />
-      </CustomCard>
+          </View>
+        </CardContent>
+      </Card>
 
-      <CustomCard style={styles.card}>
-        <CustomText>{`Completed ${completedAtDate ? format(completedAtDate, "PPP p") : "N/A"}`}</CustomText>
-        <CustomText muted>{`Duration ${workoutSession.durationSeconds ?? 0}s`}</CustomText>
-        <Pressable onPress={() => setShowCompletedAtPicker(true)}>
-          <CustomText muted>Edit completed date/time</CustomText>
-        </Pressable>
-        {showCompletedAtPicker && completedAtDate ? (
-          <DateTimePicker mode="date" value={completedAtDate} onChange={onChangeCompletedAt} />
-        ) : null}
-      </CustomCard>
+      <Card>
+        <CardContent className="gap-2">
+          <Text>{`Completed ${completedAtDate ? format(completedAtDate, "PPP p") : "N/A"}`}</Text>
+          <Text variant="muted">{`Duration ${workoutSession.durationSeconds ?? 0}s`}</Text>
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onPress={() => setShowCompletedAtPicker(true)}
+          >
+            <Text>Edit completed date/time</Text>
+          </Button>
+          {showCompletedAtPicker && completedAtDate ? (
+            <DateTimePicker
+              mode="date"
+              value={completedAtDate}
+              onChange={onChangeCompletedAt}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
 
-      <View style={styles.exerciseList}>
-        <View style={styles.exerciseListHeader}>
-          <CustomText>Exercises</CustomText>
-          <Pressable onPress={() => setShowAddExerciseSheet(true)}>
-            <CustomText muted>Add Saved Exercise</CustomText>
-          </Pressable>
+      <View className="gap-3">
+        <View className="flex-row items-center justify-between">
+          <Text variant="large">Exercises</Text>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={() => setShowAddExerciseSheet(true)}
+          >
+            <Text>Add Saved Exercise</Text>
+          </Button>
         </View>
-        {watchedExercises.map((exercise) => (
-          <WorkoutExerciseBlock
-            key={exercise.id}
-            workoutExercise={exercise}
-            commitSetChangesOnChange
-            onAddSet={onAddSetDraft}
-            onRemoveExercise={onRemoveExerciseDraft}
-            onUpdateSet={onUpdateSetDraft}
-            onDeleteSet={onDeleteSetDraft}
-          />
+        {watchedExercises.map((exercise, index) => (
+          <View key={exercise.id} className="gap-3">
+            {index > 0 ? <Separator /> : null}
+            <WorkoutExerciseBlock
+              workoutExercise={exercise}
+              commitSetChangesOnChange
+              onAddSet={onAddSetDraft}
+              onRemoveExercise={onRemoveExerciseDraft}
+              onUpdateSet={onUpdateSetDraft}
+              onDeleteSet={onDeleteSetDraft}
+            />
+          </View>
         ))}
       </View>
 
-      <CustomButton label="Save All" loading={isSaving || isSavingAll} onPress={() => void onSaveAll()} />
-      <CustomButton
-        label="Delete Workout"
+      <Button
         loading={isSaving || isSavingAll}
-        onPress={onDeleteWorkout}
-      />
+        onPress={() => void onSaveAll()}
+      >
+        <Text>Save All</Text>
+      </Button>
+      <Button
+        variant="destructive"
+        loading={isSaving || isSavingAll}
+        onPress={() => setShowDeleteConfirm(true)}
+      >
+        <Text>Delete Workout</Text>
+      </Button>
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
@@ -496,63 +562,40 @@ export default function WorkoutDetailScreen() {
         onAddExercise={(exercise) => onAddExerciseDraft(exercise.id)}
       />
 
-      <Modal
-        visible={showExitModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowExitModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <CustomCard style={styles.modalCard}>
-            <CustomText>Unsaved changes</CustomText>
-            <CustomText muted>Save changes before leaving this workout?</CustomText>
-            <View style={styles.modalActions}>
-              <CustomButton label="Save" loading={isSavingAll} onPress={() => void onSaveAll()} />
-              <CustomButton label="Discard" onPress={onDiscardChangesAndLeave} />
-              <CustomButton label="Cancel" onPress={() => setShowExitModal(false)} />
-            </View>
-          </CustomCard>
-        </View>
-      </Modal>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete workout?"
+        description="This will permanently remove this completed workout."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          void onDeleteWorkout();
+        }}
+      />
+
+      <Dialog open={showExitModal} onOpenChange={setShowExitModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription>
+              Save changes before leaving this workout?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onPress={() => setShowExitModal(false)}>
+              <Text>Cancel</Text>
+            </Button>
+            <Button variant="destructive" onPress={onDiscardChangesAndLeave}>
+              <Text>Discard</Text>
+            </Button>
+            <Button loading={isSavingAll} onPress={() => void onSaveAll()}>
+              <Text>Save</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  card: {
-    gap: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  notesInput: {
-    minHeight: 90,
-  },
-  exerciseList: {
-    gap: spacing.sm,
-  },
-  exerciseListHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    padding: spacing.lg,
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  modalCard: {
-    gap: spacing.md,
-  },
-  modalActions: {
-    gap: spacing.sm,
-  },
-});

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, type Href } from "expo-router";
 
-import { CustomScreen, CustomText } from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
@@ -22,45 +24,51 @@ export default function NewTemplateScreen() {
   const { favorites } = useFavoriteExercises();
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
+  const [isSaving, setIsSaving] = useState(false);
 
   const onSave = async (value: TemplateEditorValue) => {
-    const created = await createWorkoutTemplate({
-      name: value.name,
-      description: value.description,
-    });
-
-    for (const [exerciseIndex, exercise] of value.exercises.entries()) {
-      const addedExercise = await addExerciseToTemplate({
-        templateId: created.id,
-        exerciseId: exercise.exerciseId,
-        orderIndex: exerciseIndex,
+    setIsSaving(true);
+    try {
+      const created = await createWorkoutTemplate({
+        name: value.name,
+        description: value.description,
       });
 
-      for (const [setIndex, set] of exercise.sets.entries()) {
-        await addSetToTemplateExercise({
-          templateExerciseId: addedExercise.id,
-          orderIndex: setIndex,
-          targetReps: parseTemplateNumberText(set.repsText),
-          targetWeight: textToMetricWeight(set.weightText, weightUnit),
-          targetDurationSeconds: parseTemplateNumberText(set.durationText),
-          targetDistance: parseTemplateNumberText(set.distanceText),
+      for (const [exerciseIndex, exercise] of value.exercises.entries()) {
+        const addedExercise = await addExerciseToTemplate({
+          templateId: created.id,
+          exerciseId: exercise.exerciseId,
+          orderIndex: exerciseIndex,
         });
+
+        for (const [setIndex, set] of exercise.sets.entries()) {
+          await addSetToTemplateExercise({
+            templateExerciseId: addedExercise.id,
+            orderIndex: setIndex,
+            targetReps: parseTemplateNumberText(set.repsText),
+            targetWeight: textToMetricWeight(set.weightText, weightUnit),
+            targetDurationSeconds: parseTemplateNumberText(set.durationText),
+            targetDistance: parseTemplateNumberText(set.distanceText),
+          });
+        }
       }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["workout-templates"] }),
+        queryClient.invalidateQueries({ queryKey: ["workout-template", created.id] }),
+      ]);
+
+      router.replace(`/workout/template/${created.id}` as Href);
+    } finally {
+      setIsSaving(false);
     }
-
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["workout-templates"] }),
-      queryClient.invalidateQueries({ queryKey: ["workout-template", created.id] }),
-    ]);
-
-    router.replace(`/workout/template/${created.id}` as Href);
   };
 
   return (
     <CustomScreen scroll>
-      <CustomText variant="title">New Workout Template</CustomText>
-      <CustomText muted>Build template using saved exercises.</CustomText>
-      <TemplateEditor favorites={favorites} onSave={onSave} />
+      <Text variant="h2">New Workout Template</Text>
+      <Text variant="muted">Build template using saved exercises.</Text>
+      <TemplateEditor favorites={favorites} isSaving={isSaving} onSave={onSave} />
     </CustomScreen>
   );
 }

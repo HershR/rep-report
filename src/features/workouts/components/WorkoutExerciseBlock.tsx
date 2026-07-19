@@ -1,10 +1,14 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Check, Plus, Trash2 } from "lucide-react-native";
+import { View } from "react-native";
 
-import { CustomCard, CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { WorkoutSetRow } from "@/features/workouts/components/WorkoutSetRow";
 import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import type { WorkoutSessionExerciseWithDetails } from "@/features/workouts/types";
-import { spacing } from "@/theme";
 
 type WorkoutExerciseBlockProps = {
   workoutExercise: WorkoutSessionExerciseWithDetails;
@@ -32,29 +36,53 @@ export function WorkoutExerciseBlock({
   onUpdateSet,
   onDeleteSet,
 }: WorkoutExerciseBlockProps) {
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
   const showDuration = isCardioExercise(
     workoutExercise.exercise.category,
     workoutExercise.exercise.name,
   );
 
+  const firstColumnLabel = showDuration ? "TIME" : "REPS";
+  const secondColumnLabel = showDuration
+    ? `DIST (${distanceUnit.toUpperCase()})`
+    : `WEIGHT (${weightUnit.toUpperCase()})`;
+
   return (
-    <CustomCard style={styles.card}>
-      <View style={styles.header}>
-        <CustomText>{workoutExercise.exercise.name}</CustomText>
-        <View style={styles.headerActions}>
-          <Pressable onPress={() => onAddSet(workoutExercise.id)}>
-            <CustomText muted>Add Set</CustomText>
-          </Pressable>
-          <Pressable onPress={() => onRemoveExercise(workoutExercise.id)}>
-            <CustomText muted>Remove</CustomText>
-          </Pressable>
-        </View>
+    <View className="gap-2">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-primary font-semibold">
+          {workoutExercise.exercise.name}
+        </Text>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onPress={() => onRemoveExercise(workoutExercise.id)}
+        >
+          <Icon as={Trash2} className="text-muted-foreground size-4" />
+        </Button>
       </View>
 
       {workoutExercise.sets.length === 0 ? (
-        <CustomText muted>No sets yet.</CustomText>
+        <Text variant="muted">No sets yet.</Text>
       ) : (
-        <View style={styles.sets}>
+        <>
+          <View className="flex-row items-center gap-2 px-2">
+            <View className="w-6" />
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {firstColumnLabel}
+            </Text>
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {secondColumnLabel}
+            </Text>
+            <View className="w-9 items-center">
+              <Icon as={Check} className="text-muted-foreground size-3.5" />
+            </View>
+            <View className="w-8" />
+          </View>
+          <Separator />
           {workoutExercise.sets.map((workoutSet, index) => (
             <WorkoutSetRow
               key={workoutSet.id}
@@ -66,27 +94,18 @@ export function WorkoutExerciseBlock({
               onDelete={onDeleteSet}
             />
           ))}
-        </View>
+        </>
       )}
-    </CustomCard>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2 self-start"
+        onPress={() => onAddSet(workoutExercise.id)}
+      >
+        <Icon as={Plus} className="text-primary size-4" />
+        <Text className="text-primary">Add set</Text>
+      </Button>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  sets: {
-    gap: spacing.xs,
-  },
-});

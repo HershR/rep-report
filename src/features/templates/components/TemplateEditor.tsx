@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { View } from "react-native";
 import {
   Controller,
   useFieldArray,
@@ -11,7 +11,12 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 
-import { CustomButton, CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { TemplateExerciseBlock } from "@/features/templates/components/TemplateExerciseBlock";
 import {
@@ -22,7 +27,6 @@ import {
   type WorkoutTemplate,
 } from "@/features/templates/types";
 import type { Exercise } from "@/features/exercises/types";
-import { spacing, useThemeColors } from "@/theme";
 
 type TemplateEditorProps = {
   initialTemplate?: WorkoutTemplate | null;
@@ -39,7 +43,9 @@ function numberToText(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
-function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorFormValues {
+function getDefaultValues(
+  template?: WorkoutTemplate | null,
+): TemplateEditorFormValues {
   if (!template) {
     return {
       name: "",
@@ -70,7 +76,9 @@ function getDefaultValues(template?: WorkoutTemplate | null): TemplateEditorForm
   };
 }
 
-function mapFormToEditorValue(value: TemplateEditorFormValues): TemplateEditorValue {
+function mapFormToEditorValue(
+  value: TemplateEditorFormValues,
+): TemplateEditorValue {
   return {
     name: value.name.trim(),
     description: value.description.trim() || null,
@@ -81,18 +89,25 @@ function mapFormToEditorValue(value: TemplateEditorFormValues): TemplateEditorVa
   };
 }
 
-function getErrorMessage(errors: FieldErrors<TemplateEditorFormValues>): string | null {
+function getErrorMessage(
+  errors: FieldErrors<TemplateEditorFormValues>,
+): string | null {
   if (errors.name?.message) return errors.name.message;
   if (errors.description?.message) return errors.description.message;
   if (errors.exercises?.message) return errors.exercises.message;
 
-  const exerciseErrors = Array.isArray(errors.exercises) ? errors.exercises : [];
+  const exerciseErrors = Array.isArray(errors.exercises)
+    ? errors.exercises
+    : [];
   for (const exerciseError of exerciseErrors) {
     if (!exerciseError) continue;
     if (exerciseError.message) return exerciseError.message;
-    if (exerciseError.exerciseName?.message) return exerciseError.exerciseName.message;
+    if (exerciseError.exerciseName?.message)
+      return exerciseError.exerciseName.message;
 
-    const setErrors = Array.isArray(exerciseError.sets) ? exerciseError.sets : [];
+    const setErrors = Array.isArray(exerciseError.sets)
+      ? exerciseError.sets
+      : [];
     for (const setError of setErrors) {
       if (!setError) continue;
       if (setError.message) return setError.message;
@@ -113,7 +128,12 @@ type ExerciseFieldProps = {
   onDeleteExercise: () => void;
 };
 
-function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseFieldProps) {
+function ExerciseField({
+  control,
+  setValue,
+  index,
+  onDeleteExercise,
+}: ExerciseFieldProps) {
   const exercise = useWatch({
     control,
     name: `exercises.${index}`,
@@ -136,7 +156,10 @@ function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseF
 
   const onUpdateSet = (
     setIndex: number,
-    field: keyof Pick<TemplateEditorSet, "repsText" | "weightText" | "durationText" | "distanceText">,
+    field: keyof Pick<
+      TemplateEditorSet,
+      "repsText" | "weightText" | "durationText" | "distanceText"
+    >,
     value: string,
   ) => {
     setValue(`exercises.${index}.sets.${setIndex}.${field}`, value, {
@@ -155,11 +178,15 @@ function ExerciseField({ control, setValue, index, onDeleteExercise }: ExerciseF
       onAddSet={onAddSet}
       onDeleteExercise={onDeleteExercise}
       onDeleteSet={(setLocalId) => {
-        const setIndex = exercise.sets.findIndex((set) => set.localId === setLocalId);
+        const setIndex = exercise.sets.findIndex(
+          (set) => set.localId === setLocalId,
+        );
         if (setIndex >= 0) remove(setIndex);
       }}
       onUpdateSet={(setLocalId, field, value) => {
-        const setIndex = exercise.sets.findIndex((set) => set.localId === setLocalId);
+        const setIndex = exercise.sets.findIndex(
+          (set) => set.localId === setLocalId,
+        );
         if (setIndex >= 0) onUpdateSet(setIndex, field, value);
       }}
     />
@@ -172,7 +199,6 @@ export function TemplateEditor({
   isSaving = false,
   onSave,
 }: TemplateEditorProps) {
-  const colors = useThemeColors();
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const {
     control,
@@ -185,7 +211,11 @@ export function TemplateEditor({
     defaultValues: getDefaultValues(initialTemplate),
   });
 
-  const { fields: exerciseFields, append, remove } = useFieldArray({
+  const {
+    fields: exerciseFields,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: "exercises",
   });
@@ -222,75 +252,73 @@ export function TemplateEditor({
   const errorMessage = getErrorMessage(errors);
 
   return (
-    <View style={styles.container}>
-      <Controller
-        control={control}
-        name="name"
-        render={({ field: { value, onChange } }) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Template name"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="description"
-        render={({ field: { value, onChange } }) => (
-          <TextInput
-            textAlignVertical="top"
-            numberOfLines={3}
-            multiline
-            value={value}
-            onChangeText={onChange}
-            placeholder="Description (optional)"
-            placeholderTextColor={colors.textMuted}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          />
-        )}
-      />
+    <View className="mt-4 gap-3 pb-8">
+      <View className="gap-2">
+        <Label>Template name</Label>
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { value, onChange } }) => (
+            <Input
+              value={value}
+              onChangeText={onChange}
+              placeholder="Template name"
+            />
+          )}
+        />
+      </View>
 
-      {errorMessage ? <CustomText muted>{errorMessage}</CustomText> : null}
+      <View className="gap-2">
+        <Label>Description (optional)</Label>
+        <Controller
+          control={control}
+          name="description"
+          render={({ field: { value, onChange } }) => (
+            <Textarea
+              value={value}
+              onChangeText={onChange}
+              placeholder="Description (optional)"
+            />
+          )}
+        />
+      </View>
 
-      <View style={styles.exerciseHeader}>
-        <CustomText>Exercises</CustomText>
-        <Pressable onPress={() => setShowAddExerciseSheet(true)}>
-          <CustomText muted>Add Saved Exercise</CustomText>
-        </Pressable>
+      {errorMessage ? (
+        <Text className="text-destructive text-sm">{errorMessage}</Text>
+      ) : null}
+
+      <View className="flex-row items-center justify-between">
+        <Text variant="large">Exercises</Text>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => setShowAddExerciseSheet(true)}
+        >
+          <Text>Add Saved Exercise</Text>
+        </Button>
       </View>
 
       {exerciseFields.length === 0 ? (
-        <CustomText muted>No exercises added yet.</CustomText>
+        <Text variant="muted">No exercises added yet.</Text>
       ) : (
-        exerciseFields.map((exercise, index) => (
-          <ExerciseField
-            key={exercise.id}
-            control={control}
-            setValue={setValue}
-            index={index}
-            onDeleteExercise={() => onDeleteExercise(index)}
-          />
-        ))
+        <View className="gap-3">
+          {exerciseFields.map((exercise, index) => (
+            <View key={exercise.id} className="gap-3">
+              {index > 0 ? <Separator /> : null}
+              <ExerciseField
+                control={control}
+                setValue={setValue}
+                index={index}
+                onDeleteExercise={() => onDeleteExercise(index)}
+              />
+            </View>
+          ))}
+        </View>
       )}
 
-      <CustomButton label="Save Template" loading={isSaving} onPress={() => void onSubmit()} />
+      <Button loading={isSaving} onPress={() => void onSubmit()}>
+        <Text>Save Template</Text>
+      </Button>
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
@@ -301,22 +329,3 @@ export function TemplateEditor({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing.md,
-    marginTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  exerciseHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-});

@@ -1,8 +1,16 @@
+import { useColorScheme } from "nativewind";
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { spacing, useThemeColors } from "@/theme";
+import { THEME } from "@/lib/theme";
 
 type CustomScreenProps = {
   children: ReactNode;
@@ -11,19 +19,27 @@ type CustomScreenProps = {
   contentContainerStyle?: ViewStyle;
 };
 
+/** Matches the old `spacing.md` value; not worth a whole spacing scale for one call site. */
+const SCREEN_PADDING = 16;
+
+/**
+ * The one legacy layout primitive kept intentionally — RNR has no SafeAreaView+ScrollView
+ * equivalent, so this stays as the project's screen wrapper (see UIMigration.md decision #3).
+ */
 export function CustomScreen({
   children,
   scroll = false,
   contentContainerStyle,
 }: CustomScreenProps) {
-  const colors = useThemeColors();
+  const { colorScheme: scheme } = useColorScheme();
+  const colors = THEME[scheme ?? "light"];
 
   const inner = scroll ? (
     <ScrollView
       style={styles.flex}
       contentContainerStyle={[
         styles.scrollContent,
-        { padding: spacing.md },
+        { padding: SCREEN_PADDING },
         contentContainerStyle,
       ]}
       keyboardShouldPersistTaps="handled"
@@ -31,7 +47,7 @@ export function CustomScreen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.flex, styles.pad, { padding: spacing.md }]}>
+    <View style={[styles.flex, styles.pad, { padding: SCREEN_PADDING }]}>
       {children}
     </View>
   );
@@ -41,7 +57,12 @@ export function CustomScreen({
       style={[styles.flex, { backgroundColor: colors.background }]}
       edges={["top", "left", "right"]}
     >
-      {inner}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {inner}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

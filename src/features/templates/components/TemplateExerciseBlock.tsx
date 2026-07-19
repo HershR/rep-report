@@ -1,9 +1,13 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Plus, Trash2 } from "lucide-react-native";
+import { View } from "react-native";
 
-import { CustomCard, CustomText } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { TemplateSetRow } from "@/features/templates/components/TemplateSetRow";
 import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
-import { spacing } from "@/theme";
 
 type EditableSet = {
   localId: string;
@@ -36,16 +40,45 @@ export function TemplateExerciseBlock({
   onDeleteSet,
   onUpdateSet,
 }: TemplateExerciseBlockProps) {
+  const { appSettings } = useAppSettings();
+  const distanceUnit = appSettings?.distanceUnit ?? "mi";
+  const weightUnit = appSettings?.weightUnit ?? "lb";
   const showDuration = isCardioExercise(exerciseCategory, exerciseName);
 
+  const firstColumnLabel = showDuration ? "TIME" : "REPS";
+  const secondColumnLabel = showDuration
+    ? `DIST (${distanceUnit.toUpperCase()})`
+    : `WEIGHT (${weightUnit.toUpperCase()})`;
+
   return (
-    <CustomCard style={styles.card}>
-      <View style={styles.header}>
-        <CustomText>{exerciseName}</CustomText>
-        <Pressable onPress={onDeleteExercise}>
-          <CustomText muted>Remove</CustomText>
-        </Pressable>
+    <View className="gap-2">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-primary font-semibold">{exerciseName}</Text>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onPress={onDeleteExercise}
+        >
+          <Icon as={Trash2} className="text-muted-foreground size-4" />
+        </Button>
       </View>
+
+      {sets.length > 0 ? (
+        <>
+          <View className="flex-row items-center gap-2">
+            <View className="w-6" />
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {firstColumnLabel}
+            </Text>
+            <Text variant="muted" className="flex-1 text-center text-xs">
+              {secondColumnLabel}
+            </Text>
+            <View className="w-8" />
+          </View>
+          <Separator />
+        </>
+      ) : null}
 
       {sets.map((set, index) => (
         <TemplateSetRow
@@ -58,31 +91,27 @@ export function TemplateExerciseBlock({
           isCardio={showDuration}
           onDelete={() => onDeleteSet(set.localId)}
           onChangeReps={(value) => onUpdateSet(set.localId, "repsText", value)}
-          onChangeWeight={(value) => onUpdateSet(set.localId, "weightText", value)}
-          onChangeDuration={(value) => onUpdateSet(set.localId, "durationText", value)}
-          onChangeDistance={(value) => onUpdateSet(set.localId, "distanceText", value)}
+          onChangeWeight={(value) =>
+            onUpdateSet(set.localId, "weightText", value)
+          }
+          onChangeDuration={(value) =>
+            onUpdateSet(set.localId, "durationText", value)
+          }
+          onChangeDistance={(value) =>
+            onUpdateSet(set.localId, "distanceText", value)
+          }
         />
       ))}
 
-      <Pressable onPress={onAddSet} style={styles.addSetButton}>
-        <CustomText muted>Add Target Set</CustomText>
-      </Pressable>
-    </CustomCard>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2 self-start"
+        onPress={onAddSet}
+      >
+        <Icon as={Plus} className="text-primary size-4" />
+        <Text className="text-primary">Add set</Text>
+      </Button>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  addSetButton: {
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-});

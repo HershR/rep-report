@@ -1,9 +1,13 @@
 import { Redirect, type Href } from "expo-router";
+import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
+import { Text } from "@/components/ui/text";
 import { initializeDatabase } from "@/db/init";
 import { getProfile } from "@/features/profile/repositories/profileRepository";
+import { THEME } from "@/lib/theme";
 
 /** Valid routes; typed routes union updates after `expo start` generates `.expo/types`. */
 const HOME = "/(tabs)/home" as Href;
@@ -11,6 +15,7 @@ const ONBOARDING = "/onboarding" as Href;
 
 export default function Index() {
   const [destination, setDestination] = useState<Href | null>(null);
+  const { colorScheme: scheme } = useColorScheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +33,14 @@ export default function Index() {
   }, []);
 
   if (!destination) {
-    return <CustomScreen>{null}</CustomScreen>;
+    return (
+      <CustomScreen>
+        <View className="flex-1 items-center justify-center gap-4">
+          <Text variant="h3">Rep Report</Text>
+          <ActivityIndicator color={THEME[scheme ?? "light"].primary} />
+        </View>
+      </CustomScreen>
+    );
   }
 
   return <Redirect href={destination} />;

@@ -1,8 +1,22 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 
-import { CustomText } from "@/components/common";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Text } from "@/components/ui/text";
 import type { ExerciseFilterOption } from "@/features/exercises/types";
-import { spacing, useThemeColors } from "@/theme";
+import { cn } from "@/lib/utils";
 
 type ExerciseFilterModalProps = {
   visible: boolean;
@@ -19,6 +33,69 @@ type ExerciseFilterModalProps = {
   onClearAll: () => void;
 };
 
+function FilterChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={cn(
+        "rounded-full border px-3 py-1.5 active:opacity-80",
+        selected ? "border-primary bg-primary" : "border-border bg-transparent",
+      )}
+    >
+      <Text
+        className={cn(
+          "text-sm",
+          selected ? "text-primary-foreground" : "text-foreground",
+        )}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function FilterSection({
+  value,
+  title,
+  options,
+  selectedIds,
+  onToggle,
+}: {
+  value: string;
+  title: string;
+  options: ExerciseFilterOption[];
+  selectedIds: number[];
+  onToggle: (id: number) => void;
+}) {
+  if (options.length === 0) return null;
+
+  return (
+    <AccordionItem value={value}>
+      <AccordionTrigger>{title}</AccordionTrigger>
+      <AccordionContent>
+        <View className="flex-row flex-wrap gap-2">
+          {options.map((option) => (
+            <FilterChip
+              key={option.id}
+              label={option.name}
+              selected={selectedIds.includes(option.id)}
+              onPress={() => onToggle(option.id)}
+            />
+          ))}
+        </View>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
 export function ExerciseFilterModal({
   visible,
   onClose,
@@ -33,136 +110,55 @@ export function ExerciseFilterModal({
   onToggleMuscle,
   onClearAll,
 }: ExerciseFilterModalProps) {
-  const colors = useThemeColors();
-  function FilterSection({
-    title,
-    options,
-    selectedIds,
-    onToggle,
-  }: {
-    title: string;
-    options: ExerciseFilterOption[];
-    selectedIds: number[];
-    onToggle: (id: number) => void;
-  }) {
-    if (options.length === 0) return null;
-
-    return (
-      <View style={styles.filterSection}>
-        <CustomText muted>{title}</CustomText>
-        <View style={styles.chipsRow}>
-          {options.map((option) => {
-            const selected = selectedIds.includes(option.id);
-            return (
-              <Pressable
-                key={option.id}
-                onPress={() => onToggle(option.id)}
-                style={({ pressed }) => [
-                  styles.chip,
-                  {
-                    backgroundColor: selected ? colors.primary : colors.surface,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
-              >
-                <CustomText
-                  style={{ color: selected ? colors.primaryText : colors.text }}
-                >
-                  {selected ? `\u2713 ${option.name}` : option.name}
-                </CustomText>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    );
-  }
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+    <Sheet
+      open={visible}
+      onOpenChange={(open) => (!open ? onClose() : undefined)}
     >
-      <View style={styles.modalOverlay}>
-        <View
-          style={[
-            styles.modalContent,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <View style={styles.modalHeader}>
-            <CustomText>Filters</CustomText>
-            <View style={styles.modalActions}>
-              <Pressable onPress={onClearAll}>
-                <CustomText muted>Clear</CustomText>
-              </Pressable>
-              <Pressable onPress={onClose}>
-                <CustomText muted>Done</CustomText>
-              </Pressable>
-            </View>
-          </View>
+      <SheetContent>
+        <SheetHeader className="flex-row items-center justify-between">
+          <SheetTitle>Filters</SheetTitle>
+          <Button variant="ghost" size="sm" onPress={onClearAll}>
+            <Text>Clear</Text>
+          </Button>
+        </SheetHeader>
 
-          <FilterSection
-            title="Categories"
-            options={categoryOptions}
-            selectedIds={selectedCategoryIds}
-            onToggle={onToggleCategory}
-          />
-          <FilterSection
-            title="Equipment"
-            options={equipmentOptions}
-            selectedIds={selectedEquipmentIds}
-            onToggle={onToggleEquipment}
-          />
-          <FilterSection
-            title="Muscles"
-            options={muscleOptions}
-            selectedIds={selectedMuscleIds}
-            onToggle={onToggleMuscle}
-          />
-        </View>
-      </View>
-    </Modal>
+        <ScrollView className="gap-4">
+          <Accordion
+            type="multiple"
+            collapsible
+            defaultValue={["categories", "equipment", "muscles"]}
+          >
+            <FilterSection
+              value="categories"
+              title="Categories"
+              options={categoryOptions}
+              selectedIds={selectedCategoryIds}
+              onToggle={onToggleCategory}
+            />
+            <FilterSection
+              value="equipment"
+              title="Equipment"
+              options={equipmentOptions}
+              selectedIds={selectedEquipmentIds}
+              onToggle={onToggleEquipment}
+            />
+            <FilterSection
+              value="muscles"
+              title="Muscles"
+              options={muscleOptions}
+              selectedIds={selectedMuscleIds}
+              onToggle={onToggleMuscle}
+            />
+          </Accordion>
+        </ScrollView>
+
+        <SheetFooter>
+          <Button onPress={onClose}>
+            <Text>Done</Text>
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  modalContent: {
-    maxHeight: "75%",
-    borderTopLeftRadius: spacing.md,
-    borderTopRightRadius: spacing.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  filterSection: {
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  chipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  chip: {
-    borderWidth: 2,
-    borderRadius: 999,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-});

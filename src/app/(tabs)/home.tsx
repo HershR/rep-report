@@ -1,88 +1,99 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
-import {
-  CustomButton,
-  CustomCard,
-  CustomScreen,
-  CustomText,
-} from "@/components/common";
+import { CustomScreen } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { FadeInView } from "@/components/ui/fade-in-view";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
-import { spacing } from "@/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { templates } = useWorkoutTemplates();
+  const { templates, isLoading: templatesLoading } = useWorkoutTemplates();
   const { activeWorkout } = useActiveWorkout();
   const { profile } = useProfile();
 
   return (
     <CustomScreen scroll>
-      <CustomText variant="title">
+      <Text variant="h2">
         {profile ? `Hi ${profile.displayName}!` : "Home"}
-      </CustomText>
-      <CustomText muted style={styles.subtitle}>
-        Ready to train?
-      </CustomText>
-      <View style={styles.gap}>
-        <CustomCard>
-          <CustomText variant="caption" muted>
-            Every set counts.
-          </CustomText>
-        </CustomCard>
+      </Text>
+      <Text variant="muted">Ready to train?</Text>
 
-        <CustomButton
-          label="Start Workout"
-          onPress={() =>
-            router.push({
-              pathname: "/workout/active",
-              params: { name: "Workout" },
-            })
-          }
-        />
+      <View className="mt-6 gap-4">
+        <Card>
+          <CardContent className="gap-3">
+            <Text variant="muted">Every set counts.</Text>
 
-        {activeWorkout?.status === "active" ? (
-          <CustomButton
-            label="Resume Workout"
-            onPress={() =>
-              router.push({
-                pathname: "/workout/active",
-                params: { sessionId: activeWorkout.id },
-              })
-            }
-          />
-        ) : null}
+            <Button
+              onPress={() =>
+                router.push({
+                  pathname: "/workout/active",
+                  params: { name: "Workout" },
+                })
+              }
+            >
+              <Text>Start Workout</Text>
+            </Button>
 
-        <View style={styles.templateSection}>
-          <CustomText>Start From Template</CustomText>
-          {templates.length === 0 ? (
-            <CustomText muted>No templates yet. Create one in Saved tab.</CustomText>
-          ) : (
-            templates.slice(0, 3).map((template) => (
-              <CustomButton
-                key={template.id}
-                label={template.name}
+            {activeWorkout?.status === "active" ? (
+              <Button
+                variant="secondary"
                 onPress={() =>
                   router.push({
                     pathname: "/workout/active",
-                    params: { templateId: template.id, name: template.name },
+                    params: { sessionId: activeWorkout.id },
                   })
                 }
-              />
-            ))
+              >
+                <Text>Resume Workout</Text>
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <View className="gap-2">
+          <Text variant="large">Start From Template</Text>
+          {templatesLoading ? (
+            <View className="gap-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </View>
+          ) : templates.length === 0 ? (
+            <FadeInView>
+              <Text variant="muted">
+                No templates yet. Create one in the Saved tab.
+              </Text>
+            </FadeInView>
+          ) : (
+            <FadeInView>
+              <View className="gap-2">
+                {templates.slice(0, 3).map((template) => (
+                  <Button
+                    key={template.id}
+                    variant="outline"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/workout/active",
+                        params: {
+                          templateId: template.id,
+                          name: template.name,
+                        },
+                      })
+                    }
+                  >
+                    <Text>{template.name}</Text>
+                  </Button>
+                ))}
+              </View>
+            </FadeInView>
           )}
         </View>
       </View>
     </CustomScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  subtitle: { marginTop: spacing.xs },
-  gap: { marginTop: spacing.lg, gap: spacing.md },
-  templateSection: {
-    gap: spacing.sm,
-  },
-});
