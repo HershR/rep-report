@@ -8,6 +8,7 @@ import {
   Pencil,
   Ruler,
   Settings,
+  Trophy,
   Weight,
   type LucideIcon,
 } from "lucide-react-native";
@@ -173,6 +174,11 @@ export default function ProfileScreen() {
       </Card>
 
       <View className="gap-2">
+        <NavRow
+          icon={Trophy}
+          label="Personal records"
+          onPress={() => router.push("/profile/personal-records" as Href)}
+        />
         <NavRow
           icon={Weight}
           label="Weight history"

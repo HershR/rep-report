@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { Image as ExpoImage } from "expo-image";
 import { Heart } from "lucide-react-native";
@@ -10,9 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
+import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
+import type { PersonalRecordEntry } from "@/features/personal-records/types";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
+import { weightToText } from "@/lib/units";
 import { getWgerExerciseById } from "@/services/wger/client";
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -33,6 +39,25 @@ function MuscleGroup({ title, muscles }: { title: string; muscles: string[] }) {
   );
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-1 items-center gap-1">
+      <Text variant="large">{value}</Text>
+      <Text variant="muted" className="text-xs uppercase">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function mostRecentAchievedAt(entries: (PersonalRecordEntry | null)[]): string | null {
+  const dates = entries
+    .filter((entry): entry is PersonalRecordEntry => Boolean(entry))
+    .map((entry) => entry.achievedAt);
+  if (dates.length === 0) return null;
+  return dates.sort().at(-1) ?? null;
+}
+
 export default function ExerciseDetailScreen() {
   const params = useLocalSearchParams<{
     exerciseId: string;
@@ -43,6 +68,18 @@ export default function ExerciseDetailScreen() {
 
   const { saveFavoriteExercise, removeFavoriteExercise } =
     useFavoriteExercises();
+  const { appSettings } = useAppSettings();
+  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { records: personalRecords, isLoading: personalRecordsLoading } =
+    useExercisePersonalRecords(source === "local" ? exerciseId : undefined);
+  const mostRecentPrDate = personalRecords
+    ? mostRecentAchievedAt([
+        personalRecords.heaviestWeight,
+        personalRecords.bestSetVolume,
+        personalRecords.bestSessionVolume,
+        personalRecords.mostReps,
+      ])
+    : null;
 
   const query = useQuery({
     queryKey: ["exercise-detail", source, exerciseId],
@@ -158,6 +195,66 @@ export default function ExerciseDetailScreen() {
                 title="Secondary muscles"
                 muscles={item.secondaryMuscles}
               />
+
+              {source === "local" && !personalRecordsLoading ? (
+                <>
+                  <Separator />
+                  <View className="gap-2">
+                    <Text variant="small">Personal Records</Text>
+                    {personalRecords ? (
+                      <>
+                        <View className="flex-row">
+                          <Stat
+                            label="Heaviest"
+                            value={
+                              personalRecords.heaviestWeight
+                                ? `${weightToText(personalRecords.heaviestWeight.weight, weightUnit)} ${weightUnit}`
+                                : "—"
+                            }
+                          />
+                          <Stat
+                            label="Best Set Vol."
+                            value={
+                              personalRecords.bestSetVolume
+                                ? `${weightToText(personalRecords.bestSetVolume.volume, weightUnit)} ${weightUnit}`
+                                : "—"
+                            }
+                          />
+                          <Stat
+                            label="Best Session Vol."
+                            value={
+                              personalRecords.bestSessionVolume
+                                ? `${weightToText(personalRecords.bestSessionVolume.volume, weightUnit)} ${weightUnit}`
+                                : "—"
+                            }
+                          />
+                          <Stat
+                            label="Most Reps"
+                            value={
+                              personalRecords.mostReps
+                                ? String(personalRecords.mostReps.reps)
+                                : "—"
+                            }
+                          />
+                        </View>
+                        {mostRecentPrDate ? (
+                          <Text
+                            variant="muted"
+                            className="text-center text-xs"
+                          >
+                            {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
+                          </Text>
+                        ) : null}
+                      </>
+                    ) : (
+                      <Text variant="muted">
+                        Log a workout with this exercise to see personal
+                        records.
+                      </Text>
+                    )}
+                  </View>
+                </>
+              ) : null}
             </CardContent>
           </Card>
         </FadeInView>

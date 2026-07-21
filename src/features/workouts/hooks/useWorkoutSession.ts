@@ -56,6 +56,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -65,6 +66,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -74,6 +76,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -82,6 +85,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -90,6 +94,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -103,6 +108,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: async (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       if (sessionId) await invalidateHistoryForSession(sessionId);
     },
   });
@@ -112,6 +118,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: async () => {
       queryClient.setQueryData(queryKey(sessionId), null);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       if (sessionId) await invalidateHistoryForSession(sessionId);
     },
   });
@@ -130,6 +137,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: () => {
       queryClient.setQueryData(["active-workout"], null);
       void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       if (sessionId) {
         void invalidateHistoryForSession(sessionId);
       }
@@ -141,6 +149,7 @@ export function useWorkoutSession(sessionId?: string) {
     onSuccess: () => {
       queryClient.setQueryData(["active-workout"], null);
       void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       if (sessionId) {
         void invalidateHistoryForSession(sessionId);
       }

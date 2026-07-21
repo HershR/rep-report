@@ -56,6 +56,7 @@ export function useActiveWorkout() {
     onSuccess: () => {
       setActiveWorkoutCache(null);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
@@ -64,6 +65,7 @@ export function useActiveWorkout() {
     onSuccess: () => {
       setActiveWorkoutCache(null);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
     },
   });
 
