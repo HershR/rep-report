@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { Image as ExpoImage } from "expo-image";
 import { Heart } from "lucide-react-native";
+import { useState } from "react";
 import { View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
@@ -65,6 +67,7 @@ export default function ExerciseDetailScreen() {
   }>();
   const source = params.source ?? "wger";
   const exerciseId = params.exerciseId;
+  const [tab, setTab] = useState<"details" | "records">("details");
 
   const { saveFavoriteExercise, removeFavoriteExercise } =
     useFavoriteExercises();
@@ -186,22 +189,40 @@ export default function ExerciseDetailScreen() {
                 <Text variant="muted">{item.description}</Text>
               ) : null}
 
-              <MuscleGroup title="Equipment" muscles={item.equipment} />
-              <MuscleGroup
-                title="Primary muscles"
-                muscles={item.primaryMuscles}
-              />
-              <MuscleGroup
-                title="Secondary muscles"
-                muscles={item.secondaryMuscles}
-              />
+              <Separator />
 
-              {source === "local" && !personalRecordsLoading ? (
-                <>
-                  <Separator />
-                  <View className="gap-2">
-                    <Text variant="small">Personal Records</Text>
-                    {personalRecords ? (
+              <Tabs value={tab} onValueChange={(value) => setTab(value as "details" | "records")}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="details" className="flex-1">
+                    <Text>Details</Text>
+                  </TabsTrigger>
+                  <TabsTrigger value="records" className="flex-1">
+                    <Text>Records</Text>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="details">
+                  <View className="gap-3 pt-3">
+                    <MuscleGroup title="Equipment" muscles={item.equipment} />
+                    <MuscleGroup
+                      title="Primary muscles"
+                      muscles={item.primaryMuscles}
+                    />
+                    <MuscleGroup
+                      title="Secondary muscles"
+                      muscles={item.secondaryMuscles}
+                    />
+                  </View>
+                </TabsContent>
+
+                <TabsContent value="records">
+                  <View className="gap-2 pt-3">
+                    {source !== "local" ? (
+                      <Text variant="muted">
+                        Save this exercise as a favorite to start tracking
+                        personal records.
+                      </Text>
+                    ) : personalRecordsLoading ? null : personalRecords ? (
                       <>
                         <View className="flex-row">
                           <Stat
@@ -253,8 +274,8 @@ export default function ExerciseDetailScreen() {
                       </Text>
                     )}
                   </View>
-                </>
-              ) : null}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </FadeInView>
