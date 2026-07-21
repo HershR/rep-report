@@ -57,6 +57,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
     },
   });
 
@@ -67,6 +68,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
     },
   });
 
@@ -77,6 +79,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
     },
   });
 
@@ -86,6 +89,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
     },
   });
 
@@ -95,6 +99,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
     },
   });
 
@@ -109,6 +114,7 @@ export function useWorkoutSession(sessionId?: string) {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
       if (sessionId) await invalidateHistoryForSession(sessionId);
     },
   });
@@ -119,6 +125,7 @@ export function useWorkoutSession(sessionId?: string) {
       queryClient.setQueryData(queryKey(sessionId), null);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
       if (sessionId) await invalidateHistoryForSession(sessionId);
     },
   });
@@ -138,6 +145,7 @@ export function useWorkoutSession(sessionId?: string) {
       queryClient.setQueryData(["active-workout"], null);
       void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
       if (sessionId) {
         void invalidateHistoryForSession(sessionId);
       }
@@ -150,6 +158,7 @@ export function useWorkoutSession(sessionId?: string) {
       queryClient.setQueryData(["active-workout"], null);
       void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
       if (sessionId) {
         void invalidateHistoryForSession(sessionId);
       }

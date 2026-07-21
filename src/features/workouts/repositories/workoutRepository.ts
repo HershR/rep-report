@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { format } from "date-fns";
 
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
@@ -193,6 +194,58 @@ export async function getCompletedWorkoutsByDate(date: string): Promise<WorkoutS
 
   const hydrated = await Promise.all(filtered.map((row) => hydrateWorkoutSession(row.id)));
   return hydrated.filter((row): row is WorkoutSessionDetails => Boolean(row));
+}
+
+export type WorkoutDailyTotal = {
+  dateKey: string;
+  exerciseCount: number;
+};
+
+export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTotal[]> {
+  const sessions = await db
+    .select({
+      id: workoutSessions.id,
+      completedAt: workoutSessions.completedAt,
+    })
+    .from(workoutSessions)
+    .where(eq(workoutSessions.status, "completed"));
+
+  if (sessions.length === 0) return [];
+
+  const exerciseRows = await db
+    .select({ workoutSessionId: workoutSessionExercises.workoutSessionId })
+    .from(workoutSessionExercises)
+    .where(
+      inArray(
+        workoutSessionExercises.workoutSessionId,
+        sessions.map((session) => session.id),
+      ),
+    );
+
+  const exerciseCountBySession = new Map<string, number>();
+  for (const row of exerciseRows) {
+    exerciseCountBySession.set(
+      row.workoutSessionId,
+      (exerciseCountBySession.get(row.workoutSessionId) ?? 0) + 1,
+    );
+  }
+
+  const totalsByDay = new Map<string, WorkoutDailyTotal>();
+  for (const session of sessions) {
+    if (!session.completedAt) continue;
+    // Map each session's UTC completedAt back to the user's local calendar day
+    // (inverse of useWorkoutHistory's toDateKey) so days match what a user sees.
+    const dateKey = format(new Date(session.completedAt), "yyyy-MM-dd");
+    const sessionExerciseCount = exerciseCountBySession.get(session.id) ?? 0;
+    const existing = totalsByDay.get(dateKey);
+    if (existing) {
+      existing.exerciseCount += sessionExerciseCount;
+    } else {
+      totalsByDay.set(dateKey, { dateKey, exerciseCount: sessionExerciseCount });
+    }
+  }
+
+  return [...totalsByDay.values()];
 }
 
 export async function getWorkoutSessionDetailsById(id: string): Promise<WorkoutSessionDetails | null> {

@@ -2,16 +2,41 @@ import { useRouter } from "expo-router";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+import { type ComponentProps, useMemo } from "react";
 import { Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+
+type MarkedDates = NonNullable<ComponentProps<typeof Calendar>["markedDates"]>;
 
 import { CustomScreen } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
 import { useWorkoutHistory } from "@/features/workouts/hooks/useWorkoutHistory";
 import { THEME } from "@/lib/theme";
+
+/** Reformats a `"hsl(h s% l%)"` token into `"hsla(h, s%, l%, a)"` (legacy comma syntax). */
+function withAlpha(hsl: string, alpha: number): string {
+  const inner = hsl
+    .replace(/^hsl\(/, "")
+    .replace(/\)$/, "")
+    .trim();
+  const [h, s, l] = inner.split(/\s+/);
+  return `hsla(${h}, ${s}, ${l}, ${alpha})`;
+}
+
+/** Exercises-per-day at which the calendar cell reaches full color intensity. */
+const FULL_GRADIENT_EXERCISES = 10;
+/** Floor so any activity day stays visible even with a single exercise. */
+const MIN_ALPHA = 0.2;
+
+function intensityAlpha(exerciseCount: number): number {
+  const ratio =
+    Math.min(exerciseCount, FULL_GRADIENT_EXERCISES) / FULL_GRADIENT_EXERCISES;
+  return MIN_ALPHA + (1 - MIN_ALPHA) * ratio;
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -24,6 +49,40 @@ export default function DashboardScreen() {
     workouts,
     isLoading,
   } = useWorkoutHistory();
+  const { dailyTotals } = useWorkoutActivity();
+
+  const markedDates = useMemo<MarkedDates>(() => {
+    const marks: MarkedDates = {};
+    for (const day of dailyTotals) {
+      const alpha = intensityAlpha(day.exerciseCount);
+      marks[day.dateKey] = {
+        customStyles: {
+          container: {
+            backgroundColor: withAlpha(colors.primary, alpha),
+            borderRadius: 16,
+          },
+          text: {
+            color: alpha >= 0.5 ? colors.primaryForeground : colors.foreground,
+          },
+        },
+      };
+    }
+
+    const existing = marks[selectedDateKey];
+    marks[selectedDateKey] = {
+      customStyles: {
+        container: {
+          ...(existing?.customStyles?.container ?? {}),
+          borderWidth: 2,
+          borderColor: colors.foreground,
+          borderRadius: 16,
+        },
+        text: existing?.customStyles?.text ?? { color: colors.foreground },
+      },
+    };
+
+    return marks;
+  }, [dailyTotals, selectedDateKey, colors]);
 
   return (
     <CustomScreen scroll>
@@ -35,15 +94,11 @@ export default function DashboardScreen() {
           <CardContent>
             <Calendar
               current={selectedDateKey}
+              markingType="custom"
               onDayPress={(day) =>
                 setSelectedDate(new Date(`${day.dateString}T12:00:00`))
               }
-              markedDates={{
-                [selectedDateKey]: {
-                  selected: true,
-                  selectedColor: colors.primary,
-                },
-              }}
+              markedDates={markedDates}
               theme={{
                 calendarBackground: colors.card,
                 dayTextColor: colors.foreground,
