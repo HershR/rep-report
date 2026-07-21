@@ -18,3 +18,11 @@ export type ExercisePersonalRecordsSummary = ExercisePersonalRecords & {
   exerciseName: string;
   exerciseCategory: string | null;
 };
+
+export type SetPrResult = {
+  exerciseName: string;
+  isWeightPr: boolean;
+  isRepsPr: boolean;
+  weightKg: number | null;
+  reps: number | null;
+};

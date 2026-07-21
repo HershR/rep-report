@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { Check } from "lucide-react-native";
+import { Check, Trophy } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useColorScheme } from "nativewind";
 import { View } from "react-native";
@@ -21,12 +21,39 @@ import { Icon } from "@/components/ui/icon";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { checkSetPersonalRecord } from "@/features/personal-records/prDetection";
+import type { SetPrResult } from "@/features/personal-records/types";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
+import { weightToText } from "@/lib/units";
+
+function buildPrDescription(
+  pr: SetPrResult,
+  weightUnit: "lb" | "kg",
+): string {
+  const showWeight = pr.isWeightPr && pr.weightKg !== null;
+  const weightPart = showWeight
+    ? `${weightToText(pr.weightKg, weightUnit)} ${weightUnit}`
+    : null;
+  const repsPart =
+    pr.isRepsPr && pr.reps !== null ? `${pr.reps} reps` : null;
+
+  let stat: string;
+  if (weightPart && pr.isRepsPr && pr.reps !== null) {
+    stat = `${weightPart} × ${pr.reps}`;
+  } else if (weightPart) {
+    stat = weightPart;
+  } else {
+    stat = repsPart ?? "";
+  }
+
+  return `${pr.exerciseName} · ${stat}`;
+}
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
 
@@ -44,6 +71,8 @@ export default function ActiveWorkoutScreen() {
   }>();
   const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
+  const { appSettings } = useAppSettings();
+  const weightUnit = appSettings?.weightUnit ?? "lb";
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
@@ -137,6 +166,40 @@ export default function ActiveWorkoutScreen() {
     }
     pendingSetTimersRef.current.clear();
     pendingSetInputsRef.current.clear();
+  };
+
+  /**
+   * Removes and returns any debounced-but-not-yet-committed edits for a set, so
+   * a completion write can include the just-typed weight/reps in one commit
+   * (otherwise the immediate completion toggle races the 400ms debounce and the
+   * PR check would read a stale value).
+   */
+  const takePendingSetUpdate = (setId: string): PendingSetInput => {
+    const pending = pendingSetInputsRef.current.get(setId) ?? {};
+    pendingSetInputsRef.current.delete(setId);
+    const timer = pendingSetTimersRef.current.get(setId);
+    if (timer) {
+      clearTimeout(timer);
+      pendingSetTimersRef.current.delete(setId);
+    }
+    return pending;
+  };
+
+  const handleSetCompletionToggle = async (
+    setId: string,
+    isCompleted: boolean,
+  ) => {
+    const pending = takePendingSetUpdate(setId);
+    const session = await updateSet({ setId, ...pending, isCompleted });
+    if (!isCompleted) return;
+    const pr = await checkSetPersonalRecord(session, setId);
+    if (!pr) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast.success("New PR!", {
+      icon: <Icon as={Trophy} size={18} color={colors.chart3} />,
+      description: buildPrDescription(pr, weightUnit),
+      duration: 3000,
+    });
   };
 
   const scheduleSetUpdate = (setId: string, input: PendingSetInput) => {
@@ -270,7 +333,7 @@ export default function ActiveWorkoutScreen() {
               }}
               onUpdateSet={(setId, input) => {
                 if (input.isCompleted !== undefined) {
-                  void updateSet({ setId, ...input });
+                  void handleSetCompletionToggle(setId, input.isCompleted);
                   return;
                 }
                 scheduleSetUpdate(setId, input);
