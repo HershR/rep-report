@@ -379,6 +379,32 @@ export async function removeExerciseFromWorkout(
   return hydrated;
 }
 
+export async function reorderWorkoutExercises(
+  workoutSessionId: string,
+  orderedExerciseIds: string[],
+): Promise<WorkoutSessionDetails> {
+  const idToIndex = new Map(orderedExerciseIds.map((id, index) => [id, index] as const));
+  const rows = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId));
+
+  const timestamp = nowUtc();
+  for (const row of rows) {
+    const nextIndex = idToIndex.get(row.id);
+    if (nextIndex !== undefined && row.orderIndex !== nextIndex) {
+      await db
+        .update(workoutSessionExercises)
+        .set({ orderIndex: nextIndex, updatedAt: timestamp })
+        .where(eq(workoutSessionExercises.id, row.id));
+    }
+  }
+
+  const hydrated = await hydrateWorkoutSession(workoutSessionId);
+  if (!hydrated) throw new Error("Failed reorder workout exercises");
+  return hydrated;
+}
+
 export async function addSetToWorkout(input: {
   workoutSessionExerciseId: string;
   orderIndex?: number;

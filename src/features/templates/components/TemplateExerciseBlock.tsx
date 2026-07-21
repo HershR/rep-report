@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react-native";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,10 @@ type TemplateExerciseBlockProps = {
     field: "repsText" | "weightText" | "durationText" | "distanceText",
     value: string,
   ) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 };
 
 export function TemplateExerciseBlock({
@@ -39,6 +43,10 @@ export function TemplateExerciseBlock({
   onDeleteExercise,
   onDeleteSet,
   onUpdateSet,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }: TemplateExerciseBlockProps) {
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
@@ -53,15 +61,39 @@ export function TemplateExerciseBlock({
   return (
     <View className="gap-2">
       <View className="flex-row items-center justify-between">
-        <Text className="text-primary font-semibold">{exerciseName}</Text>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onPress={onDeleteExercise}
-        >
-          <Icon as={Trash2} className="text-muted-foreground size-4" />
-        </Button>
+        <Text className="text-primary flex-1 font-semibold">{exerciseName}</Text>
+        <View className="flex-row items-center">
+          {onMoveUp ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={!canMoveUp}
+              onPress={onMoveUp}
+            >
+              <Icon as={ChevronUp} className="text-muted-foreground size-4" />
+            </Button>
+          ) : null}
+          {onMoveDown ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={!canMoveDown}
+              onPress={onMoveDown}
+            >
+              <Icon as={ChevronDown} className="text-muted-foreground size-4" />
+            </Button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onPress={onDeleteExercise}
+          >
+            <Icon as={Trash2} className="text-muted-foreground size-4" />
+          </Button>
+        </View>
       </View>
 
       {sets.length > 0 ? (

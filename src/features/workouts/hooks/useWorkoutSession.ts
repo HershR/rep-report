@@ -6,6 +6,7 @@ import {
   cancelWorkout,
   completeWorkout,
   removeExerciseFromWorkout,
+  reorderWorkoutExercises,
   deleteSet,
   deleteWorkoutSession,
   getWorkoutSessionById,
@@ -61,6 +62,15 @@ export function useWorkoutSession(sessionId?: string) {
   const removeExerciseMutation = useMutation({
     mutationFn: (workoutSessionExerciseId: string) =>
       removeExerciseFromWorkout(sessionId as string, workoutSessionExerciseId),
+    onSuccess: (data) => {
+      setCache(data);
+      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
+    },
+  });
+
+  const reorderExercisesMutation = useMutation({
+    mutationFn: (orderedExerciseIds: string[]) =>
+      reorderWorkoutExercises(sessionId as string, orderedExerciseIds),
     onSuccess: (data) => {
       setCache(data);
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
@@ -145,6 +155,7 @@ export function useWorkoutSession(sessionId?: string) {
     addExerciseToWorkout: addExerciseMutation.mutateAsync,
     addSetToWorkout: addSetMutation.mutateAsync,
     removeExerciseFromWorkout: removeExerciseMutation.mutateAsync,
+    reorderExercises: reorderExercisesMutation.mutateAsync,
     updateSet: updateSetMutation.mutateAsync,
     deleteSet: deleteSetMutation.mutateAsync,
     updateCompletedWorkout: updateCompletedWorkoutMutation.mutateAsync,
@@ -155,6 +166,7 @@ export function useWorkoutSession(sessionId?: string) {
       addExerciseMutation.isPending ||
       addSetMutation.isPending ||
       removeExerciseMutation.isPending ||
+      reorderExercisesMutation.isPending ||
       updateSetMutation.isPending ||
       deleteSetMutation.isPending ||
       updateCompletedWorkoutMutation.isPending ||

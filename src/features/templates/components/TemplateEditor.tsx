@@ -126,6 +126,10 @@ type ExerciseFieldProps = {
   setValue: UseFormSetValue<TemplateEditorFormValues>;
   index: number;
   onDeleteExercise: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 };
 
 function ExerciseField({
@@ -133,6 +137,10 @@ function ExerciseField({
   setValue,
   index,
   onDeleteExercise,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
 }: ExerciseFieldProps) {
   const exercise = useWatch({
     control,
@@ -177,6 +185,10 @@ function ExerciseField({
       sets={exercise.sets}
       onAddSet={onAddSet}
       onDeleteExercise={onDeleteExercise}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
+      canMoveUp={canMoveUp}
+      canMoveDown={canMoveDown}
       onDeleteSet={(setLocalId) => {
         const setIndex = exercise.sets.findIndex(
           (set) => set.localId === setLocalId,
@@ -215,6 +227,7 @@ export function TemplateEditor({
     fields: exerciseFields,
     append,
     remove,
+    move,
   } = useFieldArray({
     control,
     name: "exercises",
@@ -312,6 +325,10 @@ export function TemplateEditor({
                 setValue={setValue}
                 index={index}
                 onDeleteExercise={() => onDeleteExercise(index)}
+                onMoveUp={() => move(index, index - 1)}
+                onMoveDown={() => move(index, index + 1)}
+                canMoveUp={index > 0}
+                canMoveDown={index < exerciseFields.length - 1}
               />
             </View>
           ))}

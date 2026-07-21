@@ -96,6 +96,7 @@ export default function WorkoutDetailScreen() {
     addExerciseToWorkout,
     addSetToWorkout,
     removeExerciseFromWorkout,
+    reorderExercises,
     updateSet,
     deleteSet,
     updateCompletedWorkout,
@@ -126,6 +127,7 @@ export default function WorkoutDetailScreen() {
     fields: exerciseFields,
     append,
     remove,
+    move,
   } = useFieldArray({
     control,
     name: "exercises",
@@ -424,6 +426,14 @@ export default function WorkoutDetailScreen() {
         }
       }
 
+      const orderedExerciseIds = formValues.exercises.map(
+        (draftExercise) =>
+          resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id,
+      );
+      if (orderedExerciseIds.length > 0) {
+        await reorderExercises(orderedExerciseIds);
+      }
+
       await refetch();
       setShowExitModal(false);
 
@@ -536,6 +546,10 @@ export default function WorkoutDetailScreen() {
               onRemoveExercise={onRemoveExerciseDraft}
               onUpdateSet={onUpdateSetDraft}
               onDeleteSet={onDeleteSetDraft}
+              onMoveUp={() => move(index, index - 1)}
+              onMoveDown={() => move(index, index + 1)}
+              canMoveUp={index > 0}
+              canMoveDown={index < watchedExercises.length - 1}
             />
           </View>
         ))}
