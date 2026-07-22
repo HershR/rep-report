@@ -4,11 +4,22 @@ import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
 import { measurements, type Measurement } from "@/db/schema";
 
-export const SUPPORTED_MEASUREMENT_TYPES = ["weight", "height"] as const;
+export const SUPPORTED_MEASUREMENT_TYPES = [
+  "weight",
+  "height",
+  "chest",
+  "waist",
+  "hips",
+  "shoulders",
+  "left_arm",
+  "right_arm",
+  "left_thigh",
+  "right_thigh",
+] as const;
 export type SupportedMeasurementType = (typeof SUPPORTED_MEASUREMENT_TYPES)[number];
 
 function isSupportedType(value: string): value is SupportedMeasurementType {
-  return value === "weight" || value === "height";
+  return (SUPPORTED_MEASUREMENT_TYPES as readonly string[]).includes(value);
 }
 
 export async function createMeasurement(input: {

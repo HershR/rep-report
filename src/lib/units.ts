@@ -75,3 +75,32 @@ export function toDisplayHeightCm(
   }
   return `${Number(valueInCm.toFixed(2))} cm`;
 }
+
+/**
+ * Plain decimal cm/in for single-number length measurements (e.g. circumferences)
+ * — unlike toDisplayHeightCm, never splits into feet+inches.
+ */
+export function toDisplayLengthCm(
+  valueInCm: number,
+  unit: HeightUnit,
+): number {
+  return unit === "in" ? valueInCm / CM_PER_INCH : valueInCm;
+}
+
+export function lengthToText(
+  valueInCm: number | null,
+  unit: HeightUnit,
+): string {
+  if (valueInCm === null) return "";
+  return String(Number(toDisplayLengthCm(valueInCm, unit).toFixed(2)));
+}
+
+export function textToMetricLength(
+  text: string,
+  unit: HeightUnit,
+): number | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? toMetricHeight(parsed, unit) : null;
+}

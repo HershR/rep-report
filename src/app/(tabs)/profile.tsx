@@ -190,6 +190,11 @@ export default function ProfileScreen() {
           onPress={() => router.push("/profile/height-history" as Href)}
         />
         <NavRow
+          icon={Ruler}
+          label="Body measurements"
+          onPress={() => router.push("/profile/measurements" as Href)}
+        />
+        <NavRow
           icon={Settings}
           label="Settings"
           onPress={() => router.push("/settings" as Href)}
