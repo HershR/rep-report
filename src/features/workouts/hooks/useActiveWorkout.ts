@@ -9,6 +9,7 @@ import {
   removeIncompleteSets,
   deleteSet,
   getActiveWorkoutSession,
+  repeatWorkout,
   resumeWorkout,
   startWorkout,
   updateSet,
@@ -39,6 +40,13 @@ export function useActiveWorkout() {
 
   const resumeMutation = useMutation({
     mutationFn: (sessionId?: string) => resumeWorkout(sessionId),
+    onSuccess: (data) => {
+      setActiveWorkoutCache(data);
+    },
+  });
+
+  const repeatMutation = useMutation({
+    mutationFn: (sourceSessionId: string) => repeatWorkout(sourceSessionId),
     onSuccess: (data) => {
       setActiveWorkoutCache(data);
     },
@@ -121,6 +129,7 @@ export function useActiveWorkout() {
     refetch: activeQuery.refetch,
     startWorkout: startMutation.mutateAsync,
     resumeWorkout: resumeMutation.mutateAsync,
+    repeatWorkout: repeatMutation.mutateAsync,
     completeWorkout: completeMutation.mutateAsync,
     cancelWorkout: cancelMutation.mutateAsync,
     addExerciseToWorkout: addExerciseMutation.mutateAsync,
@@ -132,6 +141,7 @@ export function useActiveWorkout() {
     isSaving:
       startMutation.isPending ||
       resumeMutation.isPending ||
+      repeatMutation.isPending ||
       completeMutation.isPending ||
       cancelMutation.isPending ||
       addExerciseMutation.isPending ||

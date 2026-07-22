@@ -459,6 +459,14 @@ export default function WorkoutDetailScreen() {
     router.back();
   };
 
+  const onRepeatWorkout = async () => {
+    if (isDirty) await onSaveAll();
+    router.push({
+      pathname: "/workout/active",
+      params: { repeatSessionId: workoutSession.id },
+    });
+  };
+
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
       <Text variant="h2">Workout Detail</Text>
@@ -560,6 +568,13 @@ export default function WorkoutDetailScreen() {
         onPress={() => void onSaveAll()}
       >
         <Text>Save All</Text>
+      </Button>
+      <Button
+        variant="outline"
+        loading={isSaving || isSavingAll}
+        onPress={() => void onRepeatWorkout()}
+      >
+        <Text>Repeat Workout</Text>
       </Button>
       <Button
         variant="destructive"

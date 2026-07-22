@@ -330,6 +330,65 @@ export async function startWorkout(input?: {
   return hydrated;
 }
 
+export async function repeatWorkout(sourceSessionId: string): Promise<WorkoutSessionDetails> {
+  const source = await getWorkoutSessionById(sourceSessionId);
+  if (!source || source.status !== "completed") {
+    throw new Error("Can only repeat a completed workout");
+  }
+
+  const now = nowUtc();
+  const session = await createWorkoutSession({
+    name: source.name,
+    templateId: source.templateId,
+    notes: null,
+  });
+
+  const sourceExerciseRows = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sourceSessionId))
+    .orderBy(asc(workoutSessionExercises.orderIndex));
+
+  for (const sourceExercise of sourceExerciseRows) {
+    const sessionExerciseId = createUuid();
+    await db.insert(workoutSessionExercises).values({
+      id: sessionExerciseId,
+      workoutSessionId: session.id,
+      exerciseId: sourceExercise.exerciseId,
+      orderIndex: sourceExercise.orderIndex,
+      notes: sourceExercise.notes,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const sourceSetRows = await db
+      .select()
+      .from(workoutSets)
+      .where(eq(workoutSets.workoutSessionExerciseId, sourceExercise.id))
+      .orderBy(asc(workoutSets.orderIndex));
+
+    for (const sourceSet of sourceSetRows) {
+      await db.insert(workoutSets).values({
+        id: createUuid(),
+        workoutSessionExerciseId: sessionExerciseId,
+        orderIndex: sourceSet.orderIndex,
+        reps: sourceSet.reps,
+        weight: sourceSet.weight,
+        durationSeconds: sourceSet.durationSeconds,
+        distance: sourceSet.distance,
+        isCompleted: 0,
+        setType: sourceSet.setType,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
+  const hydrated = await hydrateWorkoutSession(session.id);
+  if (!hydrated) throw new Error("Failed repeat workout");
+  return hydrated;
+}
+
 export async function completeWorkout(
   sessionId: string,
   input?: { completedAt?: string; durationSeconds?: number | null },

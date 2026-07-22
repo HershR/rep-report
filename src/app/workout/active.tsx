@@ -68,6 +68,7 @@ export default function ActiveWorkoutScreen() {
     templateId?: string;
     name?: string;
     sessionId?: string;
+    repeatSessionId?: string;
   }>();
   const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
@@ -85,6 +86,7 @@ export default function ActiveWorkoutScreen() {
     isLoading,
     startWorkout,
     resumeWorkout,
+    repeatWorkout,
     completeWorkout,
     cancelWorkout,
     addExerciseToWorkout,
@@ -101,6 +103,10 @@ export default function ActiveWorkoutScreen() {
       void resumeWorkout(params.sessionId);
       return;
     }
+    if (params.repeatSessionId) {
+      void repeatWorkout(params.repeatSessionId);
+      return;
+    }
     void startWorkout({
       name: params.name ?? "Workout",
       templateId: params.templateId ?? null,
@@ -110,8 +116,10 @@ export default function ActiveWorkoutScreen() {
     activeWorkout?.status,
     params.name,
     params.sessionId,
+    params.repeatSessionId,
     params.templateId,
     resumeWorkout,
+    repeatWorkout,
     startWorkout,
   ]);
 
