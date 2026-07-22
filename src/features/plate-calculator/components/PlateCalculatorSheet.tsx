@@ -10,15 +10,17 @@ import { PlateCalculator } from "@/features/plate-calculator/components/PlateCal
 type PlateCalculatorSheetProps = {
   visible: boolean;
   onClose: () => void;
-  targetWeight: number | null;
+  initialWeight: number | null;
   weightUnit: WeightUnit;
+  onApply?: (weight: number) => void;
 };
 
 export function PlateCalculatorSheet({
   visible,
   onClose,
-  targetWeight,
+  initialWeight,
   weightUnit,
+  onApply,
 }: PlateCalculatorSheetProps) {
   return (
     <Sheet open={visible} onOpenChange={(open) => (!open ? onClose() : undefined)}>
@@ -26,7 +28,11 @@ export function PlateCalculatorSheet({
         <SheetHeader>
           <SheetTitle>Plate calculator</SheetTitle>
         </SheetHeader>
-        <PlateCalculator targetWeight={targetWeight} weightUnit={weightUnit} />
+        <PlateCalculator
+          initialWeight={initialWeight}
+          weightUnit={weightUnit}
+          onApply={onApply}
+        />
       </SheetContent>
     </Sheet>
   );

@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useColorScheme } from "nativewind";
 import { Pressable, ScrollView, View } from "react-native";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import type { WeightUnit } from "@/db/schema";
 import {
@@ -10,15 +13,46 @@ import {
   plateColor,
   type BarPreset,
 } from "@/features/plate-calculator/constants";
-import { computePlateLoadout } from "@/features/plate-calculator/plateMath";
+import {
+  computePlateLoadout,
+  loadedTotalFromCounts,
+  type PlateGroup,
+} from "@/features/plate-calculator/plateMath";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
+type PlateCounts = Record<number, number>;
+
 type PlateCalculatorProps = {
-  /** Target weight in display units (kg or lb). */
-  targetWeight: number | null;
   weightUnit: WeightUnit;
+  /** Seed weight in display units. The component remounts per sheet-open, so this seeds initial state. */
+  initialWeight?: number | null;
+  /** When provided, renders a "Use {total} {unit}" button that applies the loaded total. */
+  onApply?: (weight: number) => void;
 };
+
+function toNumber(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function trim(value: number): string {
+  return String(Number(value.toFixed(2)));
+}
+
+function countsFromLoadout(perSide: PlateGroup[]): PlateCounts {
+  const counts: PlateCounts = {};
+  for (const group of perSide) counts[group.size] = group.count;
+  return counts;
+}
+
+function toPerSide(counts: PlateCounts, sizes: number[]): PlateGroup[] {
+  return sizes
+    .filter((size) => (counts[size] ?? 0) > 0)
+    .map((size) => ({ size, count: counts[size] }));
+}
 
 function BarChip({
   preset,
@@ -51,40 +85,90 @@ function BarChip({
   );
 }
 
-function trim(value: number): string {
-  return String(Number(value.toFixed(2)));
-}
-
 export function PlateCalculator({
-  targetWeight,
   weightUnit,
+  initialWeight,
+  onApply,
 }: PlateCalculatorProps) {
   const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
   const presets = BAR_PRESETS[weightUnit];
   const sizes = PLATE_SIZES[weightUnit];
   const maxSize = sizes[0];
+  const defaultBar = presets[0].weight;
 
-  const [barWeight, setBarWeight] = useState(presets[0].weight);
-
-  // Reset the bar to the unit's default if the unit changes underneath us.
-  useEffect(() => {
-    setBarWeight(BAR_PRESETS[weightUnit][0].weight);
-  }, [weightUnit]);
-
-  const hasTarget = targetWeight !== null && targetWeight > 0;
-  const loadout = computePlateLoadout(targetWeight ?? 0, barWeight, sizes);
-
-  const plateInstances = loadout.perSide.flatMap((group) =>
-    Array.from({ length: group.count }, () => group.size),
+  const [barWeight, setBarWeight] = useState(defaultBar);
+  const [weightText, setWeightText] = useState(
+    initialWeight != null && initialWeight > 0 ? trim(initialWeight) : "",
+  );
+  const [counts, setCounts] = useState<PlateCounts>(() =>
+    initialWeight != null && initialWeight > 0
+      ? countsFromLoadout(
+          computePlateLoadout(initialWeight, defaultBar, sizes).perSide,
+        )
+      : {},
   );
 
-  const breakdownText = loadout.perSide
+  const perSide = toPerSide(counts, sizes);
+  const loadedTotal = loadedTotalFromCounts(perSide, barWeight);
+  const parsed = toNumber(weightText);
+  const belowBar = parsed != null && parsed < barWeight;
+  const remainder =
+    parsed != null && !belowBar
+      ? Number((parsed - loadedTotal).toFixed(2))
+      : 0;
+
+  const onChangeWeight = (text: string) => {
+    setWeightText(text);
+    const value = toNumber(text);
+    setCounts(
+      value != null && value > 0
+        ? countsFromLoadout(computePlateLoadout(value, barWeight, sizes).perSide)
+        : {},
+    );
+  };
+
+  const setCountsAndWeight = (next: PlateCounts) => {
+    setCounts(next);
+    setWeightText(trim(loadedTotalFromCounts(toPerSide(next, sizes), barWeight)));
+  };
+
+  const addPlate = (size: number) => {
+    setCountsAndWeight({ ...counts, [size]: (counts[size] ?? 0) + 1 });
+  };
+
+  const removePlate = (size: number) => {
+    const nextCount = (counts[size] ?? 0) - 1;
+    const next = { ...counts };
+    if (nextCount > 0) next[size] = nextCount;
+    else delete next[size];
+    setCountsAndWeight(next);
+  };
+
+  const onChangeBar = (weight: number) => {
+    setBarWeight(weight);
+    setWeightText(trim(loadedTotalFromCounts(perSide, weight)));
+  };
+
+  const plateInstances = perSide.flatMap((group) =>
+    Array.from({ length: group.count }, () => group.size),
+  );
+  const breakdownText = perSide
     .map((group) => `${trim(group.size)} × ${group.count}`)
     .join("  ·  ");
 
   return (
     <View className="gap-4">
+      <View className="gap-2">
+        <Label>{`Weight (${weightUnit})`}</Label>
+        <Input
+          value={weightText}
+          onChangeText={onChangeWeight}
+          placeholder={`Weight (${weightUnit})`}
+          keyboardType="decimal-pad"
+        />
+      </View>
+
       <View className="gap-2">
         <Text variant="small">Bar</Text>
         <View className="flex-row flex-wrap gap-2">
@@ -94,15 +178,13 @@ export function PlateCalculator({
               preset={preset}
               unit={weightUnit}
               selected={barWeight === preset.weight}
-              onPress={() => setBarWeight(preset.weight)}
+              onPress={() => onChangeBar(preset.weight)}
             />
           ))}
         </View>
       </View>
 
-      {!hasTarget ? (
-        <Text variant="muted">Enter a weight to see plates.</Text>
-      ) : loadout.belowBar ? (
+      {belowBar ? (
         <Text variant="muted">
           {`Target is below the bar weight (${trim(barWeight)} ${weightUnit}).`}
         </Text>
@@ -133,8 +215,9 @@ export function PlateCalculator({
               </Text>
             ) : (
               plateInstances.map((size, index) => (
-                <View
+                <Pressable
                   key={`${size}-${index}`}
+                  onPress={() => removePlate(size)}
                   style={{
                     width: 28,
                     height: 44 + (size / maxSize) * 52,
@@ -148,33 +231,61 @@ export function PlateCalculator({
                   }}
                 >
                   <Text
-                    style={{
-                      color: "#ffffff",
-                      fontSize: 9,
-                      fontWeight: "700",
-                    }}
+                    style={{ color: "#ffffff", fontSize: 9, fontWeight: "700" }}
                   >
                     {trim(size)}
                   </Text>
-                </View>
+                </Pressable>
               ))
             )}
           </ScrollView>
 
-          {breakdownText ? <Text>{breakdownText}</Text> : null}
-
-          <View className="gap-0.5">
-            <Text variant="muted" className="text-sm">
-              {`Loaded: ${trim(loadout.loadedTotal)} ${weightUnit}`}
+          {plateInstances.length > 0 ? (
+            <Text variant="muted" className="text-xs">
+              Tap a plate to remove it.
             </Text>
-            {loadout.remainder > 0 ? (
-              <Text variant="muted" className="text-sm">
-                {`~${trim(loadout.remainder)} ${weightUnit} can't be loaded with standard plates.`}
-              </Text>
-            ) : null}
-          </View>
+          ) : null}
         </View>
       )}
+
+      <View className="gap-2">
+        <Text variant="small">Add plates (per side)</Text>
+        <View className="flex-row flex-wrap gap-2">
+          {sizes.map((size) => (
+            <Pressable
+              key={size}
+              onPress={() => addPlate(size)}
+              className="rounded-full border px-3 py-1.5 active:opacity-80"
+              style={{ borderColor: plateColor(weightUnit, size) }}
+            >
+              <Text className="text-sm">{`+${trim(size)}`}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {!belowBar ? (
+        <View className="gap-0.5">
+          {breakdownText ? <Text>{breakdownText}</Text> : null}
+          <Text variant="muted" className="text-sm">
+            {`Loaded: ${trim(loadedTotal)} ${weightUnit}`}
+          </Text>
+          {remainder > 0 ? (
+            <Text variant="muted" className="text-sm">
+              {`~${trim(remainder)} ${weightUnit} can't be loaded with standard plates.`}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
+      {onApply ? (
+        <Button
+          disabled={loadedTotal <= 0}
+          onPress={() => onApply(loadedTotal)}
+        >
+          <Text>{`Use ${trim(loadedTotal)} ${weightUnit}`}</Text>
+        </Button>
+      ) : null}
     </View>
   );
 }

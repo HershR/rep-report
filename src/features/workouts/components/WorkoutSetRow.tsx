@@ -28,6 +28,7 @@ import {
   textToMetricDistance,
   weightToText,
   textToMetricWeight,
+  toMetricWeight,
 } from "@/lib/units";
 
 type WorkoutSetRowProps = {
@@ -269,8 +270,14 @@ export function WorkoutSetRow({
       <PlateCalculatorSheet
         visible={plateCalcOpen}
         onClose={() => setPlateCalcOpen(false)}
-        targetWeight={toNumber(weightInput)}
+        initialWeight={toNumber(weightInput)}
         weightUnit={weightUnit}
+        onApply={(displayWeight) => {
+          const kg = toMetricWeight(displayWeight, weightUnit);
+          setWeightInput(weightToText(kg, weightUnit));
+          onUpdate(workoutSet.id, { weight: kg });
+          setPlateCalcOpen(false);
+        }}
       />
     </View>
   );

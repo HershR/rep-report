@@ -54,3 +54,18 @@ export function computePlateLoadout(
 
   return { perSide, loadedTotal, remainder, belowBar: false };
 }
+
+/**
+ * Reverse of the greedy fit: total weight of a bar loaded with the given
+ * per-side plate groups (bar + 2 × Σ size×count). Cents-safe like above.
+ */
+export function loadedTotalFromCounts(
+  perSide: PlateGroup[],
+  bar: number,
+): number {
+  const perSideCents = perSide.reduce(
+    (sum, group) => sum + Math.round(group.size * 100) * group.count,
+    0,
+  );
+  return (Math.round(bar * 100) + perSideCents * 2) / 100;
+}
