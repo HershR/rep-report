@@ -15,6 +15,8 @@ export async function updateAppSettings(
     distanceUnit: "mi" | "km";
     heightUnit: "in" | "cm";
     themeMode: "system" | "light" | "dark";
+    restTimerEnabled: number;
+    restTimerDefaultSeconds: number;
   }>,
 ): Promise<AppSettings | null> {
   const current = await getAppSettings();
@@ -27,6 +29,12 @@ export async function updateAppSettings(
       ...(input.distanceUnit !== undefined ? { distanceUnit: input.distanceUnit } : {}),
       ...(input.heightUnit !== undefined ? { heightUnit: input.heightUnit } : {}),
       ...(input.themeMode !== undefined ? { themeMode: input.themeMode } : {}),
+      ...(input.restTimerEnabled !== undefined
+        ? { restTimerEnabled: input.restTimerEnabled }
+        : {}),
+      ...(input.restTimerDefaultSeconds !== undefined
+        ? { restTimerDefaultSeconds: input.restTimerDefaultSeconds }
+        : {}),
       updatedAt: nowUtc(),
     })
     .where(eq(appSettings.id, current.id));

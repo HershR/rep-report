@@ -17,6 +17,11 @@ type CustomScreenProps = {
   /** When true, content scrolls inside safe area. */
   scroll?: boolean;
   contentContainerStyle?: ViewStyle;
+  /**
+   * Optional element pinned below the scroll/content area (inside the safe area),
+   * e.g. a persistent bottom bar. Scrolling content sits above it automatically.
+   */
+  stickyFooter?: ReactNode;
 };
 
 /** Matches the old `spacing.md` value; not worth a whole spacing scale for one call site. */
@@ -30,6 +35,7 @@ export function CustomScreen({
   children,
   scroll = false,
   contentContainerStyle,
+  stickyFooter,
 }: CustomScreenProps) {
   const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
@@ -62,6 +68,7 @@ export function CustomScreen({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {inner}
+        {stickyFooter}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

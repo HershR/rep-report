@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { Check, Trophy } from "lucide-react-native";
+import { BellRing, Check, Trophy } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useColorScheme } from "nativewind";
 import { View } from "react-native";
@@ -25,9 +25,11 @@ import { checkSetPersonalRecord } from "@/features/personal-records/prDetection"
 import type { SetPrResult } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
+import { RestTimerBar } from "@/features/workouts/components/RestTimerBar";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
 import { weightToText } from "@/lib/units";
@@ -74,6 +76,15 @@ export default function ActiveWorkoutScreen() {
   const colors = THEME[scheme ?? "light"];
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
+  const restTimerEnabled = (appSettings?.restTimerEnabled ?? 1) === 1;
+  const restTimerDefaultSeconds = appSettings?.restTimerDefaultSeconds ?? 90;
+  const rest = useRestTimer(() => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast("Rest complete", {
+      icon: <Icon as={BellRing} size={18} color={colors.primary} />,
+      duration: 2500,
+    });
+  });
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
@@ -200,6 +211,7 @@ export default function ActiveWorkoutScreen() {
     const pending = takePendingSetUpdate(setId);
     const session = await updateSet({ setId, ...pending, isCompleted });
     if (!isCompleted) return;
+    if (restTimerEnabled) rest.startRest(restTimerDefaultSeconds);
     const pr = await checkSetPersonalRecord(session, setId);
     if (!pr) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -293,7 +305,21 @@ export default function ActiveWorkoutScreen() {
   };
 
   return (
-    <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
+    <CustomScreen
+      scroll
+      contentContainerStyle={{ gap: 16, paddingBottom: 32 }}
+      stickyFooter={
+        <RestTimerBar
+          isResting={rest.isResting}
+          remainingSeconds={rest.remainingSeconds}
+          totalSeconds={rest.totalSeconds}
+          defaultSeconds={restTimerDefaultSeconds}
+          onStart={(seconds) => rest.startRest(seconds)}
+          onAddTime={(delta) => rest.addTime(delta)}
+          onSkip={() => rest.skipRest()}
+        />
+      }
+    >
       <WorkoutTimerHeader
         workoutName={activeWorkout.name}
         elapsedSeconds={elapsedSeconds}

@@ -17,6 +17,8 @@ export async function seedDefaultAppSettings(): Promise<AppSettings> {
     distanceUnit: "mi",
     heightUnit: "in",
     themeMode: "system",
+    restTimerEnabled: 1,
+    restTimerDefaultSeconds: 90,
     createdAt: timestamp,
     updatedAt: timestamp,
   });

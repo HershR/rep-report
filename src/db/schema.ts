@@ -176,6 +176,8 @@ export const appSettings = sqliteTable("app_settings", {
   distanceUnit: text("distance_unit", { enum: DISTANCE_UNITS }).notNull().default("mi"),
   heightUnit: text("height_unit", { enum: HEIGHT_UNITS }).notNull().default("in"),
   themeMode: text("theme_mode", { enum: THEME_MODES }).notNull().default("system"),
+  restTimerEnabled: integer("rest_timer_enabled").notNull().default(1),
+  restTimerDefaultSeconds: integer("rest_timer_default_seconds").notNull().default(90),
   ...timestampColumns,
 });
 
