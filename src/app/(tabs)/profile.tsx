@@ -4,6 +4,7 @@ import DateTimePicker, {
 import { differenceInYears, format } from "date-fns";
 import { useRouter, type Href } from "expo-router";
 import {
+  Calculator,
   ChevronRight,
   Pencil,
   Ruler,
@@ -193,6 +194,11 @@ export default function ProfileScreen() {
           icon={Ruler}
           label="Body measurements"
           onPress={() => router.push("/profile/measurements" as Href)}
+        />
+        <NavRow
+          icon={Calculator}
+          label="Plate calculator"
+          onPress={() => router.push("/tools/plate-calculator" as Href)}
         />
         <NavRow
           icon={Settings}

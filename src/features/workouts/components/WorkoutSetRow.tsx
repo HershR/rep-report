@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Check, Trash2 } from "lucide-react-native";
+import { Check, Dumbbell, Trash2 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
+import { PlateCalculatorSheet } from "@/features/plate-calculator/components/PlateCalculatorSheet";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -99,6 +100,7 @@ export function WorkoutSetRow({
   const [isDistanceFocused, setIsDistanceFocused] = useState(false);
   const [weightInput, setWeightInput] = useState("");
   const [isWeightFocused, setIsWeightFocused] = useState(false);
+  const [plateCalcOpen, setPlateCalcOpen] = useState(false);
 
   useEffect(() => {
     if (isDurationFocused) return;
@@ -227,6 +229,14 @@ export function WorkoutSetRow({
             onBlur={commitWeight}
             onSubmitEditing={commitWeight}
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-7"
+            onPress={() => setPlateCalcOpen(true)}
+          >
+            <Icon as={Dumbbell} className="text-muted-foreground size-3.5" />
+          </Button>
         </>
       )}
 
@@ -255,6 +265,13 @@ export function WorkoutSetRow({
       >
         <Icon as={Trash2} className="text-muted-foreground size-3.5" />
       </Button>
+
+      <PlateCalculatorSheet
+        visible={plateCalcOpen}
+        onClose={() => setPlateCalcOpen(false)}
+        targetWeight={toNumber(weightInput)}
+        weightUnit={weightUnit}
+      />
     </View>
   );
 }
