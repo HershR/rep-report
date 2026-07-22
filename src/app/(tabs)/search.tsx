@@ -229,12 +229,27 @@ export default function SearchScreen() {
 
       {!isLoading && !isError && items.length === 0 ? (
         <Card className="mt-4">
-          <CardContent>
+          <CardContent className="gap-2">
             <Text variant="muted">
               {debouncedQuery
                 ? "No exercises found. Try another keyword."
                 : "Type an exercise name to start searching."}
             </Text>
+            {debouncedQuery ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onPress={() =>
+                  router.push({
+                    pathname: "/exercise/new",
+                    params: { initialName: debouncedQuery },
+                  })
+                }
+              >
+                <Text>Create Custom Exercise</Text>
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

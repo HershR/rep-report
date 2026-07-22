@@ -97,6 +97,7 @@ export default function ExerciseDetailScreen() {
   });
 
   const item = query.data;
+  const isCustom = item?.source === "custom";
   const canFavorite = Boolean(item?.wgerExerciseId);
 
   const onToggleFavorite = async () => {
@@ -162,27 +163,34 @@ export default function ExerciseDetailScreen() {
             ) : null}
 
             <CardContent className="gap-3 p-4">
-              <View className="flex-row items-center">
+              <View className="flex-row items-center gap-1.5">
                 {item.category ? (
                   <Badge variant="secondary">
                     <Text>{item.category}</Text>
                   </Badge>
                 ) : null}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto"
-                  disabled={!canFavorite}
-                  onPress={() => void onToggleFavorite()}
-                >
-                  <Icon
-                    as={Heart}
-                    className={
-                      item.isFavorite ? "text-red-500" : "text-muted-foreground"
-                    }
-                    fill={item.isFavorite ? "currentColor" : "none"}
-                  />
-                </Button>
+                {isCustom ? (
+                  <Badge variant="secondary">
+                    <Text>Custom</Text>
+                  </Badge>
+                ) : null}
+                {isCustom ? null : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto"
+                    disabled={!canFavorite}
+                    onPress={() => void onToggleFavorite()}
+                  >
+                    <Icon
+                      as={Heart}
+                      className={
+                        item.isFavorite ? "text-red-500" : "text-muted-foreground"
+                      }
+                      fill={item.isFavorite ? "currentColor" : "none"}
+                    />
+                  </Button>
+                )}
               </View>
 
               {item.description ? (

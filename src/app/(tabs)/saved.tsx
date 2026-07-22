@@ -148,17 +148,21 @@ export default function SavedScreen() {
         style={{ flex: 1 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListHeaderComponent={
-          tab === "templates" ? (
-            <View className="mb-2 flex-row justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                onPress={() => router.push("/workout/template/new" as Href)}
-              >
-                <Text>Create New</Text>
-              </Button>
-            </View>
-          ) : null
+          <View className="mb-2 flex-row justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() =>
+                router.push(
+                  (tab === "templates"
+                    ? "/workout/template/new"
+                    : "/exercise/new") as Href,
+                )
+              }
+            >
+              <Text>Create New</Text>
+            </Button>
+          </View>
         }
         renderItem={({ item }) => {
           switch (item.kind) {
@@ -191,6 +195,7 @@ export default function SavedScreen() {
                   category={item.exercise.category}
                   imageUrl={item.exercise.imageUrl}
                   isFavorite
+                  source={item.exercise.source}
                   onPress={() =>
                     router.push({
                       pathname: "/exercise/[exerciseId]",
@@ -200,7 +205,11 @@ export default function SavedScreen() {
                       },
                     })
                   }
-                  onToggleFavorite={() => setExerciseToRemove(item.exercise)}
+                  onToggleFavorite={
+                    item.exercise.source === "custom"
+                      ? undefined
+                      : () => setExerciseToRemove(item.exercise)
+                  }
                 />
               );
             case "template":

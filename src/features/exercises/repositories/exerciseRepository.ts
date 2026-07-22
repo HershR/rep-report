@@ -5,7 +5,7 @@ import { type ExerciseSource, exercises } from "@/db/schema";
 import { createUuid, nowUtc } from "@/db/utils";
 import type { Exercise, ExerciseSearchResult } from "@/features/exercises/types";
 
-type CreateExerciseInput = {
+export type CreateExerciseInput = {
   name: string;
   wgerExerciseId?: number | null;
   description?: string | null;
