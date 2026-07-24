@@ -163,6 +163,51 @@ export async function getExercisePersonalRecords(exerciseId: string): Promise<Ex
   return hasAnyRecord(records) ? records : null;
 }
 
+export type ExerciseSessionPoint = {
+  /** Epoch ms of the session's completedAt — the chart x value. */
+  t: number;
+  maxWeightKg: number;
+  sessionVolumeKg: number;
+};
+
+/**
+ * Per-session progress series for one exercise, oldest→newest, limited to
+ * `opts.since` (ISO cutoff) in the query layer. Reuses the same qualifying-set
+ * pipeline as personal records (completed, non-warmup working sets).
+ */
+export async function getExerciseSessionSeries(
+  exerciseId: string,
+  opts?: { since?: string },
+): Promise<ExerciseSessionPoint[]> {
+  const [exerciseRow] = await db
+    .select({ id: exercises.id, name: exercises.name, category: exercises.category })
+    .from(exercises)
+    .where(eq(exercises.id, exerciseId))
+    .limit(1);
+  if (!exerciseRow || isCardioExercise(exerciseRow.category, exerciseRow.name)) return [];
+
+  const sets = await getQualifyingSets(exerciseId);
+  const since = opts?.since;
+  const windowed = since ? sets.filter((set) => set.achievedAt >= since) : sets;
+  if (windowed.length === 0) return [];
+
+  const bySession = new Map<string, { t: number; maxWeightKg: number; sessionVolumeKg: number }>();
+  for (const set of windowed) {
+    const t = Date.parse(set.achievedAt);
+    if (Number.isNaN(t)) continue;
+    const entry = bySession.get(set.workoutSessionId) ?? {
+      t,
+      maxWeightKg: 0,
+      sessionVolumeKg: 0,
+    };
+    if (set.weight !== null && set.weight > entry.maxWeightKg) entry.maxWeightKg = set.weight;
+    if (set.weight !== null && set.reps !== null) entry.sessionVolumeKg += set.weight * set.reps;
+    bySession.set(set.workoutSessionId, entry);
+  }
+
+  return [...bySession.values()].sort((a, b) => a.t - b.t);
+}
+
 export async function getAllPersonalRecords(): Promise<ExercisePersonalRecordsSummary[]> {
   const sets = await getQualifyingSets();
   if (sets.length === 0) return [];

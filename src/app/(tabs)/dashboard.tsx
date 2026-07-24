@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { VolumeTrendChart } from "@/features/charts/components/VolumeTrendChart";
 import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
 import { useWorkoutHistory } from "@/features/workouts/hooks/useWorkoutHistory";
 import { THEME } from "@/lib/theme";
@@ -107,6 +108,12 @@ export default function DashboardScreen() {
                 arrowColor: colors.primary,
               }}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <VolumeTrendChart />
           </CardContent>
         </Card>
 

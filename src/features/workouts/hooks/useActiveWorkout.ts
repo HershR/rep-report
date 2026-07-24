@@ -66,6 +66,8 @@ export function useActiveWorkout() {
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
+      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
     },
   });
 
@@ -76,6 +78,8 @@ export function useActiveWorkout() {
       void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
       void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
       void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
+      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
     },
   });
 

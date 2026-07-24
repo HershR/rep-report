@@ -28,6 +28,7 @@
     "@rn-primitives/slot": "^1.5.2",
     "@rn-primitives/tabs": "^1.5.2",
     "@shopify/flash-list": "^2.3.1",
+    "@shopify/react-native-skia": "2.2.12",
     "@tanstack/react-query": "^5.100.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -64,6 +65,7 @@
     "sonner-native": "^0.26.4",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "victory-native": "^41.26.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

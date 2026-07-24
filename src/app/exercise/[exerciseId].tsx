@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/icon";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
+import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
 import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
@@ -274,6 +275,11 @@ export default function ExerciseDetailScreen() {
                             {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
                           </Text>
                         ) : null}
+                        <Separator className="my-1" />
+                        <ExerciseProgressChart
+                          exerciseId={exerciseId}
+                          weightUnit={weightUnit}
+                        />
                       </>
                     ) : (
                       <Text variant="muted">

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import { format } from "date-fns";
 
 import { db } from "@/db/client";
@@ -246,6 +246,88 @@ export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTota
   }
 
   return [...totalsByDay.values()];
+}
+
+export type WorkoutVolumePoint = {
+  /** Epoch ms of the local calendar day — the chart x value. */
+  t: number;
+  totalVolumeKg: number;
+};
+
+/**
+ * Total training volume (Σ weight×reps over completed working sets) per local
+ * calendar day, oldest→newest, limited to `opts.since` (ISO cutoff) in the
+ * query layer. Mirrors getCompletedWorkoutDailyTotals with an added sets query.
+ */
+export async function getCompletedWorkoutVolumeTotals(opts?: {
+  since?: string;
+}): Promise<WorkoutVolumePoint[]> {
+  const sessionRows = await db
+    .select({ id: workoutSessions.id, completedAt: workoutSessions.completedAt })
+    .from(workoutSessions)
+    .where(eq(workoutSessions.status, "completed"));
+
+  const since = opts?.since;
+  const sessions = sessionRows.filter(
+    (session) => session.completedAt && (!since || session.completedAt >= since),
+  );
+  if (sessions.length === 0) return [];
+
+  const sessionIds = sessions.map((session) => session.id);
+  const sessionExerciseRows = await db
+    .select({
+      id: workoutSessionExercises.id,
+      workoutSessionId: workoutSessionExercises.workoutSessionId,
+    })
+    .from(workoutSessionExercises)
+    .where(inArray(workoutSessionExercises.workoutSessionId, sessionIds));
+  if (sessionExerciseRows.length === 0) return [];
+
+  const sessionByExercise = new Map(
+    sessionExerciseRows.map((row) => [row.id, row.workoutSessionId] as const),
+  );
+
+  const setRows = await db
+    .select({
+      workoutSessionExerciseId: workoutSets.workoutSessionExerciseId,
+      weight: workoutSets.weight,
+      reps: workoutSets.reps,
+    })
+    .from(workoutSets)
+    .where(
+      and(
+        inArray(
+          workoutSets.workoutSessionExerciseId,
+          sessionExerciseRows.map((row) => row.id),
+        ),
+        eq(workoutSets.isCompleted, 1),
+        ne(workoutSets.setType, "warmup"),
+      ),
+    );
+
+  const volumeBySession = new Map<string, number>();
+  for (const set of setRows) {
+    if (set.weight === null || set.reps === null) continue;
+    const sessionId = sessionByExercise.get(set.workoutSessionExerciseId);
+    if (!sessionId) continue;
+    volumeBySession.set(sessionId, (volumeBySession.get(sessionId) ?? 0) + set.weight * set.reps);
+  }
+
+  const volumeByDay = new Map<string, number>();
+  for (const session of sessions) {
+    const volume = volumeBySession.get(session.id) ?? 0;
+    if (volume <= 0) continue;
+    const dateKey = format(new Date(session.completedAt as string), "yyyy-MM-dd");
+    volumeByDay.set(dateKey, (volumeByDay.get(dateKey) ?? 0) + volume);
+  }
+
+  return [...volumeByDay.entries()]
+    .map(([dateKey, totalVolumeKg]) => ({
+      t: Date.parse(`${dateKey}T00:00:00`),
+      totalVolumeKg,
+    }))
+    .filter((point) => !Number.isNaN(point.t))
+    .sort((a, b) => a.t - b.t);
 }
 
 export async function getWorkoutSessionDetailsById(id: string): Promise<WorkoutSessionDetails | null> {
