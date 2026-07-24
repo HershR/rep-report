@@ -50,9 +50,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="dashboard"
+        name="progress"
         options={{
-          title: "Dashboard",
+          title: "Progress",
           tabBarIcon: tabIcon(BarChart3),
         }}
       />

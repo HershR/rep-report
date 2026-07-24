@@ -1,7 +1,7 @@
-import { useRouter } from "expo-router";
-import { Flame } from "lucide-react-native";
+import { useRouter, type Href } from "expo-router";
+import { Calculator, ChevronRight, Flame } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { Button } from "@/components/ui/button";
@@ -33,34 +33,41 @@ export default function HomeScreen() {
       <Text variant="muted">Ready to train?</Text>
 
       <View className="mt-6 gap-4">
-        <Card>
-          <CardContent className="py-4">
-            {currentStreak > 0 ? (
-              <View className="flex-row items-center gap-3">
-                <Icon as={Flame} size={24} color={colors.primary} />
-                <View className="flex-1">
-                  <Text variant="large">{`${currentStreak} day streak`}</Text>
-                  {bestStreak > currentStreak ? (
-                    <Text variant="muted" className="text-xs">
-                      {`Best: ${bestStreak} days`}
-                    </Text>
-                  ) : null}
+        <Pressable
+          className="active:opacity-80"
+          onPress={() => router.push("/(tabs)/progress" as Href)}
+        >
+          <Card>
+            <CardContent className="py-4">
+              {currentStreak > 0 ? (
+                <View className="flex-row items-center gap-3">
+                  <Icon as={Flame} size={24} color={colors.primary} />
+                  <View className="flex-1">
+                    <Text variant="large">{`${currentStreak} day streak`}</Text>
+                    {bestStreak > currentStreak ? (
+                      <Text variant="muted" className="text-xs">
+                        {`Best: ${bestStreak} days`}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Icon as={ChevronRight} className="text-muted-foreground" />
                 </View>
-              </View>
-            ) : (
-              <View className="flex-row items-center gap-3">
-                <Icon
-                  as={Flame}
-                  size={24}
-                  className="text-muted-foreground"
-                />
-                <Text variant="muted" className="flex-1">
-                  Complete a workout today to start your streak!
-                </Text>
-              </View>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <View className="flex-row items-center gap-3">
+                  <Icon
+                    as={Flame}
+                    size={24}
+                    className="text-muted-foreground"
+                  />
+                  <Text variant="muted" className="flex-1">
+                    Complete a workout today to start your streak!
+                  </Text>
+                  <Icon as={ChevronRight} className="text-muted-foreground" />
+                </View>
+              )}
+            </CardContent>
+          </Card>
+        </Pressable>
 
         <Card>
           <CardContent className="gap-3">
@@ -129,6 +136,17 @@ export default function HomeScreen() {
               </View>
             </FadeInView>
           )}
+        </View>
+
+        <View className="gap-2">
+          <Text variant="large">Tools</Text>
+          <Button
+            variant="outline"
+            onPress={() => router.push("/tools/plate-calculator" as Href)}
+          >
+            <Icon as={Calculator} className="text-foreground size-4" />
+            <Text>Plate Calculator</Text>
+          </Button>
         </View>
       </View>
     </CustomScreen>

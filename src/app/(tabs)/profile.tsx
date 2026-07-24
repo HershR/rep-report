@@ -4,12 +4,10 @@ import DateTimePicker, {
 import { differenceInYears, format } from "date-fns";
 import { useRouter, type Href } from "expo-router";
 import {
-  Calculator,
   ChevronRight,
   Pencil,
   Ruler,
   Settings,
-  Trophy,
   Weight,
   type LucideIcon,
 } from "lucide-react-native";
@@ -175,11 +173,7 @@ export default function ProfileScreen() {
       </Card>
 
       <View className="gap-2">
-        <NavRow
-          icon={Trophy}
-          label="Personal records"
-          onPress={() => router.push("/profile/personal-records" as Href)}
-        />
+        <Text variant="large">Body</Text>
         <NavRow
           icon={Weight}
           label="Weight history"
@@ -195,11 +189,9 @@ export default function ProfileScreen() {
           label="Body measurements"
           onPress={() => router.push("/profile/measurements" as Href)}
         />
-        <NavRow
-          icon={Calculator}
-          label="Plate calculator"
-          onPress={() => router.push("/tools/plate-calculator" as Href)}
-        />
+      </View>
+
+      <View className="gap-2">
         <NavRow
           icon={Settings}
           label="Settings"
