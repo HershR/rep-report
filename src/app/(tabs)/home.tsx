@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import { WeeklyProgressCard } from "@/features/workouts/components/WeeklyProgressCard";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 
 export default function HomeScreen() {
@@ -27,6 +28,8 @@ export default function HomeScreen() {
       <Text variant="muted">Ready to train?</Text>
 
       <View className="mt-6 gap-4">
+        <WeeklyProgressCard />
+
         <Card>
           <CardContent className="gap-3">
             <Text variant="muted">Every set counts.</Text>

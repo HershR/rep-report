@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
-import { format } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
@@ -246,6 +246,58 @@ export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTota
   }
 
   return [...totalsByDay.values()];
+}
+
+export type WeeklyProgress = {
+  /** Total exercises logged across completed workouts since Monday. */
+  exerciseCount: number;
+  /** Total workout duration (seconds) since Monday. */
+  activitySeconds: number;
+};
+
+/**
+ * Totals for the current week (Monday-start, local time). `completedAt` is a
+ * UTC ISO instant, so comparing against the local Monday-midnight instant
+ * (`startOfWeek(..., { weekStartsOn: 1 }).toISOString()`) correctly scopes to
+ * "this week" — ISO-UTC strings sort chronologically, so a string compare works.
+ */
+export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
+  const weekStartIso = startOfWeek(new Date(), {
+    weekStartsOn: 1,
+  }).toISOString();
+
+  const sessionRows = await db
+    .select({
+      id: workoutSessions.id,
+      completedAt: workoutSessions.completedAt,
+      durationSeconds: workoutSessions.durationSeconds,
+    })
+    .from(workoutSessions)
+    .where(eq(workoutSessions.status, "completed"));
+
+  const sessions = sessionRows.filter(
+    (session) => session.completedAt && session.completedAt >= weekStartIso,
+  );
+  if (sessions.length === 0) {
+    return { exerciseCount: 0, activitySeconds: 0 };
+  }
+
+  const activitySeconds = sessions.reduce(
+    (total, session) => total + (session.durationSeconds ?? 0),
+    0,
+  );
+
+  const exerciseRows = await db
+    .select({ id: workoutSessionExercises.id })
+    .from(workoutSessionExercises)
+    .where(
+      inArray(
+        workoutSessionExercises.workoutSessionId,
+        sessions.map((session) => session.id),
+      ),
+    );
+
+  return { exerciseCount: exerciseRows.length, activitySeconds };
 }
 
 export type WorkoutVolumePoint = {
