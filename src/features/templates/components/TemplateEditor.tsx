@@ -302,16 +302,7 @@ export function TemplateEditor({
         <Text className="text-destructive text-sm">{errorMessage}</Text>
       ) : null}
 
-      <View className="flex-row items-center justify-between">
-        <Text variant="large">Exercises</Text>
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={() => setShowAddExerciseSheet(true)}
-        >
-          <Text>Add Saved Exercise</Text>
-        </Button>
-      </View>
+      <Text variant="large">Exercises</Text>
 
       {exerciseFields.length === 0 ? (
         <Text variant="muted">No exercises added yet.</Text>
@@ -334,6 +325,13 @@ export function TemplateEditor({
           ))}
         </View>
       )}
+
+      <Button
+        variant="outline"
+        onPress={() => setShowAddExerciseSheet(true)}
+      >
+        <Text>Add Exercise</Text>
+      </Button>
 
       <Button loading={isSaving} onPress={() => void onSubmit()}>
         <Text>Save Template</Text>

@@ -7,12 +7,12 @@ import { format, set } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { ActivityIndicator, View } from "react-native";
+import { MoreHorizontal } from "lucide-react-native";
+import { ActivityIndicator, ScrollView, View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
@@ -112,6 +119,7 @@ export default function WorkoutDetailScreen() {
   const [totalText, setTotalText] = useState("");
   const [totalFocused, setTotalFocused] = useState(false);
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
@@ -139,6 +147,7 @@ export default function WorkoutDetailScreen() {
     name: "exercises",
   });
 
+  const nameDraft = useWatch({ control, name: "name" });
   const completedAtDraft = useWatch({ control, name: "completedAt" });
   const startedAtDraft = useWatch({ control, name: "startedAt" });
   const watchedExercises = useWatch({ control, name: "exercises" }) ?? [];
@@ -559,178 +568,218 @@ export default function WorkoutDetailScreen() {
   };
 
   return (
-    <CustomScreen scroll contentContainerStyle={{ gap: 16, paddingBottom: 32 }}>
-      <Text variant="h2">Workout Detail</Text>
-
-      <Card>
-        <CardContent className="gap-4">
-          <View className="gap-2">
-            <Label>Name</Label>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { value, onChange } }) => (
-                <Input
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Workout name"
-                />
-              )}
-            />
-            {errors.name?.message ? (
-              <Text className="text-destructive text-sm">
-                {errors.name.message}
-              </Text>
-            ) : null}
-          </View>
-
-          <View className="gap-2">
-            <Label>Notes</Label>
-            <Controller
-              control={control}
-              name="notes"
-              render={({ field: { value, onChange } }) => (
-                <Textarea
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Workout notes"
-                  placeholderClassName="text-muted-foreground/50"
-                />
-              )}
-            />
-          </View>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="gap-3">
-          <View className="flex-row items-center justify-between">
-            <Text variant="muted">Date</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text>
-                {completedAtDate ? format(completedAtDate, "PPP") : "Set date"}
-              </Text>
-            </Button>
-          </View>
-
-          <View className="flex-row items-center justify-between">
-            <Text variant="muted">Start time</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => setShowStartPicker(true)}
-            >
-              <Text>
-                {startedAtDate ? format(startedAtDate, "p") : "Set start"}
-              </Text>
-            </Button>
-          </View>
-
-          <View className="flex-row items-center justify-between">
-            <Text variant="muted">End time</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => setShowEndPicker(true)}
-            >
-              <Text>
-                {completedAtDate ? format(completedAtDate, "p") : "Set end"}
-              </Text>
-            </Button>
-          </View>
-
-          <View className="gap-1.5">
-            <Label>Total workout time (minutes)</Label>
-            <Input
-              value={totalText}
-              onChangeText={(text) =>
-                setTotalText(text.replace(/\D/g, "").slice(0, 4))
-              }
-              onFocus={() => setTotalFocused(true)}
-              onBlur={onCommitTotal}
-              keyboardType="number-pad"
-              placeholder="0"
-            />
-          </View>
-
-          {showDatePicker && completedAtDate ? (
-            <DateTimePicker
-              mode="date"
-              value={completedAtDate}
-              onChange={onChangeDate}
-            />
-          ) : null}
-          {showStartPicker && startedAtDate ? (
-            <DateTimePicker
-              mode="time"
-              value={startedAtDate}
-              onChange={onChangeStartTime}
-            />
-          ) : null}
-          {showEndPicker && completedAtDate ? (
-            <DateTimePicker
-              mode="time"
-              value={completedAtDate}
-              onChange={onChangeEndTime}
-            />
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <View className="gap-3">
-        <View className="flex-row items-center justify-between">
-          <Text variant="large">Exercises</Text>
+    <CustomScreen>
+      {/* Fixed header: title + summary, with Save and options actions. */}
+      <View className="flex-row items-start justify-between gap-2 pb-3">
+        <View className="flex-1">
+          <Text variant="h2" numberOfLines={1}>
+            {nameDraft?.trim() ? nameDraft : "Workout"}
+          </Text>
+          <Text variant="muted" className="text-xs">
+            {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
+          </Text>
+        </View>
+        <View className="flex-row items-center gap-1">
           <Button
-            variant="outline"
             size="sm"
-            onPress={() => setShowAddExerciseSheet(true)}
+            loading={isSaving || isSavingAll}
+            onPress={() => void onSaveAll()}
           >
-            <Text>Add Saved Exercise</Text>
+            <Text>Save</Text>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            accessibilityLabel="Workout options"
+            onPress={() => setShowOptions(true)}
+          >
+            <Icon as={MoreHorizontal} className="text-foreground" />
           </Button>
         </View>
-        {watchedExercises.map((exercise, index) => (
-          <View key={exercise.id} className="gap-3">
-            {index > 0 ? <Separator /> : null}
-            <WorkoutExerciseBlock
-              workoutExercise={exercise}
-              commitSetChangesOnChange
-              onAddSet={onAddSetDraft}
-              onRemoveExercise={onRemoveExerciseDraft}
-              onUpdateSet={onUpdateSetDraft}
-              onDeleteSet={onDeleteSetDraft}
-              onMoveUp={() => move(index, index - 1)}
-              onMoveDown={() => move(index, index + 1)}
-              canMoveUp={index > 0}
-              canMoveDown={index < watchedExercises.length - 1}
-            />
-          </View>
-        ))}
       </View>
 
-      <Button
-        loading={isSaving || isSavingAll}
-        onPress={() => void onSaveAll()}
+      {/* Exercises are the focus — they scroll, everything else is chrome. */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text>Save All</Text>
-      </Button>
-      <Button
-        variant="outline"
-        loading={isSaving || isSavingAll}
-        onPress={() => void onRepeatWorkout()}
-      >
-        <Text>Repeat Workout</Text>
-      </Button>
-      <Button
-        variant="destructive"
-        loading={isSaving || isSavingAll}
-        onPress={() => setShowDeleteConfirm(true)}
-      >
-        <Text>Delete Workout</Text>
-      </Button>
+        {watchedExercises.length === 0 ? (
+          <Text variant="muted" className="py-8 text-center">
+            No exercises yet. Add one below to get started.
+          </Text>
+        ) : (
+          watchedExercises.map((exercise, index) => (
+            <View key={exercise.id} className="gap-3">
+              {index > 0 ? <Separator /> : null}
+              <WorkoutExerciseBlock
+                workoutExercise={exercise}
+                commitSetChangesOnChange
+                onAddSet={onAddSetDraft}
+                onRemoveExercise={onRemoveExerciseDraft}
+                onUpdateSet={onUpdateSetDraft}
+                onDeleteSet={onDeleteSetDraft}
+                onMoveUp={() => move(index, index - 1)}
+                onMoveDown={() => move(index, index + 1)}
+                canMoveUp={index > 0}
+                canMoveDown={index < watchedExercises.length - 1}
+              />
+            </View>
+          ))
+        )}
+
+        <Button
+          variant="outline"
+          className="mt-2"
+          onPress={() => setShowAddExerciseSheet(true)}
+        >
+          <Text>Add Exercise</Text>
+        </Button>
+      </ScrollView>
+
+      {/* Options: workout details (name/notes/date/time) + workout actions. */}
+      <Sheet open={showOptions} onOpenChange={setShowOptions}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Workout details</SheetTitle>
+          </SheetHeader>
+
+          <View className="gap-4">
+            <View className="gap-2">
+              <Label>Name</Label>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field: { value, onChange } }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Workout name"
+                  />
+                )}
+              />
+              {errors.name?.message ? (
+                <Text className="text-destructive text-sm">
+                  {errors.name.message}
+                </Text>
+              ) : null}
+            </View>
+
+            <View className="gap-2">
+              <Label>Notes</Label>
+              <Controller
+                control={control}
+                name="notes"
+                render={({ field: { value, onChange } }) => (
+                  <Textarea
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Workout notes"
+                    placeholderClassName="text-muted-foreground/50"
+                  />
+                )}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <Text variant="muted">Date</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text>
+                  {completedAtDate ? format(completedAtDate, "PPP") : "Set date"}
+                </Text>
+              </Button>
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <Text variant="muted">Start time</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => setShowStartPicker(true)}
+              >
+                <Text>
+                  {startedAtDate ? format(startedAtDate, "p") : "Set start"}
+                </Text>
+              </Button>
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <Text variant="muted">End time</Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => setShowEndPicker(true)}
+              >
+                <Text>
+                  {completedAtDate ? format(completedAtDate, "p") : "Set end"}
+                </Text>
+              </Button>
+            </View>
+
+            <View className="gap-1.5">
+              <Label>Total workout time (minutes)</Label>
+              <Input
+                value={totalText}
+                onChangeText={(text) =>
+                  setTotalText(text.replace(/\D/g, "").slice(0, 4))
+                }
+                onFocus={() => setTotalFocused(true)}
+                onBlur={onCommitTotal}
+                keyboardType="number-pad"
+                placeholder="0"
+              />
+            </View>
+
+            {showDatePicker && completedAtDate ? (
+              <DateTimePicker
+                mode="date"
+                value={completedAtDate}
+                onChange={onChangeDate}
+              />
+            ) : null}
+            {showStartPicker && startedAtDate ? (
+              <DateTimePicker
+                mode="time"
+                value={startedAtDate}
+                onChange={onChangeStartTime}
+              />
+            ) : null}
+            {showEndPicker && completedAtDate ? (
+              <DateTimePicker
+                mode="time"
+                value={completedAtDate}
+                onChange={onChangeEndTime}
+              />
+            ) : null}
+
+            <Separator className="my-1" />
+
+            <Button
+              variant="outline"
+              loading={isSaving || isSavingAll}
+              onPress={() => {
+                setShowOptions(false);
+                void onRepeatWorkout();
+              }}
+            >
+              <Text>Repeat Workout</Text>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={() => {
+                setShowOptions(false);
+                setShowDeleteConfirm(true);
+              }}
+            >
+              <Text>Delete Workout</Text>
+            </Button>
+          </View>
+        </SheetContent>
+      </Sheet>
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}

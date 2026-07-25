@@ -1,9 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { BellRing, Check, Trophy } from "lucide-react-native";
+import { BellRing, Check, MoreHorizontal, Trophy } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useColorScheme } from "nativewind";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
 import { CustomScreen } from "@/components/common";
@@ -19,6 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { checkSetPersonalRecord } from "@/features/personal-records/prDetection";
@@ -27,7 +33,6 @@ import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { RestTimerBar } from "@/features/workouts/components/RestTimerBar";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
-import { WorkoutTimerHeader } from "@/features/workouts/components/WorkoutTimerHeader";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
@@ -55,6 +60,16 @@ function buildPrDescription(
   }
 
   return `${pr.exerciseName} · ${stat}`;
+}
+
+function formatElapsed(seconds: number): string {
+  const clamped = Math.max(0, seconds);
+  const hours = Math.floor(clamped / 3600);
+  const minutes = Math.floor((clamped % 3600) / 60);
+  const remainingSeconds = clamped % 60;
+  return [hours, minutes, remainingSeconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
 }
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
@@ -86,6 +101,7 @@ export default function ActiveWorkoutScreen() {
     });
   });
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
     useState(false);
@@ -306,8 +322,6 @@ export default function ActiveWorkoutScreen() {
 
   return (
     <CustomScreen
-      scroll
-      contentContainerStyle={{ gap: 16, paddingBottom: 32 }}
       stickyFooter={
         <RestTimerBar
           isResting={rest.isResting}
@@ -320,65 +334,100 @@ export default function ActiveWorkoutScreen() {
         />
       }
     >
-      <WorkoutTimerHeader
-        workoutName={activeWorkout.name}
-        elapsedSeconds={elapsedSeconds}
-      />
-
-      <View className="gap-2">
-        <Button onPress={() => void onComplete()}>
-          <Text>Complete Workout</Text>
-        </Button>
-        <Button variant="ghost" onPress={() => setCancelConfirmOpen(true)}>
-          <Text>Cancel Workout</Text>
-        </Button>
+      {/* Header: name + elapsed, with Finish and options actions. */}
+      <View className="flex-row items-start justify-between gap-2 pb-3">
+        <View className="flex-1">
+          <Text variant="h2" numberOfLines={1}>
+            {activeWorkout.name}
+          </Text>
+          <Text variant="muted" className="text-xs">
+            {`Elapsed ${formatElapsed(elapsedSeconds)}`}
+          </Text>
+        </View>
+        <View className="flex-row items-center gap-1">
+          <Button size="sm" onPress={() => void onComplete()}>
+            <Text>Finish</Text>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            accessibilityLabel="Workout options"
+            onPress={() => setShowOptions(true)}
+          >
+            <Icon as={MoreHorizontal} className="text-foreground" />
+          </Button>
+        </View>
       </View>
 
-      <View className="flex-row items-center justify-between">
-        <Text variant="large">Exercises</Text>
+      {/* Exercises are the focus — they scroll, everything else is chrome. */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {activeWorkout.exercises.length === 0 ? (
+          <Text variant="muted" className="py-8 text-center">
+            No exercises yet. Add one below to get started.
+          </Text>
+        ) : (
+          activeWorkout.exercises.map((workoutExercise, index) => (
+            <View key={workoutExercise.id} className="gap-3">
+              {index > 0 ? <Separator /> : null}
+              <WorkoutExerciseBlock
+                workoutExercise={workoutExercise}
+                commitSetChangesOnChange
+                onAddSet={(workoutSessionExerciseId) => {
+                  void addSetToWorkout({ workoutSessionExerciseId });
+                }}
+                onRemoveExercise={(workoutSessionExerciseId) => {
+                  void removeExerciseFromWorkout({
+                    workoutSessionId: activeWorkout.id,
+                    workoutSessionExerciseId,
+                  });
+                }}
+                onUpdateSet={(setId, input) => {
+                  if (input.isCompleted !== undefined) {
+                    void handleSetCompletionToggle(setId, input.isCompleted);
+                    return;
+                  }
+                  scheduleSetUpdate(setId, input);
+                }}
+                onDeleteSet={(setId) => {
+                  void deleteSet(setId);
+                }}
+              />
+            </View>
+          ))
+        )}
+
         <Button
           variant="outline"
-          size="sm"
+          className="mt-2"
           onPress={() => setShowAddExerciseSheet(true)}
         >
-          <Text>Add Saved Exercise</Text>
+          <Text>Add Exercise</Text>
         </Button>
-      </View>
+      </ScrollView>
 
-      {activeWorkout.exercises.length === 0 ? (
-        <Text variant="muted">No exercises yet.</Text>
-      ) : null}
-
-      <View className="gap-3">
-        {activeWorkout.exercises.map((workoutExercise, index) => (
-          <View key={workoutExercise.id} className="gap-3">
-            {index > 0 ? <Separator /> : null}
-            <WorkoutExerciseBlock
-              workoutExercise={workoutExercise}
-              commitSetChangesOnChange
-              onAddSet={(workoutSessionExerciseId) => {
-                void addSetToWorkout({ workoutSessionExerciseId });
+      {/* Options: destructive/secondary actions kept out of easy reach. */}
+      <Sheet open={showOptions} onOpenChange={setShowOptions}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Workout options</SheetTitle>
+          </SheetHeader>
+          <View className="gap-4">
+            <Button
+              variant="destructive"
+              onPress={() => {
+                setShowOptions(false);
+                setCancelConfirmOpen(true);
               }}
-              onRemoveExercise={(workoutSessionExerciseId) => {
-                void removeExerciseFromWorkout({
-                  workoutSessionId: activeWorkout.id,
-                  workoutSessionExerciseId,
-                });
-              }}
-              onUpdateSet={(setId, input) => {
-                if (input.isCompleted !== undefined) {
-                  void handleSetCompletionToggle(setId, input.isCompleted);
-                  return;
-                }
-                scheduleSetUpdate(setId, input);
-              }}
-              onDeleteSet={(setId) => {
-                void deleteSet(setId);
-              }}
-            />
+            >
+              <Text>Cancel Workout</Text>
+            </Button>
           </View>
-        ))}
-      </View>
+        </SheetContent>
+      </Sheet>
 
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
