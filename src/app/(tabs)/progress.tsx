@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { format } from "date-fns";
-import { ChevronRight, Flame } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import { type ComponentProps, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
@@ -72,7 +72,7 @@ export default function ProgressScreen() {
 
   const { selectedDate, selectedDateKey, setSelectedDate, workouts, isLoading } =
     useWorkoutHistory();
-  const { dailyTotals, currentStreak, bestStreak } = useWorkoutActivity();
+  const { dailyTotals } = useWorkoutActivity();
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const {
@@ -121,31 +121,6 @@ export default function ProgressScreen() {
       <Text variant="muted">Look back at your training.</Text>
 
       <View className="mt-4 gap-4">
-        <Card>
-          <CardContent className="py-4">
-            {currentStreak > 0 ? (
-              <View className="flex-row items-center gap-3">
-                <Icon as={Flame} size={24} color={colors.primary} />
-                <View className="flex-1">
-                  <Text variant="large">{`${currentStreak} day streak`}</Text>
-                  {bestStreak > currentStreak ? (
-                    <Text variant="muted" className="text-xs">
-                      {`Best: ${bestStreak} days`}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
-            ) : (
-              <View className="flex-row items-center gap-3">
-                <Icon as={Flame} size={24} className="text-muted-foreground" />
-                <Text variant="muted" className="flex-1">
-                  Complete a workout today to start your streak!
-                </Text>
-              </View>
-            )}
-          </CardContent>
-        </Card>
-
         <Tabs value={tab} onValueChange={(value) => setTab(value as ProgressTab)}>
           <TabsList className="w-full">
             <TabsTrigger value="history" className="flex-1">

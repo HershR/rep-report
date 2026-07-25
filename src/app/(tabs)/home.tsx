@@ -1,7 +1,6 @@
 import { useRouter, type Href } from "expo-router";
-import { Calculator, ChevronRight, Flame } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
-import { Pressable, View } from "react-native";
+import { Calculator } from "lucide-react-native";
+import { View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { Button } from "@/components/ui/button";
@@ -13,17 +12,12 @@ import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
-import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
-import { THEME } from "@/lib/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
   const { templates, isLoading: templatesLoading } = useWorkoutTemplates();
   const { activeWorkout } = useActiveWorkout();
   const { profile } = useProfile();
-  const { currentStreak, bestStreak } = useWorkoutActivity();
 
   return (
     <CustomScreen scroll>
@@ -33,42 +27,6 @@ export default function HomeScreen() {
       <Text variant="muted">Ready to train?</Text>
 
       <View className="mt-6 gap-4">
-        <Pressable
-          className="active:opacity-80"
-          onPress={() => router.push("/(tabs)/progress" as Href)}
-        >
-          <Card>
-            <CardContent className="py-4">
-              {currentStreak > 0 ? (
-                <View className="flex-row items-center gap-3">
-                  <Icon as={Flame} size={24} color={colors.primary} />
-                  <View className="flex-1">
-                    <Text variant="large">{`${currentStreak} day streak`}</Text>
-                    {bestStreak > currentStreak ? (
-                      <Text variant="muted" className="text-xs">
-                        {`Best: ${bestStreak} days`}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Icon as={ChevronRight} className="text-muted-foreground" />
-                </View>
-              ) : (
-                <View className="flex-row items-center gap-3">
-                  <Icon
-                    as={Flame}
-                    size={24}
-                    className="text-muted-foreground"
-                  />
-                  <Text variant="muted" className="flex-1">
-                    Complete a workout today to start your streak!
-                  </Text>
-                  <Icon as={ChevronRight} className="text-muted-foreground" />
-                </View>
-              )}
-            </CardContent>
-          </Card>
-        </Pressable>
-
         <Card>
           <CardContent className="gap-3">
             <Text variant="muted">Every set counts.</Text>
