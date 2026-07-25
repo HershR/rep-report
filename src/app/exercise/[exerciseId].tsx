@@ -151,67 +151,73 @@ export default function ExerciseDetailScreen() {
 
       {item ? (
         <FadeInView>
-          <Card className="mt-4 gap-0 overflow-hidden p-0">
-            {item.imageUrl ? (
-              <View className="bg-white">
-                <ExpoImage
-                  source={{ uri: item.imageUrl }}
-                  style={{ width: "100%", aspectRatio: 1 }}
-                  contentFit={"contain"}
-                  placeholder={blurhash}
-                />
-              </View>
-            ) : null}
+          <Tabs
+            className="mt-4"
+            value={tab}
+            onValueChange={(value) => setTab(value as "details" | "records")}
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="details" className="flex-1">
+                <Text>Details</Text>
+              </TabsTrigger>
+              <TabsTrigger value="records" className="flex-1">
+                <Text>Records</Text>
+              </TabsTrigger>
+            </TabsList>
 
-            <CardContent className="gap-3 p-4">
-              <View className="flex-row items-center gap-1.5">
-                {item.category ? (
-                  <Badge variant="secondary">
-                    <Text>{item.category}</Text>
-                  </Badge>
-                ) : null}
-                {isCustom ? (
-                  <Badge variant="secondary">
-                    <Text>Custom</Text>
-                  </Badge>
-                ) : null}
-                {isCustom ? null : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto"
-                    disabled={!canFavorite}
-                    onPress={() => void onToggleFavorite()}
-                  >
-                    <Icon
-                      as={Heart}
-                      className={
-                        item.isFavorite ? "text-red-500" : "text-muted-foreground"
-                      }
-                      fill={item.isFavorite ? "currentColor" : "none"}
+            <TabsContent value="details">
+              <Card className="gap-0 overflow-hidden p-0">
+                {item.imageUrl ? (
+                  <View className="bg-white">
+                    <ExpoImage
+                      source={{ uri: item.imageUrl }}
+                      style={{ width: "100%", aspectRatio: 1 }}
+                      contentFit={"contain"}
+                      placeholder={blurhash}
                     />
-                  </Button>
-                )}
-              </View>
+                  </View>
+                ) : null}
 
-              {item.description ? (
-                <Text variant="muted">{item.description}</Text>
-              ) : null}
+                <CardContent className="gap-3 p-4">
+                  <View className="flex-row items-center gap-1.5">
+                    {item.category ? (
+                      <Badge variant="secondary">
+                        <Text>{item.category}</Text>
+                      </Badge>
+                    ) : null}
+                    {isCustom ? (
+                      <Badge variant="secondary">
+                        <Text>Custom</Text>
+                      </Badge>
+                    ) : null}
+                    {isCustom ? null : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto"
+                        disabled={!canFavorite}
+                        onPress={() => void onToggleFavorite()}
+                      >
+                        <Icon
+                          as={Heart}
+                          className={
+                            item.isFavorite
+                              ? "text-red-500"
+                              : "text-muted-foreground"
+                          }
+                          fill={item.isFavorite ? "currentColor" : "none"}
+                        />
+                      </Button>
+                    )}
+                  </View>
 
-              <Separator />
+                  {item.description ? (
+                    <Text variant="muted">{item.description}</Text>
+                  ) : null}
 
-              <Tabs value={tab} onValueChange={(value) => setTab(value as "details" | "records")}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="details" className="flex-1">
-                    <Text>Details</Text>
-                  </TabsTrigger>
-                  <TabsTrigger value="records" className="flex-1">
-                    <Text>Records</Text>
-                  </TabsTrigger>
-                </TabsList>
+                  <Separator />
 
-                <TabsContent value="details">
-                  <View className="gap-3 pt-3">
+                  <View className="gap-3">
                     <MuscleGroup title="Equipment" muscles={item.equipment} />
                     <MuscleGroup
                       title="Primary muscles"
@@ -222,76 +228,74 @@ export default function ExerciseDetailScreen() {
                       muscles={item.secondaryMuscles}
                     />
                   </View>
-                </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                <TabsContent value="records">
-                  <View className="gap-2 pt-3">
-                    {source !== "local" ? (
-                      <Text variant="muted">
-                        Save this exercise as a favorite to start tracking
-                        personal records.
-                      </Text>
-                    ) : personalRecordsLoading ? null : personalRecords ? (
-                      <>
-                        <View className="flex-row">
-                          <Stat
-                            label="Heaviest"
-                            value={
-                              personalRecords.heaviestWeight
-                                ? `${weightToText(personalRecords.heaviestWeight.weight, weightUnit)} ${weightUnit}`
-                                : "—"
-                            }
-                          />
-                          <Stat
-                            label="Best Set Vol."
-                            value={
-                              personalRecords.bestSetVolume
-                                ? `${weightToText(personalRecords.bestSetVolume.volume, weightUnit)} ${weightUnit}`
-                                : "—"
-                            }
-                          />
-                          <Stat
-                            label="Best Session Vol."
-                            value={
-                              personalRecords.bestSessionVolume
-                                ? `${weightToText(personalRecords.bestSessionVolume.volume, weightUnit)} ${weightUnit}`
-                                : "—"
-                            }
-                          />
-                          <Stat
-                            label="Most Reps"
-                            value={
-                              personalRecords.mostReps
-                                ? String(personalRecords.mostReps.reps)
-                                : "—"
-                            }
-                          />
-                        </View>
-                        {mostRecentPrDate ? (
-                          <Text
-                            variant="muted"
-                            className="text-center text-xs"
-                          >
-                            {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
-                          </Text>
-                        ) : null}
-                        <Separator className="my-1" />
-                        <ExerciseProgressChart
-                          exerciseId={exerciseId}
-                          weightUnit={weightUnit}
+            <TabsContent value="records">
+              <Card>
+                <CardContent className="gap-2 pt-6">
+                  {source !== "local" ? (
+                    <Text variant="muted">
+                      Save this exercise as a favorite to start tracking
+                      personal records.
+                    </Text>
+                  ) : personalRecordsLoading ? null : personalRecords ? (
+                    <>
+                      <View className="flex-row">
+                        <Stat
+                          label="Heaviest"
+                          value={
+                            personalRecords.heaviestWeight
+                              ? `${weightToText(personalRecords.heaviestWeight.weight, weightUnit)} ${weightUnit}`
+                              : "—"
+                          }
                         />
-                      </>
-                    ) : (
-                      <Text variant="muted">
-                        Log a workout with this exercise to see personal
-                        records.
-                      </Text>
-                    )}
-                  </View>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                        <Stat
+                          label="Best Set Vol."
+                          value={
+                            personalRecords.bestSetVolume
+                              ? `${weightToText(personalRecords.bestSetVolume.volume, weightUnit)} ${weightUnit}`
+                              : "—"
+                          }
+                        />
+                        <Stat
+                          label="Best Session Vol."
+                          value={
+                            personalRecords.bestSessionVolume
+                              ? `${weightToText(personalRecords.bestSessionVolume.volume, weightUnit)} ${weightUnit}`
+                              : "—"
+                          }
+                        />
+                        <Stat
+                          label="Most Reps"
+                          value={
+                            personalRecords.mostReps
+                              ? String(personalRecords.mostReps.reps)
+                              : "—"
+                          }
+                        />
+                      </View>
+                      {mostRecentPrDate ? (
+                        <Text variant="muted" className="text-center text-xs">
+                          {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
+                        </Text>
+                      ) : null}
+                      <Separator className="my-1" />
+                      <ExerciseProgressChart
+                        exerciseId={exerciseId}
+                        weightUnit={weightUnit}
+                      />
+                    </>
+                  ) : (
+                    <Text variant="muted">
+                      Log a workout with this exercise to see personal records.
+                    </Text>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </FadeInView>
       ) : null}
     </CustomScreen>
