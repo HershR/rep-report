@@ -545,6 +545,7 @@ export async function updateCompletedWorkout(
   input: {
     name?: string;
     notes?: string | null;
+    startedAt?: string;
     completedAt?: string | null;
     durationSeconds?: number | null;
   },
@@ -560,6 +561,7 @@ export async function updateCompletedWorkout(
     .set({
       ...(input.name !== undefined ? { name: input.name.trim() || "Workout" } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.startedAt !== undefined ? { startedAt: input.startedAt } : {}),
       ...(input.completedAt !== undefined ? { completedAt: input.completedAt } : {}),
       ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
       updatedAt: nowUtc(),

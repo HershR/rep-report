@@ -117,6 +117,7 @@ export function useWorkoutSession(sessionId?: string) {
     mutationFn: (input: {
       name?: string;
       notes?: string | null;
+      startedAt?: string;
       completedAt?: string | null;
       durationSeconds?: number | null;
     }) => updateCompletedWorkout(sessionId as string, input),

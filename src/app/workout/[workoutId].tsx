@@ -3,7 +3,7 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import type { NavigationAction } from "@react-navigation/native";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -64,6 +64,7 @@ function getFormDefaults(
     return {
       name: "",
       notes: "",
+      startedAt: new Date().toISOString(),
       completedAt: null,
       exercises: [],
     };
@@ -72,6 +73,7 @@ function getFormDefaults(
   return {
     name: session.name,
     notes: session.notes ?? "",
+    startedAt: session.startedAt,
     completedAt: session.completedAt ?? null,
     exercises: session.exercises.map((exercise) => ({
       ...exercise,
@@ -104,7 +106,11 @@ export default function WorkoutDetailScreen() {
   } = useWorkoutSession(params.workoutId);
   const { favorites } = useFavoriteExercises();
 
-  const [showCompletedAtPicker, setShowCompletedAtPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [totalText, setTotalText] = useState("");
+  const [totalFocused, setTotalFocused] = useState(false);
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -134,6 +140,7 @@ export default function WorkoutDetailScreen() {
   });
 
   const completedAtDraft = useWatch({ control, name: "completedAt" });
+  const startedAtDraft = useWatch({ control, name: "startedAt" });
   const watchedExercises = useWatch({ control, name: "exercises" }) ?? [];
 
   const completedAtDate = useMemo(() => {
@@ -141,10 +148,33 @@ export default function WorkoutDetailScreen() {
     return new Date(completedAtDraft);
   }, [completedAtDraft]);
 
+  const startedAtDate = useMemo(() => {
+    if (!startedAtDraft) return null;
+    return new Date(startedAtDraft);
+  }, [startedAtDraft]);
+
+  const durationSeconds = useMemo(() => {
+    if (!startedAtDraft || !completedAtDraft) return 0;
+    return Math.max(
+      0,
+      Math.floor(
+        (Date.parse(completedAtDraft) - Date.parse(startedAtDraft)) / 1000,
+      ),
+    );
+  }, [startedAtDraft, completedAtDraft]);
+
   useEffect(() => {
     if (!workoutSession) return;
     reset(getFormDefaults(workoutSession));
   }, [workoutSession, reset]);
+
+  // Keep the total-minutes field in sync with start/end, but not while the user
+  // is typing in it (rounding to whole minutes would fight their input) — same
+  // focus-guard pattern as WorkoutSetRow's duration field.
+  useEffect(() => {
+    if (totalFocused) return;
+    setTotalText(String(Math.round(durationSeconds / 60)));
+  }, [durationSeconds, totalFocused]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (event) => {
@@ -168,17 +198,67 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const onChangeCompletedAt = (
-    event: DateTimePickerEvent,
-    selectedDate?: Date,
-  ) => {
-    if (event.type === "dismissed") {
-      setShowCompletedAtPicker(false);
-      return;
+  // Date applies the chosen day to both timestamps (times preserved).
+  const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === "dismissed" || !selectedDate) return;
+    const ymd = {
+      year: selectedDate.getFullYear(),
+      month: selectedDate.getMonth(),
+      date: selectedDate.getDate(),
+    };
+    if (startedAtDate) {
+      setValue("startedAt", set(startedAtDate, ymd).toISOString(), {
+        shouldDirty: true,
+      });
     }
-    if (!selectedDate) return;
-    setShowCompletedAtPicker(false);
-    setValue("completedAt", selectedDate.toISOString(), {
+    if (completedAtDate) {
+      setValue("completedAt", set(completedAtDate, ymd).toISOString(), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
+  // Start time moves startedAt; end stays put, so total recomputes from it.
+  const onChangeStartTime = (
+    event: DateTimePickerEvent,
+    selectedTime?: Date,
+  ) => {
+    setShowStartPicker(false);
+    if (event.type === "dismissed" || !selectedTime || !startedAtDate) return;
+    const nextStart = set(startedAtDate, {
+      hours: selectedTime.getHours(),
+      minutes: selectedTime.getMinutes(),
+      seconds: 0,
+      milliseconds: 0,
+    });
+    setValue("startedAt", nextStart.toISOString(), { shouldDirty: true });
+  };
+
+  // End time moves completedAt; start stays put, so total recomputes (rule 2).
+  const onChangeEndTime = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    setShowEndPicker(false);
+    if (event.type === "dismissed" || !selectedTime || !completedAtDate) return;
+    const nextEnd = set(completedAtDate, {
+      hours: selectedTime.getHours(),
+      minutes: selectedTime.getMinutes(),
+      seconds: 0,
+      milliseconds: 0,
+    });
+    setValue("completedAt", nextEnd.toISOString(), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  // Total drives the end: completedAt = startedAt + total (start fixed, rule 1).
+  const onCommitTotal = () => {
+    setTotalFocused(false);
+    if (!startedAtDate) return;
+    const minutes = Number(totalText) || 0;
+    const nextEnd = new Date(startedAtDate.getTime() + minutes * 60 * 1000);
+    setValue("completedAt", nextEnd.toISOString(), {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -332,7 +412,18 @@ export default function WorkoutDetailScreen() {
       await updateCompletedWorkout({
         name: formValues.name,
         notes: formValues.notes.trim() || null,
+        startedAt: formValues.startedAt,
         completedAt: formValues.completedAt,
+        durationSeconds: formValues.completedAt
+          ? Math.max(
+              0,
+              Math.floor(
+                (Date.parse(formValues.completedAt) -
+                  Date.parse(formValues.startedAt)) /
+                  1000,
+              ),
+            )
+          : null,
       });
 
       const originalExerciseMap = new Map(
@@ -512,22 +603,79 @@ export default function WorkoutDetailScreen() {
       </Card>
 
       <Card>
-        <CardContent className="gap-2">
-          <Text>{`Completed ${completedAtDate ? format(completedAtDate, "PPP p") : "N/A"}`}</Text>
-          <Text variant="muted">{`Duration ${workoutSession.durationSeconds ?? 0}s`}</Text>
-          <Button
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onPress={() => setShowCompletedAtPicker(true)}
-          >
-            <Text>Edit completed date/time</Text>
-          </Button>
-          {showCompletedAtPicker && completedAtDate ? (
+        <CardContent className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text variant="muted">Date</Text>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text>
+                {completedAtDate ? format(completedAtDate, "PPP") : "Set date"}
+              </Text>
+            </Button>
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text variant="muted">Start time</Text>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setShowStartPicker(true)}
+            >
+              <Text>
+                {startedAtDate ? format(startedAtDate, "p") : "Set start"}
+              </Text>
+            </Button>
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text variant="muted">End time</Text>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setShowEndPicker(true)}
+            >
+              <Text>
+                {completedAtDate ? format(completedAtDate, "p") : "Set end"}
+              </Text>
+            </Button>
+          </View>
+
+          <View className="gap-1.5">
+            <Label>Total workout time (minutes)</Label>
+            <Input
+              value={totalText}
+              onChangeText={(text) =>
+                setTotalText(text.replace(/\D/g, "").slice(0, 4))
+              }
+              onFocus={() => setTotalFocused(true)}
+              onBlur={onCommitTotal}
+              keyboardType="number-pad"
+              placeholder="0"
+            />
+          </View>
+
+          {showDatePicker && completedAtDate ? (
             <DateTimePicker
               mode="date"
               value={completedAtDate}
-              onChange={onChangeCompletedAt}
+              onChange={onChangeDate}
+            />
+          ) : null}
+          {showStartPicker && startedAtDate ? (
+            <DateTimePicker
+              mode="time"
+              value={startedAtDate}
+              onChange={onChangeStartTime}
+            />
+          ) : null}
+          {showEndPicker && completedAtDate ? (
+            <DateTimePicker
+              mode="time"
+              value={completedAtDate}
+              onChange={onChangeEndTime}
             />
           ) : null}
         </CardContent>

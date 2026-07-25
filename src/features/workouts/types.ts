@@ -30,6 +30,7 @@ export type WorkoutDetailFormExercise = WorkoutSessionExerciseWithDetails;
 export type WorkoutDetailFormValues = {
   name: string;
   notes: string;
+  startedAt: string;
   completedAt: string | null;
   exercises: WorkoutDetailFormExercise[];
 };
@@ -67,6 +68,7 @@ export const workoutDetailExerciseSchema = z.object({
 export const workoutDetailFormSchema = z.object({
   name: z.string().trim().min(1, "Workout name is required"),
   notes: z.string(),
+  startedAt: z.string(),
   completedAt: z.string().nullable(),
   exercises: z.array(workoutDetailExerciseSchema),
 });
