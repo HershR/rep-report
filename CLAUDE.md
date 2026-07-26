@@ -34,9 +34,10 @@ There is no test framework configured (no jest, no test script in `package.json`
 
 Be upfront that anything requiring an actual device — animation feel, haptics, gesture behavior, layout on a real screen — is unverified until the user checks it.
 
-**A hard-won gotcha on installing packages**: this project has a peer-dependency conflict between `sonner-native` (wants `react-native-worklets >= 0.6.1`) and the exact worklets version Expo Go's native binary actually ships for this SDK (`0.5.1`, pinned exactly, required by `react-native-reanimated`). Installs of *anything* will trip this ERESOLVE error even when unrelated to worklets. Two consequences:
+**A hard-won gotcha on installing packages**: this project has a peer-dependency conflict between `sonner-native` (wants `react-native-worklets >= 0.6.1`) and the exact worklets version Expo Go's native binary actually ships for this SDK (`0.5.1`, pinned exactly, required by `react-native-reanimated`). Installs of _anything_ will trip this ERESOLVE error even when unrelated to worklets. Two consequences:
+
 - You'll need `--legacy-peer-deps` (e.g. `npx expo install <pkg> -- --legacy-peer-deps`) to get past it.
-- `--legacy-peer-deps` disables npm's peer-dependency auto-install for the *whole* tree, which can silently drop packages that were only ever present as an auto-installed peer (this happened to `react-native-svg`, an undeclared peer of `lucide-react-native`). After any install that needed `--legacy-peer-deps`, diff `package.json`/run `npm ls` for missing/invalid entries before moving on — don't just assume the tree is still intact.
+- `--legacy-peer-deps` disables npm's peer-dependency auto-install for the _whole_ tree, which can silently drop packages that were only ever present as an auto-installed peer (this happened to `react-native-svg`, an undeclared peer of `lucide-react-native`). After any install that needed `--legacy-peer-deps`, diff `package.json`/run `npm ls` for missing/invalid entries before moving on — don't just assume the tree is still intact.
 - Never bump `react-native-worklets` itself to satisfy a peer range — it must stay at the exact version Expo Go's native binary was built against, or the app crashes at runtime with a TurboModule argument-count mismatch. If a new package's peer range conflicts with it, bypass with `--legacy-peer-deps` instead of upgrading worklets.
 
 ## Architecture
@@ -55,7 +56,7 @@ src/features/<feature>/
 
 Features today: `exercises`, `workouts`, `templates`, `profile`, `measurements`.
 
-**Screens (`src/app/**`) stay thin**: they compose components, call hooks, and trigger repository actions via those hooks — no raw SQL, no business logic, no data transformations in a screen file. Route files use Expo Router's file-based conventions (`(tabs)/` group for the bottom nav, `[param]` dynamic routes for detail screens).
+**Screens (`src/app/**`) stay thin**: they compose components, call hooks, and trigger repository actions via those hooks — no raw SQL, no business logic, no data transformations in a screen file. Route files use Expo Router's file-based conventions (`(tabs)/`group for the bottom nav,`[param]` dynamic routes for detail screens).
 
 **Repository pattern**: DB access is exclusively through named functions in `src/features/*/repositories/*.ts` (e.g. `startWorkout`, `completeWorkout`, `getWorkoutHistory`), each translating between Drizzle row shapes (`src/db/schema.ts`) and the feature's domain types. Hooks (`src/features/*/hooks/*.ts`) wrap these with `useQuery`/`useMutation`, own the query keys, and patch the query cache on mutation success — that's where caching/invalidation logic lives, not in screens or repositories.
 
@@ -89,3 +90,19 @@ Cloud sync, user accounts, social features, subscriptions, AI coaching, nutritio
 - Function components only; prefer small components + custom hooks over large screens or deep prop chains.
 - Prefer built-in Expo/RN solutions over new dependencies; don't add a library casually (see the peer-dependency gotcha above for why this matters concretely here).
 - `FlashList` (not `FlatList`) for any sizable list — see `saved.tsx`'s discriminated-union-rows + `getItemType` pattern for a mixed-content-type list.
+
+## agent-device
+
+Use agent-device only for app/device automation tasks.
+Before planning device work, run `agent-device --version` and read `agent-device help workflow`.
+For TV, Fire TV, or Vega OS tasks, read `agent-device help tv`.
+For exploratory QA, read `agent-device help dogfood`.
+For logs, network, audio, traces, or runtime failures, read `agent-device help debugging`.
+For React Native component trees, props/state/hooks, slow renders, or rerenders, read `agent-device help react-devtools`.
+For React Native JavaScript heap growth, heap snapshots, or retained-object leaks, read `agent-device help cdp`.
+For React Native apps, overlays, Metro/Fast Refresh blockers, and routing to React DevTools or debugging evidence, read `agent-device help react-native`.
+
+Use the CLI in the integrated terminal.
+If `agent-device` is not on PATH but the user installed it globally in another shell, resolve the absolute binary path instead of using `npx -y agent-device@latest`.
+Prefer `open -> snapshot -i -> act -> re-snapshot -> verify -> close` where supported; otherwise follow target-specific help.
+Keep mutating commands against one session serial.
