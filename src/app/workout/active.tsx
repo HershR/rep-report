@@ -1,6 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { BellRing, Check, MoreHorizontal, Trophy } from "lucide-react-native";
+import {
+  BellRing,
+  Check,
+  ChevronDown,
+  MoreHorizontal,
+  Trophy,
+} from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useColorScheme } from "nativewind";
 import { ScrollView, View } from "react-native";
@@ -18,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -34,6 +42,10 @@ import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedE
 import { RestTimerBar } from "@/features/workouts/components/RestTimerBar";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import {
+  formatElapsed,
+  useElapsedSeconds,
+} from "@/features/workouts/hooks/useElapsedSeconds";
 import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
@@ -60,16 +72,6 @@ function buildPrDescription(
   }
 
   return `${pr.exerciseName} · ${stat}`;
-}
-
-function formatElapsed(seconds: number): string {
-  const clamped = Math.max(0, seconds);
-  const hours = Math.floor(clamped / 3600);
-  const minutes = Math.floor((clamped % 3600) / 60);
-  const remainingSeconds = clamped % 60;
-  return [hours, minutes, remainingSeconds]
-    .map((value) => String(value).padStart(2, "0"))
-    .join(":");
 }
 
 const SET_UPDATE_DEBOUNCE_MS = 400;
@@ -102,7 +104,7 @@ export default function ActiveWorkoutScreen() {
   });
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [nameDraft, setNameDraft] = useState("");
   const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
     useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
@@ -114,6 +116,7 @@ export default function ActiveWorkoutScreen() {
     startWorkout,
     resumeWorkout,
     repeatWorkout,
+    renameWorkout,
     completeWorkout,
     cancelWorkout,
     addExerciseToWorkout,
@@ -123,6 +126,8 @@ export default function ActiveWorkoutScreen() {
     deleteSet,
     removeIncompleteSets,
   } = useActiveWorkout();
+
+  const elapsedSeconds = useElapsedSeconds(activeWorkout?.startedAt);
 
   useEffect(() => {
     if (activeWorkout?.status === "active") return;
@@ -149,21 +154,6 @@ export default function ActiveWorkoutScreen() {
     repeatWorkout,
     startWorkout,
   ]);
-
-  useEffect(() => {
-    if (!activeWorkout?.startedAt) return;
-    const tick = () => {
-      setElapsedSeconds(
-        Math.max(
-          0,
-          Math.floor((Date.now() - Date.parse(activeWorkout.startedAt)) / 1000),
-        ),
-      );
-    };
-    tick();
-    const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
-  }, [activeWorkout?.startedAt]);
 
   const canComplete = useMemo(
     () => Boolean(activeWorkout && activeWorkout.exercises.length > 0),
@@ -271,6 +261,18 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  /** Closes the active-workout modal, falling back to Home if it's the root. */
+  const dismiss = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)/home");
+  };
+
+  const commitRename = () => {
+    const next = nameDraft.trim() || "Workout";
+    if (next === activeWorkout.name) return;
+    void renameWorkout({ sessionId: activeWorkout.id, name: next });
+  };
+
   const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
     await finish();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -278,7 +280,7 @@ export default function ActiveWorkoutScreen() {
       icon: <Icon as={Check} size={18} color={colors.chart3} />,
       duration: 2500,
     });
-    router.replace("/(tabs)/home");
+    dismiss();
   };
 
   const onComplete = async () => {
@@ -317,7 +319,7 @@ export default function ActiveWorkoutScreen() {
   const onCancel = async () => {
     cancelPendingSetUpdates();
     await cancelWorkout(activeWorkout.id);
-    router.replace("/(tabs)/home");
+    dismiss();
   };
 
   return (
@@ -334,25 +336,38 @@ export default function ActiveWorkoutScreen() {
         />
       }
     >
-      {/* Header: name + elapsed, with Finish and options actions. */}
-      <View className="flex-row items-start justify-between gap-2 pb-3">
-        <View className="flex-1">
-          <Text variant="h2" numberOfLines={1}>
-            {activeWorkout.name}
-          </Text>
-          <Text variant="muted" className="text-xs">
-            {`Elapsed ${formatElapsed(elapsedSeconds)}`}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1">
-          <Button size="sm" onPress={() => void onComplete()}>
-            <Text>Finish</Text>
-          </Button>
+      {/* Header: hide + elapsed + finish, then name + options. */}
+      <View className="gap-2 pb-3">
+        <View className="flex-row items-center justify-between gap-2">
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
+            accessibilityLabel="Hide workout"
+            onPress={dismiss}
+          >
+            <Icon as={ChevronDown} className="text-foreground" />
+          </Button>
+          <Text variant="large" className="flex-1 text-center">
+            {formatElapsed(elapsedSeconds)}
+          </Text>
+          <Button size="sm" onPress={() => void onComplete()}>
+            <Text>Finish</Text>
+          </Button>
+        </View>
+        <View className="flex-row items-center gap-1">
+          <Text variant="h2" numberOfLines={1} className="shrink">
+            {activeWorkout.name}
+          </Text>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             accessibilityLabel="Workout options"
-            onPress={() => setShowOptions(true)}
+            onPress={() => {
+              setNameDraft(activeWorkout.name);
+              setShowOptions(true);
+            }}
           >
             <Icon as={MoreHorizontal} className="text-foreground" />
           </Button>
@@ -407,24 +422,30 @@ export default function ActiveWorkoutScreen() {
         >
           <Text>Add Exercise</Text>
         </Button>
+
+        <Button
+          variant="ghost"
+          className="mt-4"
+          onPress={() => setCancelConfirmOpen(true)}
+        >
+          <Text className="text-destructive">Cancel Workout</Text>
+        </Button>
       </ScrollView>
 
-      {/* Options: destructive/secondary actions kept out of easy reach. */}
+      {/* Options: rename the in-progress workout. */}
       <Sheet open={showOptions} onOpenChange={setShowOptions}>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Workout options</SheetTitle>
           </SheetHeader>
-          <View className="gap-4">
-            <Button
-              variant="destructive"
-              onPress={() => {
-                setShowOptions(false);
-                setCancelConfirmOpen(true);
-              }}
-            >
-              <Text>Cancel Workout</Text>
-            </Button>
+          <View className="gap-2">
+            <Label>Name</Label>
+            <Input
+              value={nameDraft}
+              onChangeText={setNameDraft}
+              onBlur={commitRename}
+              placeholder="Workout name"
+            />
           </View>
         </SheetContent>
       </Sheet>

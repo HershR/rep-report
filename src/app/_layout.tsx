@@ -61,7 +61,12 @@ export default function RootLayout() {
                 contentStyle: { backgroundColor: colors.background },
                 headerShown: false,
               }}
-            />
+            >
+              <Stack.Screen
+                name="workout/active"
+                options={{ presentation: "modal" }}
+              />
+            </Stack>
             <PortalHost />
             <Toaster theme={scheme ?? "light"} position="top-center" />
           </ThemeProvider>

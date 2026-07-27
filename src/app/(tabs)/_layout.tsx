@@ -1,3 +1,4 @@
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
 import {
   BarChart3,
@@ -8,7 +9,9 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+import { View } from "react-native";
 
+import { MiniWorkoutBar } from "@/features/workouts/components/MiniWorkoutBar";
 import { THEME } from "@/lib/theme";
 
 function tabIcon(IconComponent: LucideIcon) {
@@ -23,6 +26,12 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => (
+        <View>
+          <MiniWorkoutBar />
+          <BottomTabBar {...props} />
+        </View>
+      )}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

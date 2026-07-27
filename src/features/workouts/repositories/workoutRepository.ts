@@ -571,6 +571,17 @@ export async function updateCompletedWorkout(
   return hydrateWorkoutSession(id);
 }
 
+export async function renameWorkoutSession(
+  id: string,
+  name: string,
+): Promise<WorkoutSessionDetails | null> {
+  await db
+    .update(workoutSessions)
+    .set({ name: name.trim() || "Workout", updatedAt: nowUtc() })
+    .where(eq(workoutSessions.id, id));
+  return hydrateWorkoutSession(id);
+}
+
 export async function cancelWorkout(sessionId: string): Promise<WorkoutSession | null> {
   await deleteWorkoutSessionGraph(sessionId);
   return null;

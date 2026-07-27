@@ -9,6 +9,7 @@ import {
   removeIncompleteSets,
   deleteSet,
   getActiveWorkoutSession,
+  renameWorkoutSession,
   repeatWorkout,
   resumeWorkout,
   startWorkout,
@@ -83,6 +84,14 @@ export function useActiveWorkout() {
     },
   });
 
+  const renameMutation = useMutation({
+    mutationFn: (input: { sessionId: string; name: string }) =>
+      renameWorkoutSession(input.sessionId, input.name),
+    onSuccess: (data) => {
+      setActiveWorkoutCache(data);
+    },
+  });
+
   const addExerciseMutation = useMutation({
     mutationFn: (input: { workoutSessionId: string; exerciseId: string }) => addExerciseToWorkout(input),
     onSuccess: (data) => {
@@ -134,6 +143,7 @@ export function useActiveWorkout() {
     startWorkout: startMutation.mutateAsync,
     resumeWorkout: resumeMutation.mutateAsync,
     repeatWorkout: repeatMutation.mutateAsync,
+    renameWorkout: renameMutation.mutateAsync,
     completeWorkout: completeMutation.mutateAsync,
     cancelWorkout: cancelMutation.mutateAsync,
     addExerciseToWorkout: addExerciseMutation.mutateAsync,
@@ -146,6 +156,7 @@ export function useActiveWorkout() {
       startMutation.isPending ||
       resumeMutation.isPending ||
       repeatMutation.isPending ||
+      renameMutation.isPending ||
       completeMutation.isPending ||
       cancelMutation.isPending ||
       addExerciseMutation.isPending ||
