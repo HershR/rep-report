@@ -180,6 +180,7 @@ function ExerciseField({
 
   return (
     <TemplateExerciseBlock
+      exerciseId={exercise.exerciseId}
       exerciseName={exercise.exerciseName}
       exerciseCategory={exercise.exerciseCategory}
       sets={exercise.sets}

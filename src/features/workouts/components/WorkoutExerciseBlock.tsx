@@ -1,5 +1,6 @@
+import { useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react-native";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -44,6 +45,7 @@ export function WorkoutExerciseBlock({
   canMoveUp = false,
   canMoveDown = false,
 }: WorkoutExerciseBlockProps) {
+  const router = useRouter();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
@@ -60,9 +62,22 @@ export function WorkoutExerciseBlock({
   return (
     <View className="gap-2">
       <View className="flex-row items-center justify-between">
-        <Text className="text-primary flex-1 font-semibold">
-          {workoutExercise.exercise.name}
-        </Text>
+        <Pressable
+          className="flex-1 active:opacity-70"
+          onPress={() =>
+            router.push({
+              pathname: "/exercise/[exerciseId]",
+              params: {
+                exerciseId: workoutExercise.exerciseId,
+                source: "local",
+              },
+            })
+          }
+        >
+          <Text className="text-primary font-semibold">
+            {workoutExercise.exercise.name}
+          </Text>
+        </Pressable>
         <View className="flex-row items-center">
           {onMoveUp ? (
             <Button

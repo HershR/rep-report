@@ -1,5 +1,6 @@
+import { useRouter } from "expo-router";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react-native";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -18,6 +19,7 @@ type EditableSet = {
 };
 
 type TemplateExerciseBlockProps = {
+  exerciseId: string;
   exerciseName: string;
   exerciseCategory: string | null;
   sets: EditableSet[];
@@ -36,6 +38,7 @@ type TemplateExerciseBlockProps = {
 };
 
 export function TemplateExerciseBlock({
+  exerciseId,
   exerciseName,
   exerciseCategory,
   sets,
@@ -48,6 +51,7 @@ export function TemplateExerciseBlock({
   canMoveUp = false,
   canMoveDown = false,
 }: TemplateExerciseBlockProps) {
+  const router = useRouter();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
@@ -61,7 +65,17 @@ export function TemplateExerciseBlock({
   return (
     <View className="gap-2">
       <View className="flex-row items-center justify-between">
-        <Text className="text-primary flex-1 font-semibold">{exerciseName}</Text>
+        <Pressable
+          className="flex-1 active:opacity-70"
+          onPress={() =>
+            router.push({
+              pathname: "/exercise/[exerciseId]",
+              params: { exerciseId, source: "local" },
+            })
+          }
+        >
+          <Text className="text-primary font-semibold">{exerciseName}</Text>
+        </Pressable>
         <View className="flex-row items-center">
           {onMoveUp ? (
             <Button
