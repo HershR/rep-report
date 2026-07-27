@@ -569,17 +569,23 @@ export default function WorkoutDetailScreen() {
 
   return (
     <CustomScreen>
-      {/* Fixed header: title + summary, with Save and options actions. */}
-      <View className="flex-row items-start justify-between gap-2 pb-3">
-        <View className="flex-1">
-          <Text variant="h2" numberOfLines={1}>
-            {nameDraft?.trim() ? nameDraft : "Workout"}
-          </Text>
-          <Text variant="muted" className="text-xs">
-            {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1">
+      {/* Fixed header: name + options together, Save on the right, summary below. */}
+      <View className="pb-3">
+        <View className="flex-row items-center justify-between gap-2">
+          <View className="flex-1 flex-row items-center gap-1">
+            <Text variant="h2" numberOfLines={1} className="shrink">
+              {nameDraft?.trim() ? nameDraft : "Workout"}
+            </Text>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              accessibilityLabel="Workout options"
+              onPress={() => setShowOptions(true)}
+            >
+              <Icon as={MoreHorizontal} className="text-foreground" />
+            </Button>
+          </View>
           <Button
             size="sm"
             loading={isSaving || isSavingAll}
@@ -587,15 +593,10 @@ export default function WorkoutDetailScreen() {
           >
             <Text>Save</Text>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            accessibilityLabel="Workout options"
-            onPress={() => setShowOptions(true)}
-          >
-            <Icon as={MoreHorizontal} className="text-foreground" />
-          </Button>
         </View>
+        <Text variant="muted" className="text-xs">
+          {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
+        </Text>
       </View>
 
       {/* Exercises are the focus — they scroll, everything else is chrome. */}
