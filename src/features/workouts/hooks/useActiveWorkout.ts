@@ -6,6 +6,7 @@ import {
   cancelWorkout,
   completeWorkout,
   removeExerciseFromWorkout,
+  removeEmptyExercises,
   removeIncompleteSets,
   deleteSet,
   getActiveWorkoutSession,
@@ -135,6 +136,13 @@ export function useActiveWorkout() {
     },
   });
 
+  const removeEmptyExercisesMutation = useMutation({
+    mutationFn: (sessionId: string) => removeEmptyExercises(sessionId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ACTIVE_WORKOUT_QUERY_KEY });
+    },
+  });
+
   return {
     activeWorkout: activeQuery.data ?? null,
     isLoading: activeQuery.isLoading,
@@ -152,6 +160,7 @@ export function useActiveWorkout() {
     updateSet: updateSetMutation.mutateAsync,
     deleteSet: deleteSetMutation.mutateAsync,
     removeIncompleteSets: removeIncompleteSetsMutation.mutateAsync,
+    removeEmptyExercises: removeEmptyExercisesMutation.mutateAsync,
     isSaving:
       startMutation.isPending ||
       resumeMutation.isPending ||
@@ -164,6 +173,7 @@ export function useActiveWorkout() {
       removeExerciseMutation.isPending ||
       updateSetMutation.isPending ||
       deleteSetMutation.isPending ||
-      removeIncompleteSetsMutation.isPending,
+      removeIncompleteSetsMutation.isPending ||
+      removeEmptyExercisesMutation.isPending,
   };
 }

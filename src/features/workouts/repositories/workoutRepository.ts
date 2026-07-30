@@ -571,6 +571,39 @@ export async function updateCompletedWorkout(
   return hydrateWorkoutSession(id);
 }
 
+/**
+ * Deletes exercises in a session that have no sets (e.g. added but never logged,
+ * or left empty after incomplete sets were removed). Returns the number of
+ * exercises that remain. No orderIndex reindex — the session completes right
+ * after, and detail views order by orderIndex where gaps are harmless.
+ */
+export async function removeEmptyExercises(sessionId: string): Promise<number> {
+  const exerciseRows = await db
+    .select({ id: workoutSessionExercises.id })
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
+  if (exerciseRows.length === 0) return 0;
+
+  const exerciseIds = exerciseRows.map((row) => row.id);
+  const setRows = await db
+    .select({ workoutSessionExerciseId: workoutSets.workoutSessionExerciseId })
+    .from(workoutSets)
+    .where(inArray(workoutSets.workoutSessionExerciseId, exerciseIds));
+
+  const idsWithSets = new Set(
+    setRows.map((row) => row.workoutSessionExerciseId),
+  );
+  const emptyIds = exerciseIds.filter((id) => !idsWithSets.has(id));
+
+  if (emptyIds.length > 0) {
+    await db
+      .delete(workoutSessionExercises)
+      .where(inArray(workoutSessionExercises.id, emptyIds));
+  }
+
+  return exerciseRows.length - emptyIds.length;
+}
+
 export async function renameWorkoutSession(
   id: string,
   name: string,

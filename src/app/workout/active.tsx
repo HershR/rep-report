@@ -105,8 +105,7 @@ export default function ActiveWorkoutScreen() {
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [incompleteSetsDialogOpen, setIncompleteSetsDialogOpen] =
-    useState(false);
+  const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [noExerciseAlertOpen, setNoExerciseAlertOpen] = useState(false);
   const { favorites } = useFavoriteExercises();
@@ -125,6 +124,7 @@ export default function ActiveWorkoutScreen() {
     updateSet,
     deleteSet,
     removeIncompleteSets,
+    removeEmptyExercises,
   } = useActiveWorkout();
 
   const elapsedSeconds = useElapsedSeconds(activeWorkout?.startedAt);
@@ -261,6 +261,30 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  const incompleteSetCount = activeWorkout.exercises.reduce(
+    (total, exercise) =>
+      total + exercise.sets.filter((set) => set.isCompleted === 0).length,
+    0,
+  );
+  const emptyExerciseCount = activeWorkout.exercises.filter(
+    (exercise) => exercise.sets.length === 0,
+  ).length;
+  const cleanupParts: string[] = [];
+  if (incompleteSetCount > 0) {
+    cleanupParts.push(
+      `${incompleteSetCount} unmarked set${incompleteSetCount === 1 ? "" : "s"}`,
+    );
+  }
+  if (emptyExerciseCount > 0) {
+    cleanupParts.push(
+      `${emptyExerciseCount} empty exercise${emptyExerciseCount === 1 ? "" : "s"}`,
+    );
+  }
+  const cleanupSummary =
+    cleanupParts.length > 0
+      ? `This workout has ${cleanupParts.join(" and ")}.`
+      : "";
+
   /** Closes the active-workout modal, falling back to Home if it's the root. */
   const dismiss = () => {
     if (router.canGoBack()) router.back();
@@ -291,29 +315,32 @@ export default function ActiveWorkoutScreen() {
       return;
     }
 
-    const hasIncompleteSets = activeWorkout.exercises.some((exercise) =>
-      exercise.sets.some((set) => set.isCompleted === 0),
-    );
-
-    if (!hasIncompleteSets) {
+    if (incompleteSetCount === 0 && emptyExerciseCount === 0) {
       await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
       return;
     }
 
-    setIncompleteSetsDialogOpen(true);
+    setCleanupDialogOpen(true);
   };
 
-  const onKeepAllSetsAndComplete = async () => {
-    setIncompleteSetsDialogOpen(false);
+  const onKeepEverythingAndComplete = async () => {
+    setCleanupDialogOpen(false);
     await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
   };
 
-  const onRemoveIncompleteSetsAndComplete = async () => {
-    setIncompleteSetsDialogOpen(false);
-    await finishAndCelebrate(async () => {
-      await removeIncompleteSets(activeWorkout.id);
-      await completeWorkout(activeWorkout.id);
-    });
+  const onDiscardAndFinish = async () => {
+    setCleanupDialogOpen(false);
+    await removeIncompleteSets(activeWorkout.id);
+    const remaining = await removeEmptyExercises(activeWorkout.id);
+    if (remaining === 0) {
+      // Cleanup emptied the workout — discard it rather than save an empty one.
+      await cancelWorkout(activeWorkout.id);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      toast("Empty workout discarded", { duration: 2500 });
+      dismiss();
+      return;
+    }
+    await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
   };
 
   const onCancel = async () => {
@@ -482,33 +509,29 @@ export default function ActiveWorkoutScreen() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={incompleteSetsDialogOpen}
-        onOpenChange={setIncompleteSetsDialogOpen}
-      >
+      <AlertDialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Incomplete sets</AlertDialogTitle>
+            <AlertDialogTitle>Clean up before finishing?</AlertDialogTitle>
             <AlertDialogDescription>
-              Some sets in this workout haven&apos;t been marked complete. What
-              would you like to do?
+              {`${cleanupSummary} Discard them, or keep everything?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
               variant="outline"
-              onPress={() => setIncompleteSetsDialogOpen(false)}
+              onPress={() => setCleanupDialogOpen(false)}
             >
               <Text>Cancel</Text>
             </Button>
             <Button
               variant="destructive"
-              onPress={() => void onRemoveIncompleteSetsAndComplete()}
+              onPress={() => void onDiscardAndFinish()}
             >
-              <Text>Remove incomplete sets</Text>
+              <Text>Discard</Text>
             </Button>
-            <Button onPress={() => void onKeepAllSetsAndComplete()}>
-              <Text>Keep all sets</Text>
+            <Button onPress={() => void onKeepEverythingAndComplete()}>
+              <Text>Keep everything</Text>
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
