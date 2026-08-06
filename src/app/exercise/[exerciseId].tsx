@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
@@ -42,10 +43,21 @@ function MuscleGroup({ title, muscles }: { title: string; muscles: string[] }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  emphasis = false,
+}: {
+  label: string;
+  value: string;
+  /** Renders the headline metric: larger value, no row-flex sizing. */
+  emphasis?: boolean;
+}) {
   return (
-    <View className="flex-1 items-center gap-1">
-      <Text variant="large">{value}</Text>
+    <View
+      className={emphasis ? "items-center gap-1" : "flex-1 items-center gap-1"}
+    >
+      <Text variant={emphasis ? "h3" : "large"}>{value}</Text>
       <Text variant="muted" className="text-xs uppercase">
         {label}
       </Text>
@@ -53,7 +65,9 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function mostRecentAchievedAt(entries: (PersonalRecordEntry | null)[]): string | null {
+function mostRecentAchievedAt(
+  entries: (PersonalRecordEntry | null)[],
+): string | null {
   const dates = entries
     .filter((entry): entry is PersonalRecordEntry => Boolean(entry))
     .map((entry) => entry.achievedAt);
@@ -129,22 +143,33 @@ export default function ExerciseDetailScreen() {
       <Text variant="h2">{item?.name ?? "Exercise Detail"}</Text>
 
       {query.isLoading ? (
-        <Text variant="muted" className="mt-4">
-          Loading exercise...
-        </Text>
+        <View className="mt-4 gap-3">
+          <Skeleton className="h-9 w-full rounded-lg" />
+          <Skeleton className="h-56 w-full rounded-xl" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </View>
       ) : null}
 
       {query.isError ? (
-        <Card className="mt-4">
-          <CardContent>
+        <Card className="mt-4 p-0">
+          <CardContent className="gap-3 p-4">
             <Text>Could not load exercise details.</Text>
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onPress={() => void query.refetch()}
+            >
+              <Text>Retry</Text>
+            </Button>
           </CardContent>
         </Card>
       ) : null}
 
       {!query.isLoading && !query.isError && !item ? (
-        <Card className="mt-4">
-          <CardContent>
+        <Card className="mt-4 p-0">
+          <CardContent className="gap-3 p-4">
             <Text>Exercise not found.</Text>
           </CardContent>
         </Card>
@@ -201,6 +226,11 @@ export default function ExerciseDetailScreen() {
                         variant="ghost"
                         size="icon"
                         className="ml-auto"
+                        accessibilityLabel={
+                          item.isFavorite
+                            ? "Remove from favorites"
+                            : "Add to favorites"
+                        }
                         disabled={!canFavorite}
                         onPress={() => void onToggleFavorite()}
                       >
@@ -239,24 +269,40 @@ export default function ExerciseDetailScreen() {
             </TabsContent>
 
             <TabsContent value="records">
-              <Card>
-                <CardContent className="gap-2 pt-6">
+              <Card className="p-0">
+                <CardContent className="gap-3 p-4">
                   {source !== "local" ? (
                     <Text variant="muted">
                       Save this exercise as a favorite to start tracking
                       personal records.
                     </Text>
-                  ) : personalRecordsLoading ? null : personalRecords ? (
+                  ) : personalRecordsLoading ? (
+                    <View className="gap-3">
+                      <Skeleton className="h-14 w-full rounded-lg" />
+                      <View className="flex-row gap-3">
+                        <Skeleton className="h-12 flex-1 rounded-lg" />
+                        <Skeleton className="h-12 flex-1 rounded-lg" />
+                      </View>
+                      <View className="flex-row gap-3">
+                        <Skeleton className="h-12 flex-1 rounded-lg" />
+                        <Skeleton className="h-12 flex-1 rounded-lg" />
+                      </View>
+                    </View>
+                  ) : personalRecords ? (
                     <>
-                      <View className="flex-row">
-                        <Stat
-                          label="Est. 1RM"
-                          value={
-                            personalRecords.bestEstimated1RM?.volume != null
-                              ? `${weightToText(personalRecords.bestEstimated1RM.volume, weightUnit)} ${weightUnit}`
-                              : "—"
-                          }
-                        />
+                      <Stat
+                        emphasis
+                        label="Est. 1RM"
+                        value={
+                          personalRecords.bestEstimated1RM?.volume != null
+                            ? `${weightToText(personalRecords.bestEstimated1RM.volume, weightUnit)} ${weightUnit}`
+                            : "—"
+                        }
+                      />
+
+                      <Separator />
+
+                      <View className="flex-row gap-3">
                         <Stat
                           label="Heaviest"
                           value={
@@ -274,7 +320,7 @@ export default function ExerciseDetailScreen() {
                           }
                         />
                       </View>
-                      <View className="flex-row">
+                      <View className="flex-row gap-3">
                         <Stat
                           label="Best Set Vol."
                           value={
@@ -291,7 +337,6 @@ export default function ExerciseDetailScreen() {
                               : "—"
                           }
                         />
-                        <View className="flex-1" />
                       </View>
                       {mostRecentPrDate ? (
                         <Text variant="muted" className="text-center text-xs">
@@ -309,8 +354,8 @@ export default function ExerciseDetailScreen() {
             </TabsContent>
 
             <TabsContent value="charts">
-              <Card>
-                <CardContent className="gap-2 pt-6">
+              <Card className="p-0">
+                <CardContent className="gap-3 p-4">
                   {source !== "local" ? (
                     <Text variant="muted">
                       Save this exercise as a favorite to see progress charts.
