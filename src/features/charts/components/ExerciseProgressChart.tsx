@@ -13,7 +13,13 @@ type ExerciseProgressChartProps = {
   weightUnit: WeightUnit;
 };
 
-type Metric = "weight" | "volume";
+type Metric = "weight" | "volume" | "e1rm";
+
+const METRIC_LABEL: Record<Metric, string> = {
+  weight: "Heaviest set",
+  volume: "Session volume",
+  e1rm: "Estimated 1RM",
+};
 
 export function ExerciseProgressChart({
   exerciseId,
@@ -25,15 +31,18 @@ export function ExerciseProgressChart({
   if (isLoading) return null;
 
   const series = data ?? [];
-  const points = series.map((point) => ({
-    t: point.t,
-    value: Number(
-      toDisplayWeight(
-        metric === "weight" ? point.maxWeightKg : point.sessionVolumeKg,
-        weightUnit,
-      ).toFixed(1),
-    ),
-  }));
+  const points = series.map((point) => {
+    const raw =
+      metric === "weight"
+        ? point.maxWeightKg
+        : metric === "volume"
+          ? point.sessionVolumeKg
+          : point.maxEpleyKg;
+    return {
+      t: point.t,
+      value: Number(toDisplayWeight(raw, weightUnit).toFixed(1)),
+    };
+  });
 
   return (
     <View className="gap-3">
@@ -45,6 +54,9 @@ export function ExerciseProgressChart({
           <TabsTrigger value="volume" className="flex-1">
             <Text>Volume</Text>
           </TabsTrigger>
+          <TabsTrigger value="e1rm" className="flex-1">
+            <Text>Est. 1RM</Text>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -54,7 +66,7 @@ export function ExerciseProgressChart({
         formatY={(value) => `${Math.round(value)}`}
       />
       <Text variant="muted" className="text-center text-xs">
-        {`${metric === "weight" ? "Heaviest set" : "Session volume"} · ${weightUnit} · last 3 months`}
+        {`${METRIC_LABEL[metric]} · ${weightUnit} · last 3 months`}
       </Text>
     </View>
   );

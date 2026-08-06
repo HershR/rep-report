@@ -12,6 +12,8 @@ export type ExercisePersonalRecords = {
   bestSetVolume: PersonalRecordEntry | null;
   bestSessionVolume: PersonalRecordEntry | null;
   mostReps: PersonalRecordEntry | null;
+  /** Best estimated 1RM (Epley); the estimate in kg is carried in `volume`. */
+  bestEstimated1RM: PersonalRecordEntry | null;
 };
 
 export type ExercisePersonalRecordsSummary = ExercisePersonalRecords & {

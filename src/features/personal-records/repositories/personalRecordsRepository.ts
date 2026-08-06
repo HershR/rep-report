@@ -81,6 +81,7 @@ function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): Exer
   let heaviestWeight: PersonalRecordEntry | null = null;
   let bestSetVolume: PersonalRecordEntry | null = null;
   let mostReps: PersonalRecordEntry | null = null;
+  let bestEstimated1RM: PersonalRecordEntry | null = null;
   const sessionVolumes = new Map<string, { volume: number; achievedAt: string }>();
 
   for (const set of sets) {
@@ -117,6 +118,21 @@ function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): Exer
         };
       }
 
+      // Epley 1RM estimate; a true single is its own max (avoids the +3.3% skew).
+      const epley = set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
+      if (
+        bestEstimated1RM === null ||
+        epley > (bestEstimated1RM.volume ?? -Infinity)
+      ) {
+        bestEstimated1RM = {
+          weight: set.weight,
+          reps: set.reps,
+          volume: epley,
+          achievedAt: set.achievedAt,
+          workoutSessionId: set.workoutSessionId,
+        };
+      }
+
       const existingSessionVolume = sessionVolumes.get(set.workoutSessionId);
       if (existingSessionVolume) {
         existingSessionVolume.volume += volume;
@@ -139,12 +155,23 @@ function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): Exer
     }
   }
 
-  return { exerciseId, heaviestWeight, bestSetVolume, bestSessionVolume, mostReps };
+  return {
+    exerciseId,
+    heaviestWeight,
+    bestSetVolume,
+    bestSessionVolume,
+    mostReps,
+    bestEstimated1RM,
+  };
 }
 
 function hasAnyRecord(records: ExercisePersonalRecords): boolean {
   return Boolean(
-    records.heaviestWeight || records.bestSetVolume || records.bestSessionVolume || records.mostReps,
+    records.heaviestWeight ||
+      records.bestSetVolume ||
+      records.bestSessionVolume ||
+      records.mostReps ||
+      records.bestEstimated1RM,
   );
 }
 
@@ -168,6 +195,8 @@ export type ExerciseSessionPoint = {
   t: number;
   maxWeightKg: number;
   sessionVolumeKg: number;
+  /** Best estimated 1RM (Epley) across the session's working sets, in kg. */
+  maxEpleyKg: number;
 };
 
 /**
@@ -191,7 +220,10 @@ export async function getExerciseSessionSeries(
   const windowed = since ? sets.filter((set) => set.achievedAt >= since) : sets;
   if (windowed.length === 0) return [];
 
-  const bySession = new Map<string, { t: number; maxWeightKg: number; sessionVolumeKg: number }>();
+  const bySession = new Map<
+    string,
+    { t: number; maxWeightKg: number; sessionVolumeKg: number; maxEpleyKg: number }
+  >();
   for (const set of windowed) {
     const t = Date.parse(set.achievedAt);
     if (Number.isNaN(t)) continue;
@@ -199,9 +231,15 @@ export async function getExerciseSessionSeries(
       t,
       maxWeightKg: 0,
       sessionVolumeKg: 0,
+      maxEpleyKg: 0,
     };
     if (set.weight !== null && set.weight > entry.maxWeightKg) entry.maxWeightKg = set.weight;
-    if (set.weight !== null && set.reps !== null) entry.sessionVolumeKg += set.weight * set.reps;
+    if (set.weight !== null && set.reps !== null) {
+      entry.sessionVolumeKg += set.weight * set.reps;
+      // Epley 1RM estimate; a true single is its own max (avoids the +3.3% skew at 1 rep).
+      const epley = set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
+      if (epley > entry.maxEpleyKg) entry.maxEpleyKg = epley;
+    }
     bySession.set(set.workoutSessionId, entry);
   }
 

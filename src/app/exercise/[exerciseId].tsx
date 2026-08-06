@@ -68,7 +68,7 @@ export default function ExerciseDetailScreen() {
   }>();
   const source = params.source ?? "wger";
   const exerciseId = params.exerciseId;
-  const [tab, setTab] = useState<"details" | "records">("details");
+  const [tab, setTab] = useState<"details" | "records" | "charts">("details");
 
   const { saveFavoriteExercise, removeFavoriteExercise } =
     useFavoriteExercises();
@@ -82,6 +82,7 @@ export default function ExerciseDetailScreen() {
         personalRecords.bestSetVolume,
         personalRecords.bestSessionVolume,
         personalRecords.mostReps,
+        personalRecords.bestEstimated1RM,
       ])
     : null;
 
@@ -154,7 +155,9 @@ export default function ExerciseDetailScreen() {
           <Tabs
             className="mt-4"
             value={tab}
-            onValueChange={(value) => setTab(value as "details" | "records")}
+            onValueChange={(value) =>
+              setTab(value as "details" | "records" | "charts")
+            }
           >
             <TabsList className="w-full">
               <TabsTrigger value="details" className="flex-1">
@@ -162,6 +165,9 @@ export default function ExerciseDetailScreen() {
               </TabsTrigger>
               <TabsTrigger value="records" className="flex-1">
                 <Text>Records</Text>
+              </TabsTrigger>
+              <TabsTrigger value="charts" className="flex-1">
+                <Text>Charts</Text>
               </TabsTrigger>
             </TabsList>
 
@@ -244,6 +250,14 @@ export default function ExerciseDetailScreen() {
                     <>
                       <View className="flex-row">
                         <Stat
+                          label="Est. 1RM"
+                          value={
+                            personalRecords.bestEstimated1RM?.volume != null
+                              ? `${weightToText(personalRecords.bestEstimated1RM.volume, weightUnit)} ${weightUnit}`
+                              : "—"
+                          }
+                        />
+                        <Stat
                           label="Heaviest"
                           value={
                             personalRecords.heaviestWeight
@@ -251,6 +265,16 @@ export default function ExerciseDetailScreen() {
                               : "—"
                           }
                         />
+                        <Stat
+                          label="Most Reps"
+                          value={
+                            personalRecords.mostReps
+                              ? String(personalRecords.mostReps.reps)
+                              : "—"
+                          }
+                        />
+                      </View>
+                      <View className="flex-row">
                         <Stat
                           label="Best Set Vol."
                           value={
@@ -267,30 +291,35 @@ export default function ExerciseDetailScreen() {
                               : "—"
                           }
                         />
-                        <Stat
-                          label="Most Reps"
-                          value={
-                            personalRecords.mostReps
-                              ? String(personalRecords.mostReps.reps)
-                              : "—"
-                          }
-                        />
+                        <View className="flex-1" />
                       </View>
                       {mostRecentPrDate ? (
                         <Text variant="muted" className="text-center text-xs">
                           {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
                         </Text>
                       ) : null}
-                      <Separator className="my-1" />
-                      <ExerciseProgressChart
-                        exerciseId={exerciseId}
-                        weightUnit={weightUnit}
-                      />
                     </>
                   ) : (
                     <Text variant="muted">
                       Log a workout with this exercise to see personal records.
                     </Text>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="charts">
+              <Card>
+                <CardContent className="gap-2 pt-6">
+                  {source !== "local" ? (
+                    <Text variant="muted">
+                      Save this exercise as a favorite to see progress charts.
+                    </Text>
+                  ) : (
+                    <ExerciseProgressChart
+                      exerciseId={exerciseId}
+                      weightUnit={weightUnit}
+                    />
                   )}
                 </CardContent>
               </Card>
