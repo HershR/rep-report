@@ -2,7 +2,7 @@ import { useRouter, type Href } from "expo-router";
 import { Calculator } from "lucide-react-native";
 import { View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
@@ -22,10 +22,9 @@ export default function HomeScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">
-        {profile ? `Hi ${profile.displayName}!` : "Home"}
-      </Text>
-      <Text variant="muted">Ready to train?</Text>
+      <ScreenHeader
+        title={profile ? `Hi ${profile.displayName}!` : "Home"}
+      />
 
       <View className="mt-6 gap-4">
         <WeeklyProgressCard />

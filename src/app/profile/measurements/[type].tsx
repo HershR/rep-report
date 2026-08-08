@@ -43,7 +43,7 @@ export default function BodyMeasurementTypeScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title={label} />
+      <ScreenHeader title={label} showBack />
 
       <MeasurementEntryForm
         placeholder={`${label} (${heightUnit})`}

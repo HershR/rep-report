@@ -38,7 +38,7 @@ export default function WeightHistoryScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Weight" />
+      <ScreenHeader title="Weight" showBack />
 
       <View className="flex-row items-center gap-2">
         <Input

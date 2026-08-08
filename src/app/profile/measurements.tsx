@@ -23,7 +23,7 @@ export default function BodyMeasurementsScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Body Measurements" />
+      <ScreenHeader title="Body Measurements" showBack />
 
       <View className="gap-2">
         {BODY_MEASUREMENT_TYPES.map((type, index) => {

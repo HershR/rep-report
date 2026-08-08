@@ -12,7 +12,7 @@ import { useColorScheme } from "nativewind";
 import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   AlertDialog,
@@ -426,43 +426,33 @@ export default function ActiveWorkoutScreen() {
         />
       }
     >
-      {/* Header: hide + elapsed + finish, then name + options. */}
-      <View className="gap-2 pb-3">
-        <View className="flex-row items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Hide workout"
-            onPress={dismiss}
-          >
-            <Icon as={ChevronDown} className="text-foreground" />
-          </Button>
-          <Text variant="large" className="flex-1 text-center">
-            {formatElapsed(elapsedSeconds)}
-          </Text>
-          <Button size="sm" onPress={() => void onComplete()}>
-            <Text>Finish</Text>
-          </Button>
-        </View>
-        <View className="flex-row items-center gap-1">
-          <Text variant="h2" numberOfLines={1} className="shrink">
-            {activeWorkout.name}
-          </Text>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Workout options"
-            onPress={() => {
-              setNameDraft(activeWorkout.name);
-              setShowOptions(true);
-            }}
-          >
-            <Icon as={MoreHorizontal} className="text-foreground" />
-          </Button>
-        </View>
-      </View>
+      {/* Per-page extras: the live elapsed timer stays in the header because it
+          must remain visible while the exercise list scrolls. */}
+      <ScreenHeader
+        title={activeWorkout.name}
+        showBack
+        onBack={dismiss}
+        backLabel="Hide workout"
+        backIcon={ChevronDown}
+        className="pb-3"
+      >
+        <Text variant="muted">{formatElapsed(elapsedSeconds)}</Text>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          accessibilityLabel="Workout options"
+          onPress={() => {
+            setNameDraft(activeWorkout.name);
+            setShowOptions(true);
+          }}
+        >
+          <Icon as={MoreHorizontal} className="text-foreground" />
+        </Button>
+        <Button size="sm" onPress={() => void onComplete()}>
+          <Text>Finish</Text>
+        </Button>
+      </ScreenHeader>
 
       {/* Exercises are the focus: they scroll, everything else is chrome. */}
       <ScrollView

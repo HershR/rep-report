@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronLeft, MoreHorizontal } from "lucide-react-native";
+import { MoreHorizontal } from "lucide-react-native";
 import { toast } from "sonner-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -159,20 +159,11 @@ export default function TemplateDetailScreen() {
 
   return (
     <CustomScreen>
-      {/* Single-row header: no centre content to justify a second row. */}
-      <View className="flex-row items-center gap-2 pb-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          accessibilityLabel="Go back"
-          onPress={() => router.back()}
-        >
-          <Icon as={ChevronLeft} className="text-foreground" />
-        </Button>
-        <Text variant="h3" numberOfLines={1} className="flex-1">
-          {template?.name ?? "Template"}
-        </Text>
+      <ScreenHeader
+        title={template?.name ?? "Template"}
+        showBack
+        className="pb-3"
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -191,7 +182,7 @@ export default function TemplateDetailScreen() {
         >
           <Text>Save</Text>
         </Button>
-      </View>
+      </ScreenHeader>
 
       <ScrollView
         style={{ flex: 1 }}

@@ -5,7 +5,7 @@ import { useColorScheme } from "nativewind";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -157,8 +157,7 @@ export default function SearchScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">Search</Text>
-      <Text variant="muted">Find exercises from WGER.</Text>
+      <ScreenHeader title="Search" />
 
       <View className="border-input bg-background mt-4 flex-row items-center gap-2 rounded-md border-2 px-3">
         <Icon as={Search} className="text-muted-foreground" />

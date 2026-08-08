@@ -49,7 +49,7 @@ export default function SettingsScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Settings" />
+      <ScreenHeader title="Settings" showBack />
 
       <Card>
         <CardContent className="gap-6 pt-6">

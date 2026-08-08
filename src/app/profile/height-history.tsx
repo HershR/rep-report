@@ -48,7 +48,7 @@ export default function HeightHistoryScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Height" />
+      <ScreenHeader title="Height" showBack />
 
       <View className="flex-row items-center gap-2">
         {heightUnit === "in" ? (

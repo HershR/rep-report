@@ -8,7 +8,7 @@ export default function PlateCalculatorScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Plate calculator" />
+      <ScreenHeader title="Plate calculator" showBack />
       <PlateCalculator weightUnit={weightUnit} />
     </CustomScreen>
   );

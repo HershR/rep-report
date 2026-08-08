@@ -31,7 +31,7 @@ export default function NewCustomExerciseScreen() {
 
   return (
     <CustomScreen scroll>
-      <ScreenHeader title="New Custom Exercise" />
+      <ScreenHeader title="New Custom Exercise" showBack />
       <Text variant="muted">Add an exercise not found in the exercise library.</Text>
       <CustomExerciseForm
         initialName={params.initialName}

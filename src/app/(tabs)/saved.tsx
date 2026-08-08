@@ -3,7 +3,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,10 +164,7 @@ export default function SavedScreen() {
   return (
     <CustomScreen>
       <View className="mb-3 gap-3">
-        <View>
-          <Text variant="h2">Saved</Text>
-          <Text variant="muted">Manage saved exercises and templates.</Text>
-        </View>
+        <ScreenHeader title="Saved" />
 
         <Tabs value={tab} onValueChange={(value) => setTab(value as SavedTab)}>
           <TabsList className="w-full">

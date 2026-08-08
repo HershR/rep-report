@@ -6,7 +6,7 @@ import { Heart } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -140,7 +140,7 @@ export default function ExerciseDetailScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">{item?.name ?? "Exercise Detail"}</Text>
+      <ScreenHeader title={item?.name ?? "Exercise"} showBack />
 
       {query.isLoading ? (
         <View className="mt-4 gap-3">

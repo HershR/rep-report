@@ -7,11 +7,11 @@ import { format, set } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { ChevronLeft, MoreHorizontal } from "lucide-react-native";
+import { MoreHorizontal } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -613,44 +613,28 @@ export default function WorkoutDetailScreen() {
 
   return (
     <CustomScreen>
-      {/* Header: back + summary + save, then name + options (matches active.tsx). */}
-      <View className="gap-2 pb-3">
-        <View className="flex-row items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Go back"
-            onPress={() => router.back()}
-          >
-            <Icon as={ChevronLeft} className="text-foreground" />
-          </Button>
-          <Text variant="muted" className="flex-1 text-center text-xs">
-            {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
-          </Text>
-          <Button
-            size="sm"
-            loading={isSaving || isSavingAll}
-            onPress={() => void onSaveAll()}
-          >
-            <Text>Save</Text>
-          </Button>
-        </View>
-        <View className="flex-row items-center gap-1">
-          <Text variant="h2" numberOfLines={1} className="shrink">
-            {nameDraft?.trim() ? nameDraft : "Workout"}
-          </Text>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Workout options"
-            onPress={() => setShowOptions(true)}
-          >
-            <Icon as={MoreHorizontal} className="text-foreground" />
-          </Button>
-        </View>
-      </View>
+      <ScreenHeader
+        title={nameDraft?.trim() ? nameDraft : "Workout"}
+        showBack
+        className="pb-3"
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          accessibilityLabel="Workout options"
+          onPress={() => setShowOptions(true)}
+        >
+          <Icon as={MoreHorizontal} className="text-foreground" />
+        </Button>
+        <Button
+          size="sm"
+          loading={isSaving || isSavingAll}
+          onPress={() => void onSaveAll()}
+        >
+          <Text>Save</Text>
+        </Button>
+      </ScreenHeader>
 
       {/* Exercises are the focus: they scroll, everything else is chrome. */}
       <ScrollView
@@ -658,6 +642,10 @@ export default function WorkoutDetailScreen() {
         contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        <Text variant="muted" className="text-xs">
+          {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
+        </Text>
+
         {watchedExercises.length === 0 ? (
           <Text variant="muted" className="py-8 text-center">
             No exercises yet. Add one below to get started.

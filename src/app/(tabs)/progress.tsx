@@ -6,7 +6,7 @@ import { type ComponentProps, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -117,8 +117,7 @@ export default function ProgressScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">Progress</Text>
-      <Text variant="muted">Look back at your training.</Text>
+      <ScreenHeader title="Progress" />
 
       <View className="mt-4 gap-4">
         <Tabs value={tab} onValueChange={(value) => setTab(value as ProgressTab)}>

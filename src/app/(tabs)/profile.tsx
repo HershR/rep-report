@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -135,7 +135,7 @@ export default function ProfileScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <Text variant="h2">Profile</Text>
+      <ScreenHeader title="Profile" />
 
       <Card>
         <CardContent className="gap-4 pt-6">
