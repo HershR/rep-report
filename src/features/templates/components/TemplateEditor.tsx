@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { View } from "react-native";
 import {
   Controller,
@@ -31,9 +31,15 @@ import type { Exercise } from "@/features/exercises/types";
 type TemplateEditorProps = {
   initialTemplate?: WorkoutTemplate | null;
   favorites: Exercise[];
-  isSaving?: boolean;
   onSave: (value: TemplateEditorValue) => Promise<void>;
 };
+
+/**
+ * Lets the hosting screen trigger validation + save from its own header button,
+ * so Save sits in a fixed header (like the workout screens) instead of at the
+ * bottom of a long scroll.
+ */
+export type TemplateEditorHandle = { submit: () => void };
 
 function createLocalId() {
   return `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -206,12 +212,10 @@ function ExerciseField({
   );
 }
 
-export function TemplateEditor({
-  initialTemplate,
-  favorites,
-  isSaving = false,
-  onSave,
-}: TemplateEditorProps) {
+export const TemplateEditor = forwardRef<
+  TemplateEditorHandle,
+  TemplateEditorProps
+>(function TemplateEditor({ initialTemplate, favorites, onSave }, ref) {
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const {
     control,
@@ -263,6 +267,10 @@ export function TemplateEditor({
     await onSave(mapFormToEditorValue(value));
   });
 
+  useImperativeHandle(ref, () => ({ submit: () => void onSubmit() }), [
+    onSubmit,
+  ]);
+
   const errorMessage = getErrorMessage(errors);
 
   return (
@@ -306,7 +314,9 @@ export function TemplateEditor({
       <Text variant="large">Exercises</Text>
 
       {exerciseFields.length === 0 ? (
-        <Text variant="muted">No exercises added yet.</Text>
+        <Text variant="muted" className="py-8 text-center">
+          No exercises yet. Add one below to get started.
+        </Text>
       ) : (
         <View className="gap-3">
           {exerciseFields.map((exercise, index) => (
@@ -334,10 +344,6 @@ export function TemplateEditor({
         <Text>Add Exercise</Text>
       </Button>
 
-      <Button loading={isSaving} onPress={() => void onSubmit()}>
-        <Text>Save Template</Text>
-      </Button>
-
       <AddSavedExerciseSheet
         visible={showAddExerciseSheet}
         favorites={favorites}
@@ -346,4 +352,4 @@ export function TemplateEditor({
       />
     </View>
   );
-}
+});

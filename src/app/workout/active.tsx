@@ -7,7 +7,7 @@ import {
   MoreHorizontal,
   Trophy,
 } from "lucide-react-native";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useColorScheme } from "nativewind";
 import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
@@ -39,6 +39,7 @@ import { checkSetPersonalRecord } from "@/features/personal-records/prDetection"
 import type { SetPrResult } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
+import { ExerciseListSkeleton } from "@/features/workouts/components/ExerciseListSkeleton";
 import { RestTimerBar } from "@/features/workouts/components/RestTimerBar";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
@@ -108,10 +109,12 @@ export default function ActiveWorkoutScreen() {
   const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [noExerciseAlertOpen, setNoExerciseAlertOpen] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const { favorites } = useFavoriteExercises();
   const {
     activeWorkout,
     isLoading,
+    error,
     startWorkout,
     resumeWorkout,
     repeatWorkout,
@@ -129,23 +132,29 @@ export default function ActiveWorkoutScreen() {
 
   const elapsedSeconds = useElapsedSeconds(activeWorkout?.startedAt);
 
-  useEffect(() => {
-    if (activeWorkout?.status === "active") return;
-    if (params.sessionId) {
-      void resumeWorkout(params.sessionId);
-      return;
+  /**
+   * Starts, resumes, or repeats the session. Extracted so a failure can surface
+   * an error state with a working Retry instead of hanging on "Loading...".
+   */
+  const beginWorkout = useCallback(async () => {
+    try {
+      setStartError(null);
+      if (params.sessionId) {
+        await resumeWorkout(params.sessionId);
+        return;
+      }
+      if (params.repeatSessionId) {
+        await repeatWorkout(params.repeatSessionId);
+        return;
+      }
+      await startWorkout({
+        name: params.name ?? "Workout",
+        templateId: params.templateId ?? null,
+      });
+    } catch {
+      setStartError("Could not start this workout.");
     }
-    if (params.repeatSessionId) {
-      void repeatWorkout(params.repeatSessionId);
-      return;
-    }
-    void startWorkout({
-      name: params.name ?? "Workout",
-      templateId: params.templateId ?? null,
-    });
   }, [
-    activeWorkout?.id,
-    activeWorkout?.status,
     params.name,
     params.sessionId,
     params.repeatSessionId,
@@ -154,6 +163,11 @@ export default function ActiveWorkoutScreen() {
     repeatWorkout,
     startWorkout,
   ]);
+
+  useEffect(() => {
+    if (activeWorkout?.status === "active") return;
+    void beginWorkout();
+  }, [activeWorkout?.id, activeWorkout?.status, beginWorkout]);
 
   const canComplete = useMemo(
     () => Boolean(activeWorkout && activeWorkout.exercises.length > 0),
@@ -253,10 +267,38 @@ export default function ActiveWorkoutScreen() {
     };
   }, []);
 
+  /** Closes the active-workout modal, falling back to Home if it's the root. */
+  const dismiss = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)/home");
+  };
+
+  const loadErrorMessage = error ? "Could not load your workout." : startError;
+
+  if (loadErrorMessage) {
+    return (
+      <CustomScreen>
+        <View className="flex-1 items-center justify-center gap-3">
+          <Text className="text-destructive text-sm">{loadErrorMessage}</Text>
+          <View className="flex-row gap-2">
+            <Button variant="outline" size="sm" onPress={() => void beginWorkout()}>
+              <Text>Retry</Text>
+            </Button>
+            <Button variant="ghost" size="sm" onPress={dismiss}>
+              <Text>Close</Text>
+            </Button>
+          </View>
+        </View>
+      </CustomScreen>
+    );
+  }
+
   if (isLoading || !activeWorkout) {
     return (
       <CustomScreen>
-        <Text variant="muted">Loading workout...</Text>
+        <View className="pt-4">
+          <ExerciseListSkeleton />
+        </View>
       </CustomScreen>
     );
   }
@@ -285,20 +327,26 @@ export default function ActiveWorkoutScreen() {
       ? `This workout has ${cleanupParts.join(" and ")}.`
       : "";
 
-  /** Closes the active-workout modal, falling back to Home if it's the root. */
-  const dismiss = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace("/(tabs)/home");
+  const reportFailure = (message: string) => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    toast.error(message);
   };
 
   const commitRename = () => {
     const next = nameDraft.trim() || "Workout";
     if (next === activeWorkout.name) return;
-    void renameWorkout({ sessionId: activeWorkout.id, name: next });
+    renameWorkout({ sessionId: activeWorkout.id, name: next }).catch(() =>
+      reportFailure("Could not rename this workout."),
+    );
   };
 
   const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
-    await finish();
+    try {
+      await finish();
+    } catch {
+      reportFailure("Could not save your workout. Nothing was lost.");
+      return;
+    }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success("Nice work!", {
       icon: <Icon as={Check} size={18} color={colors.chart3} />,
@@ -308,7 +356,12 @@ export default function ActiveWorkoutScreen() {
   };
 
   const onComplete = async () => {
-    await flushPendingSetUpdates();
+    try {
+      await flushPendingSetUpdates();
+    } catch {
+      reportFailure("Could not save your latest set changes.");
+      return;
+    }
 
     if (!canComplete) {
       setNoExerciseAlertOpen(true);
@@ -330,14 +383,19 @@ export default function ActiveWorkoutScreen() {
 
   const onDiscardAndFinish = async () => {
     setCleanupDialogOpen(false);
-    await removeIncompleteSets(activeWorkout.id);
-    const remaining = await removeEmptyExercises(activeWorkout.id);
-    if (remaining === 0) {
-      // Cleanup emptied the workout — discard it rather than save an empty one.
-      await cancelWorkout(activeWorkout.id);
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      toast("Empty workout discarded", { duration: 2500 });
-      dismiss();
+    try {
+      await removeIncompleteSets(activeWorkout.id);
+      const remaining = await removeEmptyExercises(activeWorkout.id);
+      if (remaining === 0) {
+        // Cleanup emptied the workout, so discard it rather than save an empty one.
+        await cancelWorkout(activeWorkout.id);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        toast("Empty workout discarded", { duration: 2500 });
+        dismiss();
+        return;
+      }
+    } catch {
+      reportFailure("Could not clean up this workout.");
       return;
     }
     await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
@@ -345,7 +403,12 @@ export default function ActiveWorkoutScreen() {
 
   const onCancel = async () => {
     cancelPendingSetUpdates();
-    await cancelWorkout(activeWorkout.id);
+    try {
+      await cancelWorkout(activeWorkout.id);
+    } catch {
+      reportFailure("Could not cancel this workout.");
+      return;
+    }
     dismiss();
   };
 
@@ -401,7 +464,7 @@ export default function ActiveWorkoutScreen() {
         </View>
       </View>
 
-      {/* Exercises are the focus — they scroll, everything else is chrome. */}
+      {/* Exercises are the focus: they scroll, everything else is chrome. */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
@@ -498,7 +561,7 @@ export default function ActiveWorkoutScreen() {
           <AlertDialogHeader>
             <AlertDialogTitle>Add at least one exercise</AlertDialogTitle>
             <AlertDialogDescription>
-              Workout needs one exercise before completing.
+              Add at least one exercise before finishing this workout.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -522,7 +585,7 @@ export default function ActiveWorkoutScreen() {
               variant="outline"
               onPress={() => setCleanupDialogOpen(false)}
             >
-              <Text>Cancel</Text>
+              <Text>Keep editing</Text>
             </Button>
             <Button
               variant="destructive"
@@ -541,7 +604,7 @@ export default function ActiveWorkoutScreen() {
         open={cancelConfirmOpen}
         onOpenChange={setCancelConfirmOpen}
         title="Cancel this workout?"
-        description="This will discard the entire session — nothing will be saved. This can't be undone."
+        description="This will discard the entire session. Nothing will be saved, and this can't be undone."
         confirmLabel="Cancel Workout"
         destructive
         onConfirm={() => {

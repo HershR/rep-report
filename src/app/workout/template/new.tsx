@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, type Href } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
+import { ScrollView, View } from "react-native";
+import { toast } from "sonner-native";
 
 import { CustomScreen } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
-import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
+import {
+  TemplateEditor,
+  type TemplateEditorHandle,
+} from "@/features/templates/components/TemplateEditor";
 import {
   parseTemplateNumberText,
   type TemplateEditorValue,
@@ -21,6 +29,7 @@ export default function NewTemplateScreen() {
   const queryClient = useQueryClient();
   const { favorites } = useFavoriteExercises();
   const [isSaving, setIsSaving] = useState(false);
+  const editorRef = useRef<TemplateEditorHandle>(null);
 
   const onSave = async (value: TemplateEditorValue) => {
     setIsSaving(true);
@@ -51,20 +60,55 @@ export default function NewTemplateScreen() {
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["workout-templates"] }),
-        queryClient.invalidateQueries({ queryKey: ["workout-template", created.id] }),
+        queryClient.invalidateQueries({
+          queryKey: ["workout-template", created.id],
+        }),
       ]);
 
       router.replace(`/workout/template/${created.id}` as Href);
+    } catch {
+      toast.error("Could not save template. Your changes are still here.");
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <CustomScreen scroll>
-      <Text variant="h2">New Workout Template</Text>
-      <Text variant="muted">Build template using saved exercises.</Text>
-      <TemplateEditor favorites={favorites} isSaving={isSaving} onSave={onSave} />
+    <CustomScreen>
+      {/* Single-row header: no centre content to justify a second row. */}
+      <View className="flex-row items-center gap-2 pb-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+        >
+          <Icon as={ChevronLeft} className="text-foreground" />
+        </Button>
+        <Text variant="h3" numberOfLines={1} className="flex-1">
+          New Template
+        </Text>
+        <Button
+          size="sm"
+          loading={isSaving}
+          onPress={() => editorRef.current?.submit()}
+        >
+          <Text>Save</Text>
+        </Button>
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TemplateEditor
+          ref={editorRef}
+          favorites={favorites}
+          onSave={onSave}
+        />
+      </ScrollView>
     </CustomScreen>
   );
 }

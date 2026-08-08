@@ -7,8 +7,9 @@ import { format, set } from "date-fns";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { MoreHorizontal } from "lucide-react-native";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ChevronLeft, MoreHorizontal } from "lucide-react-native";
+import { ScrollView, View } from "react-native";
+import { toast } from "sonner-native";
 
 import { CustomScreen } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -35,6 +36,7 @@ import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
+import { ExerciseListSkeleton } from "@/features/workouts/components/ExerciseListSkeleton";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { useWorkoutSession } from "@/features/workouts/hooks/useWorkoutSession";
 import type {
@@ -100,6 +102,7 @@ export default function WorkoutDetailScreen() {
   const {
     workoutSession,
     isLoading,
+    error,
     isSaving,
     refetch,
     addExerciseToWorkout,
@@ -178,7 +181,7 @@ export default function WorkoutDetailScreen() {
   }, [workoutSession, reset]);
 
   // Keep the total-minutes field in sync with start/end, but not while the user
-  // is typing in it (rounding to whole minutes would fight their input) — same
+  // is typing in it (rounding to whole minutes would fight their input), same
   // focus-guard pattern as WorkoutSetRow's duration field.
   useEffect(() => {
     if (totalFocused) return;
@@ -196,12 +199,44 @@ export default function WorkoutDetailScreen() {
     return unsubscribe;
   }, [isDirty, isSavingAll, navigation]);
 
-  if (isLoading || !workoutSession) {
+  if (error) {
     return (
       <CustomScreen>
-        <View className="flex-1 items-center justify-center gap-2">
-          <ActivityIndicator />
-          <Text variant="muted">Loading workout...</Text>
+        <View className="flex-1 items-center justify-center gap-3">
+          <Text className="text-destructive text-sm">
+            Could not load this workout.
+          </Text>
+          <View className="flex-row gap-2">
+            <Button variant="outline" size="sm" onPress={() => void refetch()}>
+              <Text>Retry</Text>
+            </Button>
+            <Button variant="ghost" size="sm" onPress={() => router.back()}>
+              <Text>Go back</Text>
+            </Button>
+          </View>
+        </View>
+      </CustomScreen>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <CustomScreen>
+        <View className="pt-4">
+          <ExerciseListSkeleton />
+        </View>
+      </CustomScreen>
+    );
+  }
+
+  if (!workoutSession) {
+    return (
+      <CustomScreen>
+        <View className="flex-1 items-center justify-center gap-3">
+          <Text variant="muted">This workout no longer exists.</Text>
+          <Button variant="outline" size="sm" onPress={() => router.back()}>
+            <Text>Go back</Text>
+          </Button>
         </View>
       </CustomScreen>
     );
@@ -536,11 +571,15 @@ export default function WorkoutDetailScreen() {
 
       await refetch();
       setShowExitModal(false);
+      toast.success("Workout saved");
 
       if (pendingNavigationActionRef.current) {
         navigation.dispatch(pendingNavigationActionRef.current);
         pendingNavigationActionRef.current = null;
       }
+    } catch {
+      // Keep the user on the screen with their edits intact.
+      toast.error("Could not save this workout. Your changes are still here.");
     } finally {
       setIsSavingAll(false);
     }
@@ -555,7 +594,12 @@ export default function WorkoutDetailScreen() {
   };
 
   const onDeleteWorkout = async () => {
-    await deleteWorkoutSession();
+    try {
+      await deleteWorkoutSession();
+    } catch {
+      toast.error("Could not delete this workout.");
+      return;
+    }
     router.back();
   };
 
@@ -569,23 +613,21 @@ export default function WorkoutDetailScreen() {
 
   return (
     <CustomScreen>
-      {/* Fixed header: name + options together, Save on the right, summary below. */}
-      <View className="pb-3">
+      {/* Header: back + summary + save, then name + options (matches active.tsx). */}
+      <View className="gap-2 pb-3">
         <View className="flex-row items-center justify-between gap-2">
-          <View className="flex-1 flex-row items-center gap-1">
-            <Text variant="h2" numberOfLines={1} className="shrink">
-              {nameDraft?.trim() ? nameDraft : "Workout"}
-            </Text>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              accessibilityLabel="Workout options"
-              onPress={() => setShowOptions(true)}
-            >
-              <Icon as={MoreHorizontal} className="text-foreground" />
-            </Button>
-          </View>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+          >
+            <Icon as={ChevronLeft} className="text-foreground" />
+          </Button>
+          <Text variant="muted" className="flex-1 text-center text-xs">
+            {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
+          </Text>
           <Button
             size="sm"
             loading={isSaving || isSavingAll}
@@ -594,12 +636,23 @@ export default function WorkoutDetailScreen() {
             <Text>Save</Text>
           </Button>
         </View>
-        <Text variant="muted" className="text-xs">
-          {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
-        </Text>
+        <View className="flex-row items-center gap-1">
+          <Text variant="h2" numberOfLines={1} className="shrink">
+            {nameDraft?.trim() ? nameDraft : "Workout"}
+          </Text>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            accessibilityLabel="Workout options"
+            onPress={() => setShowOptions(true)}
+          >
+            <Icon as={MoreHorizontal} className="text-foreground" />
+          </Button>
+        </View>
       </View>
 
-      {/* Exercises are the focus — they scroll, everything else is chrome. */}
+      {/* Exercises are the focus: they scroll, everything else is chrome. */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
@@ -642,7 +695,7 @@ export default function WorkoutDetailScreen() {
       <Sheet open={showOptions} onOpenChange={setShowOptions}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Workout details</SheetTitle>
+            <SheetTitle>Workout options</SheetTitle>
           </SheetHeader>
 
           <View className="gap-4">
