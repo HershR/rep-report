@@ -1,9 +1,22 @@
 import "@/global.css";
 
+import {
+  Archivo_400Regular,
+  Archivo_500Medium,
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+} from "@expo-google-fonts/archivo";
+import {
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+} from "@expo-google-fonts/ibm-plex-mono";
 import { ThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PortalHost } from "@rn-primitives/portal";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
@@ -16,6 +29,10 @@ import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
+
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // already hidden; nothing to do
+});
 
 /**
  * Applies the persisted theme preference (`appSettings.themeMode`) to NativeWind's
@@ -37,6 +54,15 @@ function ThemeModeSync() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [fontsLoaded, fontError] = useFonts({
+    Archivo_400Regular,
+    Archivo_500Medium,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
   const { colorScheme: scheme } = useColorScheme();
   const colors = THEME[scheme ?? "light"];
 
@@ -46,6 +72,16 @@ export default function RootLayout() {
     });
   }, []);
   useDrizzleStudio(sqlite);
+
+  // Hold the splash until the faces are ready, so text never paints in the
+  // fallback and reflows. A font error still releases it - shipping the
+  // system stack beats hanging on the splash.
+  useEffect(() => {
+    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

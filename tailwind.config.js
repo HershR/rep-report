@@ -53,6 +53,18 @@ module.exports = {
         "value-logged": "hsl(var(--value-logged))",
         "accent-dim": "hsl(var(--accent-dim))",
       },
+      fontFamily: {
+        // Named faces, not numeric weights - RN picks the face by name.
+        // Keys avoid Tailwind's fontWeight names (medium/bold/...), which
+        // would make `font-bold` ambiguous between family and weight.
+        sans: ["Archivo_400Regular"],
+        "sans-medium": ["Archivo_500Medium"],
+        "sans-semibold": ["Archivo_600SemiBold"],
+        "sans-bold": ["Archivo_700Bold"],
+        "sans-extrabold": ["Archivo_800ExtraBold"],
+        mono: ["IBMPlexMono_500Medium"],
+        "mono-semibold": ["IBMPlexMono_600SemiBold"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
