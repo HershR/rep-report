@@ -31,10 +31,15 @@ import {
   toMetricWeight,
 } from "@/lib/units";
 
+/** Digits share one advance width, so values line up down the column. */
+const TABULAR = { fontVariant: ["tabular-nums" as const] };
+
 type WorkoutSetRowProps = {
   index: number;
   workoutSet: WorkoutSessionSet;
   isCardio: boolean;
+  /** First not-yet-completed set in the session - the one you are on. */
+  isCurrent?: boolean;
   commitOnChange?: boolean;
   onUpdate: (
     setId: string,
@@ -64,6 +69,7 @@ export function WorkoutSetRow({
   index,
   workoutSet,
   isCardio,
+  isCurrent = false,
   commitOnChange = false,
   onUpdate,
   onDelete,
@@ -72,6 +78,11 @@ export function WorkoutSetRow({
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
+  const fieldClass = isCompleted
+    ? "border-primary/30 bg-primary/10 text-value-logged"
+    : isCurrent
+      ? "border-primary/40 bg-surface-raised text-foreground"
+      : "border-border bg-surface-inset text-value-planned";
 
   const reducedMotion = useReducedMotion();
   const completeButtonScale = useSharedValue(1);
@@ -141,13 +152,28 @@ export function WorkoutSetRow({
 
   return (
     <View
-      className={cn(
-        "flex-row items-center gap-2 rounded-md px-2 py-1.5",
-        isCompleted && "bg-primary/10",
-      )}
+      className={cn("h-[52px] flex-row items-center gap-2 rounded-md px-2")}
     >
-      <View className="w-6 items-center">
-        <Text variant="muted" className="text-sm">
+      <View
+        className={cn(
+          "size-6 items-center justify-center rounded-full border-2",
+          isCompleted
+            ? "border-primary bg-primary"
+            : isCurrent
+              ? "border-primary bg-transparent"
+              : "border-border-strong bg-transparent",
+        )}
+      >
+        <Text
+          className={cn(
+            "font-mono-semibold text-[10px]",
+            isCompleted
+              ? "text-primary-foreground"
+              : isCurrent
+                ? "text-primary"
+                : "text-text-4",
+          )}
+        >
           {index + 1}
         </Text>
       </View>
@@ -155,7 +181,8 @@ export function WorkoutSetRow({
       {isCardio ? (
         <>
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            style={TABULAR}
             value={durationInput}
             onChangeText={(value) => {
               const formatted = formatDurationInput(value);
@@ -173,7 +200,8 @@ export function WorkoutSetRow({
             onSubmitEditing={commitDuration}
           />
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            style={TABULAR}
             value={distanceInput}
             onChangeText={(value) => {
               setDistanceInput(value);
@@ -193,7 +221,8 @@ export function WorkoutSetRow({
       ) : (
         <>
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            style={TABULAR}
             defaultValue={toText(workoutSet.reps)}
             keyboardType="number-pad"
             onEndEditing={(event) => {
@@ -214,7 +243,8 @@ export function WorkoutSetRow({
             }
           />
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            style={TABULAR}
             value={weightInput}
             onChangeText={(value) => {
               setWeightInput(value);
@@ -233,10 +263,10 @@ export function WorkoutSetRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-7"
+            className="h-11 w-8"
             onPress={() => setPlateCalcOpen(true)}
           >
-            <Icon as={Dumbbell} className="text-muted-foreground size-3.5" />
+            <Icon as={Dumbbell} className="text-text-3 size-4" />
           </Button>
         </>
       )}
@@ -245,14 +275,14 @@ export function WorkoutSetRow({
         <Button
           variant={isCompleted ? "default" : "outline"}
           size="icon"
-          className="h-9 w-9"
+          className={cn("size-11", isCurrent && !isCompleted && "border-primary/40")}
           onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
         >
           <Icon
             as={Check}
             className={cn(
-              "size-4",
-              isCompleted ? "text-primary-foreground" : "text-muted-foreground",
+              "size-5",
+              isCompleted ? "text-primary-foreground" : isCurrent ? "text-primary/70" : "text-text-4",
             )}
           />
         </Button>
@@ -261,10 +291,10 @@ export function WorkoutSetRow({
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-8"
+        className="h-11 w-8"
         onPress={() => onDelete(workoutSet.id)}
       >
-        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+        <Icon as={Trash2} className="text-text-4 size-4" />
       </Button>
 
       <PlateCalculatorSheet

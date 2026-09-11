@@ -45,6 +45,10 @@ export function WorkoutExerciseBlock({
   canMoveUp = false,
   canMoveDown = false,
 }: WorkoutExerciseBlockProps) {
+  // First set not yet ticked - highlighted so you never lose your place.
+  const currentSetIndex = workoutExercise.sets.findIndex(
+    (workoutSet) => workoutSet.isCompleted !== 1,
+  );
   const router = useRouter();
   const { appSettings } = useAppSettings();
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
@@ -74,7 +78,7 @@ export function WorkoutExerciseBlock({
             })
           }
         >
-          <Text className="text-primary font-semibold">
+          <Text variant="cardTitle" className="text-foreground">
             {workoutExercise.exercise.name}
           </Text>
         </Pressable>
@@ -83,31 +87,31 @@ export function WorkoutExerciseBlock({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-11"
               disabled={!canMoveUp}
               onPress={onMoveUp}
             >
-              <Icon as={ChevronUp} className="text-muted-foreground size-4" />
+              <Icon as={ChevronUp} className="text-text-3 size-4" />
             </Button>
           ) : null}
           {onMoveDown ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-11"
               disabled={!canMoveDown}
               onPress={onMoveDown}
             >
-              <Icon as={ChevronDown} className="text-muted-foreground size-4" />
+              <Icon as={ChevronDown} className="text-text-3 size-4" />
             </Button>
           ) : null}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="size-11"
             onPress={() => onRemoveExercise(workoutExercise.id)}
           >
-            <Icon as={Trash2} className="text-muted-foreground size-4" />
+            <Icon as={Trash2} className="text-text-3 size-4" />
           </Button>
         </View>
       </View>
@@ -118,11 +122,11 @@ export function WorkoutExerciseBlock({
         <>
           <View className="flex-row items-center gap-2 px-2">
             <View className="w-6" />
-            <Text variant="muted" className="flex-1 text-center text-xs">
-              {firstColumnLabel}
+            <Text variant="microLabel" className="flex-1 text-center">
+              {firstColumnLabel.toUpperCase()}
             </Text>
-            <Text variant="muted" className="flex-1 text-center text-xs">
-              {secondColumnLabel}
+            <Text variant="microLabel" className="flex-1 text-center">
+              {secondColumnLabel.toUpperCase()}
             </Text>
             <View className="w-9 items-center">
               <Icon as={Check} className="text-muted-foreground size-3.5" />
@@ -136,6 +140,7 @@ export function WorkoutExerciseBlock({
               index={index}
               workoutSet={workoutSet}
               isCardio={showDuration}
+              isCurrent={index === currentSetIndex}
               commitOnChange={commitSetChangesOnChange}
               onUpdate={onUpdateSet}
               onDelete={onDeleteSet}
