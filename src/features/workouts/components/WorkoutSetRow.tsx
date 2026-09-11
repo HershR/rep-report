@@ -79,9 +79,9 @@ export function WorkoutSetRow({
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
   const fieldClass = isCompleted
-    ? "border-primary/30 bg-primary/10 text-value-logged"
+    ? "border-border bg-primary/10 text-value-logged"
     : isCurrent
-      ? "border-primary/40 bg-surface-raised text-foreground"
+      ? "border-primary bg-surface-raised text-foreground"
       : "border-border bg-surface-inset text-value-planned";
 
   const reducedMotion = useReducedMotion();
