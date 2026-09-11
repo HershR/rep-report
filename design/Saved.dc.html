@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    body { margin: 0; background: #09090B; }
+    a { color: #CCFF33; text-decoration: none; }
+    a:hover { color: #DDFF6B; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #09090B; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; color: #F4F4F2; position: relative; overflow: hidden;">
+
+  <div style="height: 52px;"></div>
+
+  <div style="padding: 0 20px;">
+    <div style="height: 34px; display: flex; align-items: center;">
+      <span style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">Saved</span>
+    </div>
+
+    <!-- counts live in the tabs, so no separate summary line is needed -->
+    <div style="margin-top: 14px; height: 44px; border-radius: 13px; background: #131316; border: 1px solid #1F1F24; padding: 4px; display: flex; gap: 4px;">
+      <div style="flex: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 7px;">
+        <span style="font-size: 13px; font-weight: 600; color: #8E8E97;">Exercises</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600; color: #7E7E88;">12</span>
+      </div>
+      <div style="flex: 1; border-radius: 10px; background: #2F2F38; border: 1px solid #3A3A42; display: flex; align-items: center; justify-content: center; gap: 7px;">
+        <span style="font-size: 13px; font-weight: 700; color: #F4F4F2; letter-spacing: -0.005em;">Templates</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600; color: #CCFF33;">4</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; height: 50px; border-radius: 13px; border: 1px dashed #2E2E36; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CCFF33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span style="font-size: 14px; font-weight: 700; color: #CCFF33; letter-spacing: -0.005em;">New template</span>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="border-radius: 15px; background: #131316; border: 1px solid #232328; padding: 13px 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #A0A0A8;">A</span>
+          </div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;">Push Day</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; line-height: 1; color: #8E8E97;">5 EXERCISES · 18 SETS · ~52 MIN</span>
+          </div>
+          <div style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -8px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7E7E88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </div>
+        </div>
+        <div style="height: 1px; background: #1F1F24; margin: 11px 0 10px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">01</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Barbell Bench Press</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 10</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">02</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Seated Shoulder Press</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 12</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">+</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #7E7E88;">3 more exercises</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-radius: 15px; background: #131316; border: 1px solid #232328; padding: 13px 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #A0A0A8;">B</span>
+          </div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;">Pull Day</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; line-height: 1; color: #8E8E97;">4 EXERCISES · 15 SETS · ~45 MIN</span>
+          </div>
+          <div style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -8px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7E7E88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </div>
+        </div>
+        <div style="height: 1px; background: #1F1F24; margin: 11px 0 10px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">01</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Barbell Row</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">4 × 8</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">02</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Lat Pulldown</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 12</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">+</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #7E7E88;">2 more exercises</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-radius: 15px; background: #131316; border: 1px solid #232328; padding: 13px 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #A0A0A8;">C</span>
+          </div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;">Leg Day</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; line-height: 1; color: #8E8E97;">5 EXERCISES · 16 SETS · ~58 MIN</span>
+          </div>
+          <div style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -8px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7E7E88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </div>
+        </div>
+        <div style="height: 1px; background: #1F1F24; margin: 11px 0 10px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">01</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Back Squat</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">4 × 8</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">02</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Romanian Deadlift</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 10</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">+</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #7E7E88;">3 more exercises</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-radius: 15px; background: #131316; border: 1px solid #232328; padding: 13px 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #A0A0A8;">D</span>
+          </div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;">Upper Body</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; line-height: 1; color: #8E8E97;">6 EXERCISES · 20 SETS · ~61 MIN</span>
+          </div>
+          <div style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: -8px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7E7E88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </div>
+        </div>
+        <div style="height: 1px; background: #1F1F24; margin: 11px 0 10px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">01</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Incline Bench Press</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 10</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">02</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #C8C8CC;">Cable Row</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 500; color: #8E8E97;">3 × 10</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #55555F; width: 14px; flex-shrink: 0;">+</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #7E7E88;">4 more exercises</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- tab bar -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 78px; background: #0C0C0F; border-top: 1px solid #232328; display: flex; align-items: flex-start; padding-top: 11px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">TODAY</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">SEARCH</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6.5 20v-6"/><path d="M12 20V6"/><path d="M17.5 20v-9"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">PROGRESS</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#CCFF33" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #CCFF33;">SAVED</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.75"/><path d="M4.5 20.5c0-4.1 3.4-6.5 7.5-6.5s7.5 2.4 7.5 6.5"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">PROFILE</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

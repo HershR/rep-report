@@ -25,11 +25,11 @@
     </div>
 
     <!-- tabs -->
-    <div style="margin-top: 14px; height: 40px; border-radius: 12px; background: #131316; border: 1px solid #1F1F24; padding: 4px; display: flex; gap: 4px;">
+    <div style="margin-top: 14px; height: 44px; border-radius: 13px; background: #131316; border: 1px solid #1F1F24; padding: 4px; display: flex; gap: 4px;">
       <div style="flex: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
         <span style="font-size: 13px; font-weight: 600; color: #8E8E97;">History</span>
       </div>
-      <div style="flex: 1; border-radius: 9px; background: #26262C; display: flex; align-items: center; justify-content: center;">
+      <div style="flex: 1; border-radius: 10px; background: #2F2F38; border: 1px solid #3A3A42; display: flex; align-items: center; justify-content: center;">
         <span style="font-size: 13px; font-weight: 700; color: #F4F4F2; letter-spacing: -0.005em;">Trends</span>
       </div>
       <div style="flex: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
@@ -61,7 +61,7 @@
       <div style="position: relative; height: 146px; margin-top: 16px;">
         <!-- recessive reference line at 4k -->
         <div style="position: absolute; left: 0; right: 0; bottom: 62px; height: 1px; border-top: 1px dashed #26262C;"></div>
-        <div style="position: absolute; right: 0; bottom: 66px; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 500; color: #6E6E78;">4k</div>
+        <div style="position: absolute; right: 0; bottom: 66px; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; color: #7E7E88;">4k</div>
 
         <!-- direct label on the current week only -->
         <div style="position: absolute; right: 0; bottom: 126px; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600; color: #F4F4F2;">8,150</div>
@@ -83,20 +83,22 @@
 
       <!-- x axis -->
       <div style="margin-top: 9px; display: flex; gap: 8px;">
-        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 500; color: #6E6E78;">W28</div>
+        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; color: #7E7E88;">W28</div>
         <div style="flex: 1;"></div>
-        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 500; color: #6E6E78;">W30</div>
+        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; color: #7E7E88;">W30</div>
         <div style="flex: 1;"></div>
-        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 500; color: #6E6E78;">W32</div>
+        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; color: #7E7E88;">W32</div>
         <div style="flex: 1;"></div>
-        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 500; color: #6E6E78;">W34</div>
-        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; color: #A0A0A8;">NOW</div>
+        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; color: #7E7E88;">W34</div>
+        <div style="flex: 1; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; color: #C8C8CC;">NOW</div>
       </div>
     </div>
 
     <div style="margin-top: 24px; display: flex; align-items: center; justify-content: space-between; height: 14px;">
       <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; color: #8E8E97;">RECENT SESSIONS</span>
-      <span style="font-size: 12px; font-weight: 600; color: #A0A0A8;">See all</span>
+      <div style="height: 24px; padding: 0 10px; margin-right: -10px; border-radius: 8px; display: flex; align-items: center;">
+        <span style="font-size: 12px; font-weight: 600; color: #A0A0A8;">See all</span>
+      </div>
     </div>
   </div>
 
@@ -146,22 +148,6 @@
       </div>
       <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0;">
         <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #C8C8CC;">7,100</span>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#62626C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-      </div>
-    </div>
-
-    <div style="height: 66px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
-      <div style="width: 42px; display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0;">
-        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">SEP</span>
-        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 17px; font-weight: 600; color: #F4F4F2;">04</span>
-      </div>
-      <div style="width: 1px; height: 30px; background: #232328; flex-shrink: 0;"></div>
-      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Push Day</span>
-        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; color: #8E8E97;">5 EX · 18 SETS · 49 MIN</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0;">
-        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: #C8C8CC;">5,900</span>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#62626C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
       </div>
     </div>
