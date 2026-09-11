@@ -1,0 +1,308 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    body { margin: 0; background: #09090B; }
+    a { color: #CCFF33; text-decoration: none; }
+    a:hover { color: #DDFF6B; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #09090B; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; color: #F4F4F2; position: relative; overflow: hidden;">
+
+  <div style="height: 52px;"></div>
+
+  <!-- header -->
+  <div style="height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 8px;">
+    <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#A0A0A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em;">Push Day</div>
+      <div style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">{{ setsDone }} OF {{ setsTotal }} SETS</div>
+    </div>
+    <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#A0A0A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    </div>
+  </div>
+
+  <!-- workout progress -->
+  <div style="height: 3px; background: #1C1C21; margin: 4px 0 0;">
+    <div style="height: 100%; width: {{ progressPct }}; background: #CCFF33;"></div>
+  </div>
+
+  <!-- exercise list -->
+  <div style="padding: 18px 20px 0; display: flex; flex-direction: column; gap: 16px;">
+    <sc-for list="{{ exercises }}" as="ex" hint-placeholder-count="2">
+      <div>
+        <!-- exercise header -->
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: #F4F4F2;">{{ ex.name }}</div>
+            <div style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; color: #8E8E97;">{{ ex.last }}</div>
+          </div>
+          <div style="width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#62626C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </div>
+        </div>
+
+        <!-- column labels -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; height: 14px;">
+          <div style="width: 24px;"></div>
+          <div style="width: 96px; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #7E7E88;">REPS</div>
+          <div style="width: 13px;"></div>
+          <div style="width: 106px; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #7E7E88;">WEIGHT</div>
+          <div style="width: 44px; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #7E7E88;">DONE</div>
+        </div>
+
+        <!-- set rows, with the spine behind them -->
+        <div style="position: relative; margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
+          <div style="position: absolute; left: 11px; top: 10px; bottom: 10px; width: 2px; background: #1F1F24;"></div>
+
+          <sc-for list="{{ ex.sets }}" as="set" hint-placeholder-count="3">
+            <div style="position: relative; height: 52px; display: flex; align-items: center; justify-content: space-between;">
+              <div style="{{ set.dotStyle }}">{{ set.index }}</div>
+
+              <div style="{{ set.repsStyle }}">
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 19px; font-weight: 600; color: {{ set.numColor }}; font-variant-numeric: tabular-nums;">{{ set.reps }}</span>
+              </div>
+
+              <div style="width: 13px; text-align: center; font-size: 13px; font-weight: 500; color: #55555F;">×</div>
+
+              <div style="{{ set.weightStyle }}">
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 19px; font-weight: 600; color: {{ set.numColor }}; font-variant-numeric: tabular-nums;">{{ set.weight }}</span>
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #7E7E88; padding-bottom: 2px;">LB</span>
+              </div>
+
+              <div onClick="{{ set.toggle }}" style="{{ set.checkStyle }}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ set.checkStroke }}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9 17.5 20 6.5"/></svg>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- add set -->
+        <sc-if value="{{ ex.showAddSet }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ ex.addSet }}" style="margin-top: 8px; margin-left: 34px; height: 42px; border-radius: 11px; border: 1px dashed #2E2E36; display: flex; align-items: center; justify-content: center; gap: 7px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#CCFF33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span style="font-size: 13px; font-weight: 700; color: #CCFF33; letter-spacing: -0.005em;">Add set</span>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- rest timer dock -->
+  <sc-if value="{{ rest.show }}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 84px; background: #131316; border-top: 1px solid rgba(204,255,51,0.34);">
+      <div style="height: 2px; background: #1C1C21;">
+        <div style="height: 100%; width: {{ rest.pct }}; background: #CCFF33;"></div>
+      </div>
+      <div style="height: 62px; padding: 0 20px; display: flex; align-items: center; gap: 13px;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#CCFF33" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10"/><path d="M9.5 2.5h5"/></svg>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #8E8E97;">REST</span>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: #F4F4F2; font-variant-numeric: tabular-nums;">{{ rest.label }}</span>
+        </div>
+        <div onClick="{{ rest.add }}" style="height: 36px; padding: 0 13px; border-radius: 10px; background: #1C1C21; display: flex; align-items: center;">
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: #A0A0A8;">+30s</span>
+        </div>
+        <div onClick="{{ rest.skip }}" style="height: 36px; padding: 0 14px; border-radius: 10px; background: rgba(204,255,51,0.13); display: flex; align-items: center;">
+          <span style="font-size: 13px; font-weight: 700; color: #CCFF33;">Skip</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- bottom bar -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: #0C0C0F; border-top: 1px solid #232328; padding: 14px 20px 0; display: flex; align-items: flex-start; gap: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #7E7E88;">ELAPSED</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 17px; font-weight: 600; color: #F4F4F2; font-variant-numeric: tabular-nums;">{{ elapsed }}</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: #7E7E88;">VOLUME</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 17px; font-weight: 600; color: #F4F4F2; font-variant-numeric: tabular-nums;">{{ volume }}</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="height: 46px; padding: 0 22px; border-radius: 13px; background: #CCFF33; display: flex; align-items: center;">
+      <span style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: #0B0F00;">Finish</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"restSeconds":{"editor":"int","default":90,"min":30,"max":300,"step":15,"unit":"s","section":"Behavior"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      seconds: 724,
+      restLeft: 0,
+      exercises: [
+        {
+          name: 'Barbell Bench Press',
+          last: 'LAST · 3 × 10 @ 20 LB',
+          sets: [
+            { reps: 10, weight: 20, done: true },
+            { reps: 10, weight: 20, done: true },
+            { reps: 10, weight: 20, done: false },
+          ],
+        },
+        {
+          name: 'Seated Shoulder Press',
+          last: 'LAST · 3 × 12 @ 15 LB',
+          sets: [
+            { reps: 12, weight: 15, done: false },
+            { reps: 12, weight: 15, done: false },
+          ],
+        },
+      ],
+    };
+  }
+
+  componentDidMount() {
+    this.tick = setInterval(() => {
+      this.setState((s) => ({
+        seconds: s.seconds + 1,
+        restLeft: s.restLeft > 0 ? s.restLeft - 1 : 0,
+      }));
+    }, 1000);
+  }
+
+  componentWillUnmount() {
+    if (this.tick) clearInterval(this.tick);
+  }
+
+  clock(total) {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  toggleSet(ei, si) {
+    const exercises = this.state.exercises.map((ex, i) => {
+      if (i !== ei) return ex;
+      return {
+        ...ex,
+        sets: ex.sets.map((st, j) => (j === si ? { ...st, done: !st.done } : st)),
+      };
+    });
+    const nowDone = exercises[ei].sets[si].done;
+    this.setState({
+      exercises: exercises,
+      restLeft: nowDone ? (this.props.restSeconds ?? 90) : 0,
+    });
+  }
+
+  addSet(ei) {
+    const exercises = this.state.exercises.map((ex, i) => {
+      if (i !== ei) return ex;
+      const prev = ex.sets[ex.sets.length - 1] || { reps: 10, weight: 20 };
+      return { ...ex, sets: ex.sets.concat([{ reps: prev.reps, weight: prev.weight, done: false }]) };
+    });
+    this.setState({ exercises: exercises });
+  }
+
+  renderVals() {
+    const rest = this.props.restSeconds ?? 90;
+    const exList = this.state.exercises;
+
+    let done = 0;
+    let total = 0;
+    let volume = 0;
+    exList.forEach((ex) => {
+      ex.sets.forEach((st) => {
+        total += 1;
+        if (st.done) {
+          done += 1;
+          volume += st.reps * st.weight;
+        }
+      });
+    });
+
+    // first not-done set across the whole workout is "up next"
+    let activeEi = -1;
+    let activeSi = -1;
+    for (let i = 0; i < exList.length && activeEi < 0; i += 1) {
+      for (let j = 0; j < exList[i].sets.length; j += 1) {
+        if (!exList[i].sets[j].done) { activeEi = i; activeSi = j; break; }
+      }
+    }
+
+    const dotBase = 'width: 24px; height: 24px; border-radius: 999px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: \'IBM Plex Mono\', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; ';
+    const fieldBase = 'height: 48px; border-radius: 11px; display: flex; align-items: baseline; justify-content: center; gap: 3px; padding-top: 13px; ';
+    const checkBase = 'width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+
+    const exercises = exList.map((ex, ei) => ({
+      name: ex.name,
+      last: ex.last,
+      showAddSet: ei === 0,
+      addSet: () => this.addSet(ei),
+      sets: ex.sets.map((st, si) => {
+        const isActive = ei === activeEi && si === activeSi;
+        let ring = '#2A2A32';
+        let fieldBg = '#1C1C21';
+        let fieldBorder = '#26262C';
+        let numColor = '#F4F4F2';
+        let dotExtra = 'background: transparent; border: 2px solid #2A2A32; color: #7E7E88;';
+        let checkExtra = 'background: #16161A; border: 1px solid #2A2A32;';
+        let checkStroke = '#55555F';
+
+        if (st.done) {
+          fieldBg = 'rgba(204,255,51,0.09)';
+          fieldBorder = 'rgba(204,255,51,0.26)';
+          dotExtra = 'background: #CCFF33; border: 2px solid #CCFF33; color: #0B0F00;';
+          checkExtra = 'background: #CCFF33; border: 1px solid #CCFF33;';
+          checkStroke = '#0B0F00';
+        } else if (isActive) {
+          fieldBg = '#1C1C21';
+          fieldBorder = 'rgba(204,255,51,0.42)';
+          dotExtra = 'background: transparent; border: 2px solid #CCFF33; color: #CCFF33;';
+          checkExtra = 'background: #16161A; border: 1px solid rgba(204,255,51,0.42);';
+          checkStroke = '#7F8F4A';
+        }
+
+        return {
+          index: si + 1,
+          reps: st.reps,
+          weight: st.weight,
+          numColor: numColor,
+          dotStyle: dotBase + dotExtra,
+          repsStyle: fieldBase + 'width: 96px; background: ' + fieldBg + '; border: 1px solid ' + fieldBorder + ';',
+          weightStyle: fieldBase + 'width: 106px; background: ' + fieldBg + '; border: 1px solid ' + fieldBorder + ';',
+          checkStyle: checkBase + checkExtra,
+          checkStroke: checkStroke,
+          toggle: () => this.toggleSet(ei, si),
+          ring: ring,
+        };
+      }),
+    }));
+
+    return {
+      exercises: exercises,
+      setsDone: done,
+      setsTotal: total,
+      progressPct: total ? Math.round((done / total) * 100) + '%' : '0%',
+      elapsed: this.clock(this.state.seconds),
+      volume: volume.toLocaleString('en-US'),
+      rest: {
+        show: this.state.restLeft > 0,
+        label: this.clock(this.state.restLeft),
+        pct: Math.max(0, Math.round((this.state.restLeft / rest) * 100)) + '%',
+        skip: () => this.setState({ restLeft: 0 }),
+        add: () => this.setState((s) => ({ restLeft: s.restLeft + 30 })),
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

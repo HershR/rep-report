@@ -1,0 +1,43 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Screens" },
+    { "id": "page-2", "name": "Other directions" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Today", "x": 0, "y": 0, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "Workout.dc.html", "title": "Active workout (live)", "x": 490, "y": 0, "w": 390, "h": 844, "page": "page-1", "is_interactive": true },
+    { "file": "Keypad.dc.html", "title": "Set entry", "x": 980, "y": 0, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "Search.dc.html", "title": "Exercise search", "x": 1470, "y": 0, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "Exercise.dc.html", "title": "Exercise detail", "x": 0, "y": 1010, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "Progress.dc.html", "title": "Progress", "x": 490, "y": 1010, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "Profile.dc.html", "title": "Profile", "x": 980, "y": 1010, "w": 390, "h": 844, "page": "page-1" },
+    { "file": "DirectionB.dc.html", "title": "B · One set at a time", "x": 0, "y": 0, "w": 390, "h": 844, "page": "page-2" },
+    { "file": "DirectionC.dc.html", "title": "C · The log", "x": 490, "y": 0, "w": 390, "h": 844, "page": "page-2" }
+  ],
+  "annotations": [
+    {
+      "id": "system-note",
+      "x": 1980,
+      "y": 0,
+      "w": 300,
+      "text": "THE SYSTEM\n\nType — Archivo (display / UI), IBM Plex Mono (all numerals, micro-labels). Tabular digits are why the set columns finally line up.\n\nGround — #09090B page, #131316 card, #1C1C21 raised, #232328 hairline. Three real surface steps instead of one flat card colour.\n\nAccent — #CCFF33 only for live, done, or the one primary action on screen. Nothing decorative is lime.\n\nRadii — 8 / 12-14 / pill. Tighter than the current 1rem so the numbers read as instruments, not bubbles.\n\nWhat changed structurally:\n1. Headers shrank from ~90px of title+subtitle to a 34px line.\n2. Cards-inside-cards became hairline-separated full-bleed rows.\n3. Records came out of a tab and onto the exercise screen.\n4. Set logging got a spine, a focused current set, and a rest timer that docks instead of interrupting."
+    },
+    {
+      "id": "workout-note",
+      "x": 490,
+      "y": -150,
+      "w": 390,
+      "text": "This one is live — tick a set to see the row commit and the rest timer dock in. \"Add set\" works too. Rest length is a tweak above the frame."
+    },
+    {
+      "id": "directions-note",
+      "x": 0,
+      "y": -170,
+      "w": 880,
+      "page": "page-2",
+      "text": "Two other ways the logging screen could go, if the committed direction on page 1 isn't the one. Both are deliberately rough — they're here to pick an idea from, not a look.",
+      "kind": "note"
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

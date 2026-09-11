@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    body { margin: 0; background: #09090B; }
+    a { color: #CCFF33; text-decoration: none; }
+    a:hover { color: #DDFF6B; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #09090B; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; color: #F4F4F2; position: relative; overflow: hidden;">
+
+  <div style="height: 52px;"></div>
+
+  <!-- header + search, one compact block -->
+  <div style="padding: 0 20px;">
+    <div style="height: 34px; display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">Exercises</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600; color: #7E7E88;">WGER</span>
+    </div>
+
+    <div style="margin-top: 14px; height: 48px; border-radius: 12px; background: #1C1C21; border: 1px solid #26262C; display: flex; align-items: center; gap: 10px; padding: 0 14px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7E7E88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+      <span style="flex-grow: 1; font-size: 15px; font-weight: 500; color: #F4F4F2;">bench</span>
+      <div style="width: 20px; height: 20px; border-radius: 999px; background: #2E2E36; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#A0A0A8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+    </div>
+
+    <!-- filters -->
+    <div style="margin-top: 14px; display: flex; gap: 8px; align-items: center;">
+      <div style="height: 36px; width: 36px; border-radius: 999px; background: #1C1C21; border: 1px solid #26262C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A0A0A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9"/><path d="M19 7h1"/><path d="M4 17h4"/><path d="M14 17h6"/><circle cx="16" cy="7" r="2.4"/><circle cx="11" cy="17" r="2.4"/></svg>
+      </div>
+      <div style="height: 36px; padding: 0 14px; border-radius: 999px; background: #CCFF33; display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <span style="font-size: 13px; font-weight: 700; color: #0B0F00; letter-spacing: -0.005em;">Chest</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0B0F00" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+      <div style="height: 36px; padding: 0 14px; border-radius: 999px; background: #16161A; border: 1px solid #26262C; display: flex; align-items: center; flex-shrink: 0;">
+        <span style="font-size: 13px; font-weight: 600; color: #A0A0A8;">Barbell</span>
+      </div>
+      <div style="height: 36px; padding: 0 14px; border-radius: 999px; background: #16161A; border: 1px solid #26262C; display: flex; align-items: center; flex-shrink: 0;">
+        <span style="font-size: 13px; font-weight: 600; color: #A0A0A8;">Dumbbell</span>
+      </div>
+      <div style="height: 36px; padding: 0 11px; border-radius: 999px; background: #16161A; border: 1px solid #26262C; display: flex; align-items: center; flex-shrink: 0;">
+        <span style="font-size: 13px; font-weight: 600; color: #7E7E88;">Mac</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; height: 14px;">
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; color: #8E8E97;">14 RESULTS</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #7E7E88;">A → Z</span>
+    </div>
+  </div>
+
+  <!-- results: hairline-separated rows, no nested cards -->
+  <div style="margin-top: 6px;">
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Barbell Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · BARBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: rgba(204,255,51,0.13); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#CCFF33" stroke="#CCFF33" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Incline Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · BARBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #16161A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A5A63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 4 4M17.5 6.5 20 4M6.5 17.5 4 20M17.5 17.5 20 20"/><circle cx="12" cy="12" r="4.5"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Dumbbell Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · DUMBBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: rgba(204,255,51,0.13); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#CCFF33" stroke="#CCFF33" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 4 4M17.5 6.5 20 4M6.5 17.5 4 20M17.5 17.5 20 20"/><circle cx="12" cy="12" r="4.5"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Close-Grip Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">TRICEPS · BARBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #16161A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A5A63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="10" rx="2.5"/><path d="M8 7V4.5M16 7V4.5"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Smith Machine Bench</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · MACHINE</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #16161A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A5A63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 4 4M17.5 6.5 20 4M6.5 17.5 4 20M17.5 17.5 20 20"/><circle cx="12" cy="12" r="4.5"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Decline Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · BARBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #16161A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A5A63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="height: 72px; padding: 0 20px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #18181C;">
+      <div style="width: 50px; height: 50px; border-radius: 11px; background: #1C1C21; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A5A64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.012em;">Floor Bench Press</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: #8E8E97;">CHEST · BARBELL</span>
+      </div>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #16161A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A5A63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- tab bar -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 78px; background: #0C0C0F; border-top: 1px solid #232328; display: flex; align-items: flex-start; padding-top: 11px;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">TODAY</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#CCFF33" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #CCFF33;">SEARCH</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6.5 20v-6"/><path d="M12 20V6"/><path d="M17.5 20v-9"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">PROGRESS</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">SAVED</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#8E8E97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.75"/><path d="M4.5 20.5c0-4.1 3.4-6.5 7.5-6.5s7.5 2.4 7.5 6.5"/></svg>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #8E8E97;">PROFILE</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
