@@ -5,7 +5,13 @@
       "source": "callstack/agent-device",
       "sourceType": "github",
       "skillPath": "skills/agent-device/SKILL.md",
-      "computedHash": "cd27700cca442d6fc4228911a0c4bb9a80915bb1c8c58147950a37355baf21e5"
+      "computedHash": "3187ae73a1a8b055e20630d64c86e5bb7576341b495c9a755f5e3ec7927c0302"
+    },
+    "android-emulator": {
+      "source": "callstack/agent-device",
+      "sourceType": "github",
+      "skillPath": "skills/android-emulator/SKILL.md",
+      "computedHash": "20b3ca719cceeb25a7442f167f5ae60a816e03cd2b05dc3574cdd9d9056e8dac"
     },
     "caveman": {
       "source": "JuliusBrussee/caveman",
@@ -27,7 +33,7 @@
       "source": "callstack/agent-device",
       "sourceType": "github",
       "skillPath": "skills/dogfood/SKILL.md",
-      "computedHash": "c83ed84a234bb8ea7a588635ace904e150429f83321024487c7dbcfd19c81575"
+      "computedHash": "8e6dfbff0633e355210ce7ae109cb39a3e1347946b6e92aaa607271154526b6b"
     },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
@@ -64,6 +70,12 @@
       "sourceType": "github",
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "ff9991a8d6dabb24411daaf6de570e3b6826323459d514d90d7f6371bbdbdbe1"
+    },
+    "ios-simulator": {
+      "source": "callstack/agent-device",
+      "sourceType": "github",
+      "skillPath": "skills/ios-simulator/SKILL.md",
+      "computedHash": "a0196ca78c5af1e2f25f4d534b3971fe8d9e5e6aa02a2d0f35a53b222bca57da"
     },
     "review-animations": {
       "source": "emilkowalski/skills",
