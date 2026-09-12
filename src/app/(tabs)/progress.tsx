@@ -7,7 +7,6 @@ import { ActivityIndicator, Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 import { CustomScreen } from "@/components/common";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
@@ -64,6 +63,15 @@ function headlineText(
   return "—";
 }
 
+/** Durations were rendering as raw seconds ("3120s"). */
+function formatMinutes(seconds: number | null): string {
+  const mins = Math.round((seconds ?? 0) / 60);
+  if (mins < 60) return `${mins} MIN`;
+  const hours = Math.floor(mins / 60);
+  const rest = mins % 60;
+  return rest === 0 ? `${hours}H` : `${hours}H ${rest}M`;
+}
+
 export default function ProgressScreen() {
   const router = useRouter();
   const { colorScheme: scheme } = useColorScheme();
@@ -117,8 +125,9 @@ export default function ProgressScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">Progress</Text>
-      <Text variant="muted">Look back at your training.</Text>
+      <Text variant="screenTitle" className="h-9">
+        Progress
+      </Text>
 
       <View className="mt-4 gap-4">
         <Tabs value={tab} onValueChange={(value) => setTab(value as ProgressTab)}>
@@ -157,7 +166,9 @@ export default function ProgressScreen() {
               </CardContent>
             </Card>
 
-            <Text variant="muted">{`Selected ${format(selectedDate, "PPP")}`}</Text>
+            <Text variant="sectionLabel">
+              {format(selectedDate, "PPP").toUpperCase()}
+            </Text>
 
             {isLoading ? (
               <Text variant="muted">Loading workouts...</Text>
@@ -180,7 +191,7 @@ export default function ProgressScreen() {
                   return (
                     <Pressable
                       key={workout.id}
-                      className="active:opacity-80"
+                      className="border-separator -mx-4 h-[66px] flex-row items-center gap-3 border-b px-4 active:opacity-80"
                       onPress={() =>
                         router.push({
                           pathname: "/workout/[workoutId]",
@@ -188,28 +199,15 @@ export default function ProgressScreen() {
                         })
                       }
                     >
-                      <Card>
-                        <CardContent className="flex-row items-center gap-3">
-                          <View className="flex-1 gap-2">
-                            <Text>{workout.name}</Text>
-                            <View className="flex-row flex-wrap gap-2">
-                              <Badge variant="secondary">
-                                <Text>{`${workout.exercises.length} exercises`}</Text>
-                              </Badge>
-                              <Badge variant="secondary">
-                                <Text>{`${setCount} sets`}</Text>
-                              </Badge>
-                              <Badge variant="secondary">
-                                <Text>{`${workout.durationSeconds ?? 0}s`}</Text>
-                              </Badge>
-                            </View>
-                          </View>
-                          <Icon
-                            as={ChevronRight}
-                            className="text-muted-foreground"
-                          />
-                        </CardContent>
-                      </Card>
+                      <View className="flex-1 gap-1">
+                        <Text variant="itemTitle" numberOfLines={1}>
+                          {workout.name}
+                        </Text>
+                        <Text variant="microLabel">
+                          {`${workout.exercises.length} EX · ${setCount} SETS · ${formatMinutes(workout.durationSeconds)}`}
+                        </Text>
+                      </View>
+                      <Icon as={ChevronRight} className="text-text-4 size-4" />
                     </Pressable>
                   );
                 })
@@ -218,11 +216,9 @@ export default function ProgressScreen() {
         ) : null}
 
         {tab === "trends" ? (
-          <Card>
-            <CardContent className="pt-6">
-              <VolumeTrendChart />
-            </CardContent>
-          </Card>
+          <View className="border-border bg-surface-sunken rounded-lg border p-4">
+            <VolumeTrendChart />
+          </View>
         ) : null}
 
         {tab === "records" ? (

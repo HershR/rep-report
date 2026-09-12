@@ -39,7 +39,16 @@ export function ProgressLineChart({
   const gridColor = hslStringToRgb(colors.border);
 
   if (points.length < 2) {
-    return <Text variant="muted">{emptyMessage}</Text>;
+    return (
+      <View
+        style={{ height: height / 2 }}
+        className="items-center justify-center"
+      >
+        <Text variant="body" className="text-text-3 text-center">
+          {emptyMessage}
+        </Text>
+      </View>
+    );
   }
 
   return (
