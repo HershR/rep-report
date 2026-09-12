@@ -11,7 +11,6 @@ import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import { WeeklyProgressCard } from "@/features/workouts/components/WeeklyProgressCard";
-import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 
 const WEEKDAY_FORMAT: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -22,7 +21,6 @@ const WEEKDAY_FORMAT: Intl.DateTimeFormatOptions = {
 export default function HomeScreen() {
   const router = useRouter();
   const { templates, isLoading: templatesLoading } = useWorkoutTemplates();
-  const { activeWorkout } = useActiveWorkout();
   const { profile } = useProfile();
 
   const today = new Date()
@@ -50,33 +48,6 @@ export default function HomeScreen() {
       </View>
 
       <WeeklyProgressCard />
-
-      {activeWorkout?.status === "active" ? (
-        <FadeInView>
-          <View className="border-primary/30 bg-card mt-3 flex-row items-center gap-3 rounded-lg border p-3.5">
-            <View className="bg-primary size-2 rounded-full" />
-            <View className="flex-1 gap-1">
-              <Text variant="microLabel" className="text-primary">
-                IN PROGRESS
-              </Text>
-              <Text variant="itemTitle" numberOfLines={1}>
-                {activeWorkout.name}
-              </Text>
-            </View>
-            <Button
-              className="bg-primary/10 h-11"
-              onPress={() =>
-                router.push({
-                  pathname: "/workout/active",
-                  params: { sessionId: activeWorkout.id },
-                })
-              }
-            >
-              <Text className="text-primary">Resume</Text>
-            </Button>
-          </View>
-        </FadeInView>
-      ) : null}
 
       <Button
         size="lg"
