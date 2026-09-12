@@ -8,7 +8,6 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -22,8 +21,7 @@ function tabIcon(IconComponent: LucideIcon) {
 }
 
 export default function TabLayout() {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const insets = useSafeAreaInsets();
 
   return (

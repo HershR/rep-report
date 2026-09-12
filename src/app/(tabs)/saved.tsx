@@ -1,6 +1,5 @@
 import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
-import { useColorScheme } from "nativewind";
 import { ActivityIndicator, View } from "react-native";
 import { Plus } from "lucide-react-native";
 import { FlashList } from "@shopify/flash-list";
@@ -30,8 +29,7 @@ type SavedRow =
 
 export default function SavedScreen() {
   const router = useRouter();
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const [tab, setTab] = useState<SavedTab>("exercises");
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();

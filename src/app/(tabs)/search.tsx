@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
@@ -24,8 +23,7 @@ import {
 import { THEME } from "@/lib/theme";
 
 export default function SearchScreen() {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);

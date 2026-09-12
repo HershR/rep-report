@@ -8,7 +8,6 @@ import {
   Trophy,
 } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useColorScheme } from "nativewind";
 import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
@@ -97,8 +96,7 @@ export default function ActiveWorkoutScreen() {
     sessionId?: string;
     repeatSessionId?: string;
   }>();
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const restTimerEnabled = (appSettings?.restTimerEnabled ?? 1) === 1;

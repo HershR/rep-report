@@ -25,7 +25,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 
 import { initializeDatabase } from "@/db/init";
-import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
@@ -35,19 +34,15 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 /**
- * Applies the persisted theme preference (`appSettings.themeMode`) to NativeWind's
- * color scheme so the choice survives app restarts. Lives inside QueryClientProvider
- * because it reads a react-query-backed hook. NativeWind's color scheme is the single
- * source of truth for both `className` dark variants and the JS `THEME[scheme]` lookups.
+ * The app is dark only. NativeWind still needs the scheme pinned so `dark:`
+ * variants resolve; the CSS custom properties are dark in :root regardless.
  */
-function ThemeModeSync() {
-  const { appSettings } = useAppSettings();
+function ForceDarkScheme() {
   const { setColorScheme } = useColorScheme();
-  const themeMode = appSettings?.themeMode;
 
   useEffect(() => {
-    if (themeMode) setColorScheme(themeMode);
-  }, [themeMode, setColorScheme]);
+    setColorScheme("dark");
+  }, [setColorScheme]);
 
   return null;
 }
@@ -63,8 +58,7 @@ export default function RootLayout() {
     IBMPlexMono_500Medium,
     IBMPlexMono_600SemiBold,
   });
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
 
   useEffect(() => {
     initializeDatabase().catch((error) => {
@@ -86,9 +80,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeModeSync />
-          <ThemeProvider value={NAV_THEME[scheme ?? "light"]}>
-            <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+          <ForceDarkScheme />
+          <ThemeProvider value={NAV_THEME}>
+            <StatusBar style="light" />
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: colors.card },
@@ -104,7 +98,7 @@ export default function RootLayout() {
               />
             </Stack>
             <PortalHost />
-            <Toaster theme={scheme ?? "light"} position="top-center" />
+            <Toaster theme="dark" position="top-center" />
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -1,4 +1,3 @@
-import { useColorScheme } from "nativewind";
 import type { ReactNode } from "react";
 import {
   KeyboardAvoidingView,
@@ -37,8 +36,7 @@ export function CustomScreen({
   contentContainerStyle,
   stickyFooter,
 }: CustomScreenProps) {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
 
   const inner = scroll ? (
     <ScrollView

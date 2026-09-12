@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
 import { type ComponentProps, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -74,8 +73,7 @@ function formatMinutes(seconds: number | null): string {
 
 export default function ProgressScreen() {
   const router = useRouter();
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const [tab, setTab] = useState<ProgressTab>("history");
 
   const { selectedDate, selectedDateKey, setSelectedDate, workouts, isLoading } =

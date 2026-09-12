@@ -1,5 +1,4 @@
 import { Redirect, type Href } from "expo-router";
-import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
@@ -15,7 +14,6 @@ const ONBOARDING = "/onboarding" as Href;
 
 export default function Index() {
   const [destination, setDestination] = useState<Href | null>(null);
-  const { colorScheme: scheme } = useColorScheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +35,7 @@ export default function Index() {
       <CustomScreen>
         <View className="flex-1 items-center justify-center gap-4">
           <Text variant="h3">Rep Report</Text>
-          <ActivityIndicator color={THEME[scheme ?? "light"].primary} />
+          <ActivityIndicator color={THEME.primary} />
         </View>
       </CustomScreen>
     );
