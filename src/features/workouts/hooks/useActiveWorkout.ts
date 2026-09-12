@@ -146,6 +146,12 @@ export function useActiveWorkout() {
   return {
     activeWorkout: activeQuery.data ?? null,
     isLoading: activeQuery.isLoading,
+    /**
+     * Whether the active-workout lookup has actually answered. Callers must not read
+     * `activeWorkout === null` as "there is no workout" until this is true — while the
+     * query is still in flight the value is also null.
+     */
+    isLoaded: activeQuery.isSuccess,
     error: activeQuery.error ?? null,
     refetch: activeQuery.refetch,
     startWorkout: startMutation.mutateAsync,

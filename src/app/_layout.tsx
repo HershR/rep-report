@@ -25,6 +25,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 
 import { initializeDatabase } from "@/db/init";
+import { discardOrphanedActiveSessions } from "@/features/workouts/repositories/workoutRepository";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
@@ -74,9 +75,26 @@ export default function RootLayout() {
   const colors = THEME;
 
   useEffect(() => {
-    initializeDatabase().catch((error) => {
-      console.error("DB init failed", error);
-    });
+    void (async () => {
+      try {
+        await initializeDatabase();
+      } catch (error) {
+        console.error("DB init failed", error);
+        return;
+      }
+
+      // Only one workout can be in progress, and only the newest `active` row is
+      // ever reachable. Older ones are leftovers a UI bug used to strand here;
+      // sweep them so they don't sit in the DB forever.
+      try {
+        const discarded = await discardOrphanedActiveSessions();
+        if (discarded > 0) {
+          console.warn(`Discarded ${discarded} unreachable active workout(s)`);
+        }
+      } catch (error) {
+        console.error("Orphaned workout cleanup failed", error);
+      }
+    })();
   }, []);
   useDrizzleStudio(sqlite);
 

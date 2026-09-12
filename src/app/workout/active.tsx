@@ -117,7 +117,9 @@ export default function ActiveWorkoutScreen() {
   const { favorites } = useFavoriteExercises();
   const {
     activeWorkout,
-    isLoading,
+    isLoaded,
+    error,
+    refetch,
     startWorkout,
     resumeWorkout,
     repeatWorkout,
@@ -133,9 +135,22 @@ export default function ActiveWorkoutScreen() {
     removeEmptyExercises,
   } = useActiveWorkout();
 
-  const elapsedSeconds = useElapsedSeconds(activeWorkout?.startedAt);
+  /**
+   * Guards the bootstrap below so it decides exactly once per mount. Without it
+   * the screen reads every empty cache as "no workout yet" and starts one — so
+   * cancelling or finishing (both of which deliberately clear the cache) would
+   * immediately spawn a phantom session, and a reload would duplicate the live
+   * one before the lookup had a chance to answer.
+   */
+  const didBootstrapRef = useRef(false);
 
   useEffect(() => {
+    if (didBootstrapRef.current) return;
+    // Until the lookup answers, `activeWorkout` is null for "still loading" as
+    // well as "nothing in progress" — acting on it here starts a duplicate.
+    if (!isLoaded) return;
+    didBootstrapRef.current = true;
+
     if (activeWorkout?.status === "active") return;
     if (params.sessionId) {
       void resumeWorkout(params.sessionId);
@@ -150,8 +165,8 @@ export default function ActiveWorkoutScreen() {
       templateId: params.templateId ?? null,
     });
   }, [
-    activeWorkout?.id,
     activeWorkout?.status,
+    isLoaded,
     params.name,
     params.sessionId,
     params.repeatSessionId,
@@ -161,10 +176,29 @@ export default function ActiveWorkoutScreen() {
     startWorkout,
   ]);
 
+  /**
+   * Ending a workout clears the active-workout cache, which would otherwise rip
+   * this screen's tree — including the alert dialog still animating closed —
+   * out from under itself before the dismissal lands. Keep rendering the last
+   * snapshot instead: the screen is on its way out either way.
+   */
+  const lastWorkoutRef = useRef(activeWorkout);
+  if (activeWorkout) lastWorkoutRef.current = activeWorkout;
+  const workout = activeWorkout ?? lastWorkoutRef.current;
+
+  const elapsedSeconds = useElapsedSeconds(workout?.startedAt);
+
   const canComplete = useMemo(
-    () => Boolean(activeWorkout && activeWorkout.exercises.length > 0),
-    [activeWorkout],
+    () => Boolean(workout && workout.exercises.length > 0),
+    [workout],
   );
+
+  /**
+   * Finishing and cancelling both tear the session down for good, so a second
+   * trigger (a double tap, or the other dialog action) would write against an
+   * already-deleted row.
+   */
+  const isEndingRef = useRef(false);
 
   const pendingSetInputsRef = useRef<Map<string, PendingSetInput>>(new Map());
   const pendingSetTimersRef = useRef<
@@ -263,7 +297,7 @@ export default function ActiveWorkoutScreen() {
 
   /** Builds the sheet's payload from whichever value the row reported. */
   const openSetEntry = (setId: string, field: "reps" | "weight") => {
-    for (const exercise of activeWorkout?.exercises ?? []) {
+    for (const exercise of workout?.exercises ?? []) {
       const index = exercise.sets.findIndex((item) => item.id === setId);
       if (index < 0) continue;
       const workoutSet = exercise.sets[index];
@@ -291,7 +325,7 @@ export default function ActiveWorkoutScreen() {
     let done = 0;
     let total = 0;
     let volumeKg = 0;
-    for (const exercise of activeWorkout?.exercises ?? []) {
+    for (const exercise of workout?.exercises ?? []) {
       for (const workoutSet of exercise.sets) {
         total += 1;
         if (workoutSet.isCompleted === 1) {
@@ -301,22 +335,31 @@ export default function ActiveWorkoutScreen() {
       }
     }
     return { done, total, volumeKg };
-  }, [activeWorkout]);
+  }, [workout]);
 
-  if (isLoading || !activeWorkout) {
+  if (!workout) {
     return (
       <CustomScreen>
-        <Text variant="muted">Loading workout...</Text>
+        {error ? (
+          <View className="gap-3">
+            <Text variant="muted">Couldn&apos;t load this workout.</Text>
+            <Button variant="outline" onPress={() => void refetch()}>
+              <Text>Try again</Text>
+            </Button>
+          </View>
+        ) : (
+          <Text variant="muted">Loading workout...</Text>
+        )}
       </CustomScreen>
     );
   }
 
-  const incompleteSetCount = activeWorkout.exercises.reduce(
+  const incompleteSetCount = workout.exercises.reduce(
     (total, exercise) =>
       total + exercise.sets.filter((set) => set.isCompleted === 0).length,
     0,
   );
-  const emptyExerciseCount = activeWorkout.exercises.filter(
+  const emptyExerciseCount = workout.exercises.filter(
     (exercise) => exercise.sets.length === 0,
   ).length;
   const cleanupParts: string[] = [];
@@ -343,11 +386,22 @@ export default function ActiveWorkoutScreen() {
 
   const commitRename = () => {
     const next = nameDraft.trim() || "Workout";
-    if (next === activeWorkout.name) return;
-    void renameWorkout({ sessionId: activeWorkout.id, name: next });
+    if (next === workout.name) return;
+    void renameWorkout({ sessionId: workout.id, name: next });
+  };
+
+  /** Deletes the session outright and leaves the screen. */
+  const discardWorkout = async () => {
+    if (isEndingRef.current) return;
+    isEndingRef.current = true;
+    cancelPendingSetUpdates();
+    await cancelWorkout(workout.id);
+    dismiss();
   };
 
   const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
+    if (isEndingRef.current) return;
+    isEndingRef.current = true;
     await finish();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success("Nice work!", {
@@ -366,7 +420,7 @@ export default function ActiveWorkoutScreen() {
     }
 
     if (incompleteSetCount === 0 && emptyExerciseCount === 0) {
-      await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
+      await finishAndCelebrate(() => completeWorkout(workout.id));
       return;
     }
 
@@ -375,28 +429,21 @@ export default function ActiveWorkoutScreen() {
 
   const onKeepEverythingAndComplete = async () => {
     setCleanupDialogOpen(false);
-    await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
+    await finishAndCelebrate(() => completeWorkout(workout.id));
   };
 
   const onDiscardAndFinish = async () => {
     setCleanupDialogOpen(false);
-    await removeIncompleteSets(activeWorkout.id);
-    const remaining = await removeEmptyExercises(activeWorkout.id);
+    await removeIncompleteSets(workout.id);
+    const remaining = await removeEmptyExercises(workout.id);
     if (remaining === 0) {
       // Cleanup emptied the workout — discard it rather than save an empty one.
-      await cancelWorkout(activeWorkout.id);
+      await discardWorkout();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       toast("Empty workout discarded", { duration: 2500 });
-      dismiss();
       return;
     }
-    await finishAndCelebrate(() => completeWorkout(activeWorkout.id));
-  };
-
-  const onCancel = async () => {
-    cancelPendingSetUpdates();
-    await cancelWorkout(activeWorkout.id);
-    dismiss();
+    await finishAndCelebrate(() => completeWorkout(workout.id));
   };
 
   return (
@@ -448,7 +495,7 @@ export default function ActiveWorkoutScreen() {
         </Button>
         <View className="flex-1 items-center">
           <Text variant="cardTitle" numberOfLines={1} className="text-[16px]">
-            {activeWorkout.name}
+            {workout.name}
           </Text>
           <Text variant="microLabel" className="mt-0.5">
             {totals.done} OF {totals.total} SETS
@@ -460,7 +507,7 @@ export default function ActiveWorkoutScreen() {
           className="size-11"
           accessibilityLabel="Workout options"
           onPress={() => {
-            setNameDraft(activeWorkout.name);
+            setNameDraft(workout.name);
             setShowOptions(true);
           }}
         >
@@ -484,12 +531,12 @@ export default function ActiveWorkoutScreen() {
         contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
-        {activeWorkout.exercises.length === 0 ? (
+        {workout.exercises.length === 0 ? (
           <Text variant="muted" className="py-8 text-center">
             No exercises yet. Add one below to get started.
           </Text>
         ) : (
-          activeWorkout.exercises.map((workoutExercise, index) => (
+          workout.exercises.map((workoutExercise, index) => (
             <View key={workoutExercise.id} className="gap-3">
               {index > 0 ? <Separator /> : null}
               <WorkoutExerciseBlock
@@ -500,7 +547,7 @@ export default function ActiveWorkoutScreen() {
                 }}
                 onRemoveExercise={(workoutSessionExerciseId) => {
                   void removeExerciseFromWorkout({
-                    workoutSessionId: activeWorkout.id,
+                    workoutSessionId: workout.id,
                     workoutSessionExerciseId,
                   });
                 }}
@@ -577,7 +624,7 @@ export default function ActiveWorkoutScreen() {
         onAddExercise={(exercise) => {
           setShowAddExerciseSheet(false);
           void addExerciseToWorkout({
-            workoutSessionId: activeWorkout.id,
+            workoutSessionId: workout.id,
             exerciseId: exercise.id,
           });
         }}
@@ -639,7 +686,7 @@ export default function ActiveWorkoutScreen() {
         destructive
         onConfirm={() => {
           setCancelConfirmOpen(false);
-          void onCancel();
+          void discardWorkout();
         }}
       />
     </CustomScreen>

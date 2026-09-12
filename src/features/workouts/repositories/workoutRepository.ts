@@ -412,6 +412,29 @@ export async function getActiveWorkoutSession(): Promise<WorkoutSessionDetails |
   return hydrateWorkoutSession(active.id);
 }
 
+/**
+ * Deletes every `active` session except the one `getActiveWorkoutSession` would
+ * return. The app only ever supports a single workout in progress and that
+ * lookup is the only thing that finds one by status, so any older `active` row
+ * is unreachable — nothing in the UI can resume, finish or discard it. Returns
+ * how many were dropped.
+ */
+export async function discardOrphanedActiveSessions(): Promise<number> {
+  const current = await getActiveWorkoutSession();
+  if (!current) return 0;
+
+  const orphans = await db
+    .select({ id: workoutSessions.id })
+    .from(workoutSessions)
+    .where(and(eq(workoutSessions.status, "active"), ne(workoutSessions.id, current.id)));
+
+  for (const orphan of orphans) {
+    await deleteWorkoutSessionGraph(orphan.id);
+  }
+
+  return orphans.length;
+}
+
 export async function resumeWorkout(sessionId?: string): Promise<WorkoutSessionDetails | null> {
   if (sessionId) return hydrateWorkoutSession(sessionId);
   return getActiveWorkoutSession();
