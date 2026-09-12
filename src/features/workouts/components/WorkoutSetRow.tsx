@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Check, Dumbbell, Trash2 } from "lucide-react-native";
+import { Check, Trash2 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -15,7 +15,6 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { PlateCalculatorSheet } from "@/features/plate-calculator/components/PlateCalculatorSheet";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -27,7 +26,6 @@ import {
   distanceToText,
   textToMetricDistance,
   weightToText,
-  toMetricWeight,
 } from "@/lib/units";
 
 /** Digits share one advance width, so values line up down the column. */
@@ -59,12 +57,6 @@ function toText(value: number | null): string {
   return value === null ? "" : String(value);
 }
 
-function toNumber(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export function WorkoutSetRow({
   index,
@@ -119,7 +111,6 @@ export function WorkoutSetRow({
   const [isDistanceFocused, setIsDistanceFocused] = useState(false);
   const [weightInput, setWeightInput] = useState("");
   const [isWeightFocused] = useState(false);
-  const [plateCalcOpen, setPlateCalcOpen] = useState(false);
 
   useEffect(() => {
     if (isDurationFocused) return;
@@ -252,14 +243,6 @@ export function WorkoutSetRow({
               {weightInput}
             </Text>
           </Pressable>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-11 w-8"
-            onPress={() => setPlateCalcOpen(true)}
-          >
-            <Icon as={Dumbbell} className="text-text-3 size-4" />
-          </Button>
         </>
       )}
 
@@ -289,18 +272,6 @@ export function WorkoutSetRow({
         <Icon as={Trash2} className="text-text-4 size-4" />
       </Button>
 
-      <PlateCalculatorSheet
-        visible={plateCalcOpen}
-        onClose={() => setPlateCalcOpen(false)}
-        initialWeight={toNumber(weightInput)}
-        weightUnit={weightUnit}
-        onApply={(displayWeight) => {
-          const kg = toMetricWeight(displayWeight, weightUnit);
-          setWeightInput(weightToText(kg, weightUnit));
-          onUpdate(workoutSet.id, { weight: kg });
-          setPlateCalcOpen(false);
-        }}
-      />
     </View>
   );
 }

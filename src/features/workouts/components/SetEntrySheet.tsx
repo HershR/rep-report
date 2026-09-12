@@ -1,4 +1,4 @@
-import { Delete } from "lucide-react-native";
+import { ChevronLeft, Delete, Dumbbell } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 
@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import type { WeightUnit } from "@/db/schema";
+import { PlateCalculator } from "@/features/plate-calculator/components/PlateCalculator";
 
 export type SetEntryField = "reps" | "weight";
 
@@ -56,6 +57,7 @@ export function SetEntrySheet({
   onCommit,
 }: SetEntrySheetProps) {
   const [field, setField] = useState<SetEntryField>("reps");
+  const [mode, setMode] = useState<"keypad" | "plates">("keypad");
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
 
@@ -63,6 +65,7 @@ export function SetEntrySheet({
   useEffect(() => {
     if (!target) return;
     setField(target.field);
+    setMode("keypad");
     setReps(target.reps);
     setWeight(target.weight);
   }, [target]);
@@ -126,6 +129,29 @@ export function SetEntrySheet({
             })}
           </View>
 
+          {mode === "plates" ? (
+            <View className="gap-3">
+              <Pressable
+                role="button"
+                onPress={() => setMode("keypad")}
+                className="-ml-1 h-11 flex-row items-center gap-1.5 self-start pr-3"
+              >
+                <Icon as={ChevronLeft} className="text-text-2 size-4" />
+                <Text variant="meta" className="text-text-2">
+                  KEYPAD
+                </Text>
+              </Pressable>
+              <PlateCalculator
+                weightUnit={weightUnit}
+                initialWeight={Number(weight) || null}
+                onApply={(total) => {
+                  setWeight(String(total));
+                  setMode("keypad");
+                }}
+              />
+            </View>
+          ) : (
+            <>
           <View className="flex-row gap-2">
             {steps.map((delta) => (
               <Pressable
@@ -139,6 +165,19 @@ export function SetEntrySheet({
                 </Text>
               </Pressable>
             ))}
+            {field === "weight" ? (
+              <Pressable
+                role="button"
+                accessibilityLabel="Plate calculator"
+                onPress={() => setMode("plates")}
+                className="bg-surface-raised h-11 flex-[1.4] flex-row items-center justify-center gap-1.5 rounded-full"
+              >
+                <Icon as={Dumbbell} className="text-text-2 size-4" />
+                <Text variant="meta" className="text-text-2">
+                  PLATES
+                </Text>
+              </Pressable>
+            ) : null}
             <Pressable
               role="button"
               disabled={!target.previous}
@@ -192,6 +231,8 @@ export function SetEntrySheet({
           >
             <Text>Log set · start rest</Text>
           </Button>
+            </>
+          )}
         </View>
       </SheetContent>
     </Sheet>
