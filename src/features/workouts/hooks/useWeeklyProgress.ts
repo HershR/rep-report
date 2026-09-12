@@ -18,6 +18,7 @@ export function useWeeklyProgress() {
   return {
     exerciseCount: query.data?.exerciseCount ?? 0,
     activitySeconds: query.data?.activitySeconds ?? 0,
+    dailySeconds: query.data?.dailySeconds ?? [0, 0, 0, 0, 0, 0, 0],
     isLoading: query.isLoading,
   };
 }
