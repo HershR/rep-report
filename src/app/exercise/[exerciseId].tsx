@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { toast } from "sonner-native";
 import { Image as ExpoImage } from "expo-image";
-import { Bookmark, ChevronLeft } from "lucide-react-native";
+import { Bookmark, ChevronLeft, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -16,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
 import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
 import type { PersonalRecordEntry } from "@/features/personal-records/types";
@@ -88,8 +90,18 @@ export default function ExerciseDetailScreen() {
   const exerciseId = params.exerciseId;
   const [tab, setTab] = useState<"details" | "records" | "charts">("details");
 
-  const { saveFavoriteExercise, removeFavoriteExercise } =
-    useFavoriteExercises();
+  const {
+    saveFavoriteExercise,
+    removeFavoriteExercise,
+    getFavoriteExerciseByWgerId,
+  } = useFavoriteExercises();
+  const {
+    activeWorkout,
+    startWorkout,
+    addExerciseToWorkout,
+    isSaving: workoutSaving,
+  } = useActiveWorkout();
+  const [addingToWorkout, setAddingToWorkout] = useState(false);
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const { records: personalRecords, isLoading: personalRecordsLoading } =
@@ -120,6 +132,70 @@ export default function ExerciseDetailScreen() {
   const isCustom = item?.source === "custom";
   const canFavorite = Boolean(item?.wgerExerciseId);
 
+  /**
+   * Sessions reference local exercise rows, and a wger exercise only gets one
+   * by being saved - which is also how the workout picker finds it later. So
+   * an unsaved exercise is saved on the way in, and the toast says so.
+   */
+  const onAddToWorkout = async () => {
+    if (!item) return;
+    setAddingToWorkout(true);
+    try {
+      let localId: string | null = source === "local" ? exerciseId : null;
+      let didSave = false;
+
+      if (!localId && item.wgerExerciseId !== null) {
+        const existing = await getFavoriteExerciseByWgerId(item.wgerExerciseId);
+        if (existing) {
+          localId = existing.id;
+        } else {
+          const saved = await saveFavoriteExercise({
+            id: String(item.wgerExerciseId),
+            wgerExerciseId: item.wgerExerciseId,
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            equipment: item.equipment,
+            primaryMuscles: item.primaryMuscles,
+            secondaryMuscles: item.secondaryMuscles,
+            imageUrl: item.imageUrl,
+            source: "wger",
+            isFavorite: true,
+          });
+          localId = saved.id;
+          didSave = true;
+        }
+      }
+      if (!localId) return;
+
+      const hadWorkout = activeWorkout?.status === "active";
+      const session = hadWorkout
+        ? activeWorkout
+        : await startWorkout({ name: "Workout" });
+
+      await addExerciseToWorkout({
+        workoutSessionId: session.id,
+        exerciseId: localId,
+      });
+
+      if (hadWorkout) {
+        toast.success(
+          didSave
+            ? `Saved and added to ${session.name}`
+            : `Added to ${session.name}`,
+        );
+      } else {
+        // A workout that did not exist a moment ago deserves to be shown.
+        router.push({
+          pathname: "/workout/active",
+          params: { sessionId: session.id },
+        });
+      }
+    } finally {
+      setAddingToWorkout(false);
+    }
+  };
+
   const onToggleFavorite = async () => {
     if (!item || item.wgerExerciseId === null) return;
     if (item.isFavorite) {
@@ -143,7 +219,28 @@ export default function ExerciseDetailScreen() {
   };
 
   return (
-    <CustomScreen scroll>
+    <CustomScreen
+      scroll
+      contentContainerStyle={{ paddingBottom: 16 }}
+      stickyFooter={
+        item ? (
+          <View className="border-border bg-surface-sunken border-t px-4 pt-3.5 pb-5">
+            <Button
+              size="lg"
+              loading={addingToWorkout || workoutSaving}
+              onPress={() => void onAddToWorkout()}
+            >
+              <Icon as={Plus} className="text-primary-foreground size-[18px]" />
+              <Text>
+                {activeWorkout?.status === "active"
+                  ? "Add to workout"
+                  : "Start workout with this"}
+              </Text>
+            </Button>
+          </View>
+        ) : null
+      }
+    >
       <View className="-mx-2 -mt-1 flex-row items-center justify-between">
         <Button
           variant="ghost"
