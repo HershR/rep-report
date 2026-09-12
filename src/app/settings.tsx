@@ -1,6 +1,7 @@
 import { Switch, View } from "react-native";
 
 import { CustomScreen, ScreenHeader } from "@/components/common";
+import { DeveloperCard } from "@/components/DeveloperCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -107,6 +108,8 @@ export default function SettingsScreen() {
           </View>
         </CardContent>
       </Card>
+
+      {__DEV__ ? <DeveloperCard /> : null}
     </CustomScreen>
   );
 }
