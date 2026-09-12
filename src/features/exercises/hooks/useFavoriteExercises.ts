@@ -28,6 +28,7 @@ export function useFavoriteExercises() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["favorite-exercises"] });
       void queryClient.invalidateQueries({ queryKey: ["exercise-search"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercise-detail"] });
     },
   });
 
@@ -36,6 +37,7 @@ export function useFavoriteExercises() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["favorite-exercises"] });
       void queryClient.invalidateQueries({ queryKey: ["exercise-search"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercise-detail"] });
     },
   });
 
@@ -44,6 +46,7 @@ export function useFavoriteExercises() {
       createExercise({ ...input, source: "custom", wgerExerciseId: null, isFavorite: true }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["favorite-exercises"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercise-detail"] });
     },
   });
 
