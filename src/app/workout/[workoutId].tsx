@@ -10,7 +10,7 @@ import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { MoreHorizontal } from "lucide-react-native";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -199,6 +199,7 @@ export default function WorkoutDetailScreen() {
   if (isLoading || !workoutSession) {
     return (
       <CustomScreen>
+        <ScreenHeader title="Workout" />
         <View className="flex-1 items-center justify-center gap-2">
           <ActivityIndicator />
           <Text variant="muted">Loading workout...</Text>
@@ -569,32 +570,32 @@ export default function WorkoutDetailScreen() {
 
   return (
     <CustomScreen>
-      {/* Fixed header: name + options together, Save on the right, summary below. */}
+      {/* Fixed header: back + name, options and Save trailing, summary below. */}
       <View className="pb-3">
-        <View className="flex-row items-center justify-between gap-2">
-          <View className="flex-1 flex-row items-center gap-1">
-            <Text variant="h2" numberOfLines={1} className="shrink">
-              {nameDraft?.trim() ? nameDraft : "Workout"}
-            </Text>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              accessibilityLabel="Workout options"
-              onPress={() => setShowOptions(true)}
-            >
-              <Icon as={MoreHorizontal} className="text-foreground" />
-            </Button>
-          </View>
-          <Button
-            size="sm"
-            loading={isSaving || isSavingAll}
-            onPress={() => void onSaveAll()}
-          >
-            <Text>Save</Text>
-          </Button>
-        </View>
-        <Text variant="muted" className="text-xs">
+        <ScreenHeader
+          title={nameDraft?.trim() ? nameDraft : "Workout"}
+          right={
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                accessibilityLabel="Workout options"
+                onPress={() => setShowOptions(true)}
+              >
+                <Icon as={MoreHorizontal} className="text-foreground" />
+              </Button>
+              <Button
+                size="sm"
+                loading={isSaving || isSavingAll}
+                onPress={() => void onSaveAll()}
+              >
+                <Text>Save</Text>
+              </Button>
+            </>
+          }
+        />
+        <Text variant="muted" className="mt-2 text-xs">
           {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
         </Text>
       </View>

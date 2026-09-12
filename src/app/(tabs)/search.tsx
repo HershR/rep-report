@@ -307,7 +307,7 @@ export default function SearchScreen() {
                 <Text variant="muted">Loading page...</Text>
               </View>
             ) : !isLoading && !isError && items.length > 0 ? (
-              <View className="mt-4 flex-row gap-2">
+              <View className="mt-4 flex-row gap-2 px-4">
                 <Button
                   variant="outline"
                   className="flex-1"

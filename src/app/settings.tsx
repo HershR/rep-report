@@ -79,6 +79,12 @@ export default function SettingsScreen() {
                 void updateAppSettings({ restTimerEnabled: on ? 1 : 0 })
               }
               trackColor={{ false: colors.border, true: colors.primary }}
+              // Left unset, Android paints the thumb Material blue, which
+              // belongs to no palette in this app.
+              thumbColor={
+                restTimerEnabled ? colors.primaryForeground : colors.foreground
+              }
+              ios_backgroundColor={colors.border}
             />
           </View>
 

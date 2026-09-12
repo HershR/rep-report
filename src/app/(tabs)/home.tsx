@@ -69,7 +69,7 @@ export default function HomeScreen() {
           {templates.length > 0 ? (
             <Button
               variant="ghost"
-              className="-mr-2.5 h-6 px-2.5"
+              className="-mr-2.5 h-6 px-2.5 py-0"
               onPress={() => router.push("/saved" as Href)}
             >
               <Text className="text-text-3 text-xs font-semibold">See all</Text>

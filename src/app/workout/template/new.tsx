@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, type Href } from "expo-router";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Text } from "@/components/ui/text";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { TemplateEditor } from "../../../features/templates/components/TemplateEditor";
@@ -62,8 +62,10 @@ export default function NewTemplateScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">New Workout Template</Text>
-      <Text variant="muted">Build template using saved exercises.</Text>
+      <ScreenHeader title="New Template" />
+      <Text variant="muted" className="mt-2">
+        Build template using saved exercises.
+      </Text>
       <TemplateEditor favorites={favorites} isSaving={isSaving} onSave={onSave} />
     </CustomScreen>
   );

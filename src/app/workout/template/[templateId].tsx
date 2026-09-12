@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -123,8 +123,10 @@ export default function TemplateDetailScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">Edit Workout Template</Text>
-      <Text variant="muted">Update name, exercises, and target sets.</Text>
+      <ScreenHeader title="Edit Template" />
+      <Text variant="muted" className="mt-2">
+        Update name, exercises, and target sets.
+      </Text>
 
       <Button
         variant="destructive"

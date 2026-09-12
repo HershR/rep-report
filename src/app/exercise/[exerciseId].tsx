@@ -18,7 +18,10 @@ import { Text } from "@/components/ui/text";
 import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
-import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
+import {
+  getExerciseById,
+  isExerciseFavorited,
+} from "@/features/exercises/repositories/exerciseRepository";
 import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
 import type { PersonalRecordEntry } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
@@ -124,7 +127,15 @@ export default function ExerciseDetailScreen() {
       if (source === "local") {
         return getExerciseById(exerciseId);
       }
-      return getWgerExerciseById(Number(exerciseId));
+      // The wger mapper has no view of the local database, so everything it
+      // returns claims `isFavorite: false`. Without this the bookmark reads
+      // hollow for an exercise that is already saved, and toggling it appears
+      // to do nothing - the refetch just hands back another false.
+      const remote = await getWgerExerciseById(Number(exerciseId));
+      return {
+        ...remote,
+        isFavorite: await isExerciseFavorited(remote.wgerExerciseId),
+      };
     },
   });
 
