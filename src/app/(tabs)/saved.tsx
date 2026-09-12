@@ -1,17 +1,16 @@
 import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
-import { useColorScheme } from "nativewind";
 import { ActivityIndicator, View } from "react-native";
+import { Plus } from "lucide-react-native";
 import { FlashList } from "@shopify/flash-list";
 
 import { CustomScreen } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
-import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
+import { ExerciseRow } from "@/features/exercises/components/ExerciseRow";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import type { Exercise } from "@/features/exercises/types";
 import { TemplateCard } from "@/features/templates/components/TemplateCard";
@@ -30,8 +29,7 @@ type SavedRow =
 
 export default function SavedScreen() {
   const router = useRouter();
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const [tab, setTab] = useState<SavedTab>("exercises");
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
@@ -114,27 +112,26 @@ export default function SavedScreen() {
   return (
     <CustomScreen>
       <View className="mb-3 gap-3">
-        <View>
-          <Text variant="h2">Saved</Text>
-          <Text variant="muted">Manage saved exercises and templates.</Text>
-        </View>
+        <Text variant="screenTitle" className="h-9">
+          Saved
+        </Text>
 
         <Tabs value={tab} onValueChange={(value) => setTab(value as SavedTab)}>
           <TabsList className="w-full">
             <TabsTrigger value="exercises" className="flex-1">
               <Text>Exercises</Text>
               {exerciseCount !== undefined ? (
-                <Badge variant="secondary">
-                  <Text>{exerciseCount}</Text>
-                </Badge>
+                <Text variant="meta" className="text-text-3">
+                  {exerciseCount}
+                </Text>
               ) : null}
             </TabsTrigger>
             <TabsTrigger value="templates" className="flex-1">
               <Text>Templates</Text>
               {templateCount !== undefined ? (
-                <Badge variant="secondary">
-                  <Text>{templateCount}</Text>
-                </Badge>
+                <Text variant="meta" className="text-text-3">
+                  {templateCount}
+                </Text>
               ) : null}
             </TabsTrigger>
           </TabsList>
@@ -146,25 +143,28 @@ export default function SavedScreen() {
         keyExtractor={(row) => row.key}
         getItemType={(row) => row.kind}
         style={{ flex: 1 }}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        ListHeaderComponent={
-          <View className="mb-2 flex-row justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onPress={() =>
-                router.push(
-                  (tab === "templates"
-                    ? "/workout/template/new"
-                    : "/exercise/new") as Href,
-                )
-              }
-            >
-              <Text>Create New</Text>
-            </Button>
-          </View>
+        ItemSeparatorComponent={() =>
+          tab === "templates" ? <View style={{ height: 10 }} /> : null
         }
-        renderItem={({ item }) => {
+        ListHeaderComponent={
+          <Button
+            variant="outline"
+            className="border-border-strong mb-3 h-[50px] border-dashed bg-transparent"
+            onPress={() =>
+              router.push(
+                (tab === "templates"
+                  ? "/workout/template/new"
+                  : "/exercise/new") as Href,
+              )
+            }
+          >
+            <Icon as={Plus} className="text-primary size-4" />
+            <Text className="text-primary">
+              {tab === "templates" ? "New template" : "New exercise"}
+            </Text>
+          </Button>
+        }
+        renderItem={({ item, index }) => {
           switch (item.kind) {
             case "loading":
               return (
@@ -174,23 +174,19 @@ export default function SavedScreen() {
               );
             case "error":
               return (
-                <Card>
-                  <CardContent>
-                    <Text>{item.message}</Text>
-                  </CardContent>
-                </Card>
+                <Text className="text-destructive py-6 text-center text-sm">
+                  {item.message}
+                </Text>
               );
             case "empty":
               return (
-                <Card>
-                  <CardContent>
-                    <Text variant="muted">{item.message}</Text>
-                  </CardContent>
-                </Card>
+                <Text className="text-text-3 py-8 text-center text-sm">
+                  {item.message}
+                </Text>
               );
             case "exercise":
               return (
-                <ExerciseCard
+                <ExerciseRow
                   name={item.exercise.name}
                   category={item.exercise.category}
                   imageUrl={item.exercise.imageUrl}
@@ -216,6 +212,7 @@ export default function SavedScreen() {
               return (
                 <TemplateCard
                   template={item.template}
+                  marker={String.fromCharCode(65 + index)}
                   onPress={() => {
                     router.push({
                       pathname: "/workout/template/[templateId]",

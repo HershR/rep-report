@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useColorScheme } from "nativewind";
 import { Pressable, ScrollView, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
@@ -90,8 +89,7 @@ export function PlateCalculator({
   initialWeight,
   onApply,
 }: PlateCalculatorProps) {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const presets = BAR_PRESETS[weightUnit];
   const sizes = PLATE_SIZES[weightUnit];
   const maxSize = sizes[0];

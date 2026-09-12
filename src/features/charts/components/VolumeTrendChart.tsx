@@ -19,16 +19,33 @@ export function VolumeTrendChart() {
     value: Math.round(toDisplayWeight(point.totalVolumeKg, weightUnit)),
   }));
 
+  // The headline number is the point of the panel; the line shows its shape.
+  const total = points.reduce((sum, point) => sum + point.value, 0);
+
   return (
     <View className="gap-3">
-      <Text variant="large">Volume trend</Text>
+      <View>
+        <Text variant="sectionLabel">
+          {`VOLUME · LAST 3 MONTHS · ${weightUnit.toUpperCase()}`}
+        </Text>
+        <View className="mt-2 flex-row items-baseline gap-2">
+          <Text variant="hero" className="text-[34px]">
+            {total.toLocaleString()}
+          </Text>
+          <Text className="text-text-4 text-sm font-semibold">
+            {weightUnit}
+          </Text>
+        </View>
+      </View>
       <ProgressLineChart
         points={points}
-        emptyMessage="Complete a couple of workouts to see your volume trend."
+        emptyMessage="Train on two different days to see the shape of your volume."
       />
-      <Text variant="muted" className="text-center text-xs">
-        {`Total volume per day · ${weightUnit} · last 3 months`}
-      </Text>
+      {points.length > 1 ? (
+        <Text variant="microLabel" className="text-center">
+          TOTAL VOLUME PER DAY
+        </Text>
+      ) : null}
     </View>
   );
 }

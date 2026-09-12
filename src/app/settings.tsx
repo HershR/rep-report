@@ -1,4 +1,3 @@
-import { useColorScheme } from "nativewind";
 import { Switch, View } from "react-native";
 
 import { CustomScreen, ScreenHeader } from "@/components/common";
@@ -18,15 +17,8 @@ const REST_TIMER_PRESETS = [
 ] as const;
 
 export default function SettingsScreen() {
-  const { colorScheme, setColorScheme } = useColorScheme();
-  const colors = THEME[colorScheme ?? "light"];
+  const colors = THEME;
   const { appSettings, updateAppSettings } = useAppSettings();
-
-  const onToggleDarkMode = (dark: boolean) => {
-    const mode = dark ? "dark" : "light";
-    setColorScheme(mode);
-    void updateAppSettings({ themeMode: mode });
-  };
 
   const restTimerEnabled = (appSettings?.restTimerEnabled ?? 1) === 1;
   const restTimerDefaultSeconds = appSettings?.restTimerDefaultSeconds ?? 90;
@@ -72,15 +64,6 @@ export default function SettingsScreen() {
               <TabsContent value="metric" />
               <TabsContent value="imperial" />
             </Tabs>
-          </View>
-
-          <View className="flex-row items-center justify-between">
-            <Label>Dark mode</Label>
-            <Switch
-              value={colorScheme === "dark"}
-              onValueChange={onToggleDarkMode}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
           </View>
         </CardContent>
       </Card>

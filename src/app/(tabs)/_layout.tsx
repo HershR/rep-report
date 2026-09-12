@@ -8,8 +8,8 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MiniWorkoutBar } from "@/features/workouts/components/MiniWorkoutBar";
 import { THEME } from "@/lib/theme";
@@ -21,8 +21,8 @@ function tabIcon(IconComponent: LucideIcon) {
 }
 
 export default function TabLayout() {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -35,11 +35,21 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarInactiveTintColor: colors.text3,
         tabBarStyle: {
-          backgroundColor: colors.card,
+          backgroundColor: colors.surfaceSunken,
           borderTopColor: colors.border,
+          height: 62 + insets.bottom,
+          paddingTop: 10,
+          paddingBottom: insets.bottom,
         },
+        tabBarLabelStyle: {
+          fontFamily: "IBMPlexMono_600SemiBold",
+          fontSize: 9,
+          letterSpacing: 0.9,
+          marginTop: 3,
+        },
+        tabBarIconStyle: { marginTop: 2 },
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.foreground,
       }}
@@ -48,6 +58,7 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Home",
+          tabBarLabel: "TODAY",
           tabBarIcon: tabIcon(Home),
         }}
       />
@@ -55,6 +66,7 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "Search",
+          tabBarLabel: "SEARCH",
           tabBarIcon: tabIcon(Search),
         }}
       />
@@ -62,6 +74,7 @@ export default function TabLayout() {
         name="progress"
         options={{
           title: "Progress",
+          tabBarLabel: "PROGRESS",
           tabBarIcon: tabIcon(BarChart3),
         }}
       />
@@ -69,6 +82,7 @@ export default function TabLayout() {
         name="saved"
         options={{
           title: "Saved",
+          tabBarLabel: "SAVED",
           tabBarIcon: tabIcon(Bookmark),
         }}
       />
@@ -76,6 +90,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
+          tabBarLabel: "PROFILE",
           tabBarIcon: tabIcon(User),
         }}
       />

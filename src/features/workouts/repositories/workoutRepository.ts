@@ -249,6 +249,8 @@ export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTota
 }
 
 export type WeeklyProgress = {
+  /** Active seconds per weekday, Monday first - drives the week strip. */
+  dailySeconds: number[];
   /** Total exercises logged across completed workouts since Monday. */
   exerciseCount: number;
   /** Total workout duration (seconds) since Monday. */
@@ -278,8 +280,20 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
   const sessions = sessionRows.filter(
     (session) => session.completedAt && session.completedAt >= weekStartIso,
   );
+  const weekStartMs = new Date(weekStartIso).getTime();
+  const dailySeconds = [0, 0, 0, 0, 0, 0, 0];
+  for (const session of sessions) {
+    const dayIndex = Math.floor(
+      (new Date(session.completedAt as string).getTime() - weekStartMs) /
+        86_400_000,
+    );
+    if (dayIndex >= 0 && dayIndex < 7) {
+      dailySeconds[dayIndex] += session.durationSeconds ?? 0;
+    }
+  }
+
   if (sessions.length === 0) {
-    return { exerciseCount: 0, activitySeconds: 0 };
+    return { exerciseCount: 0, activitySeconds: 0, dailySeconds };
   }
 
   const activitySeconds = sessions.reduce(
@@ -297,7 +311,7 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
       ),
     );
 
-  return { exerciseCount: exerciseRows.length, activitySeconds };
+  return { exerciseCount: exerciseRows.length, activitySeconds, dailySeconds };
 }
 
 export type WorkoutVolumePoint = {

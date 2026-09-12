@@ -1,18 +1,16 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
+import { Search, SlidersHorizontal, X } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
 import { CustomScreen } from "@/components/common";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
+import { ExerciseRow } from "@/features/exercises/components/ExerciseRow";
 import { ExerciseFilterModal } from "@/features/exercises/components/ExerciseFilterModal";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useExerciseSearch } from "@/features/exercises/hooks/useExerciseSearch";
@@ -25,8 +23,7 @@ import {
 import { THEME } from "@/lib/theme";
 
 export default function SearchScreen() {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -157,52 +154,69 @@ export default function SearchScreen() {
 
   return (
     <CustomScreen scroll>
-      <Text variant="h2">Search</Text>
-      <Text variant="muted">Find exercises from WGER.</Text>
+      <View className="h-9 flex-row items-center justify-between">
+        <Text variant="screenTitle">Exercises</Text>
+        <Text variant="microLabel">WGER</Text>
+      </View>
 
-      <View className="border-input bg-background mt-4 flex-row items-center gap-2 rounded-md border-2 px-3">
-        <Icon as={Search} className="text-muted-foreground" />
+      <View className="border-input bg-surface-raised mt-3.5 h-12 flex-row items-center gap-2.5 rounded-md border px-3.5">
+        <Icon as={Search} className="text-text-4 size-[18px]" />
         <Input
-          className="flex-1 border-0 px-0 shadow-none"
+          className="h-12 flex-1 border-0 bg-transparent px-0"
           value={query}
           onChangeText={onChangeQuery}
           placeholder="Search exercises"
         />
-      </View>
-
-      <View className="mt-4 flex-row items-center justify-between">
-        <Button variant="outline" onPress={() => setFilterModalVisible(true)}>
-          <Text>Filters</Text>
-          {activeFilterCount > 0 ? (
-            <Badge variant="secondary">
-              <Text>{activeFilterCount}</Text>
-            </Badge>
-          ) : null}
-        </Button>
-
-        {activeFilterCount > 0 ? (
-          <Button variant="ghost" size="sm" onPress={clearFilters}>
-            <Text>Clear</Text>
+        {query ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="-mr-2 size-11"
+            accessibilityLabel="Clear search"
+            onPress={() => onChangeQuery("")}
+          >
+            <View className="bg-border-strong size-5 items-center justify-center rounded-full">
+              <Icon as={X} className="text-text-2 size-3" />
+            </View>
           </Button>
         ) : null}
       </View>
 
-      {activeFilterChips.length > 0 ? (
-        <View className="mt-3 flex-row flex-wrap gap-2">
-          {activeFilterChips.map((chip) => (
-            <Badge
-              key={chip.key}
-              variant="secondary"
-              className="flex-row items-center gap-1 pr-1"
-            >
-              <Text>{chip.label}</Text>
-              <Pressable onPress={chip.onRemove} hitSlop={8}>
-                <Icon as={X} className="text-secondary-foreground size-3" />
-              </Pressable>
-            </Badge>
-          ))}
-        </View>
-      ) : null}
+      <View className="mt-3.5 flex-row flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-surface-inset size-11 rounded-full"
+          accessibilityLabel="Filters"
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Icon as={SlidersHorizontal} className="text-text-2 size-[17px]" />
+        </Button>
+
+        {activeFilterChips.map((chip) => (
+          <Pressable
+            key={chip.key}
+            role="button"
+            onPress={chip.onRemove}
+            className="bg-primary h-11 flex-row items-center gap-1.5 rounded-full pr-3 pl-4"
+          >
+            <Text className="text-primary-foreground text-sm font-semibold">
+              {chip.label}
+            </Text>
+            <Icon as={X} className="text-primary-foreground size-3.5" />
+          </Pressable>
+        ))}
+
+        {activeFilterCount > 1 ? (
+          <Button
+            variant="ghost"
+            className="h-11 rounded-full px-4"
+            onPress={clearFilters}
+          >
+            <Text className="text-text-3 text-sm">Clear</Text>
+          </Button>
+        ) : null}
+      </View>
 
       {isLoading ? (
         <View className="mt-8 items-center justify-center">
@@ -257,17 +271,17 @@ export default function SearchScreen() {
       <View className="mt-4 gap-2">
         {!isLoading && !isError && items.length > 0 ? (
           <View className="flex-row items-center justify-between">
-            <Text variant="muted">{`Showing ${items.length} of ${total}`}</Text>
-            <Text variant="muted">{`Page ${page} of ${totalPages}`}</Text>
+            <Text variant="sectionLabel">{`${total} RESULTS`}</Text>
+            <Text variant="microLabel">{`PAGE ${page} / ${totalPages}`}</Text>
           </View>
         ) : null}
         <FlashList
+          className="-mx-4"
           data={items}
           keyExtractor={(exercise) => String(exercise.wgerExerciseId)}
-          contentContainerStyle={{ gap: 8 }}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          contentContainerStyle={{ paddingBottom: 8 }}
           renderItem={({ item: exercise }) => (
-            <ExerciseCard
+            <ExerciseRow
               name={exercise.name}
               category={exercise.category}
               imageUrl={exercise.imageUrl}

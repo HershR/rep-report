@@ -41,12 +41,12 @@ export function RestTimerBar({
 
   return (
     <View
-      className="border-border bg-background border-t px-4 pt-3"
+      className="border-primary/30 bg-card border-t px-4 pt-3"
       style={{ paddingBottom: insets.bottom + 12 }}
     >
       {isResting ? (
         <View className="gap-2">
-          <View className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+          <View className="bg-surface-raised h-1 w-full overflow-hidden rounded-full">
             <View
               className="bg-primary h-full rounded-full"
               style={{ width: `${ratio * 100}%` }}
@@ -55,8 +55,8 @@ export function RestTimerBar({
 
           <View className="flex-row items-center gap-2">
             <View className="flex-row items-center gap-2">
-              <Icon as={Timer} className="text-muted-foreground size-4" />
-              <Text variant="large">{formatRest(remainingSeconds)}</Text>
+              <Icon as={Timer} className="text-primary size-5" />
+              <Text variant="numeral" className="text-[22px]">{formatRest(remainingSeconds)}</Text>
             </View>
 
             <View className="ml-auto flex-row items-center gap-2">
@@ -77,7 +77,7 @@ export function RestTimerBar({
           variant="outline"
           onPress={() => onStart(defaultSeconds)}
         >
-          <Icon as={Timer} className="text-muted-foreground size-4" />
+          <Icon as={Timer} className="text-primary size-5" />
           <Text>{`Start rest · ${formatRest(defaultSeconds)}`}</Text>
         </Button>
       )}

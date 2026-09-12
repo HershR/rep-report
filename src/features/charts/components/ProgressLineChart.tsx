@@ -1,6 +1,5 @@
 import { matchFont } from "@shopify/react-native-skia";
 import { format } from "date-fns";
-import { useColorScheme } from "nativewind";
 import { useMemo } from "react";
 import { Platform, View } from "react-native";
 import { CartesianChart, Line } from "victory-native";
@@ -27,8 +26,7 @@ export function ProgressLineChart({
   formatY,
   height = 220,
 }: ProgressLineChartProps) {
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const colors = THEME;
 
   const font = useMemo(
     () => matchFont({ fontFamily: fontFamily ?? "sans-serif", fontSize: 11 }),
@@ -39,7 +37,16 @@ export function ProgressLineChart({
   const gridColor = hslStringToRgb(colors.border);
 
   if (points.length < 2) {
-    return <Text variant="muted">{emptyMessage}</Text>;
+    return (
+      <View
+        style={{ height: height / 2 }}
+        className="items-center justify-center"
+      >
+        <Text variant="body" className="text-text-3 text-center">
+          {emptyMessage}
+        </Text>
+      </View>
+    );
   }
 
   return (

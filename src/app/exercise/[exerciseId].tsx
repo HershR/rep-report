@@ -1,22 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { toast } from "sonner-native";
 import { Image as ExpoImage } from "expo-image";
-import { Heart } from "lucide-react-native";
+import { Bookmark, ChevronLeft, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
+import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import { getExerciseById } from "@/features/exercises/repositories/exerciseRepository";
 import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
 import type { PersonalRecordEntry } from "@/features/personal-records/types";
@@ -29,25 +30,43 @@ const blurhash =
 function MuscleGroup({ title, muscles }: { title: string; muscles: string[] }) {
   if (muscles.length === 0) return null;
   return (
-    <View className="gap-1">
-      <Text variant="small">{title}</Text>
-      <View className="flex-row flex-wrap gap-1">
+    <View className="gap-2.5">
+      <Text variant="sectionLabel">{title.toUpperCase()}</Text>
+      <View className="flex-row flex-wrap gap-2">
         {muscles.map((muscle) => (
-          <Badge key={muscle} variant="outline">
-            <Text>{muscle}</Text>
-          </Badge>
+          <View
+            key={muscle}
+            className="border-border bg-surface-inset h-8 justify-center rounded-full border px-3"
+          >
+            <Text className="text-text-2 text-xs font-medium">{muscle}</Text>
+          </View>
         ))}
       </View>
     </View>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
-    <View className="flex-1 items-center gap-1">
-      <Text variant="large">{value}</Text>
-      <Text variant="muted" className="text-xs uppercase">
+    <View
+      className={cn(
+        "bg-card h-[78px] flex-1 justify-between rounded-lg border p-3",
+        accent ? "border-primary/30" : "border-border",
+      )}
+    >
+      <Text variant="microLabel" className={cn(accent && "text-primary")}>
         {label}
+      </Text>
+      <Text variant="numeral" className="text-[22px]" numberOfLines={1}>
+        {value}
       </Text>
     </View>
   );
@@ -62,6 +81,7 @@ function mostRecentAchievedAt(entries: (PersonalRecordEntry | null)[]): string |
 }
 
 export default function ExerciseDetailScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{
     exerciseId: string;
     source?: "local" | "wger";
@@ -70,8 +90,18 @@ export default function ExerciseDetailScreen() {
   const exerciseId = params.exerciseId;
   const [tab, setTab] = useState<"details" | "records" | "charts">("details");
 
-  const { saveFavoriteExercise, removeFavoriteExercise } =
-    useFavoriteExercises();
+  const {
+    saveFavoriteExercise,
+    removeFavoriteExercise,
+    getFavoriteExerciseByWgerId,
+  } = useFavoriteExercises();
+  const {
+    activeWorkout,
+    startWorkout,
+    addExerciseToWorkout,
+    isSaving: workoutSaving,
+  } = useActiveWorkout();
+  const [addingToWorkout, setAddingToWorkout] = useState(false);
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const { records: personalRecords, isLoading: personalRecordsLoading } =
@@ -102,6 +132,70 @@ export default function ExerciseDetailScreen() {
   const isCustom = item?.source === "custom";
   const canFavorite = Boolean(item?.wgerExerciseId);
 
+  /**
+   * Sessions reference local exercise rows, and a wger exercise only gets one
+   * by being saved - which is also how the workout picker finds it later. So
+   * an unsaved exercise is saved on the way in, and the toast says so.
+   */
+  const onAddToWorkout = async () => {
+    if (!item) return;
+    setAddingToWorkout(true);
+    try {
+      let localId: string | null = source === "local" ? exerciseId : null;
+      let didSave = false;
+
+      if (!localId && item.wgerExerciseId !== null) {
+        const existing = await getFavoriteExerciseByWgerId(item.wgerExerciseId);
+        if (existing) {
+          localId = existing.id;
+        } else {
+          const saved = await saveFavoriteExercise({
+            id: String(item.wgerExerciseId),
+            wgerExerciseId: item.wgerExerciseId,
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            equipment: item.equipment,
+            primaryMuscles: item.primaryMuscles,
+            secondaryMuscles: item.secondaryMuscles,
+            imageUrl: item.imageUrl,
+            source: "wger",
+            isFavorite: true,
+          });
+          localId = saved.id;
+          didSave = true;
+        }
+      }
+      if (!localId) return;
+
+      const hadWorkout = activeWorkout?.status === "active";
+      const session = hadWorkout
+        ? activeWorkout
+        : await startWorkout({ name: "Workout" });
+
+      await addExerciseToWorkout({
+        workoutSessionId: session.id,
+        exerciseId: localId,
+      });
+
+      if (hadWorkout) {
+        toast.success(
+          didSave
+            ? `Saved and added to ${session.name}`
+            : `Added to ${session.name}`,
+        );
+      } else {
+        // A workout that did not exist a moment ago deserves to be shown.
+        router.push({
+          pathname: "/workout/active",
+          params: { sessionId: session.id },
+        });
+      }
+    } finally {
+      setAddingToWorkout(false);
+    }
+  };
+
   const onToggleFavorite = async () => {
     if (!item || item.wgerExerciseId === null) return;
     if (item.isFavorite) {
@@ -125,8 +219,81 @@ export default function ExerciseDetailScreen() {
   };
 
   return (
-    <CustomScreen scroll>
-      <Text variant="h2">{item?.name ?? "Exercise Detail"}</Text>
+    <CustomScreen
+      scroll
+      contentContainerStyle={{ paddingBottom: 16 }}
+      stickyFooter={
+        item ? (
+          <View className="border-border bg-surface-sunken border-t px-4 pt-3.5 pb-5">
+            <Button
+              size="lg"
+              loading={addingToWorkout || workoutSaving}
+              onPress={() => void onAddToWorkout()}
+            >
+              <Icon as={Plus} className="text-primary-foreground size-[18px]" />
+              <Text>
+                {activeWorkout?.status === "active"
+                  ? "Add to workout"
+                  : "Start workout with this"}
+              </Text>
+            </Button>
+          </View>
+        ) : null
+      }
+    >
+      <View className="-mx-2 -mt-1 flex-row items-center justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          accessibilityLabel="Back"
+          onPress={() => router.back()}
+        >
+          <Icon as={ChevronLeft} className="text-foreground size-5" />
+        </Button>
+        {item && !isCustom ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "size-11 rounded-full",
+              item.isFavorite && "bg-primary/10",
+            )}
+            disabled={!canFavorite}
+            accessibilityLabel={
+              item.isFavorite ? "Remove from saved" : "Save exercise"
+            }
+            onPress={() => void onToggleFavorite()}
+          >
+            <Icon
+              as={Bookmark}
+              className={item.isFavorite ? "text-primary" : "text-text-3"}
+              fill={item.isFavorite ? "currentColor" : "none"}
+            />
+          </Button>
+        ) : null}
+      </View>
+
+      <Text variant="screenTitle" className="mt-1 text-[27px] leading-tight">
+        {item?.name ?? "Exercise Detail"}
+      </Text>
+
+      {item ? (
+        <View className="mt-2.5 flex-row flex-wrap gap-2">
+          {[item.category, item.equipment[0], isCustom ? "Custom" : null]
+            .filter(Boolean)
+            .map((label) => (
+              <View
+                key={label as string}
+                className="bg-surface-raised h-[26px] justify-center rounded-full px-3"
+              >
+                <Text variant="microLabel" className="text-text-2">
+                  {String(label).toUpperCase()}
+                </Text>
+              </View>
+            ))}
+        </View>
+      ) : null}
 
       {query.isLoading ? (
         <Text variant="muted" className="mt-4">
@@ -150,6 +317,36 @@ export default function ExerciseDetailScreen() {
         </Card>
       ) : null}
 
+      {item && source === "local" && personalRecords ? (
+        <View className="mt-4 flex-row gap-2">
+          <Stat
+            label="EST. 1RM"
+            accent
+            value={
+              personalRecords.bestEstimated1RM?.volume != null
+                ? weightToText(personalRecords.bestEstimated1RM.volume, weightUnit)
+                : "—"
+            }
+          />
+          <Stat
+            label="HEAVIEST"
+            value={
+              personalRecords.heaviestWeight
+                ? weightToText(personalRecords.heaviestWeight.weight, weightUnit)
+                : "—"
+            }
+          />
+          <Stat
+            label="MOST REPS"
+            value={
+              personalRecords.mostReps
+                ? String(personalRecords.mostReps.reps)
+                : "—"
+            }
+          />
+        </View>
+      ) : null}
+
       {item ? (
         <FadeInView>
           <Tabs
@@ -161,7 +358,7 @@ export default function ExerciseDetailScreen() {
           >
             <TabsList className="w-full">
               <TabsTrigger value="details" className="flex-1">
-                <Text>Details</Text>
+                <Text>How to</Text>
               </TabsTrigger>
               <TabsTrigger value="records" className="flex-1">
                 <Text>Records</Text>
@@ -172,56 +369,22 @@ export default function ExerciseDetailScreen() {
             </TabsList>
 
             <TabsContent value="details">
-              <Card className="gap-0 overflow-hidden p-0">
+              <Card className="gap-0 overflow-hidden border-0 bg-transparent p-0">
                 {item.imageUrl ? (
-                  <View className="bg-white">
+                  <View className="border-border bg-neutral-200 overflow-hidden rounded-lg border">
                     <ExpoImage
                       source={{ uri: item.imageUrl }}
-                      style={{ width: "100%", aspectRatio: 1 }}
+                      style={{ width: "100%", aspectRatio: 16 / 10 }}
                       contentFit={"contain"}
                       placeholder={blurhash}
                     />
                   </View>
                 ) : null}
 
-                <CardContent className="gap-3 p-4">
-                  <View className="flex-row items-center gap-1.5">
-                    {item.category ? (
-                      <Badge variant="secondary">
-                        <Text>{item.category}</Text>
-                      </Badge>
-                    ) : null}
-                    {isCustom ? (
-                      <Badge variant="secondary">
-                        <Text>Custom</Text>
-                      </Badge>
-                    ) : null}
-                    {isCustom ? null : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto"
-                        disabled={!canFavorite}
-                        onPress={() => void onToggleFavorite()}
-                      >
-                        <Icon
-                          as={Heart}
-                          className={
-                            item.isFavorite
-                              ? "text-red-500"
-                              : "text-muted-foreground"
-                          }
-                          fill={item.isFavorite ? "currentColor" : "none"}
-                        />
-                      </Button>
-                    )}
-                  </View>
-
+                <CardContent className="gap-4 px-0 pt-4">
                   {item.description ? (
-                    <Text variant="muted">{item.description}</Text>
+                    <Text variant="body">{item.description}</Text>
                   ) : null}
-
-                  <Separator />
 
                   <View className="gap-3">
                     <MuscleGroup title="Equipment" muscles={item.equipment} />

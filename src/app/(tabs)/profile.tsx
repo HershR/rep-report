@@ -16,7 +16,6 @@ import { Pressable, View } from "react-native";
 
 import { CustomScreen } from "@/components/common";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -42,10 +41,10 @@ import {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-1 items-center gap-1">
-      <Text variant="large">{value}</Text>
-      <Text variant="muted" className="text-xs uppercase">
-        {label}
+    <View className="border-border bg-card h-[72px] flex-1 justify-between rounded-lg border p-3">
+      <Text variant="microLabel">{label.toUpperCase()}</Text>
+      <Text variant="numeral" className="text-[21px]" numberOfLines={1}>
+        {value}
       </Text>
     </View>
   );
@@ -54,21 +53,28 @@ function Stat({ label, value }: { label: string; value: string }) {
 function NavRow({
   icon,
   label,
+  value,
   onPress,
 }: {
+  value?: string;
   icon: LucideIcon;
   label: string;
   onPress: () => void;
 }) {
   return (
-    <Pressable className="active:opacity-80" onPress={onPress}>
-      <Card className="py-0">
-        <CardContent className="flex-row items-center gap-3 py-3">
-          <Icon as={icon} className="text-muted-foreground size-5" />
-          <Text className="flex-1">{label}</Text>
-          <Icon as={ChevronRight} className="text-muted-foreground" />
-        </CardContent>
-      </Card>
+    <Pressable
+      role="button"
+      className="border-separator -mx-4 h-14 flex-row items-center gap-3 border-b px-4 active:opacity-80"
+      onPress={onPress}
+    >
+      <Icon as={icon} className="text-text-3 size-5" />
+      <Text className="flex-1 text-[15px] font-medium">{label}</Text>
+      {value ? (
+        <Text variant="meta" className="text-text-3">
+          {value}
+        </Text>
+      ) : null}
+      <Icon as={ChevronRight} className="text-text-4 size-4" />
     </Pressable>
   );
 }
@@ -118,6 +124,17 @@ export default function ProfileScreen() {
     setEditOpen(false);
   };
 
+  const initials = (profile?.displayName ?? "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "—";
+
+  const memberSince = profile?.createdAt
+    ? `TRAINING SINCE ${format(new Date(profile.createdAt), "MMM yyyy").toUpperCase()}`
+    : "SET UP YOUR PROFILE";
+
   const ageText = profile?.dateOfBirth
     ? String(differenceInYears(new Date(), new Date(profile.dateOfBirth)))
     : "—";
@@ -134,46 +151,53 @@ export default function ProfileScreen() {
     : "—";
 
   return (
-    <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <Text variant="h2">Profile</Text>
+    <CustomScreen scroll contentContainerStyle={{ paddingBottom: 24 }}>
+      <View className="h-9 flex-row items-center justify-between">
+        <Text variant="screenTitle">Profile</Text>
+        <Button
+          variant="ghost"
+          className="-mr-2.5 h-9 px-2.5"
+          accessibilityLabel="Edit profile"
+          onPress={openEdit}
+        >
+          <Icon as={Pencil} className="text-text-3 size-4" />
+          <Text className="text-text-3 text-[13px] font-semibold">Edit</Text>
+        </Button>
+      </View>
 
-      <Card>
-        <CardContent className="gap-4 pt-6">
-          {profileLoading ? (
-            <View className="gap-4">
-              <Skeleton className="h-7 w-40" />
-              <Skeleton className="h-12 w-full" />
+      {profileLoading ? (
+        <View className="mt-4 gap-4">
+          <Skeleton className="h-14 w-52" />
+          <Skeleton className="h-[72px] w-full" />
+        </View>
+      ) : (
+        <>
+          <View className="mt-4 flex-row items-center gap-3.5">
+            <View className="border-border-strong bg-surface-raised size-14 items-center justify-center rounded-full border">
+              <Text variant="numeral" className="text-primary text-[18px]">
+                {initials}
+              </Text>
             </View>
-          ) : (
-            <>
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 gap-1">
-                  <Text variant="h3">
-                    {profile?.displayName ?? "Your name"}
-                  </Text>
-                </View>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onPress={openEdit}
-                >
-                  <Icon as={Pencil} className="text-muted-foreground size-4" />
-                </Button>
-              </View>
+            <View className="flex-1 gap-1">
+              <Text className="text-[19px] font-bold tracking-tight">
+                {profile?.displayName ?? "Your name"}
+              </Text>
+              <Text variant="microLabel">{memberSince}</Text>
+            </View>
+          </View>
 
-              <View className="flex-row">
-                <Stat label="Age" value={ageText} />
-                <Stat label="Weight" value={weightText} />
-                <Stat label="Height" value={heightText} />
-              </View>
-            </>
-          )}
-        </CardContent>
-      </Card>
+          <View className="mt-4 flex-row gap-2">
+            <Stat label="Age" value={ageText} />
+            <Stat label="Weight" value={weightText} />
+            <Stat label="Height" value={heightText} />
+          </View>
+        </>
+      )}
 
-      <View className="gap-2">
-        <Text variant="large">Body</Text>
+      <View className="mt-6">
+        <Text variant="sectionLabel" className="mb-2.5">
+          BODY
+        </Text>
         <NavRow
           icon={Weight}
           label="Weight history"
@@ -191,10 +215,14 @@ export default function ProfileScreen() {
         />
       </View>
 
-      <View className="gap-2">
+      <View className="mt-6">
+        <Text variant="sectionLabel" className="mb-2.5">
+          PREFERENCES
+        </Text>
         <NavRow
           icon={Settings}
           label="Settings"
+          value={`${weightUnit} · ${heightUnit}`}
           onPress={() => router.push("/settings" as Href)}
         />
       </View>

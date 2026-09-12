@@ -6,7 +6,7 @@ import { Platform, Text as RNText, type Role } from "react-native";
 
 const textVariants = cva(
   cn(
-    "text-foreground text-base",
+    "text-foreground font-sans text-base",
     Platform.select({
       web: "select-text",
     })
@@ -31,9 +31,23 @@ const textVariants = cva(
           "bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold"
         ),
         lead: "text-muted-foreground text-xl",
-        large: "text-lg font-semibold",
-        small: "text-sm font-medium leading-none",
+        large: "text-lg font-sans-semibold",
+        small: "text-sm font-sans-medium leading-none",
         muted: "text-muted-foreground text-sm",
+
+        /* Redesign scale. The shadcn variants above are kept as aliases
+           until the screens are migrated, then removed. */
+        screenTitle: "font-sans-extrabold text-[26px] tracking-[-0.03em]",
+        hero: "font-sans-extrabold text-[42px] leading-none tracking-[-0.04em]",
+        itemTitle: "font-sans-semibold text-[15px] tracking-[-0.012em]",
+        cardTitle: "font-sans-bold text-[17px] tracking-[-0.02em]",
+        body: "text-text-2 text-sm leading-[1.5]",
+        meta: "text-text-3 font-mono text-[11px] tracking-[0.06em]",
+        /* uppercase the string at the call site - RN has no text-transform
+           on Android for all faces */
+        sectionLabel: "text-text-3 font-mono-semibold text-[10px] tracking-[0.16em]",
+        microLabel: "text-text-3 font-mono-semibold text-[9px] tracking-[0.16em]",
+        numeral: "font-mono-semibold text-[19px]",
       },
     },
     defaultVariants: {
@@ -64,6 +78,9 @@ const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
 
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
+/** Digits share one advance width, so numbers in a column line up. */
+const TABULAR = { fontVariant: ["tabular-nums" as const] };
+
 function Text({
   className,
   asChild = false,
@@ -76,8 +93,10 @@ function Text({
   }) {
   const textClass = React.useContext(TextClassContext);
   const Component = asChild ? Slot : RNText;
+  const tabular = variant === "numeral" || variant === "hero";
   return (
     <Component
+      style={tabular ? TABULAR : undefined}
       className={cn(textVariants({ variant }), textClass, className)}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}

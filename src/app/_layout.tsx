@@ -1,9 +1,22 @@
 import "@/global.css";
 
+import {
+  Archivo_400Regular,
+  Archivo_500Medium,
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+} from "@expo-google-fonts/archivo";
+import {
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+} from "@expo-google-fonts/ibm-plex-mono";
 import { ThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PortalHost } from "@rn-primitives/portal";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
@@ -12,33 +25,53 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 
 import { initializeDatabase } from "@/db/init";
-import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
+import { WgerTimeoutError } from "@/services/wger/client";
+
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // already hidden; nothing to do
+});
 
 /**
- * Applies the persisted theme preference (`appSettings.themeMode`) to NativeWind's
- * color scheme so the choice survives app restarts. Lives inside QueryClientProvider
- * because it reads a react-query-backed hook. NativeWind's color scheme is the single
- * source of truth for both `className` dark variants and the JS `THEME[scheme]` lookups.
+ * The app is dark only. NativeWind still needs the scheme pinned so `dark:`
+ * variants resolve; the CSS custom properties are dark in :root regardless.
  */
-function ThemeModeSync() {
-  const { appSettings } = useAppSettings();
+function ForceDarkScheme() {
   const { setColorScheme } = useColorScheme();
-  const themeMode = appSettings?.themeMode;
 
   useEffect(() => {
-    if (themeMode) setColorScheme(themeMode);
-  }, [themeMode, setColorScheme]);
+    setColorScheme("dark");
+  }, [setColorScheme]);
 
   return null;
 }
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
-  const { colorScheme: scheme } = useColorScheme();
-  const colors = THEME[scheme ?? "light"];
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Retrying a timeout just multiplies the wait; everything else
+            // keeps the default backoff.
+            retry: (failureCount, error) =>
+              !(error instanceof WgerTimeoutError) && failureCount < 3,
+          },
+        },
+      }),
+  );
+  const [fontsLoaded, fontError] = useFonts({
+    Archivo_400Regular,
+    Archivo_500Medium,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
+  const colors = THEME;
 
   useEffect(() => {
     initializeDatabase().catch((error) => {
@@ -46,13 +79,23 @@ export default function RootLayout() {
     });
   }, []);
   useDrizzleStudio(sqlite);
+
+  // Hold the splash until the faces are ready, so text never paints in the
+  // fallback and reflows. A font error still releases it - shipping the
+  // system stack beats hanging on the splash.
+  useEffect(() => {
+    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeModeSync />
-          <ThemeProvider value={NAV_THEME[scheme ?? "light"]}>
-            <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+          <ForceDarkScheme />
+          <ThemeProvider value={NAV_THEME}>
+            <StatusBar style="light" />
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: colors.card },
@@ -68,7 +111,7 @@ export default function RootLayout() {
               />
             </Stack>
             <PortalHost />
-            <Toaster theme={scheme ?? "light"} position="top-center" />
+            <Toaster theme="dark" position="top-center" />
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

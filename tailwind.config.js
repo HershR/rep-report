@@ -41,6 +41,29 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "surface-sunken": "hsl(var(--surface-sunken))",
+        "surface-raised": "hsl(var(--surface-raised))",
+        "surface-inset": "hsl(var(--surface-inset))",
+        "border-strong": "hsl(var(--border-strong))",
+        separator: "hsl(var(--separator))",
+        "text-2": "hsl(var(--text-2))",
+        "text-3": "hsl(var(--text-3))",
+        "text-4": "hsl(var(--text-4))",
+        "value-planned": "hsl(var(--value-planned))",
+        "value-logged": "hsl(var(--value-logged))",
+        "accent-dim": "hsl(var(--accent-dim))",
+      },
+      fontFamily: {
+        // Named faces, not numeric weights - RN picks the face by name.
+        // Keys avoid Tailwind's fontWeight names (medium/bold/...), which
+        // would make `font-bold` ambiguous between family and weight.
+        sans: ["Archivo_400Regular"],
+        "sans-medium": ["Archivo_500Medium"],
+        "sans-semibold": ["Archivo_600SemiBold"],
+        "sans-bold": ["Archivo_700Bold"],
+        "sans-extrabold": ["Archivo_800ExtraBold"],
+        mono: ["IBMPlexMono_500Medium"],
+        "mono-semibold": ["IBMPlexMono_600SemiBold"],
       },
       borderRadius: {
         lg: "var(--radius)",

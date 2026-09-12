@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Check, Dumbbell, Trash2 } from "lucide-react-native";
+import { Check, Trash2 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -15,7 +15,6 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { PlateCalculatorSheet } from "@/features/plate-calculator/components/PlateCalculatorSheet";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import type { WorkoutSessionSet } from "@/features/workouts/types";
 import {
@@ -27,14 +26,19 @@ import {
   distanceToText,
   textToMetricDistance,
   weightToText,
-  textToMetricWeight,
-  toMetricWeight,
 } from "@/lib/units";
+
+/** Digits share one advance width, so values line up down the column. */
+const TABULAR = { fontVariant: ["tabular-nums" as const] };
 
 type WorkoutSetRowProps = {
   index: number;
   workoutSet: WorkoutSessionSet;
   isCardio: boolean;
+  /** First not-yet-completed set in the session - the one you are on. */
+  isCurrent?: boolean;
+  /** Strength sets open the keypad sheet instead of editing inline. */
+  onEditValue?: (setId: string, field: "reps" | "weight") => void;
   commitOnChange?: boolean;
   onUpdate: (
     setId: string,
@@ -53,17 +57,13 @@ function toText(value: number | null): string {
   return value === null ? "" : String(value);
 }
 
-function toNumber(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export function WorkoutSetRow({
   index,
   workoutSet,
   isCardio,
+  isCurrent = false,
+  onEditValue,
   commitOnChange = false,
   onUpdate,
   onDelete,
@@ -72,6 +72,16 @@ export function WorkoutSetRow({
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
+  const fieldBoxClass = isCompleted
+    ? "border-border bg-primary/10"
+    : isCurrent
+      ? "border-primary bg-surface-raised"
+      : "border-border bg-surface-inset";
+  const fieldTextClass = isCompleted
+    ? "text-value-logged"
+    : isCurrent
+      ? "text-foreground"
+      : "text-value-planned";
 
   const reducedMotion = useReducedMotion();
   const completeButtonScale = useSharedValue(1);
@@ -100,8 +110,7 @@ export function WorkoutSetRow({
   const [distanceInput, setDistanceInput] = useState("");
   const [isDistanceFocused, setIsDistanceFocused] = useState(false);
   const [weightInput, setWeightInput] = useState("");
-  const [isWeightFocused, setIsWeightFocused] = useState(false);
-  const [plateCalcOpen, setPlateCalcOpen] = useState(false);
+  const [isWeightFocused] = useState(false);
 
   useEffect(() => {
     if (isDurationFocused) return;
@@ -132,22 +141,30 @@ export function WorkoutSetRow({
     });
   };
 
-  const commitWeight = () => {
-    setIsWeightFocused(false);
-    onUpdate(workoutSet.id, {
-      weight: textToMetricWeight(weightInput, weightUnit),
-    });
-  };
-
   return (
     <View
-      className={cn(
-        "flex-row items-center gap-2 rounded-md px-2 py-1.5",
-        isCompleted && "bg-primary/10",
-      )}
+      className={cn("h-[52px] flex-row items-center gap-2 rounded-md px-2")}
     >
-      <View className="w-6 items-center">
-        <Text variant="muted" className="text-sm">
+      <View
+        className={cn(
+          "size-6 items-center justify-center rounded-full border-2",
+          isCompleted
+            ? "border-primary bg-primary"
+            : isCurrent
+              ? "border-primary bg-transparent"
+              : "border-border-strong bg-transparent",
+        )}
+      >
+        <Text
+          className={cn(
+            "font-mono-semibold text-[10px]",
+            isCompleted
+              ? "text-primary-foreground"
+              : isCurrent
+                ? "text-primary"
+                : "text-text-4",
+          )}
+        >
           {index + 1}
         </Text>
       </View>
@@ -155,7 +172,8 @@ export function WorkoutSetRow({
       {isCardio ? (
         <>
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldBoxClass, fieldTextClass)}
+            style={TABULAR}
             value={durationInput}
             onChangeText={(value) => {
               const formatted = formatDurationInput(value);
@@ -173,7 +191,8 @@ export function WorkoutSetRow({
             onSubmitEditing={commitDuration}
           />
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldBoxClass, fieldTextClass)}
+            style={TABULAR}
             value={distanceInput}
             onChangeText={(value) => {
               setDistanceInput(value);
@@ -192,52 +211,38 @@ export function WorkoutSetRow({
         </>
       ) : (
         <>
-          <Input
-            className="h-9 flex-1 px-2 text-center"
-            defaultValue={toText(workoutSet.reps)}
-            keyboardType="number-pad"
-            onEndEditing={(event) => {
-              if (!commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  reps: toNumber(event.nativeEvent.text),
-                });
-              }
-            }}
-            onChangeText={
-              commitOnChange
-                ? (value) => {
-                    onUpdate(workoutSet.id, {
-                      reps: toNumber(value),
-                    });
-                  }
-                : undefined
-            }
-          />
-          <Input
-            className="h-9 flex-1 px-2 text-center"
-            value={weightInput}
-            onChangeText={(value) => {
-              setWeightInput(value);
-              if (commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  weight: textToMetricWeight(value, weightUnit),
-                });
-              }
-            }}
-            keyboardType="decimal-pad"
-            onFocus={() => setIsWeightFocused(true)}
-            onEndEditing={commitWeight}
-            onBlur={commitWeight}
-            onSubmitEditing={commitWeight}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-7"
-            onPress={() => setPlateCalcOpen(true)}
+          <Pressable
+            role="button"
+            accessibilityLabel="Edit reps"
+            onPress={() => onEditValue?.(workoutSet.id, "reps")}
+            className={cn(
+              "h-11 flex-1 items-center justify-center rounded-md border px-2",
+              fieldBoxClass,
+            )}
           >
-            <Icon as={Dumbbell} className="text-muted-foreground size-3.5" />
-          </Button>
+            <Text
+              style={TABULAR}
+              className={cn("font-mono-semibold text-[17px]", fieldTextClass)}
+            >
+              {toText(workoutSet.reps)}
+            </Text>
+          </Pressable>
+          <Pressable
+            role="button"
+            accessibilityLabel="Edit weight"
+            onPress={() => onEditValue?.(workoutSet.id, "weight")}
+            className={cn(
+              "h-11 flex-1 items-center justify-center rounded-md border px-2",
+              fieldBoxClass,
+            )}
+          >
+            <Text
+              style={TABULAR}
+              className={cn("font-mono-semibold text-[17px]", fieldTextClass)}
+            >
+              {weightInput}
+            </Text>
+          </Pressable>
         </>
       )}
 
@@ -245,14 +250,14 @@ export function WorkoutSetRow({
         <Button
           variant={isCompleted ? "default" : "outline"}
           size="icon"
-          className="h-9 w-9"
+          className={cn("size-11", isCurrent && !isCompleted && "border-primary/40")}
           onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
         >
           <Icon
             as={Check}
             className={cn(
-              "size-4",
-              isCompleted ? "text-primary-foreground" : "text-muted-foreground",
+              "size-5",
+              isCompleted ? "text-primary-foreground" : isCurrent ? "text-primary/70" : "text-text-4",
             )}
           />
         </Button>
@@ -261,24 +266,12 @@ export function WorkoutSetRow({
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-8"
+        className="h-11 w-8"
         onPress={() => onDelete(workoutSet.id)}
       >
-        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+        <Icon as={Trash2} className="text-text-4 size-4" />
       </Button>
 
-      <PlateCalculatorSheet
-        visible={plateCalcOpen}
-        onClose={() => setPlateCalcOpen(false)}
-        initialWeight={toNumber(weightInput)}
-        weightUnit={weightUnit}
-        onApply={(displayWeight) => {
-          const kg = toMetricWeight(displayWeight, weightUnit);
-          setWeightInput(weightToText(kg, weightUnit));
-          onUpdate(workoutSet.id, { weight: kg });
-          setPlateCalcOpen(false);
-        }}
-      />
     </View>
   );
 }
