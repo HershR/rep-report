@@ -27,6 +27,7 @@ type WorkoutExerciseBlockProps = {
     },
   ) => void;
   onDeleteSet: (setId: string) => void;
+  onEditValue?: (setId: string, field: "reps" | "weight") => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   canMoveUp?: boolean;
@@ -40,6 +41,7 @@ export function WorkoutExerciseBlock({
   onRemoveExercise,
   onUpdateSet,
   onDeleteSet,
+  onEditValue,
   onMoveUp,
   onMoveDown,
   canMoveUp = false,
@@ -141,6 +143,7 @@ export function WorkoutExerciseBlock({
               workoutSet={workoutSet}
               isCardio={showDuration}
               isCurrent={index === currentSetIndex}
+              onEditValue={onEditValue}
               commitOnChange={commitSetChangesOnChange}
               onUpdate={onUpdateSet}
               onDelete={onDeleteSet}

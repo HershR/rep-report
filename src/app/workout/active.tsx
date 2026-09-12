@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import {
   BellRing,
   Check,
-  ChevronDown,
   ChevronLeft,
   MoreHorizontal,
   Trophy,
@@ -41,6 +40,10 @@ import type { SetPrResult } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { AddSavedExerciseSheet } from "@/features/templates/components/AddSavedExerciseSheet";
 import { RestTimerBar } from "@/features/workouts/components/RestTimerBar";
+import {
+  SetEntrySheet,
+  type SetEntryTarget,
+} from "@/features/workouts/components/SetEntrySheet";
 import { WorkoutExerciseBlock } from "@/features/workouts/components/WorkoutExerciseBlock";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
 import {
@@ -50,7 +53,11 @@ import {
 import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
-import { toDisplayWeight, weightToText } from "@/lib/units";
+import {
+  textToMetricWeight,
+  toDisplayWeight,
+  weightToText,
+} from "@/lib/units";
 
 function buildPrDescription(
   pr: SetPrResult,
@@ -254,6 +261,50 @@ export default function ActiveWorkoutScreen() {
     };
   }, []);
 
+  const [entryTarget, setEntryTarget] = useState<SetEntryTarget | null>(null);
+
+  /** Builds the sheet's payload from whichever value the row reported. */
+  const openSetEntry = (setId: string, field: "reps" | "weight") => {
+    for (const exercise of activeWorkout?.exercises ?? []) {
+      const index = exercise.sets.findIndex((item) => item.id === setId);
+      if (index < 0) continue;
+      const workoutSet = exercise.sets[index];
+      const prior = index > 0 ? exercise.sets[index - 1] : null;
+      setEntryTarget({
+        setId,
+        exerciseName: exercise.exercise.name,
+        setNumber: index + 1,
+        setCount: exercise.sets.length,
+        field,
+        reps: workoutSet.reps === null ? "" : String(workoutSet.reps),
+        weight: weightToText(workoutSet.weight, weightUnit),
+        previous: prior
+          ? {
+              reps: prior.reps === null ? "" : String(prior.reps),
+              weight: weightToText(prior.weight, weightUnit),
+            }
+          : null,
+      });
+      return;
+    }
+  };
+
+  const totals = useMemo(() => {
+    let done = 0;
+    let total = 0;
+    let volumeKg = 0;
+    for (const exercise of activeWorkout?.exercises ?? []) {
+      for (const workoutSet of exercise.sets) {
+        total += 1;
+        if (workoutSet.isCompleted === 1) {
+          done += 1;
+          volumeKg += (workoutSet.reps ?? 0) * (workoutSet.weight ?? 0);
+        }
+      }
+    }
+    return { done, total, volumeKg };
+  }, [activeWorkout]);
+
   if (isLoading || !activeWorkout) {
     return (
       <CustomScreen>
@@ -349,22 +400,6 @@ export default function ActiveWorkoutScreen() {
     await cancelWorkout(activeWorkout.id);
     dismiss();
   };
-
-  const totals = useMemo(() => {
-    let done = 0;
-    let total = 0;
-    let volumeKg = 0;
-    for (const exercise of activeWorkout?.exercises ?? []) {
-      for (const workoutSet of exercise.sets) {
-        total += 1;
-        if (workoutSet.isCompleted === 1) {
-          done += 1;
-          volumeKg += (workoutSet.reps ?? 0) * (workoutSet.weight ?? 0);
-        }
-      }
-    }
-    return { done, total, volumeKg };
-  }, [activeWorkout]);
 
   return (
     <CustomScreen
@@ -481,6 +516,7 @@ export default function ActiveWorkoutScreen() {
                 onDeleteSet={(setId) => {
                   void deleteSet(setId);
                 }}
+                onEditValue={openSetEntry}
               />
             </View>
           ))
@@ -502,6 +538,21 @@ export default function ActiveWorkoutScreen() {
           <Text className="text-destructive">Cancel Workout</Text>
         </Button>
       </ScrollView>
+
+      <SetEntrySheet
+        target={entryTarget}
+        weightUnit={weightUnit}
+        onClose={() => setEntryTarget(null)}
+        onCommit={(setId, values) => {
+          scheduleSetUpdate(setId, {
+            reps: values.reps.trim() === "" ? null : Number(values.reps),
+            weight: textToMetricWeight(values.weight, weightUnit),
+          });
+          setEntryTarget(null);
+          // Same path as the row tick, so PR detection and rest still fire.
+          void handleSetCompletionToggle(setId, true);
+        }}
+      />
 
       {/* Options: rename the in-progress workout. */}
       <Sheet open={showOptions} onOpenChange={setShowOptions}>

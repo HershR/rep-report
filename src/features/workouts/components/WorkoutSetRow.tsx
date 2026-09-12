@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Check, Dumbbell, Trash2 } from "lucide-react-native";
 import Animated, {
@@ -27,7 +27,6 @@ import {
   distanceToText,
   textToMetricDistance,
   weightToText,
-  textToMetricWeight,
   toMetricWeight,
 } from "@/lib/units";
 
@@ -40,6 +39,8 @@ type WorkoutSetRowProps = {
   isCardio: boolean;
   /** First not-yet-completed set in the session - the one you are on. */
   isCurrent?: boolean;
+  /** Strength sets open the keypad sheet instead of editing inline. */
+  onEditValue?: (setId: string, field: "reps" | "weight") => void;
   commitOnChange?: boolean;
   onUpdate: (
     setId: string,
@@ -70,6 +71,7 @@ export function WorkoutSetRow({
   workoutSet,
   isCardio,
   isCurrent = false,
+  onEditValue,
   commitOnChange = false,
   onUpdate,
   onDelete,
@@ -78,11 +80,16 @@ export function WorkoutSetRow({
   const distanceUnit = appSettings?.distanceUnit ?? "mi";
   const weightUnit = appSettings?.weightUnit ?? "lb";
   const isCompleted = workoutSet.isCompleted === 1;
-  const fieldClass = isCompleted
-    ? "border-border bg-primary/10 text-value-logged"
+  const fieldBoxClass = isCompleted
+    ? "border-border bg-primary/10"
     : isCurrent
-      ? "border-primary bg-surface-raised text-foreground"
-      : "border-border bg-surface-inset text-value-planned";
+      ? "border-primary bg-surface-raised"
+      : "border-border bg-surface-inset";
+  const fieldTextClass = isCompleted
+    ? "text-value-logged"
+    : isCurrent
+      ? "text-foreground"
+      : "text-value-planned";
 
   const reducedMotion = useReducedMotion();
   const completeButtonScale = useSharedValue(1);
@@ -111,7 +118,7 @@ export function WorkoutSetRow({
   const [distanceInput, setDistanceInput] = useState("");
   const [isDistanceFocused, setIsDistanceFocused] = useState(false);
   const [weightInput, setWeightInput] = useState("");
-  const [isWeightFocused, setIsWeightFocused] = useState(false);
+  const [isWeightFocused] = useState(false);
   const [plateCalcOpen, setPlateCalcOpen] = useState(false);
 
   useEffect(() => {
@@ -140,13 +147,6 @@ export function WorkoutSetRow({
     setIsDistanceFocused(false);
     onUpdate(workoutSet.id, {
       distance: textToMetricDistance(distanceInput, distanceUnit),
-    });
-  };
-
-  const commitWeight = () => {
-    setIsWeightFocused(false);
-    onUpdate(workoutSet.id, {
-      weight: textToMetricWeight(weightInput, weightUnit),
     });
   };
 
@@ -181,7 +181,7 @@ export function WorkoutSetRow({
       {isCardio ? (
         <>
           <Input
-            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldBoxClass, fieldTextClass)}
             style={TABULAR}
             value={durationInput}
             onChangeText={(value) => {
@@ -200,7 +200,7 @@ export function WorkoutSetRow({
             onSubmitEditing={commitDuration}
           />
           <Input
-            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
+            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldBoxClass, fieldTextClass)}
             style={TABULAR}
             value={distanceInput}
             onChangeText={(value) => {
@@ -220,46 +220,38 @@ export function WorkoutSetRow({
         </>
       ) : (
         <>
-          <Input
-            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
-            style={TABULAR}
-            defaultValue={toText(workoutSet.reps)}
-            keyboardType="number-pad"
-            onEndEditing={(event) => {
-              if (!commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  reps: toNumber(event.nativeEvent.text),
-                });
-              }
-            }}
-            onChangeText={
-              commitOnChange
-                ? (value) => {
-                    onUpdate(workoutSet.id, {
-                      reps: toNumber(value),
-                    });
-                  }
-                : undefined
-            }
-          />
-          <Input
-            className={cn("h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]", fieldClass)}
-            style={TABULAR}
-            value={weightInput}
-            onChangeText={(value) => {
-              setWeightInput(value);
-              if (commitOnChange) {
-                onUpdate(workoutSet.id, {
-                  weight: textToMetricWeight(value, weightUnit),
-                });
-              }
-            }}
-            keyboardType="decimal-pad"
-            onFocus={() => setIsWeightFocused(true)}
-            onEndEditing={commitWeight}
-            onBlur={commitWeight}
-            onSubmitEditing={commitWeight}
-          />
+          <Pressable
+            role="button"
+            accessibilityLabel="Edit reps"
+            onPress={() => onEditValue?.(workoutSet.id, "reps")}
+            className={cn(
+              "h-11 flex-1 items-center justify-center rounded-md border px-2",
+              fieldBoxClass,
+            )}
+          >
+            <Text
+              style={TABULAR}
+              className={cn("font-mono-semibold text-[17px]", fieldTextClass)}
+            >
+              {toText(workoutSet.reps)}
+            </Text>
+          </Pressable>
+          <Pressable
+            role="button"
+            accessibilityLabel="Edit weight"
+            onPress={() => onEditValue?.(workoutSet.id, "weight")}
+            className={cn(
+              "h-11 flex-1 items-center justify-center rounded-md border px-2",
+              fieldBoxClass,
+            )}
+          >
+            <Text
+              style={TABULAR}
+              className={cn("font-mono-semibold text-[17px]", fieldTextClass)}
+            >
+              {weightInput}
+            </Text>
+          </Pressable>
           <Button
             variant="ghost"
             size="icon"
