@@ -28,6 +28,7 @@ import { initializeDatabase } from "@/db/init";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
+import { WgerTimeoutError } from "@/services/wger/client";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // already hidden; nothing to do
@@ -48,7 +49,19 @@ function ForceDarkScheme() {
 }
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Retrying a timeout just multiplies the wait; everything else
+            // keeps the default backoff.
+            retry: (failureCount, error) =>
+              !(error instanceof WgerTimeoutError) && failureCount < 3,
+          },
+        },
+      }),
+  );
   const [fontsLoaded, fontError] = useFonts({
     Archivo_400Regular,
     Archivo_500Medium,

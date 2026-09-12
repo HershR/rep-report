@@ -15,6 +15,16 @@ import type {
 
 const WGER_BASE_URL = "https://wger.de/api/v2";
 const DEFAULT_LIMIT = 20;
+/** Without this a stalled connection never settles and screens sit on their
+ *  loading state forever; the error paths already handle a rejection. */
+const REQUEST_TIMEOUT_MS = 10_000;
+
+export class WgerTimeoutError extends Error {
+  constructor() {
+    super("The exercise service did not respond. Check your connection.");
+    this.name = "WgerTimeoutError";
+  }
+}
 
 function toOffset(page: number, limit: number): number {
   return Math.max(0, (page - 1) * limit);
@@ -27,16 +37,29 @@ function appendList(params: URLSearchParams, key: string, values?: number[]) {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: { accept: "application/json" },
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`WGER request failed (${response.status})`);
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`WGER request failed (${response.status})`);
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new WgerTimeoutError();
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
   }
-
-  return (await response.json()) as T;
 }
 
 function mapFilterOptions(options: WgerFilterOption[]): ExerciseFilterOption[] {
