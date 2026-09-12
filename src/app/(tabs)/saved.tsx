@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
-import { ExerciseCard } from "@/features/exercises/components/ExerciseCard";
+import { ExerciseRow } from "@/features/exercises/components/ExerciseRow";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import type { Exercise } from "@/features/exercises/types";
 import { TemplateCard } from "@/features/templates/components/TemplateCard";
@@ -190,7 +190,7 @@ export default function SavedScreen() {
               );
             case "exercise":
               return (
-                <ExerciseCard
+                <ExerciseRow
                   name={item.exercise.name}
                   category={item.exercise.category}
                   imageUrl={item.exercise.imageUrl}
