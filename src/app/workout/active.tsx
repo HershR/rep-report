@@ -4,6 +4,7 @@ import {
   BellRing,
   Check,
   ChevronDown,
+  ChevronLeft,
   MoreHorizontal,
   Trophy,
 } from "lucide-react-native";
@@ -49,7 +50,7 @@ import {
 import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
-import { weightToText } from "@/lib/units";
+import { toDisplayWeight, weightToText } from "@/lib/units";
 
 function buildPrDescription(
   pr: SetPrResult,
@@ -349,56 +350,99 @@ export default function ActiveWorkoutScreen() {
     dismiss();
   };
 
+  const totals = useMemo(() => {
+    let done = 0;
+    let total = 0;
+    let volumeKg = 0;
+    for (const exercise of activeWorkout?.exercises ?? []) {
+      for (const workoutSet of exercise.sets) {
+        total += 1;
+        if (workoutSet.isCompleted === 1) {
+          done += 1;
+          volumeKg += (workoutSet.reps ?? 0) * (workoutSet.weight ?? 0);
+        }
+      }
+    }
+    return { done, total, volumeKg };
+  }, [activeWorkout]);
+
   return (
     <CustomScreen
       stickyFooter={
-        <RestTimerBar
-          isResting={rest.isResting}
-          remainingSeconds={rest.remainingSeconds}
-          totalSeconds={rest.totalSeconds}
-          defaultSeconds={restTimerDefaultSeconds}
-          onStart={(seconds) => rest.startRest(seconds)}
-          onAddTime={(delta) => rest.addTime(delta)}
-          onSkip={() => rest.skipRest()}
-        />
+        <>
+          <RestTimerBar
+            isResting={rest.isResting}
+            remainingSeconds={rest.remainingSeconds}
+            totalSeconds={rest.totalSeconds}
+            defaultSeconds={restTimerDefaultSeconds}
+            onStart={(seconds) => rest.startRest(seconds)}
+            onAddTime={(delta) => rest.addTime(delta)}
+            onSkip={() => rest.skipRest()}
+          />
+          <View className="border-border bg-surface-sunken flex-row items-center gap-5 border-t px-5 pt-3.5 pb-5">
+            <View className="gap-1">
+              <Text variant="microLabel">ELAPSED</Text>
+              <Text variant="numeral" className="text-[17px]">
+                {formatElapsed(elapsedSeconds)}
+              </Text>
+            </View>
+            <View className="gap-1">
+              <Text variant="microLabel">VOLUME</Text>
+              <Text variant="numeral" className="text-[17px]">
+                {Math.round(
+                  toDisplayWeight(totals.volumeKg, weightUnit),
+                ).toLocaleString()}
+              </Text>
+            </View>
+            <View className="flex-1" />
+            <Button onPress={() => void onComplete()}>
+              <Text>Finish</Text>
+            </Button>
+          </View>
+        </>
       }
     >
-      {/* Header: hide + elapsed + finish, then name + options. */}
-      <View className="gap-2 pb-3">
-        <View className="flex-row items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Hide workout"
-            onPress={dismiss}
-          >
-            <Icon as={ChevronDown} className="text-foreground" />
-          </Button>
-          <Text variant="large" className="flex-1 text-center">
-            {formatElapsed(elapsedSeconds)}
-          </Text>
-          <Button size="sm" onPress={() => void onComplete()}>
-            <Text>Finish</Text>
-          </Button>
-        </View>
-        <View className="flex-row items-center gap-1">
-          <Text variant="h2" numberOfLines={1} className="shrink">
+      {/* Header carries identity and position; actions live in the bottom bar. */}
+      <View className="-mx-2 flex-row items-center gap-1 pb-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          accessibilityLabel="Hide workout"
+          onPress={dismiss}
+        >
+          <Icon as={ChevronLeft} className="text-foreground" />
+        </Button>
+        <View className="flex-1 items-center">
+          <Text variant="cardTitle" numberOfLines={1} className="text-[16px]">
             {activeWorkout.name}
           </Text>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            accessibilityLabel="Workout options"
-            onPress={() => {
-              setNameDraft(activeWorkout.name);
-              setShowOptions(true);
-            }}
-          >
-            <Icon as={MoreHorizontal} className="text-foreground" />
-          </Button>
+          <Text variant="microLabel" className="mt-0.5">
+            {totals.done} OF {totals.total} SETS
+          </Text>
         </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          accessibilityLabel="Workout options"
+          onPress={() => {
+            setNameDraft(activeWorkout.name);
+            setShowOptions(true);
+          }}
+        >
+          <Icon as={MoreHorizontal} className="text-foreground" />
+        </Button>
+      </View>
+
+      {/* How far through the session you are, at a glance. */}
+      <View className="bg-surface-raised -mx-4 h-[3px]">
+        <View
+          className="bg-primary h-full"
+          style={{
+            width: `${totals.total ? (totals.done / totals.total) * 100 : 0}%`,
+          }}
+        />
       </View>
 
       {/* Exercises are the focus — they scroll, everything else is chrome. */}
