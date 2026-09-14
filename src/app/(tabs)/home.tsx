@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import { summarizeTemplate } from "@/features/templates/utils/summarizeTemplate";
 import { WeeklyProgressCard } from "@/features/workouts/components/WeeklyProgressCard";
 
 const WEEKDAY_FORMAT: Intl.DateTimeFormatOptions = {
@@ -108,9 +109,14 @@ export default function HomeScreen() {
                       {String.fromCharCode(65 + index)}
                     </Text>
                   </View>
-                  <Text variant="itemTitle" numberOfLines={1} className="flex-1">
-                    {template.name}
-                  </Text>
+                  <View className="flex-1 gap-1">
+                    <Text variant="itemTitle" numberOfLines={1}>
+                      {template.name}
+                    </Text>
+                    <Text variant="microLabel">
+                      {summarizeTemplate(template)}
+                    </Text>
+                  </View>
                   <Icon as={ChevronRight} className="text-text-4 size-4" />
                 </Button>
               ))}

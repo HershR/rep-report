@@ -1,12 +1,11 @@
-import { ArrowUp } from "lucide-react-native";
 import { View } from "react-native";
 
-import { Icon } from "@/components/ui/icon";
+import { DeltaPill } from "@/components/DeltaPill";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import {
   WEEKLY_ACTIVITY_HOURS_GOAL,
-  WEEKLY_EXERCISE_GOAL,
+  WEEKLY_SESSION_GOAL,
   useWeeklyProgress,
 } from "@/features/workouts/hooks/useWeeklyProgress";
 
@@ -26,7 +25,8 @@ function todayIndex(): number {
 }
 
 export function WeeklyProgressCard() {
-  const { exerciseCount, activitySeconds, dailySeconds } = useWeeklyProgress();
+  const { sessionCount, previousSessionCount, activitySeconds, dailySeconds } =
+    useWeeklyProgress();
   const activityHours = activitySeconds / 3600;
   const today = todayIndex();
   const peak = Math.max(...dailySeconds, 1);
@@ -41,23 +41,21 @@ export function WeeklyProgressCard() {
         <View>
           <Text variant="sectionLabel">THIS WEEK</Text>
           <View className="mt-2 flex-row items-baseline gap-1.5">
-            <Text variant="hero">{exerciseCount}</Text>
+            <Text variant="hero">{sessionCount}</Text>
             <Text className="text-text-4 text-[17px] font-semibold">
-              / {WEEKLY_EXERCISE_GOAL}
+              / {WEEKLY_SESSION_GOAL}
             </Text>
             <Text variant="microLabel" className="ml-1">
-              EXERCISES
+              SESSIONS
             </Text>
           </View>
         </View>
-        {exerciseCount > 0 ? (
-          <View className="bg-primary/10 flex-row items-center gap-1 rounded-full px-2.5 py-1.5">
-            <Icon as={ArrowUp} className="text-primary size-3" />
-            <Text variant="meta" className="text-primary">
-              {exerciseCount}
-            </Text>
-          </View>
-        ) : null}
+        <DeltaPill
+          value={sessionCount - previousSessionCount}
+          accessibilityLabel={`${Math.abs(sessionCount - previousSessionCount)} ${
+            sessionCount > previousSessionCount ? "more" : "fewer"
+          } workouts than last week`}
+        />
       </View>
 
       {/* One bar per day: height is that day's active time, so the week

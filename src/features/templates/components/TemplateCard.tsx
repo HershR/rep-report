@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import type { WorkoutTemplate } from "@/features/templates/types";
+import { summarizeTemplate } from "@/features/templates/utils/summarizeTemplate";
 
 type TemplateCardProps = {
   template: WorkoutTemplate;
@@ -23,10 +24,6 @@ export function TemplateCard({
   onDelete,
 }: TemplateCardProps) {
   const exercises = template.exercises;
-  const setCount = exercises.reduce(
-    (total, exercise) => total + exercise.sets.length,
-    0,
-  );
   const preview = exercises.slice(0, PREVIEW_COUNT);
   const remaining = exercises.length - preview.length;
 
@@ -44,9 +41,7 @@ export function TemplateCard({
           <Text variant="itemTitle" className="text-[16px]" numberOfLines={1}>
             {template.name}
           </Text>
-          <Text variant="microLabel">
-            {`${exercises.length} EX · ${setCount} SET${setCount === 1 ? "" : "S"}`}
-          </Text>
+          <Text variant="microLabel">{summarizeTemplate(template)}</Text>
         </Pressable>
         <Button
           variant="ghost"

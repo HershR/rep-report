@@ -32,8 +32,10 @@ import type { WeightUnit } from "@/db/schema";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
+import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
 import {
   toDisplayHeightCm,
+  toDisplayWeight,
   toMetricHeight,
   toMetricWeight,
   weightToText,
@@ -90,8 +92,10 @@ export default function ProfileScreen() {
   const { appSettings } = useAppSettings();
   const weightUnit = appSettings?.weightUnit ?? "kg";
   const heightUnit = appSettings?.heightUnit ?? "cm";
-  const { latest: latestWeight } = useMeasurements("weight");
+  const { latest: latestWeight, history: weightHistory } =
+    useMeasurements("weight");
   const { latest: latestHeight } = useMeasurements("height");
+  const { dailyTotals } = useWorkoutActivity();
 
   const [editOpen, setEditOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
@@ -131,8 +135,20 @@ export default function ProfileScreen() {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("") || "—";
 
+  const sessionTotal = dailyTotals.reduce(
+    (total, day) => total + day.sessionCount,
+    0,
+  );
+
   const memberSince = profile?.createdAt
-    ? `TRAINING SINCE ${format(new Date(profile.createdAt), "MMM yyyy").toUpperCase()}`
+    ? [
+        `TRAINING SINCE ${format(new Date(profile.createdAt), "MMM yyyy").toUpperCase()}`,
+        sessionTotal > 0
+          ? `${sessionTotal} SESSION${sessionTotal === 1 ? "" : "S"}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
     : "SET UP YOUR PROFILE";
 
   const ageText = profile?.dateOfBirth
@@ -142,6 +158,28 @@ export default function ProfileScreen() {
   const weightText = latestWeight
     ? `${weightToText(toMetricWeight(latestWeight.value, latestWeight.unit as WeightUnit), weightUnit)} ${weightUnit}`
     : "—";
+
+  const previousWeight = weightHistory.at(-2) ?? null;
+  const weightChangeText =
+    latestWeight && previousWeight
+      ? (() => {
+          const change =
+            toDisplayWeight(
+              toMetricWeight(latestWeight.value, latestWeight.unit as WeightUnit),
+              weightUnit,
+            ) -
+            toDisplayWeight(
+              toMetricWeight(
+                previousWeight.value,
+                previousWeight.unit as WeightUnit,
+              ),
+              weightUnit,
+            );
+          const rounded = Math.round(change * 10) / 10;
+          if (rounded === 0) return undefined;
+          return `${rounded > 0 ? "+" : "−"}${Math.abs(rounded)} ${weightUnit}`;
+        })()
+      : undefined;
 
   const heightText = latestHeight
     ? toDisplayHeightCm(
@@ -201,6 +239,7 @@ export default function ProfileScreen() {
         <NavRow
           icon={Weight}
           label="Weight history"
+          value={weightChangeText}
           onPress={() => router.push("/profile/weight-history" as Href)}
         />
         <NavRow

@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
-import { format, startOfWeek } from "date-fns";
+import { format, startOfWeek, subWeeks } from "date-fns";
 
 import { db } from "@/db/client";
 import { createUuid, nowUtc } from "@/db/utils";
@@ -199,6 +199,7 @@ export async function getCompletedWorkoutsByDate(date: string): Promise<WorkoutS
 export type WorkoutDailyTotal = {
   dateKey: string;
   exerciseCount: number;
+  sessionCount: number;
 };
 
 export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTotal[]> {
@@ -240,8 +241,13 @@ export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTota
     const existing = totalsByDay.get(dateKey);
     if (existing) {
       existing.exerciseCount += sessionExerciseCount;
+      existing.sessionCount += 1;
     } else {
-      totalsByDay.set(dateKey, { dateKey, exerciseCount: sessionExerciseCount });
+      totalsByDay.set(dateKey, {
+        dateKey,
+        exerciseCount: sessionExerciseCount,
+        sessionCount: 1,
+      });
     }
   }
 
@@ -251,8 +257,10 @@ export async function getCompletedWorkoutDailyTotals(): Promise<WorkoutDailyTota
 export type WeeklyProgress = {
   /** Active seconds per weekday, Monday first - drives the week strip. */
   dailySeconds: number[];
-  /** Total exercises logged across completed workouts since Monday. */
-  exerciseCount: number;
+  /** Completed workouts since Monday. */
+  sessionCount: number;
+  /** Completed workouts in the week before, for the week-over-week delta. */
+  previousSessionCount: number;
   /** Total workout duration (seconds) since Monday. */
   activitySeconds: number;
 };
@@ -264,9 +272,9 @@ export type WeeklyProgress = {
  * "this week" — ISO-UTC strings sort chronologically, so a string compare works.
  */
 export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
-  const weekStartIso = startOfWeek(new Date(), {
-    weekStartsOn: 1,
-  }).toISOString();
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekStartIso = weekStart.toISOString();
+  const previousWeekStartIso = subWeeks(weekStart, 1).toISOString();
 
   const sessionRows = await db
     .select({
@@ -280,7 +288,13 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
   const sessions = sessionRows.filter(
     (session) => session.completedAt && session.completedAt >= weekStartIso,
   );
-  const weekStartMs = new Date(weekStartIso).getTime();
+  const previousSessionCount = sessionRows.filter(
+    (session) =>
+      session.completedAt &&
+      session.completedAt >= previousWeekStartIso &&
+      session.completedAt < weekStartIso,
+  ).length;
+  const weekStartMs = weekStart.getTime();
   const dailySeconds = [0, 0, 0, 0, 0, 0, 0];
   for (const session of sessions) {
     const dayIndex = Math.floor(
@@ -292,26 +306,17 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
     }
   }
 
-  if (sessions.length === 0) {
-    return { exerciseCount: 0, activitySeconds: 0, dailySeconds };
-  }
-
   const activitySeconds = sessions.reduce(
     (total, session) => total + (session.durationSeconds ?? 0),
     0,
   );
 
-  const exerciseRows = await db
-    .select({ id: workoutSessionExercises.id })
-    .from(workoutSessionExercises)
-    .where(
-      inArray(
-        workoutSessionExercises.workoutSessionId,
-        sessions.map((session) => session.id),
-      ),
-    );
-
-  return { exerciseCount: exerciseRows.length, activitySeconds, dailySeconds };
+  return {
+    dailySeconds,
+    sessionCount: sessions.length,
+    previousSessionCount,
+    activitySeconds,
+  };
 }
 
 export type WorkoutVolumePoint = {

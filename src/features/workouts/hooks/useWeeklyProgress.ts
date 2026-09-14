@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentWeekProgress } from "@/features/workouts/repositories/workoutRepository";
 
 /** Weekly goals (Monday-start week). */
-export const WEEKLY_EXERCISE_GOAL = 6;
+export const WEEKLY_SESSION_GOAL = 6;
 export const WEEKLY_ACTIVITY_HOURS_GOAL = 7;
 
 export function useWeeklyProgress() {
@@ -16,7 +16,8 @@ export function useWeeklyProgress() {
   });
 
   return {
-    exerciseCount: query.data?.exerciseCount ?? 0,
+    sessionCount: query.data?.sessionCount ?? 0,
+    previousSessionCount: query.data?.previousSessionCount ?? 0,
     activitySeconds: query.data?.activitySeconds ?? 0,
     dailySeconds: query.data?.dailySeconds ?? [0, 0, 0, 0, 0, 0, 0],
     isLoading: query.isLoading,

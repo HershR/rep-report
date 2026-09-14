@@ -40,7 +40,7 @@ export function ExerciseRow({
 
   return (
     <Pressable
-      className="border-separator h-[68px] flex-row items-center gap-3 border-b pr-3 pl-5 active:opacity-80"
+      className="border-separator h-[68px] flex-row items-center gap-3 border-b pr-4 pl-5 active:opacity-80"
       onPress={onPress}
     >
       <View
