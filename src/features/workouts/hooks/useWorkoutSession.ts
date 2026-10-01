@@ -1,25 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  addExerciseToWorkout,
-  addSetToWorkout,
-  cancelWorkout,
-  completeWorkout,
-  removeExerciseFromWorkout,
-  reorderWorkoutExercises,
-  deleteSet,
   deleteWorkoutSession,
-  getWorkoutSessionById,
   getWorkoutSessionDetailsById,
-  updateCompletedWorkout,
-  updateSet,
+  saveCompletedWorkout,
+  type CompletedWorkoutDraft,
 } from "@/features/workouts/repositories/workoutRepository";
-import type { WorkoutSetInput } from "@/features/workouts/types";
+import { invalidateWorkoutDerivedQueries } from "@/features/workouts/hooks/invalidateWorkoutDerivedQueries";
 
 function queryKey(sessionId?: string) {
   return ["workout-session", sessionId] as const;
 }
 
+/** A finished workout, for viewing and editing in history. */
 export function useWorkoutSession(sessionId?: string) {
   const queryClient = useQueryClient();
   const sessionQuery = useQuery({
@@ -28,159 +21,20 @@ export function useWorkoutSession(sessionId?: string) {
     queryFn: () => getWorkoutSessionDetailsById(sessionId as string),
   });
 
-  const setCache = (data: Awaited<ReturnType<typeof getWorkoutSessionDetailsById>>) => {
-    queryClient.setQueryData(queryKey(sessionId), data);
-    if (data?.status === "active") {
-      queryClient.setQueryData(["active-workout"], data);
-    }
-  };
-
-  const invalidateHistoryForSession = async (id: string) => {
-    const base = await getWorkoutSessionById(id);
-    if (!base?.completedAt) return;
-    const day = new Date(base.completedAt);
-    const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(
-      day.getDate(),
-    ).padStart(2, "0")}`;
-    await queryClient.invalidateQueries({ queryKey: ["workout-history", dateKey] });
-  };
-
-  const addExerciseMutation = useMutation({
-    mutationFn: (input: { exerciseId: string }) =>
-      addExerciseToWorkout({ workoutSessionId: sessionId as string, exerciseId: input.exerciseId }),
-    onSuccess: setCache,
-  });
-
-  const addSetMutation = useMutation({
-    mutationFn: (input: { workoutSessionExerciseId: string } & WorkoutSetInput) => addSetToWorkout(input),
-    onSuccess: (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-    },
-  });
-
-  const removeExerciseMutation = useMutation({
-    mutationFn: (workoutSessionExerciseId: string) =>
-      removeExerciseFromWorkout(sessionId as string, workoutSessionExerciseId),
-    onSuccess: (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-    },
-  });
-
-  const reorderExercisesMutation = useMutation({
-    mutationFn: (orderedExerciseIds: string[]) =>
-      reorderWorkoutExercises(sessionId as string, orderedExerciseIds),
-    onSuccess: (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-    },
-  });
-
-  const updateSetMutation = useMutation({
-    mutationFn: (input: { setId: string } & WorkoutSetInput) => updateSet(input.setId, input),
-    onSuccess: (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-    },
-  });
-
-  const deleteSetMutation = useMutation({
-    mutationFn: (setId: string) => deleteSet(setId),
-    onSuccess: (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-    },
-  });
-
-  const updateCompletedWorkoutMutation = useMutation({
-    mutationFn: (input: {
-      name?: string;
-      notes?: string | null;
-      startedAt?: string;
-      completedAt?: string | null;
-      durationSeconds?: number | null;
-    }) => updateCompletedWorkout(sessionId as string, input),
+  const saveMutation = useMutation({
+    mutationFn: (draft: CompletedWorkoutDraft) =>
+      saveCompletedWorkout(sessionId as string, draft),
     onSuccess: async (data) => {
-      setCache(data);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-      if (sessionId) await invalidateHistoryForSession(sessionId);
+      queryClient.setQueryData(queryKey(sessionId), data);
+      await invalidateWorkoutDerivedQueries(queryClient);
     },
   });
 
-  const deleteWorkoutSessionMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: () => deleteWorkoutSession(sessionId as string),
     onSuccess: async () => {
       queryClient.setQueryData(queryKey(sessionId), null);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-      if (sessionId) await invalidateHistoryForSession(sessionId);
-    },
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: async () => {
-      const session = await getWorkoutSessionDetailsById(sessionId as string);
-      if (!session) return null;
-      const completedAt = new Date().toISOString();
-      const durationSeconds = Math.max(
-        0,
-        Math.floor((Date.parse(completedAt) - Date.parse(session.startedAt)) / 1000),
-      );
-      return completeWorkout(session.id, { completedAt, durationSeconds });
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["active-workout"], null);
-      void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-      if (sessionId) {
-        void invalidateHistoryForSession(sessionId);
-      }
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: () => cancelWorkout(sessionId as string),
-    onSuccess: () => {
-      queryClient.setQueryData(["active-workout"], null);
-      void queryClient.invalidateQueries({ queryKey: queryKey(sessionId) });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
-      if (sessionId) {
-        void invalidateHistoryForSession(sessionId);
-      }
+      await invalidateWorkoutDerivedQueries(queryClient);
     },
   });
 
@@ -189,26 +43,8 @@ export function useWorkoutSession(sessionId?: string) {
     isLoading: sessionQuery.isLoading,
     error: sessionQuery.error ?? null,
     refetch: sessionQuery.refetch,
-    addExerciseToWorkout: addExerciseMutation.mutateAsync,
-    addSetToWorkout: addSetMutation.mutateAsync,
-    removeExerciseFromWorkout: removeExerciseMutation.mutateAsync,
-    reorderExercises: reorderExercisesMutation.mutateAsync,
-    updateSet: updateSetMutation.mutateAsync,
-    deleteSet: deleteSetMutation.mutateAsync,
-    updateCompletedWorkout: updateCompletedWorkoutMutation.mutateAsync,
-    deleteWorkoutSession: deleteWorkoutSessionMutation.mutateAsync,
-    completeWorkout: completeMutation.mutateAsync,
-    cancelWorkout: cancelMutation.mutateAsync,
-    isSaving:
-      addExerciseMutation.isPending ||
-      addSetMutation.isPending ||
-      removeExerciseMutation.isPending ||
-      reorderExercisesMutation.isPending ||
-      updateSetMutation.isPending ||
-      deleteSetMutation.isPending ||
-      updateCompletedWorkoutMutation.isPending ||
-      deleteWorkoutSessionMutation.isPending ||
-      completeMutation.isPending ||
-      cancelMutation.isPending,
+    saveCompletedWorkout: saveMutation.mutateAsync,
+    deleteWorkoutSession: deleteMutation.mutateAsync,
+    isSaving: saveMutation.isPending || deleteMutation.isPending,
   };
 }

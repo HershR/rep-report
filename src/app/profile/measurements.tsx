@@ -7,7 +7,7 @@ import { MeasurementSummaryCard } from "@/features/measurements/components/Measu
 import { getLatestMeasurementByType } from "@/features/measurements/repositories/measurementRepository";
 import { BODY_MEASUREMENT_TYPES, MEASUREMENT_LABELS } from "@/features/measurements/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
-import { lengthToText, toMetricHeight } from "@/lib/units";
+import { lengthToText } from "@/lib/units";
 
 export default function BodyMeasurementsScreen() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function BodyMeasurementsScreen() {
         {BODY_MEASUREMENT_TYPES.map((type, index) => {
           const latest = queries[index]?.data;
           const valueText = latest
-            ? `${lengthToText(toMetricHeight(latest.value, latest.unit), heightUnit)} ${heightUnit}`
+            ? `${lengthToText(latest.value, heightUnit)} ${heightUnit}`
             : "—";
           return (
             <MeasurementSummaryCard

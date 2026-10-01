@@ -11,3 +11,17 @@ export const createUuid = (): string => {
     return value.toString(16);
   });
 };
+
+/**
+ * Rows per multi-row INSERT. Comfortably under SQLite's bound-parameter limit
+ * and the compound-select limit a long VALUES list can route through.
+ */
+export const INSERT_BATCH_ROWS = 80;
+
+export function chunk<T>(rows: T[], size: number = INSERT_BATCH_ROWS): T[][] {
+  const batches: T[][] = [];
+  for (let index = 0; index < rows.length; index += size) {
+    batches.push(rows.slice(index, index + size));
+  }
+  return batches;
+}

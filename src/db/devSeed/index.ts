@@ -10,7 +10,7 @@ import {
   workoutTemplateSets,
   workoutTemplates,
 } from "@/db/schema";
-import { nowUtc } from "@/db/utils";
+import { chunk, nowUtc } from "@/db/utils";
 import {
   DEMO_EXERCISE_WGER_IDS,
   type DemoExerciseKey,
@@ -45,17 +45,6 @@ import { saveFavoriteExercise } from "@/features/exercises/repositories/exercise
  * unambiguous marker; the trade is that a hand-made row with that prefix would
  * be swept up by `clearDemoData`.
  */
-
-/** Rows per INSERT. Comfortably under SQLite's parameter and compound-select limits. */
-const BATCH_ROWS = 80;
-
-function chunk<T>(rows: T[], size: number): T[][] {
-  const batches: T[][] = [];
-  for (let index = 0; index < rows.length; index += size) {
-    batches.push(rows.slice(index, index + size));
-  }
-  return batches;
-}
 
 export async function isDemoDataSeeded(): Promise<boolean> {
   const [row] = await db
@@ -114,25 +103,25 @@ export async function seedDemoData(): Promise<SeedCounts> {
   // callback would commit before the inserts ran, with no error. Nothing in
   // here may await — which is why the plan is built above, not inside.
   db.transaction((tx) => {
-    for (const batch of chunk(rows.templates, BATCH_ROWS)) {
+    for (const batch of chunk(rows.templates)) {
       tx.insert(workoutTemplates).values(batch).run();
     }
-    for (const batch of chunk(rows.templateExercises, BATCH_ROWS)) {
+    for (const batch of chunk(rows.templateExercises)) {
       tx.insert(workoutTemplateExercises).values(batch).run();
     }
-    for (const batch of chunk(rows.templateSets, BATCH_ROWS)) {
+    for (const batch of chunk(rows.templateSets)) {
       tx.insert(workoutTemplateSets).values(batch).run();
     }
-    for (const batch of chunk(rows.sessions, BATCH_ROWS)) {
+    for (const batch of chunk(rows.sessions)) {
       tx.insert(workoutSessions).values(batch).run();
     }
-    for (const batch of chunk(rows.sessionExercises, BATCH_ROWS)) {
+    for (const batch of chunk(rows.sessionExercises)) {
       tx.insert(workoutSessionExercises).values(batch).run();
     }
-    for (const batch of chunk(rows.sets, BATCH_ROWS)) {
+    for (const batch of chunk(rows.sets)) {
       tx.insert(workoutSets).values(batch).run();
     }
-    for (const batch of chunk(rows.measurements, BATCH_ROWS)) {
+    for (const batch of chunk(rows.measurements)) {
       tx.insert(measurements).values(batch).run();
     }
   });

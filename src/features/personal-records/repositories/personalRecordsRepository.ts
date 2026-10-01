@@ -1,7 +1,8 @@
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { exercises, workoutSessionExercises, workoutSessions, workoutSets } from "@/db/schema";
+import { isHeavier } from "@/features/personal-records/compare";
 import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import type {
   ExercisePersonalRecords,
@@ -17,64 +18,48 @@ type QualifyingSet = {
   reps: number | null;
 };
 
-async function getQualifyingSets(exerciseIdFilter?: string): Promise<QualifyingSet[]> {
-  const completedSessions = await db
-    .select({ id: workoutSessions.id, completedAt: workoutSessions.completedAt })
-    .from(workoutSessions)
-    .where(eq(workoutSessions.status, "completed"));
+/**
+ * Completed, non-warmup sets from finished workouts, optionally narrowed to one
+ * exercise and/or a `since` cutoff (ISO). One join, so the filters run in SQL
+ * on indexed columns - rather than loading every finished session and passing
+ * all their ids back through an ever-growing `IN (...)` list, which this used
+ * to do on every set completion.
+ */
+async function getQualifyingSets(
+  filter: { exerciseId?: string; since?: string } = {},
+): Promise<QualifyingSet[]> {
+  const conditions = [
+    eq(workoutSessions.status, "completed"),
+    isNotNull(workoutSessions.completedAt),
+    eq(workoutSets.isCompleted, 1),
+    ne(workoutSets.setType, "warmup"),
+  ];
+  if (filter.exerciseId) {
+    conditions.push(eq(workoutSessionExercises.exerciseId, filter.exerciseId));
+  }
+  if (filter.since) {
+    conditions.push(gte(workoutSessions.completedAt, filter.since));
+  }
 
-  const completedSessionIds = completedSessions.map((row) => row.id);
-  if (completedSessionIds.length === 0) return [];
-  const sessionCompletedAt = new Map(completedSessions.map((row) => [row.id, row.completedAt] as const));
-
-  const sessionExerciseRows = await db
+  const rows = await db
     .select({
-      id: workoutSessionExercises.id,
       exerciseId: workoutSessionExercises.exerciseId,
-      workoutSessionId: workoutSessionExercises.workoutSessionId,
-    })
-    .from(workoutSessionExercises)
-    .where(
-      exerciseIdFilter
-        ? and(
-            inArray(workoutSessionExercises.workoutSessionId, completedSessionIds),
-            eq(workoutSessionExercises.exerciseId, exerciseIdFilter),
-          )
-        : inArray(workoutSessionExercises.workoutSessionId, completedSessionIds),
-    );
-  if (sessionExerciseRows.length === 0) return [];
-
-  const sessionExerciseContext = new Map(sessionExerciseRows.map((row) => [row.id, row] as const));
-
-  const setRows = await db
-    .select({
-      workoutSessionExerciseId: workoutSets.workoutSessionExerciseId,
+      workoutSessionId: workoutSessions.id,
+      achievedAt: workoutSessions.completedAt,
       weight: workoutSets.weight,
       reps: workoutSets.reps,
     })
     .from(workoutSets)
-    .where(
-      and(
-        inArray(workoutSets.workoutSessionExerciseId, sessionExerciseRows.map((row) => row.id)),
-        eq(workoutSets.isCompleted, 1),
-        ne(workoutSets.setType, "warmup"),
-      ),
-    );
+    .innerJoin(
+      workoutSessionExercises,
+      eq(workoutSets.workoutSessionExerciseId, workoutSessionExercises.id),
+    )
+    .innerJoin(workoutSessions, eq(workoutSessionExercises.workoutSessionId, workoutSessions.id))
+    .where(and(...conditions));
 
-  return setRows
-    .map((set) => {
-      const context = sessionExerciseContext.get(set.workoutSessionExerciseId);
-      const achievedAt = context ? sessionCompletedAt.get(context.workoutSessionId) : null;
-      if (!context || !achievedAt) return null;
-      return {
-        exerciseId: context.exerciseId,
-        workoutSessionId: context.workoutSessionId,
-        achievedAt,
-        weight: set.weight,
-        reps: set.reps,
-      };
-    })
-    .filter((row): row is QualifyingSet => Boolean(row));
+  return rows.flatMap((row) =>
+    row.achievedAt === null ? [] : [{ ...row, achievedAt: row.achievedAt }],
+  );
 }
 
 function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): ExercisePersonalRecords {
@@ -84,8 +69,14 @@ function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): Exer
   let bestEstimated1RM: PersonalRecordEntry | null = null;
   const sessionVolumes = new Map<string, { volume: number; achievedAt: string }>();
 
-  for (const set of sets) {
-    if (set.weight !== null && (heaviestWeight === null || set.weight > (heaviestWeight.weight ?? -Infinity))) {
+  // Oldest first, so a tie keeps the date it was first achieved.
+  const chronological = [...sets].sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
+
+  for (const set of chronological) {
+    if (
+      set.weight !== null &&
+      (heaviestWeight === null || isHeavier(set.weight, heaviestWeight.weight ?? -Infinity))
+    ) {
       heaviestWeight = {
         weight: set.weight,
         reps: set.reps,
@@ -183,7 +174,7 @@ export async function getExercisePersonalRecords(exerciseId: string): Promise<Ex
     .limit(1);
   if (!exerciseRow || isCardioExercise(exerciseRow.category, exerciseRow.name)) return null;
 
-  const sets = await getQualifyingSets(exerciseId);
+  const sets = await getQualifyingSets({ exerciseId });
   if (sets.length === 0) return null;
 
   const records = computeRecordsFromSets(exerciseId, sets);
@@ -215,9 +206,7 @@ export async function getExerciseSessionSeries(
     .limit(1);
   if (!exerciseRow || isCardioExercise(exerciseRow.category, exerciseRow.name)) return [];
 
-  const sets = await getQualifyingSets(exerciseId);
-  const since = opts?.since;
-  const windowed = since ? sets.filter((set) => set.achievedAt >= since) : sets;
+  const windowed = await getQualifyingSets({ exerciseId, since: opts?.since });
   if (windowed.length === 0) return [];
 
   const bySession = new Map<

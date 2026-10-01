@@ -38,14 +38,24 @@ export type WorkoutTemplate = {
   exercises: WorkoutTemplateExercise[];
 };
 
-export type CreateWorkoutTemplateInput = {
+/** A template as the editor saves it: plain numbers, in display order. */
+export type WorkoutTemplateDraft = {
   name: string;
-  description?: string | null;
-};
-
-export type UpdateWorkoutTemplateInput = {
-  name?: string;
-  description?: string | null;
+  description: string | null;
+  exercises: {
+    /** The existing row to keep, or null for an exercise added in this edit. */
+    id: string | null;
+    exerciseId: string;
+    sets: {
+      id: string | null;
+      targetReps: number | null;
+      /** Canonical kg. */
+      targetWeight: number | null;
+      targetDurationSeconds: number | null;
+      /** Canonical km. */
+      targetDistance: number | null;
+    }[];
+  }[];
 };
 
 export type TemplateEditorSet = {
@@ -133,4 +143,25 @@ export function parseTemplateNumberText(value: string): number | null {
   if (!trimmed) return null;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** The editor holds numbers as text (weight already in kg, distance in km). */
+export function templateDraftFromEditor(
+  value: TemplateEditorValue,
+): WorkoutTemplateDraft {
+  return {
+    name: value.name,
+    description: value.description,
+    exercises: value.exercises.map((exercise) => ({
+      id: exercise.id ?? null,
+      exerciseId: exercise.exerciseId,
+      sets: exercise.sets.map((set) => ({
+        id: set.id ?? null,
+        targetReps: parseTemplateNumberText(set.repsText),
+        targetWeight: parseTemplateNumberText(set.weightText),
+        targetDurationSeconds: parseTemplateNumberText(set.durationText),
+        targetDistance: parseTemplateNumberText(set.distanceText),
+      })),
+    })),
+  };
 }

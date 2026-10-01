@@ -22,6 +22,13 @@
       "when": 1784690788943,
       "tag": "0002_sleepy_inhumans",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790822455558,
+      "tag": "0003_cool_malcolm_colcord",
+      "breakpoints": true
     }
   ]
 }

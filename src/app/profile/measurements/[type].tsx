@@ -8,7 +8,7 @@ import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import type { SupportedMeasurementType } from "@/features/measurements/repositories/measurementRepository";
 import { MEASUREMENT_LABELS } from "@/features/measurements/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
-import { lengthToText, textToMetricLength, toMetricHeight } from "@/lib/units";
+import { lengthToText, textToMetricLength } from "@/lib/units";
 
 export default function BodyMeasurementTypeScreen() {
   const params = useLocalSearchParams<{ type: string }>();
@@ -29,7 +29,7 @@ export default function BodyMeasurementTypeScreen() {
   const onAdd = async (rawText: string) => {
     const metricValue = textToMetricLength(rawText, heightUnit);
     if (metricValue === null || metricValue <= 0) return;
-    await addMeasurement({ value: metricValue, unit: "cm" });
+    await addMeasurement({ value: metricValue });
   };
 
   const rows = history
@@ -38,7 +38,7 @@ export default function BodyMeasurementTypeScreen() {
     .map((item) => ({
       id: item.id,
       dateText: format(new Date(item.measuredAt), "PP"),
-      valueText: `${lengthToText(toMetricHeight(item.value, item.unit), heightUnit)} ${heightUnit}`,
+      valueText: `${lengthToText(item.value, heightUnit)} ${heightUnit}`,
     }));
 
   return (

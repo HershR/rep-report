@@ -1,8 +1,8 @@
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { format, startOfWeek, subWeeks } from "date-fns";
 
 import { db } from "@/db/client";
-import { createUuid, nowUtc } from "@/db/utils";
+import { chunk, createUuid, nowUtc } from "@/db/utils";
 import {
   type SetType,
   exercises,
@@ -125,49 +125,182 @@ async function getNextSetOrderIndex(workoutSessionExerciseId: string): Promise<n
   return (rows[0]?.orderIndex ?? -1) + 1;
 }
 
-async function deleteWorkoutSessionGraph(sessionId: string): Promise<void> {
-  const sessionExercises = await db
-    .select({ id: workoutSessionExercises.id })
-    .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
+/** The exercises and sets a new session starts with, already in order. */
+type SessionSeed = {
+  exerciseId: string;
+  orderIndex: number;
+  notes: string | null;
+  sets: {
+    orderIndex: number;
+    reps: number | null;
+    weight: number | null;
+    durationSeconds: number | null;
+    distance: number | null;
+    setType: SetType;
+  }[];
+}[];
 
-  const sessionExerciseIds = sessionExercises.map((row) => row.id);
-  if (sessionExerciseIds.length > 0) {
-    await db
-      .delete(workoutSets)
-      .where(inArray(workoutSets.workoutSessionExerciseId, sessionExerciseIds));
+function groupBy<T, K>(rows: T[], key: (row: T) => K): Map<K, T[]> {
+  const groups = new Map<K, T[]>();
+  for (const row of rows) {
+    const list = groups.get(key(row)) ?? [];
+    list.push(row);
+    groups.set(key(row), list);
   }
-
-  await db
-    .delete(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
-  await db.delete(workoutSessions).where(eq(workoutSessions.id, sessionId));
+  return groups;
 }
 
-export async function createWorkoutSession(input: {
+async function loadTemplateSeed(templateId: string): Promise<SessionSeed> {
+  const exerciseRows = await db
+    .select()
+    .from(workoutTemplateExercises)
+    .where(eq(workoutTemplateExercises.templateId, templateId))
+    .orderBy(asc(workoutTemplateExercises.orderIndex));
+  if (exerciseRows.length === 0) return [];
+
+  const setRows = await db
+    .select()
+    .from(workoutTemplateSets)
+    .where(
+      inArray(
+        workoutTemplateSets.templateExerciseId,
+        exerciseRows.map((row) => row.id),
+      ),
+    )
+    .orderBy(asc(workoutTemplateSets.orderIndex));
+  const setsByExercise = groupBy(setRows, (row) => row.templateExerciseId);
+
+  return exerciseRows.map((row) => ({
+    exerciseId: row.exerciseId,
+    orderIndex: row.orderIndex,
+    notes: row.notes,
+    sets: (setsByExercise.get(row.id) ?? []).map((set) => ({
+      orderIndex: set.orderIndex,
+      reps: set.targetReps,
+      weight: set.targetWeight,
+      durationSeconds: set.targetDurationSeconds,
+      distance: set.targetDistance,
+      setType: set.setType,
+    })),
+  }));
+}
+
+async function loadSessionSeed(sessionId: string): Promise<SessionSeed> {
+  const exerciseRows = await db
+    .select()
+    .from(workoutSessionExercises)
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId))
+    .orderBy(asc(workoutSessionExercises.orderIndex));
+  if (exerciseRows.length === 0) return [];
+
+  const setRows = await db
+    .select()
+    .from(workoutSets)
+    .where(
+      inArray(
+        workoutSets.workoutSessionExerciseId,
+        exerciseRows.map((row) => row.id),
+      ),
+    )
+    .orderBy(asc(workoutSets.orderIndex));
+  const setsByExercise = groupBy(setRows, (row) => row.workoutSessionExerciseId);
+
+  return exerciseRows.map((row) => ({
+    exerciseId: row.exerciseId,
+    orderIndex: row.orderIndex,
+    notes: row.notes,
+    sets: (setsByExercise.get(row.id) ?? []).map((set) => ({
+      orderIndex: set.orderIndex,
+      reps: set.reps,
+      weight: set.weight,
+      durationSeconds: set.durationSeconds,
+      distance: set.distance,
+      setType: set.setType,
+    })),
+  }));
+}
+
+/**
+ * Creates the in-progress session and everything it starts with, in one
+ * transaction - so a crash or a throw can never leave a half-copied template
+ * behind as the live workout. Does nothing if a session is already in progress.
+ *
+ * `db.transaction` on expo-sqlite is SYNCHRONOUS: it commits the moment this
+ * callback returns, and an async callback would commit before its statements
+ * ran, with no error. So everything inside is `.get()`/`.run()`, nothing
+ * awaits, and callers do their async reads first and hand in plain rows.
+ */
+function insertActiveSession(input: {
   name: string;
-  templateId?: string | null;
-  notes?: string | null;
-}): Promise<WorkoutSession> {
-  const id = createUuid();
+  templateId: string | null;
+  notes: string | null;
+  seed: SessionSeed;
+}): void {
+  const sessionId = createUuid();
   const timestamp = nowUtc();
 
-  await db.insert(workoutSessions).values({
-    id,
-    templateId: input.templateId ?? null,
-    name: input.name,
-    startedAt: timestamp,
-    completedAt: null,
-    durationSeconds: null,
-    notes: input.notes ?? null,
-    status: "active",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
+  const exerciseRows: (typeof workoutSessionExercises.$inferInsert)[] = [];
+  const setRows: (typeof workoutSets.$inferInsert)[] = [];
+  for (const exercise of input.seed) {
+    const sessionExerciseId = createUuid();
+    exerciseRows.push({
+      id: sessionExerciseId,
+      workoutSessionId: sessionId,
+      exerciseId: exercise.exerciseId,
+      orderIndex: exercise.orderIndex,
+      notes: exercise.notes,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+    for (const set of exercise.sets) {
+      setRows.push({
+        id: createUuid(),
+        workoutSessionExerciseId: sessionExerciseId,
+        ...set,
+        isCompleted: 0,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+    }
+  }
 
-  const created = await getWorkoutSessionById(id);
-  if (!created) throw new Error("Failed create workout session");
-  return created;
+  db.transaction((tx) => {
+    // Re-checked inside the transaction; the partial unique index on `status`
+    // is the backstop if anything slips between this and the insert.
+    const existing = tx
+      .select({ id: workoutSessions.id })
+      .from(workoutSessions)
+      .where(eq(workoutSessions.status, "active"))
+      .get();
+    if (existing) return;
+
+    tx.insert(workoutSessions)
+      .values({
+        id: sessionId,
+        templateId: input.templateId,
+        name: input.name,
+        startedAt: timestamp,
+        completedAt: null,
+        durationSeconds: null,
+        notes: input.notes,
+        status: "active",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .run();
+    for (const batch of chunk(exerciseRows)) {
+      tx.insert(workoutSessionExercises).values(batch).run();
+    }
+    for (const batch of chunk(setRows)) {
+      tx.insert(workoutSets).values(batch).run();
+    }
+  });
+}
+
+async function requireActiveSession(): Promise<WorkoutSessionDetails> {
+  const session = await getActiveWorkoutSession();
+  if (!session) throw new Error("Failed to start workout");
+  return session;
 }
 
 export async function getWorkoutSessionById(id: string): Promise<WorkoutSession | null> {
@@ -181,18 +314,21 @@ export async function getCompletedWorkoutsByDate(date: string): Promise<WorkoutS
   const startUtcIso = startLocal.toISOString();
   const endUtcIso = endLocal.toISOString();
 
+  // ISO-UTC strings sort chronologically, so the range runs in SQL on the
+  // `completed_at` index.
   const rows = await db
-    .select()
+    .select({ id: workoutSessions.id })
     .from(workoutSessions)
-    .where(eq(workoutSessions.status, "completed"))
+    .where(
+      and(
+        eq(workoutSessions.status, "completed"),
+        gte(workoutSessions.completedAt, startUtcIso),
+        lte(workoutSessions.completedAt, endUtcIso),
+      ),
+    )
     .orderBy(desc(workoutSessions.completedAt));
 
-  const filtered = rows.filter((row) => {
-    if (!row.completedAt) return false;
-    return row.completedAt >= startUtcIso && row.completedAt <= endUtcIso;
-  });
-
-  const hydrated = await Promise.all(filtered.map((row) => hydrateWorkoutSession(row.id)));
+  const hydrated = await Promise.all(rows.map((row) => hydrateWorkoutSession(row.id)));
   return hydrated.filter((row): row is WorkoutSessionDetails => Boolean(row));
 }
 
@@ -283,7 +419,12 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
       durationSeconds: workoutSessions.durationSeconds,
     })
     .from(workoutSessions)
-    .where(eq(workoutSessions.status, "completed"));
+    .where(
+      and(
+        eq(workoutSessions.status, "completed"),
+        gte(workoutSessions.completedAt, previousWeekStartIso),
+      ),
+    );
 
   const sessions = sessionRows.filter(
     (session) => session.completedAt && session.completedAt >= weekStartIso,
@@ -333,15 +474,17 @@ export type WorkoutVolumePoint = {
 export async function getCompletedWorkoutVolumeTotals(opts?: {
   since?: string;
 }): Promise<WorkoutVolumePoint[]> {
+  const since = opts?.since;
   const sessionRows = await db
     .select({ id: workoutSessions.id, completedAt: workoutSessions.completedAt })
     .from(workoutSessions)
-    .where(eq(workoutSessions.status, "completed"));
+    .where(
+      since
+        ? and(eq(workoutSessions.status, "completed"), gte(workoutSessions.completedAt, since))
+        : eq(workoutSessions.status, "completed"),
+    );
 
-  const since = opts?.since;
-  const sessions = sessionRows.filter(
-    (session) => session.completedAt && (!since || session.completedAt >= since),
-  );
+  const sessions = sessionRows.filter((session) => session.completedAt);
   if (sessions.length === 0) return [];
 
   const sessionIds = sessions.map((session) => session.id);
@@ -418,232 +561,272 @@ export async function getActiveWorkoutSession(): Promise<WorkoutSessionDetails |
 }
 
 /**
- * Deletes every `active` session except the one `getActiveWorkoutSession` would
- * return. The app only ever supports a single workout in progress and that
- * lookup is the only thing that finds one by status, so any older `active` row
- * is unreachable — nothing in the UI can resume, finish or discard it. Returns
- * how many were dropped.
+ * Starts the workout - or, if one is already in progress, returns that one
+ * instead. Only one workout can be in progress, so "start" when one exists can
+ * only sensibly mean "take me to it"; doing that here means no caller, however
+ * stale its cache, can create a second.
  */
-export async function discardOrphanedActiveSessions(): Promise<number> {
-  const current = await getActiveWorkoutSession();
-  if (!current) return 0;
-
-  const orphans = await db
-    .select({ id: workoutSessions.id })
-    .from(workoutSessions)
-    .where(and(eq(workoutSessions.status, "active"), ne(workoutSessions.id, current.id)));
-
-  for (const orphan of orphans) {
-    await deleteWorkoutSessionGraph(orphan.id);
-  }
-
-  return orphans.length;
-}
-
-export async function resumeWorkout(sessionId?: string): Promise<WorkoutSessionDetails | null> {
-  if (sessionId) return hydrateWorkoutSession(sessionId);
-  return getActiveWorkoutSession();
-}
-
 export async function startWorkout(input?: {
   name?: string;
   templateId?: string | null;
   notes?: string | null;
 }): Promise<WorkoutSessionDetails> {
+  const existing = await getActiveWorkoutSession();
+  if (existing) return existing;
+
   const templateId = input?.templateId ?? null;
-  const now = nowUtc();
-  const session = await createWorkoutSession({
+  insertActiveSession({
     name: input?.name?.trim() || "Workout",
     templateId,
     notes: input?.notes ?? null,
+    seed: templateId ? await loadTemplateSeed(templateId) : [],
   });
-
-  if (templateId) {
-    const templateExerciseRows = await db
-      .select()
-      .from(workoutTemplateExercises)
-      .where(eq(workoutTemplateExercises.templateId, templateId))
-      .orderBy(asc(workoutTemplateExercises.orderIndex));
-
-    for (const templateExercise of templateExerciseRows) {
-      const sessionExerciseId = createUuid();
-      await db.insert(workoutSessionExercises).values({
-        id: sessionExerciseId,
-        workoutSessionId: session.id,
-        exerciseId: templateExercise.exerciseId,
-        orderIndex: templateExercise.orderIndex,
-        notes: templateExercise.notes,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      const templateSetRows = await db
-        .select()
-        .from(workoutTemplateSets)
-        .where(eq(workoutTemplateSets.templateExerciseId, templateExercise.id))
-        .orderBy(asc(workoutTemplateSets.orderIndex));
-
-      for (const templateSet of templateSetRows) {
-        await db.insert(workoutSets).values({
-          id: createUuid(),
-          workoutSessionExerciseId: sessionExerciseId,
-          orderIndex: templateSet.orderIndex,
-          reps: templateSet.targetReps,
-          weight: templateSet.targetWeight,
-          durationSeconds: templateSet.targetDurationSeconds,
-          distance: templateSet.targetDistance,
-          isCompleted: 0,
-          setType: templateSet.setType,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-    }
-  }
-
-  const hydrated = await hydrateWorkoutSession(session.id);
-  if (!hydrated) throw new Error("Failed start workout");
-  return hydrated;
+  return requireActiveSession();
 }
 
+/** Starts a new workout pre-filled from a completed one. Same rule as `startWorkout`. */
 export async function repeatWorkout(sourceSessionId: string): Promise<WorkoutSessionDetails> {
+  const existing = await getActiveWorkoutSession();
+  if (existing) return existing;
+
   const source = await getWorkoutSessionById(sourceSessionId);
   if (!source || source.status !== "completed") {
     throw new Error("Can only repeat a completed workout");
   }
 
-  const now = nowUtc();
-  const session = await createWorkoutSession({
+  insertActiveSession({
     name: source.name,
     templateId: source.templateId,
     notes: null,
+    seed: await loadSessionSeed(sourceSessionId),
   });
+  return requireActiveSession();
+}
 
-  const sourceExerciseRows = await db
-    .select()
+export type FinishWorkoutOutcome = "completed" | "discarded";
+
+/**
+ * Ends the workout in progress, in one transaction.
+ *
+ * With `discardUnlogged`, sets never ticked off are dropped first, then any
+ * exercise left with no sets; if that leaves nothing, the session itself is
+ * deleted and the outcome is "discarded" rather than saving an empty workout.
+ * Without it, everything is kept as-is.
+ *
+ * Duration is measured from this session's own `startedAt`.
+ */
+export async function finishWorkout(
+  sessionId: string,
+  options: { discardUnlogged: boolean },
+): Promise<FinishWorkoutOutcome> {
+  const completedAt = nowUtc();
+
+  return db.transaction((tx) => {
+    const session = tx
+      .select({ startedAt: workoutSessions.startedAt })
+      .from(workoutSessions)
+      .where(and(eq(workoutSessions.id, sessionId), eq(workoutSessions.status, "active")))
+      .get();
+    if (!session) throw new Error("No workout in progress with that id");
+
+    if (options.discardUnlogged) {
+      const exerciseIds = tx
+        .select({ id: workoutSessionExercises.id })
+        .from(workoutSessionExercises)
+        .where(eq(workoutSessionExercises.workoutSessionId, sessionId))
+        .all()
+        .map((row) => row.id);
+
+      if (exerciseIds.length > 0) {
+        tx.delete(workoutSets)
+          .where(
+            and(
+              inArray(workoutSets.workoutSessionExerciseId, exerciseIds),
+              eq(workoutSets.isCompleted, 0),
+            ),
+          )
+          .run();
+      }
+
+      const idsWithSets = new Set(
+        exerciseIds.length > 0
+          ? tx
+              .select({ id: workoutSets.workoutSessionExerciseId })
+              .from(workoutSets)
+              .where(inArray(workoutSets.workoutSessionExerciseId, exerciseIds))
+              .all()
+              .map((row) => row.id)
+          : [],
+      );
+      const emptyIds = exerciseIds.filter((id) => !idsWithSets.has(id));
+      if (emptyIds.length > 0) {
+        tx.delete(workoutSessionExercises)
+          .where(inArray(workoutSessionExercises.id, emptyIds))
+          .run();
+      }
+
+      if (emptyIds.length === exerciseIds.length) {
+        tx.delete(workoutSessions).where(eq(workoutSessions.id, sessionId)).run();
+        return "discarded";
+      }
+    }
+
+    tx.update(workoutSessions)
+      .set({
+        status: "completed",
+        completedAt,
+        durationSeconds: Math.max(
+          0,
+          Math.floor((Date.parse(completedAt) - Date.parse(session.startedAt)) / 1000),
+        ),
+        updatedAt: completedAt,
+      })
+      .where(eq(workoutSessions.id, sessionId))
+      .run();
+    return "completed";
+  });
+}
+
+/** An edited past workout, as the history editor hands it over. */
+export type CompletedWorkoutDraft = {
+  name: string;
+  notes: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  /** In display order. */
+  exercises: {
+    /** The existing row to keep, or null for an exercise added in this edit. */
+    id: string | null;
+    exerciseId: string;
+    notes: string | null;
+    /** In display order. */
+    sets: {
+      id: string | null;
+      reps: number | null;
+      weight: number | null;
+      durationSeconds: number | null;
+      distance: number | null;
+      isCompleted: boolean;
+      setType: SetType;
+    }[];
+  }[];
+};
+
+/**
+ * Applies an edited past workout in one transaction: the session row, then its
+ * exercises and sets replaced wholesale from the draft, in draft order.
+ *
+ * Replacing rather than diffing is safe because nothing references a
+ * session-exercise or set id - personal records point at the session - and rows
+ * that survive the edit keep their id and `createdAt`. Duration is derived here
+ * from the edited times rather than trusted from the caller.
+ */
+export async function saveCompletedWorkout(
+  sessionId: string,
+  draft: CompletedWorkoutDraft,
+): Promise<WorkoutSessionDetails> {
+  const timestamp = nowUtc();
+
+  const existingExercises = await db
+    .select({ id: workoutSessionExercises.id, createdAt: workoutSessionExercises.createdAt })
     .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, sourceSessionId))
-    .orderBy(asc(workoutSessionExercises.orderIndex));
+    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
+  const existingSets =
+    existingExercises.length > 0
+      ? await db
+          .select({ id: workoutSets.id, createdAt: workoutSets.createdAt })
+          .from(workoutSets)
+          .where(
+            inArray(
+              workoutSets.workoutSessionExerciseId,
+              existingExercises.map((row) => row.id),
+            ),
+          )
+      : [];
+  // Only ids that already belong to this session are reused; anything else
+  // (a client-side temp id, a stray id from elsewhere) becomes a fresh row.
+  const createdAtById = new Map(
+    [...existingExercises, ...existingSets].map((row) => [row.id, row.createdAt] as const),
+  );
+  const keepOrCreate = (id: string | null) =>
+    id !== null && createdAtById.has(id) ? id : createUuid();
 
-  for (const sourceExercise of sourceExerciseRows) {
-    const sessionExerciseId = createUuid();
-    await db.insert(workoutSessionExercises).values({
-      id: sessionExerciseId,
-      workoutSessionId: session.id,
-      exerciseId: sourceExercise.exerciseId,
-      orderIndex: sourceExercise.orderIndex,
-      notes: sourceExercise.notes,
-      createdAt: now,
-      updatedAt: now,
+  const exerciseRows: (typeof workoutSessionExercises.$inferInsert)[] = [];
+  const setRows: (typeof workoutSets.$inferInsert)[] = [];
+  for (const [exerciseIndex, exercise] of draft.exercises.entries()) {
+    const exerciseRowId = keepOrCreate(exercise.id);
+    exerciseRows.push({
+      id: exerciseRowId,
+      workoutSessionId: sessionId,
+      exerciseId: exercise.exerciseId,
+      orderIndex: exerciseIndex,
+      notes: exercise.notes,
+      createdAt: createdAtById.get(exerciseRowId) ?? timestamp,
+      updatedAt: timestamp,
     });
-
-    const sourceSetRows = await db
-      .select()
-      .from(workoutSets)
-      .where(eq(workoutSets.workoutSessionExerciseId, sourceExercise.id))
-      .orderBy(asc(workoutSets.orderIndex));
-
-    for (const sourceSet of sourceSetRows) {
-      await db.insert(workoutSets).values({
-        id: createUuid(),
-        workoutSessionExerciseId: sessionExerciseId,
-        orderIndex: sourceSet.orderIndex,
-        reps: sourceSet.reps,
-        weight: sourceSet.weight,
-        durationSeconds: sourceSet.durationSeconds,
-        distance: sourceSet.distance,
-        isCompleted: 0,
-        setType: sourceSet.setType,
-        createdAt: now,
-        updatedAt: now,
+    for (const [setIndex, set] of exercise.sets.entries()) {
+      const setRowId = keepOrCreate(set.id);
+      setRows.push({
+        id: setRowId,
+        workoutSessionExerciseId: exerciseRowId,
+        orderIndex: setIndex,
+        reps: set.reps,
+        weight: set.weight,
+        durationSeconds: set.durationSeconds,
+        distance: set.distance,
+        isCompleted: set.isCompleted ? 1 : 0,
+        setType: set.setType,
+        createdAt: createdAtById.get(setRowId) ?? timestamp,
+        updatedAt: timestamp,
       });
     }
   }
 
-  const hydrated = await hydrateWorkoutSession(session.id);
-  if (!hydrated) throw new Error("Failed repeat workout");
+  const durationSeconds = draft.completedAt
+    ? Math.max(
+        0,
+        Math.floor((Date.parse(draft.completedAt) - Date.parse(draft.startedAt)) / 1000),
+      )
+    : null;
+
+  // Synchronous on expo-sqlite - see insertActiveSession.
+  db.transaction((tx) => {
+    const session = tx
+      .select({ status: workoutSessions.status })
+      .from(workoutSessions)
+      .where(eq(workoutSessions.id, sessionId))
+      .get();
+    if (!session || session.status !== "completed") {
+      throw new Error("Can only edit completed workouts");
+    }
+
+    tx.update(workoutSessions)
+      .set({
+        name: draft.name.trim() || "Workout",
+        notes: draft.notes,
+        startedAt: draft.startedAt,
+        completedAt: draft.completedAt,
+        durationSeconds,
+        updatedAt: timestamp,
+      })
+      .where(eq(workoutSessions.id, sessionId))
+      .run();
+
+    // Cascades to the sets.
+    tx.delete(workoutSessionExercises)
+      .where(eq(workoutSessionExercises.workoutSessionId, sessionId))
+      .run();
+    for (const batch of chunk(exerciseRows)) {
+      tx.insert(workoutSessionExercises).values(batch).run();
+    }
+    for (const batch of chunk(setRows)) {
+      tx.insert(workoutSets).values(batch).run();
+    }
+  });
+
+  const hydrated = await hydrateWorkoutSession(sessionId);
+  if (!hydrated) throw new Error("Failed to save workout");
   return hydrated;
-}
-
-export async function completeWorkout(
-  sessionId: string,
-  input?: { completedAt?: string; durationSeconds?: number | null },
-): Promise<WorkoutSession | null> {
-  await db
-    .update(workoutSessions)
-    .set({
-      status: "completed",
-      completedAt: input?.completedAt ?? nowUtc(),
-      durationSeconds: input?.durationSeconds ?? null,
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutSessions.id, sessionId));
-
-  return getWorkoutSessionById(sessionId);
-}
-
-export async function updateCompletedWorkout(
-  id: string,
-  input: {
-    name?: string;
-    notes?: string | null;
-    startedAt?: string;
-    completedAt?: string | null;
-    durationSeconds?: number | null;
-  },
-): Promise<WorkoutSessionDetails | null> {
-  const current = await getWorkoutSessionById(id);
-  if (!current) return null;
-  if (current.status !== "completed") {
-    throw new Error("Can only edit completed workouts");
-  }
-
-  await db
-    .update(workoutSessions)
-    .set({
-      ...(input.name !== undefined ? { name: input.name.trim() || "Workout" } : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      ...(input.startedAt !== undefined ? { startedAt: input.startedAt } : {}),
-      ...(input.completedAt !== undefined ? { completedAt: input.completedAt } : {}),
-      ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutSessions.id, id));
-
-  return hydrateWorkoutSession(id);
-}
-
-/**
- * Deletes exercises in a session that have no sets (e.g. added but never logged,
- * or left empty after incomplete sets were removed). Returns the number of
- * exercises that remain. No orderIndex reindex — the session completes right
- * after, and detail views order by orderIndex where gaps are harmless.
- */
-export async function removeEmptyExercises(sessionId: string): Promise<number> {
-  const exerciseRows = await db
-    .select({ id: workoutSessionExercises.id })
-    .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, sessionId));
-  if (exerciseRows.length === 0) return 0;
-
-  const exerciseIds = exerciseRows.map((row) => row.id);
-  const setRows = await db
-    .select({ workoutSessionExerciseId: workoutSets.workoutSessionExerciseId })
-    .from(workoutSets)
-    .where(inArray(workoutSets.workoutSessionExerciseId, exerciseIds));
-
-  const idsWithSets = new Set(
-    setRows.map((row) => row.workoutSessionExerciseId),
-  );
-  const emptyIds = exerciseIds.filter((id) => !idsWithSets.has(id));
-
-  if (emptyIds.length > 0) {
-    await db
-      .delete(workoutSessionExercises)
-      .where(inArray(workoutSessionExercises.id, emptyIds));
-  }
-
-  return exerciseRows.length - emptyIds.length;
 }
 
 export async function renameWorkoutSession(
@@ -657,9 +840,15 @@ export async function renameWorkoutSession(
   return hydrateWorkoutSession(id);
 }
 
-export async function cancelWorkout(sessionId: string): Promise<WorkoutSession | null> {
-  await deleteWorkoutSessionGraph(sessionId);
-  return null;
+/**
+ * Discards the workout in progress. One statement, so it is atomic, and the
+ * schema's cascades take the exercises and sets with it. Scoped to `active`, so
+ * it can never delete finished history; on anything else it is a no-op.
+ */
+export async function cancelWorkout(sessionId: string): Promise<void> {
+  await db
+    .delete(workoutSessions)
+    .where(and(eq(workoutSessions.id, sessionId), eq(workoutSessions.status, "active")));
 }
 
 export async function addExerciseToWorkout(input: {
@@ -710,32 +899,6 @@ export async function removeExerciseFromWorkout(
 
   const hydrated = await hydrateWorkoutSession(workoutSessionId);
   if (!hydrated) throw new Error("Failed remove exercise from workout");
-  return hydrated;
-}
-
-export async function reorderWorkoutExercises(
-  workoutSessionId: string,
-  orderedExerciseIds: string[],
-): Promise<WorkoutSessionDetails> {
-  const idToIndex = new Map(orderedExerciseIds.map((id, index) => [id, index] as const));
-  const rows = await db
-    .select()
-    .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId));
-
-  const timestamp = nowUtc();
-  for (const row of rows) {
-    const nextIndex = idToIndex.get(row.id);
-    if (nextIndex !== undefined && row.orderIndex !== nextIndex) {
-      await db
-        .update(workoutSessionExercises)
-        .set({ orderIndex: nextIndex, updatedAt: timestamp })
-        .where(eq(workoutSessionExercises.id, row.id));
-    }
-  }
-
-  const hydrated = await hydrateWorkoutSession(workoutSessionId);
-  if (!hydrated) throw new Error("Failed reorder workout exercises");
   return hydrated;
 }
 
@@ -849,29 +1012,6 @@ export async function deleteSet(setId: string): Promise<WorkoutSessionDetails> {
   return hydrated;
 }
 
-export async function removeIncompleteSets(workoutSessionId: string): Promise<WorkoutSessionDetails> {
-  const sessionExercises = await db
-    .select({ id: workoutSessionExercises.id })
-    .from(workoutSessionExercises)
-    .where(eq(workoutSessionExercises.workoutSessionId, workoutSessionId));
-
-  const sessionExerciseIds = sessionExercises.map((row) => row.id);
-  if (sessionExerciseIds.length > 0) {
-    await db
-      .delete(workoutSets)
-      .where(
-        and(
-          inArray(workoutSets.workoutSessionExerciseId, sessionExerciseIds),
-          eq(workoutSets.isCompleted, 0),
-        ),
-      );
-  }
-
-  const hydrated = await hydrateWorkoutSession(workoutSessionId);
-  if (!hydrated) throw new Error("Failed remove incomplete sets");
-  return hydrated;
-}
-
 export async function updateWorkoutExerciseNotes(
   workoutSessionExerciseId: string,
   notes: string | null,
@@ -905,11 +1045,12 @@ export async function ensureWorkoutIsActive(workoutSessionId: string): Promise<b
   return Boolean(row);
 }
 
+/**
+ * Deletes a finished workout from history. The workout in progress is ended
+ * through `cancelWorkout`/`finishWorkout` instead, so this skips it.
+ */
 export async function deleteWorkoutSession(id: string): Promise<void> {
-  const current = await getWorkoutSessionById(id);
-  if (!current) return;
-  if (current.status === "active") {
-    throw new Error("Cannot delete active workout session");
-  }
-  await deleteWorkoutSessionGraph(id);
+  await db
+    .delete(workoutSessions)
+    .where(and(eq(workoutSessions.id, id), ne(workoutSessions.status, "active")));
 }

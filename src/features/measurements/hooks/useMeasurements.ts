@@ -25,11 +25,11 @@ export function useMeasurements(type: SupportedMeasurementType) {
   });
 
   const addMeasurementMutation = useMutation({
-    mutationFn: (input: { value: number; unit: string; measuredAt?: string; notes?: string | null }) =>
+    /** `value` is canonical: kg for weight, cm for every other type. */
+    mutationFn: (input: { value: number; measuredAt?: string; notes?: string | null }) =>
       createMeasurement({
         measurementType: type,
         value: input.value,
-        unit: input.unit,
         measuredAt: input.measuredAt,
         notes: input.notes ?? null,
       }),

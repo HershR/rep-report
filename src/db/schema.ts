@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const EXERCISE_SOURCES = ["wger", "custom"] as const;
@@ -107,6 +107,12 @@ export const workoutSessions = sqliteTable(
   (table) => [
     index("workout_sessions_started_at_idx").on(table.startedAt),
     index("workout_sessions_completed_at_idx").on(table.completedAt),
+    // The app supports exactly one workout in progress. Enforcing it here rather
+    // than in UI code means no caller - however stale its cache - can create a
+    // second one: the insert fails instead.
+    uniqueIndex("workout_sessions_one_active_uidx")
+      .on(table.status)
+      .where(sql`${table.status} = 'active'`),
   ],
 );
 

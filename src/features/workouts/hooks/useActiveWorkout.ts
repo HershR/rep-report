@@ -4,18 +4,16 @@ import {
   addExerciseToWorkout,
   addSetToWorkout,
   cancelWorkout,
-  completeWorkout,
-  removeExerciseFromWorkout,
-  removeEmptyExercises,
-  removeIncompleteSets,
   deleteSet,
+  finishWorkout,
   getActiveWorkoutSession,
+  removeExerciseFromWorkout,
   renameWorkoutSession,
   repeatWorkout,
-  resumeWorkout,
   startWorkout,
   updateSet,
 } from "@/features/workouts/repositories/workoutRepository";
+import { invalidateWorkoutDerivedQueries } from "@/features/workouts/hooks/invalidateWorkoutDerivedQueries";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 
 const ACTIVE_WORKOUT_QUERY_KEY = ["active-workout"] as const;
@@ -40,13 +38,6 @@ export function useActiveWorkout() {
     },
   });
 
-  const resumeMutation = useMutation({
-    mutationFn: (sessionId?: string) => resumeWorkout(sessionId),
-    onSuccess: (data) => {
-      setActiveWorkoutCache(data);
-    },
-  });
-
   const repeatMutation = useMutation({
     mutationFn: (sourceSessionId: string) => repeatWorkout(sourceSessionId),
     onSuccess: (data) => {
@@ -54,22 +45,13 @@ export function useActiveWorkout() {
     },
   });
 
-  const completeMutation = useMutation({
-    mutationFn: async (sessionId: string) => {
-      const active = await getActiveWorkoutSession();
-      const completedAt = new Date().toISOString();
-      const durationSeconds = active
-        ? Math.max(0, Math.floor((Date.parse(completedAt) - Date.parse(active.startedAt)) / 1000))
-        : null;
-      return completeWorkout(sessionId, { completedAt, durationSeconds });
-    },
-    onSuccess: () => {
+  const finishMutation = useMutation({
+    mutationFn: (input: { sessionId: string; discardUnlogged: boolean }) =>
+      finishWorkout(input.sessionId, { discardUnlogged: input.discardUnlogged }),
+    onSuccess: async (outcome) => {
       setActiveWorkoutCache(null);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
+      // A discarded workout never reached history, so nothing derived changed.
+      if (outcome === "completed") await invalidateWorkoutDerivedQueries(queryClient);
     },
   });
 
@@ -77,11 +59,6 @@ export function useActiveWorkout() {
     mutationFn: (sessionId: string) => cancelWorkout(sessionId),
     onSuccess: () => {
       setActiveWorkoutCache(null);
-      void queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-      void queryClient.invalidateQueries({ queryKey: ["personal-records"] });
-      void queryClient.invalidateQueries({ queryKey: ["workout-activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["exercise-chart"] });
-      void queryClient.invalidateQueries({ queryKey: ["volume-trend"] });
     },
   });
 
@@ -129,20 +106,6 @@ export function useActiveWorkout() {
     },
   });
 
-  const removeIncompleteSetsMutation = useMutation({
-    mutationFn: (sessionId: string) => removeIncompleteSets(sessionId),
-    onSuccess: (data) => {
-      setActiveWorkoutCache(data);
-    },
-  });
-
-  const removeEmptyExercisesMutation = useMutation({
-    mutationFn: (sessionId: string) => removeEmptyExercises(sessionId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ACTIVE_WORKOUT_QUERY_KEY });
-    },
-  });
-
   return {
     activeWorkout: activeQuery.data ?? null,
     isLoading: activeQuery.isLoading,
@@ -155,31 +118,25 @@ export function useActiveWorkout() {
     error: activeQuery.error ?? null,
     refetch: activeQuery.refetch,
     startWorkout: startMutation.mutateAsync,
-    resumeWorkout: resumeMutation.mutateAsync,
     repeatWorkout: repeatMutation.mutateAsync,
     renameWorkout: renameMutation.mutateAsync,
-    completeWorkout: completeMutation.mutateAsync,
+    finishWorkout: finishMutation.mutateAsync,
     cancelWorkout: cancelMutation.mutateAsync,
     addExerciseToWorkout: addExerciseMutation.mutateAsync,
     addSetToWorkout: addSetMutation.mutateAsync,
     removeExerciseFromWorkout: removeExerciseMutation.mutateAsync,
     updateSet: updateSetMutation.mutateAsync,
     deleteSet: deleteSetMutation.mutateAsync,
-    removeIncompleteSets: removeIncompleteSetsMutation.mutateAsync,
-    removeEmptyExercises: removeEmptyExercisesMutation.mutateAsync,
     isSaving:
       startMutation.isPending ||
-      resumeMutation.isPending ||
       repeatMutation.isPending ||
       renameMutation.isPending ||
-      completeMutation.isPending ||
+      finishMutation.isPending ||
       cancelMutation.isPending ||
       addExerciseMutation.isPending ||
       addSetMutation.isPending ||
       removeExerciseMutation.isPending ||
       updateSetMutation.isPending ||
-      deleteSetMutation.isPending ||
-      removeIncompleteSetsMutation.isPending ||
-      removeEmptyExercisesMutation.isPending,
+      deleteSetMutation.isPending,
   };
 }

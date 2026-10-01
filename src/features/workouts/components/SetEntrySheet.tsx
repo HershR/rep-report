@@ -20,8 +20,13 @@ export type SetEntryTarget = {
   field: SetEntryField;
   reps: string;
   weight: string;
-  /** Same set from the previous session, if there was one. */
-  previous: { reps: string; weight: string } | null;
+  /**
+   * The stored kg behind `weight`. Committing text that still reads as this
+   * value keeps it exactly, rather than re-deriving it from rounded text.
+   */
+  weightKg: number | null;
+  /** The set before this one in the same exercise, if there is one. */
+  previous: { reps: string; weight: string; weightKg: number | null } | null;
 };
 
 type SetEntrySheetProps = {

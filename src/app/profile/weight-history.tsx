@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
-import type { WeightUnit } from "@/db/schema";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { toMetricWeight, weightToText } from "@/lib/units";
@@ -29,7 +28,7 @@ export default function WeightHistoryScreen() {
     const value = Number(weightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
     const metricValue = toMetricWeight(value, weightUnit);
-    await addWeight({ value: metricValue, unit: "kg" });
+    await addWeight({ value: metricValue });
     setWeightValue("");
   };
 
@@ -84,9 +83,7 @@ export default function WeightHistoryScreen() {
                   {format(new Date(item.measuredAt), "PP")}
                 </Text>
                 <Text>
-                  {displayText(
-                    toMetricWeight(item.value, item.unit as WeightUnit),
-                  )}
+                  {displayText(item.value)}
                 </Text>
               </Card>
             ))}

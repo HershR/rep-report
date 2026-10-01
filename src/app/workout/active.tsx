@@ -52,11 +52,7 @@ import {
 import { useRestTimer } from "@/features/workouts/hooks/useRestTimer";
 import type { WorkoutSetInput } from "@/features/workouts/types";
 import { THEME } from "@/lib/theme";
-import {
-  textToMetricWeight,
-  toDisplayWeight,
-  weightToText,
-} from "@/lib/units";
+import { resolveWeightText, toDisplayWeight, weightToText } from "@/lib/units";
 
 function buildPrDescription(
   pr: SetPrResult,
@@ -121,18 +117,15 @@ export default function ActiveWorkoutScreen() {
     error,
     refetch,
     startWorkout,
-    resumeWorkout,
     repeatWorkout,
     renameWorkout,
-    completeWorkout,
+    finishWorkout,
     cancelWorkout,
     addExerciseToWorkout,
     addSetToWorkout,
     removeExerciseFromWorkout,
     updateSet,
     deleteSet,
-    removeIncompleteSets,
-    removeEmptyExercises,
   } = useActiveWorkout();
 
   /**
@@ -153,7 +146,10 @@ export default function ActiveWorkoutScreen() {
 
     if (activeWorkout?.status === "active") return;
     if (params.sessionId) {
-      void resumeWorkout(params.sessionId);
+      // Asked to resume a particular workout, but nothing is in progress: it
+      // was finished or discarded elsewhere. There is nothing to show.
+      if (router.canGoBack()) router.back();
+      else router.replace("/(tabs)/home");
       return;
     }
     if (params.repeatSessionId) {
@@ -171,8 +167,8 @@ export default function ActiveWorkoutScreen() {
     params.sessionId,
     params.repeatSessionId,
     params.templateId,
-    resumeWorkout,
     repeatWorkout,
+    router,
     startWorkout,
   ]);
 
@@ -310,10 +306,12 @@ export default function ActiveWorkoutScreen() {
         field,
         reps: workoutSet.reps === null ? "" : String(workoutSet.reps),
         weight: weightToText(workoutSet.weight, weightUnit),
+        weightKg: workoutSet.weight,
         previous: prior
           ? {
               reps: prior.reps === null ? "" : String(prior.reps),
               weight: weightToText(prior.weight, weightUnit),
+              weightKg: prior.weight,
             }
           : null,
       });
@@ -399,15 +397,25 @@ export default function ActiveWorkoutScreen() {
     dismiss();
   };
 
-  const finishAndCelebrate = async (finish: () => Promise<unknown>) => {
+  /**
+   * Ends the session in one repository call. With `discardUnlogged`, unticked
+   * sets and emptied exercises are dropped first - and if that leaves nothing,
+   * the repository discards the workout instead of saving an empty one.
+   */
+  const endWorkout = async (discardUnlogged: boolean) => {
     if (isEndingRef.current) return;
     isEndingRef.current = true;
-    await finish();
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success("Nice work!", {
-      icon: <Icon as={Check} size={18} color={colors.chart3} />,
-      duration: 2500,
-    });
+    const outcome = await finishWorkout({ sessionId: workout.id, discardUnlogged });
+    if (outcome === "discarded") {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      toast("Empty workout discarded", { duration: 2500 });
+    } else {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toast.success("Nice work!", {
+        icon: <Icon as={Check} size={18} color={colors.chart3} />,
+        duration: 2500,
+      });
+    }
     dismiss();
   };
 
@@ -420,7 +428,7 @@ export default function ActiveWorkoutScreen() {
     }
 
     if (incompleteSetCount === 0 && emptyExerciseCount === 0) {
-      await finishAndCelebrate(() => completeWorkout(workout.id));
+      await endWorkout(false);
       return;
     }
 
@@ -429,21 +437,12 @@ export default function ActiveWorkoutScreen() {
 
   const onKeepEverythingAndComplete = async () => {
     setCleanupDialogOpen(false);
-    await finishAndCelebrate(() => completeWorkout(workout.id));
+    await endWorkout(false);
   };
 
   const onDiscardAndFinish = async () => {
     setCleanupDialogOpen(false);
-    await removeIncompleteSets(workout.id);
-    const remaining = await removeEmptyExercises(workout.id);
-    if (remaining === 0) {
-      // Cleanup emptied the workout — discard it rather than save an empty one.
-      await discardWorkout();
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      toast("Empty workout discarded", { duration: 2500 });
-      return;
-    }
-    await finishAndCelebrate(() => completeWorkout(workout.id));
+    await endWorkout(true);
   };
 
   return (
@@ -591,7 +590,12 @@ export default function ActiveWorkoutScreen() {
         onCommit={(setId, values) => {
           scheduleSetUpdate(setId, {
             reps: values.reps.trim() === "" ? null : Number(values.reps),
-            weight: textToMetricWeight(values.weight, weightUnit),
+            // Untouched, or copied from the previous set, the weight keeps its
+            // stored kg - re-parsing rounded display text would drift it.
+            weight: resolveWeightText(values.weight, weightUnit, [
+              entryTarget?.weightKg ?? null,
+              entryTarget?.previous?.weightKg ?? null,
+            ]),
           });
           setEntryTarget(null);
           // Same path as the row tick, so PR detection and rest still fire.

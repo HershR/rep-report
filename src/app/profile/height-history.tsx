@@ -34,7 +34,7 @@ export default function HeightHistoryScreen() {
       if (feet < 0 || inches < 0) return;
       const totalInches = feet * 12 + inches;
       if (totalInches <= 0) return;
-      await addHeight({ value: toMetricHeight(totalInches, "in"), unit: "cm" });
+      await addHeight({ value: toMetricHeight(totalInches, "in") });
       setHeightFeet("");
       setHeightInches("");
       return;
@@ -42,7 +42,7 @@ export default function HeightHistoryScreen() {
 
     const value = Number(heightValue.trim());
     if (!Number.isFinite(value) || value <= 0) return;
-    await addHeight({ value: toMetricHeight(value, "cm"), unit: "cm" });
+    await addHeight({ value });
     setHeightValue("");
   };
 
@@ -113,10 +113,7 @@ export default function HeightHistoryScreen() {
                   {format(new Date(item.measuredAt), "PP")}
                 </Text>
                 <Text>
-                  {toDisplayHeightCm(
-                    toMetricHeight(item.value, item.unit),
-                    heightUnit,
-                  )}
+                  {toDisplayHeightCm(item.value, heightUnit)}
                 </Text>
               </Card>
             ))}

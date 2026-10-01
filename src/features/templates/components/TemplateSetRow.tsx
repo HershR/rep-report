@@ -12,11 +12,12 @@ import {
   formatDurationInput,
   secondsToDurationDisplay,
 } from "@/features/workouts/utils/durationInput";
+import { parseTemplateNumberText } from "@/features/templates/types";
 import {
   distanceToText,
-  textToMetricDistance,
+  resolveDistanceText,
+  resolveWeightText,
   weightToText,
-  textToMetricWeight,
 } from "@/lib/units";
 
 type TemplateSetRowProps = {
@@ -100,27 +101,32 @@ export function TemplateSetRow({
     onChangeDuration(String(durationDisplayToSeconds(formatted)));
   };
 
+  // The form holds canonical km/kg as text; text that still reads as that value
+  // keeps it exactly instead of re-deriving it from rounded display text.
+  const storedKm = parseTemplateNumberText(distanceText);
+  const storedKg = parseTemplateNumberText(weightText);
+
   const commitDistance = () => {
     setIsDistanceFocused(false);
-    const metricValue = textToMetricDistance(distanceInput, distanceUnit);
+    const metricValue = resolveDistanceText(distanceInput, distanceUnit, [storedKm]);
     onChangeDistance(metricValue === null ? "" : String(metricValue));
   };
 
   const onChangeDistanceInput = (value: string) => {
     setDistanceInput(value);
-    const metricValue = textToMetricDistance(value, distanceUnit);
+    const metricValue = resolveDistanceText(value, distanceUnit, [storedKm]);
     onChangeDistance(metricValue === null ? "" : String(metricValue));
   };
 
   const commitWeight = () => {
     setIsWeightFocused(false);
-    const metricValue = textToMetricWeight(weightInput, weightUnit);
+    const metricValue = resolveWeightText(weightInput, weightUnit, [storedKg]);
     onChangeWeight(metricValue === null ? "" : String(metricValue));
   };
 
   const onChangeWeightInput = (value: string) => {
     setWeightInput(value);
-    const metricValue = textToMetricWeight(value, weightUnit);
+    const metricValue = resolveWeightText(value, weightUnit, [storedKg]);
     onChangeWeight(metricValue === null ? "" : String(metricValue));
   };
 

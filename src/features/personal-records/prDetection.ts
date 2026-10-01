@@ -1,3 +1,4 @@
+import { isHeavier } from "@/features/personal-records/compare";
 import { getExercisePersonalRecords } from "@/features/personal-records/repositories/personalRecordsRepository";
 import type { SetPrResult } from "@/features/personal-records/types";
 import type {
@@ -39,6 +40,10 @@ export async function checkSetPersonalRecord(
   }
   if (!targetExercise || !targetSet) return null;
 
+  // Records are computed from working sets only; a warmup that out-reps them
+  // would otherwise fire a toast the Records screen then contradicts.
+  if (targetSet.setType === "warmup") return null;
+
   if (isCardioExercise(targetExercise.exercise.category, targetExercise.exercise.name)) {
     return null;
   }
@@ -70,7 +75,7 @@ export async function checkSetPersonalRecord(
   const priorBestReps = maxNullable(sessionMaxReps, history?.mostReps?.reps ?? null);
 
   const isWeightPr =
-    hasWeight && (priorBestWeight === null || (weight as number) > priorBestWeight);
+    hasWeight && (priorBestWeight === null || isHeavier(weight as number, priorBestWeight));
   const isRepsPr = hasReps && (priorBestReps === null || (reps as number) > priorBestReps);
 
   if (!isWeightPr && !isRepsPr) return null;

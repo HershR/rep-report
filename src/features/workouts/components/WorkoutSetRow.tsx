@@ -24,7 +24,7 @@ import {
 } from "@/features/workouts/utils/durationInput";
 import {
   distanceToText,
-  textToMetricDistance,
+  resolveDistanceText,
   weightToText,
 } from "@/lib/units";
 
@@ -137,7 +137,7 @@ export function WorkoutSetRow({
   const commitDistance = () => {
     setIsDistanceFocused(false);
     onUpdate(workoutSet.id, {
-      distance: textToMetricDistance(distanceInput, distanceUnit),
+      distance: resolveDistanceText(distanceInput, distanceUnit, [workoutSet.distance]),
     });
   };
 
@@ -198,7 +198,7 @@ export function WorkoutSetRow({
               setDistanceInput(value);
               if (commitOnChange) {
                 onUpdate(workoutSet.id, {
-                  distance: textToMetricDistance(value, distanceUnit),
+                  distance: resolveDistanceText(value, distanceUnit, [workoutSet.distance]),
                 });
               }
             }}

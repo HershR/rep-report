@@ -41,7 +41,6 @@ import type {
   WorkoutDetailFormSet,
   WorkoutDetailFormValues,
   WorkoutSessionDetails,
-  WorkoutSessionSet,
 } from "@/features/workouts/types";
 import { workoutDetailFormSchema } from "@/features/workouts/types";
 
@@ -51,17 +50,6 @@ function createTempId(prefix: "exercise" | "set") {
 
 function isTempId(id: string) {
   return id.startsWith("temp-");
-}
-
-function areSetsEqual(a: WorkoutSessionSet, b: WorkoutSessionSet) {
-  return (
-    a.reps === b.reps &&
-    a.weight === b.weight &&
-    a.durationSeconds === b.durationSeconds &&
-    a.distance === b.distance &&
-    a.setType === b.setType &&
-    a.isCompleted === b.isCompleted
-  );
 }
 
 function getFormDefaults(
@@ -101,14 +89,7 @@ export default function WorkoutDetailScreen() {
     workoutSession,
     isLoading,
     isSaving,
-    refetch,
-    addExerciseToWorkout,
-    addSetToWorkout,
-    removeExerciseFromWorkout,
-    reorderExercises,
-    updateSet,
-    deleteSet,
-    updateCompletedWorkout,
+    saveCompletedWorkout,
     deleteWorkoutSession,
   } = useWorkoutSession(params.workoutId);
   const { favorites } = useFavoriteExercises();
@@ -419,123 +400,29 @@ export default function WorkoutDetailScreen() {
     setIsSavingAll(true);
 
     try {
-      await updateCompletedWorkout({
+      // One repository call applies the whole edit atomically; rows created
+      // in this session of editing carry temp ids, which become fresh rows.
+      await saveCompletedWorkout({
         name: formValues.name,
         notes: formValues.notes.trim() || null,
         startedAt: formValues.startedAt,
         completedAt: formValues.completedAt,
-        durationSeconds: formValues.completedAt
-          ? Math.max(
-              0,
-              Math.floor(
-                (Date.parse(formValues.completedAt) -
-                  Date.parse(formValues.startedAt)) /
-                  1000,
-              ),
-            )
-          : null,
+        exercises: formValues.exercises.map((exercise) => ({
+          id: isTempId(exercise.id) ? null : exercise.id,
+          exerciseId: exercise.exerciseId,
+          notes: exercise.notes,
+          sets: exercise.sets.map((set: WorkoutDetailFormSet) => ({
+            id: isTempId(set.id) ? null : set.id,
+            reps: set.reps,
+            weight: set.weight,
+            durationSeconds: set.durationSeconds,
+            distance: set.distance,
+            isCompleted: set.isCompleted === 1,
+            setType: set.setType,
+          })),
+        })),
       });
 
-      const originalExerciseMap = new Map(
-        workoutSession.exercises.map(
-          (exercise) => [exercise.id, exercise] as const,
-        ),
-      );
-      const nextExerciseIds = new Set(
-        formValues.exercises
-          .filter((exercise) => !isTempId(exercise.id))
-          .map((exercise) => exercise.id),
-      );
-
-      for (const exercise of workoutSession.exercises) {
-        if (!nextExerciseIds.has(exercise.id)) {
-          await removeExerciseFromWorkout(exercise.id);
-        }
-      }
-
-      const resolvedExerciseIds = new Map<string, string>();
-      const knownExerciseIds = new Set(originalExerciseMap.keys());
-
-      for (const draftExercise of formValues.exercises) {
-        if (
-          !isTempId(draftExercise.id) &&
-          originalExerciseMap.has(draftExercise.id)
-        ) {
-          resolvedExerciseIds.set(draftExercise.id, draftExercise.id);
-          continue;
-        }
-
-        const session = await addExerciseToWorkout({
-          exerciseId: draftExercise.exerciseId,
-        });
-        const created = session.exercises.find(
-          (exercise: WorkoutSessionDetails["exercises"][number]) =>
-            exercise.exerciseId === draftExercise.exerciseId &&
-            !knownExerciseIds.has(exercise.id),
-        );
-        if (!created) continue;
-
-        knownExerciseIds.add(created.id);
-        resolvedExerciseIds.set(draftExercise.id, created.id);
-      }
-
-      for (const draftExercise of formValues.exercises) {
-        const realExerciseId =
-          resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id;
-        const originalExercise = originalExerciseMap.get(realExerciseId);
-        const originalSetMap = new Map(
-          (originalExercise?.sets ?? []).map((set) => [set.id, set] as const),
-        );
-
-        const nextSetIds = new Set(
-          draftExercise.sets
-            .filter((set: WorkoutDetailFormSet) => !isTempId(set.id))
-            .map((set: WorkoutDetailFormSet) => set.id),
-        );
-        for (const set of originalExercise?.sets ?? []) {
-          if (!nextSetIds.has(set.id)) {
-            await deleteSet(set.id);
-          }
-        }
-
-        for (const draftSet of draftExercise.sets) {
-          const originalSet = originalSetMap.get(draftSet.id);
-          if (!originalSet || isTempId(draftSet.id)) {
-            await addSetToWorkout({
-              workoutSessionExerciseId: realExerciseId,
-              reps: draftSet.reps,
-              weight: draftSet.weight,
-              durationSeconds: draftSet.durationSeconds,
-              distance: draftSet.distance,
-              isCompleted: draftSet.isCompleted === 1,
-              setType: draftSet.setType,
-            });
-            continue;
-          }
-
-          if (!areSetsEqual(originalSet, draftSet)) {
-            await updateSet({
-              setId: draftSet.id,
-              reps: draftSet.reps,
-              weight: draftSet.weight,
-              durationSeconds: draftSet.durationSeconds,
-              distance: draftSet.distance,
-              isCompleted: draftSet.isCompleted === 1,
-              setType: draftSet.setType,
-            });
-          }
-        }
-      }
-
-      const orderedExerciseIds = formValues.exercises.map(
-        (draftExercise) =>
-          resolvedExerciseIds.get(draftExercise.id) ?? draftExercise.id,
-      );
-      if (orderedExerciseIds.length > 0) {
-        await reorderExercises(orderedExerciseIds);
-      }
-
-      await refetch();
       setShowExitModal(false);
 
       if (pendingNavigationActionRef.current) {

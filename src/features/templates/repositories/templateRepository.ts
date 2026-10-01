@@ -1,18 +1,16 @@
 import { asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { createUuid, nowUtc } from "@/db/utils";
+import { chunk, createUuid, nowUtc } from "@/db/utils";
 import {
-  type SetType,
   exercises,
   workoutTemplateSets,
   workoutTemplateExercises,
   workoutTemplates,
 } from "@/db/schema";
 import type {
-  CreateWorkoutTemplateInput,
-  UpdateWorkoutTemplateInput,
   WorkoutTemplate,
+  WorkoutTemplateDraft,
   WorkoutTemplateExercise,
   WorkoutTemplateSet,
 } from "@/features/templates/types";
@@ -106,23 +104,6 @@ async function hydrateTemplate(templateId: string): Promise<WorkoutTemplate | nu
   };
 }
 
-export async function createWorkoutTemplate(input: CreateWorkoutTemplateInput): Promise<WorkoutTemplate> {
-  const id = createUuid();
-  const timestamp = nowUtc();
-
-  await db.insert(workoutTemplates).values({
-    id,
-    name: input.name.trim(),
-    description: input.description ?? null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  const created = await getWorkoutTemplateById(id);
-  if (!created) throw new Error("Failed create workout template");
-  return created;
-}
-
 export async function getWorkoutTemplateById(id: string): Promise<WorkoutTemplate | null> {
   return hydrateTemplate(id);
 }
@@ -133,141 +114,128 @@ export async function getWorkoutTemplates(): Promise<WorkoutTemplate[]> {
   return templates.filter((template): template is WorkoutTemplate => Boolean(template));
 }
 
-export async function updateWorkoutTemplate(
-  id: string,
-  input: UpdateWorkoutTemplateInput,
-): Promise<WorkoutTemplate | null> {
-  await db
-    .update(workoutTemplates)
-    .set({
-      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.description !== undefined ? { description: input.description } : {}),
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutTemplates.id, id));
-
-  return getWorkoutTemplateById(id);
-}
-
 export async function deleteWorkoutTemplate(id: string): Promise<void> {
   await db.delete(workoutTemplates).where(eq(workoutTemplates.id, id));
 }
 
-export async function addExerciseToTemplate(input: {
-  templateId: string;
-  exerciseId: string;
-  orderIndex?: number;
-  notes?: string | null;
-}): Promise<WorkoutTemplateExercise> {
-  const id = createUuid();
+/**
+ * Creates (`templateId` null) or overwrites a template in one transaction: the
+ * template row, then its exercises and target sets replaced wholesale from the
+ * draft, in draft order. Returns the template id.
+ *
+ * Replacing rather than diffing is safe because nothing references a
+ * template-exercise or template-set id - sessions point at the template itself.
+ * Rows that survive the edit keep their id and `createdAt`, plus the fields the
+ * editor does not show (exercise notes, set type), so editing a template can
+ * never quietly turn a warmup target into a working set.
+ */
+export async function saveWorkoutTemplate(
+  templateId: string | null,
+  draft: WorkoutTemplateDraft,
+): Promise<string> {
+  const id = templateId ?? createUuid();
   const timestamp = nowUtc();
 
-  await db.insert(workoutTemplateExercises).values({
-    id,
-    templateId: input.templateId,
-    exerciseId: input.exerciseId,
-    orderIndex: input.orderIndex ?? 0,
-    notes: input.notes ?? null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
+  const existingExercises = templateId
+    ? await db
+        .select({
+          id: workoutTemplateExercises.id,
+          createdAt: workoutTemplateExercises.createdAt,
+          notes: workoutTemplateExercises.notes,
+        })
+        .from(workoutTemplateExercises)
+        .where(eq(workoutTemplateExercises.templateId, templateId))
+    : [];
+  const existingSets =
+    existingExercises.length > 0
+      ? await db
+          .select({
+            id: workoutTemplateSets.id,
+            createdAt: workoutTemplateSets.createdAt,
+            setType: workoutTemplateSets.setType,
+          })
+          .from(workoutTemplateSets)
+          .where(
+            inArray(
+              workoutTemplateSets.templateExerciseId,
+              existingExercises.map((row) => row.id),
+            ),
+          )
+      : [];
+  const exerciseById = new Map(existingExercises.map((row) => [row.id, row] as const));
+  const setById = new Map(existingSets.map((row) => [row.id, row] as const));
+
+  const exerciseRows: (typeof workoutTemplateExercises.$inferInsert)[] = [];
+  const setRows: (typeof workoutTemplateSets.$inferInsert)[] = [];
+  for (const [exerciseIndex, exercise] of draft.exercises.entries()) {
+    const kept = exercise.id !== null ? exerciseById.get(exercise.id) : undefined;
+    const exerciseRowId = kept?.id ?? createUuid();
+    exerciseRows.push({
+      id: exerciseRowId,
+      templateId: id,
+      exerciseId: exercise.exerciseId,
+      orderIndex: exerciseIndex,
+      notes: kept?.notes ?? null,
+      createdAt: kept?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+    });
+    for (const [setIndex, set] of exercise.sets.entries()) {
+      const keptSet = set.id !== null ? setById.get(set.id) : undefined;
+      setRows.push({
+        id: keptSet?.id ?? createUuid(),
+        templateExerciseId: exerciseRowId,
+        orderIndex: setIndex,
+        targetReps: set.targetReps,
+        targetWeight: set.targetWeight,
+        targetDurationSeconds: set.targetDurationSeconds,
+        targetDistance: set.targetDistance,
+        setType: keptSet?.setType ?? "normal",
+        createdAt: keptSet?.createdAt ?? timestamp,
+        updatedAt: timestamp,
+      });
+    }
+  }
+
+  // `db.transaction` on expo-sqlite is synchronous and commits when this
+  // callback returns, so nothing in here may await.
+  db.transaction((tx) => {
+    if (templateId) {
+      const existing = tx
+        .select({ id: workoutTemplates.id })
+        .from(workoutTemplates)
+        .where(eq(workoutTemplates.id, templateId))
+        .get();
+      if (!existing) throw new Error("Template not found");
+      tx.update(workoutTemplates)
+        .set({
+          name: draft.name.trim(),
+          description: draft.description,
+          updatedAt: timestamp,
+        })
+        .where(eq(workoutTemplates.id, templateId))
+        .run();
+      // Cascades to the template sets.
+      tx.delete(workoutTemplateExercises)
+        .where(eq(workoutTemplateExercises.templateId, templateId))
+        .run();
+    } else {
+      tx.insert(workoutTemplates)
+        .values({
+          id,
+          name: draft.name.trim(),
+          description: draft.description,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .run();
+    }
+    for (const batch of chunk(exerciseRows)) {
+      tx.insert(workoutTemplateExercises).values(batch).run();
+    }
+    for (const batch of chunk(setRows)) {
+      tx.insert(workoutTemplateSets).values(batch).run();
+    }
   });
 
-  const [inserted] = await db
-    .select()
-    .from(workoutTemplateExercises)
-    .where(eq(workoutTemplateExercises.id, id))
-    .limit(1);
-
-  if (!inserted) throw new Error("Failed add exercise to template");
-  const template = await getWorkoutTemplateById(input.templateId);
-  const row = template?.exercises.find((exercise) => exercise.id === inserted.id);
-  if (!row) throw new Error("Failed load template exercise");
-  return row;
-}
-
-export async function removeExerciseFromTemplate(templateExerciseId: string): Promise<void> {
-  await db.delete(workoutTemplateExercises).where(eq(workoutTemplateExercises.id, templateExerciseId));
-}
-
-export async function updateTemplateExercise(
-  id: string,
-  input: { orderIndex?: number; notes?: string | null },
-): Promise<WorkoutTemplateExercise | null> {
-  await db
-    .update(workoutTemplateExercises)
-    .set({
-      ...(input.orderIndex !== undefined ? { orderIndex: input.orderIndex } : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutTemplateExercises.id, id));
-
-  const [row] = await db.select().from(workoutTemplateExercises).where(eq(workoutTemplateExercises.id, id)).limit(1);
-  if (!row) return null;
-  const template = await getWorkoutTemplateById(row.templateId);
-  return template?.exercises.find((exercise) => exercise.id === id) ?? null;
-}
-
-export async function addSetToTemplateExercise(input: {
-  templateExerciseId: string;
-  orderIndex?: number;
-  targetReps?: number | null;
-  targetWeight?: number | null;
-  targetDurationSeconds?: number | null;
-  targetDistance?: number | null;
-  setType?: SetType;
-}): Promise<WorkoutTemplateSet> {
-  const id = createUuid();
-  const timestamp = nowUtc();
-
-  await db.insert(workoutTemplateSets).values({
-    id,
-    templateExerciseId: input.templateExerciseId,
-    orderIndex: input.orderIndex ?? 0,
-    targetReps: input.targetReps ?? null,
-    targetWeight: input.targetWeight ?? null,
-    targetDurationSeconds: input.targetDurationSeconds ?? null,
-    targetDistance: input.targetDistance ?? null,
-    setType: input.setType ?? "normal",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  const [row] = await db.select().from(workoutTemplateSets).where(eq(workoutTemplateSets.id, id)).limit(1);
-  if (!row) throw new Error("Failed add template set");
-  return row as WorkoutTemplateSet;
-}
-
-export async function updateTemplateSet(
-  id: string,
-  input: {
-    orderIndex?: number;
-    targetReps?: number | null;
-    targetWeight?: number | null;
-    targetDurationSeconds?: number | null;
-    targetDistance?: number | null;
-    setType?: SetType;
-  },
-): Promise<WorkoutTemplateSet | null> {
-  await db
-    .update(workoutTemplateSets)
-    .set({
-      ...(input.orderIndex !== undefined ? { orderIndex: input.orderIndex } : {}),
-      ...(input.targetReps !== undefined ? { targetReps: input.targetReps } : {}),
-      ...(input.targetWeight !== undefined ? { targetWeight: input.targetWeight } : {}),
-      ...(input.targetDurationSeconds !== undefined
-        ? { targetDurationSeconds: input.targetDurationSeconds }
-        : {}),
-      ...(input.targetDistance !== undefined ? { targetDistance: input.targetDistance } : {}),
-      ...(input.setType !== undefined ? { setType: input.setType } : {}),
-      updatedAt: nowUtc(),
-    })
-    .where(eq(workoutTemplateSets.id, id));
-
-  const [row] = await db.select().from(workoutTemplateSets).where(eq(workoutTemplateSets.id, id)).limit(1);
-  return (row as WorkoutTemplateSet | undefined) ?? null;
-}
-
-export async function deleteTemplateSet(id: string): Promise<void> {
-  await db.delete(workoutTemplateSets).where(eq(workoutTemplateSets.id, id));
+  return id;
 }

@@ -28,18 +28,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
-import type { WeightUnit } from "@/db/schema";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
-import {
-  toDisplayHeightCm,
-  toDisplayWeight,
-  toMetricHeight,
-  toMetricWeight,
-  weightToText,
-} from "@/lib/units";
+import { toDisplayHeightCm, toDisplayWeight, weightToText } from "@/lib/units";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -156,7 +149,7 @@ export default function ProfileScreen() {
     : "—";
 
   const weightText = latestWeight
-    ? `${weightToText(toMetricWeight(latestWeight.value, latestWeight.unit as WeightUnit), weightUnit)} ${weightUnit}`
+    ? `${weightToText(latestWeight.value, weightUnit)} ${weightUnit}`
     : "—";
 
   const previousWeight = weightHistory.at(-2) ?? null;
@@ -164,17 +157,8 @@ export default function ProfileScreen() {
     latestWeight && previousWeight
       ? (() => {
           const change =
-            toDisplayWeight(
-              toMetricWeight(latestWeight.value, latestWeight.unit as WeightUnit),
-              weightUnit,
-            ) -
-            toDisplayWeight(
-              toMetricWeight(
-                previousWeight.value,
-                previousWeight.unit as WeightUnit,
-              ),
-              weightUnit,
-            );
+            toDisplayWeight(latestWeight.value, weightUnit) -
+            toDisplayWeight(previousWeight.value, weightUnit);
           const rounded = Math.round(change * 10) / 10;
           if (rounded === 0) return undefined;
           return `${rounded > 0 ? "+" : "−"}${Math.abs(rounded)} ${weightUnit}`;
@@ -182,10 +166,7 @@ export default function ProfileScreen() {
       : undefined;
 
   const heightText = latestHeight
-    ? toDisplayHeightCm(
-        toMetricHeight(latestHeight.value, latestHeight.unit),
-        heightUnit,
-      )
+    ? toDisplayHeightCm(latestHeight.value, heightUnit)
     : "—";
 
   return (
