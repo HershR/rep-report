@@ -66,9 +66,11 @@ function BarChip({
 }) {
   return (
     <Pressable
+      role="button"
+      accessibilityState={{ selected }}
       onPress={onPress}
       className={cn(
-        "rounded-full border px-3 py-1.5 active:opacity-80",
+        "h-11 justify-center rounded-full border px-4 active:opacity-80",
         selected ? "border-primary bg-primary" : "border-border bg-transparent",
       )}
     >
@@ -168,7 +170,7 @@ export function PlateCalculator({
       </View>
 
       <View className="gap-2">
-        <Text variant="small">Bar</Text>
+        <Text variant="sectionLabel">BAR</Text>
         <View className="flex-row flex-wrap gap-2">
           {presets.map((preset) => (
             <BarChip
@@ -183,14 +185,12 @@ export function PlateCalculator({
       </View>
 
       {belowBar ? (
-        <Text variant="muted">
+        <Text variant="body" className="text-text-3">
           {`Target is below the bar weight (${trim(barWeight)} ${weightUnit}).`}
         </Text>
       ) : (
         <View className="gap-3">
-          <Text variant="small" className="text-muted-foreground">
-            Per side
-          </Text>
+          <Text variant="sectionLabel">PER SIDE</Text>
 
           <ScrollView
             horizontal
@@ -208,13 +208,16 @@ export function PlateCalculator({
               }}
             />
             {plateInstances.length === 0 ? (
-              <Text variant="muted" className="ml-3">
+              <Text variant="body" className="text-text-3 ml-3">
                 Just the bar
               </Text>
             ) : (
               plateInstances.map((size, index) => (
                 <Pressable
                   key={`${size}-${index}`}
+                  role="button"
+                  accessibilityLabel={`Remove ${trim(size)} ${weightUnit} plate`}
+                  hitSlop={{ top: 8, bottom: 8 }}
                   onPress={() => removePlate(size)}
                   style={{
                     width: 28,
@@ -229,7 +232,9 @@ export function PlateCalculator({
                   }}
                 >
                   <Text
-                    style={{ color: "#ffffff", fontSize: 9, fontWeight: "700" }}
+                    // Light on every plate color; the plate palette itself is
+                    // the competition standard (constants.ts), not theme tokens.
+                    style={{ color: colors.foreground, fontSize: 9, fontWeight: "700" }}
                   >
                     {trim(size)}
                   </Text>
@@ -239,21 +244,23 @@ export function PlateCalculator({
           </ScrollView>
 
           {plateInstances.length > 0 ? (
-            <Text variant="muted" className="text-xs">
-              Tap a plate to remove it.
+            <Text variant="meta" className="text-text-4">
+              TAP A PLATE TO REMOVE IT
             </Text>
           ) : null}
         </View>
       )}
 
       <View className="gap-2">
-        <Text variant="small">Add plates (per side)</Text>
+        <Text variant="sectionLabel">ADD PLATES · PER SIDE</Text>
         <View className="flex-row flex-wrap gap-2">
           {sizes.map((size) => (
             <Pressable
               key={size}
+              role="button"
+              accessibilityLabel={`Add ${trim(size)} ${weightUnit} plate`}
               onPress={() => addPlate(size)}
-              className="rounded-full border px-3 py-1.5 active:opacity-80"
+              className="h-11 justify-center rounded-full border px-4 active:opacity-80"
               style={{ borderColor: plateColor(weightUnit, size) }}
             >
               <Text className="text-sm">{`+${trim(size)}`}</Text>
@@ -265,11 +272,11 @@ export function PlateCalculator({
       {!belowBar ? (
         <View className="gap-0.5">
           {breakdownText ? <Text>{breakdownText}</Text> : null}
-          <Text variant="muted" className="text-sm">
-            {`Loaded: ${trim(loadedTotal)} ${weightUnit}`}
+          <Text variant="meta" className="text-text-3">
+            {`LOADED · ${trim(loadedTotal)} ${weightUnit.toUpperCase()}`}
           </Text>
           {remainder > 0 ? (
-            <Text variant="muted" className="text-sm">
+            <Text variant="body" className="text-text-3">
               {`~${trim(remainder)} ${weightUnit} can't be loaded with standard plates.`}
             </Text>
           ) : null}

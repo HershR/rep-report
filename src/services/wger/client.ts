@@ -1,7 +1,4 @@
-import type {
-  ExerciseFilterOption,
-  ExerciseSearchPage,
-} from "@/features/exercises/types";
+import type { ExerciseSearchPage } from "@/features/exercises/types";
 import {
   mapWgerExerciseToSearchResult,
   mapWgerSearchResponse,
@@ -10,7 +7,6 @@ import type {
   WgerApiListResponse,
   WgerExerciseInfo,
   WgerExerciseSearchRequest,
-  WgerFilterOption,
 } from "@/services/wger/types";
 
 const WGER_BASE_URL = "https://wger.de/api/v2";
@@ -19,10 +15,29 @@ const DEFAULT_LIMIT = 20;
  *  loading state forever; the error paths already handle a rejection. */
 const REQUEST_TIMEOUT_MS = 10_000;
 
-export class WgerTimeoutError extends Error {
+/**
+ * WGER couldn't be reached at all - no connection, or no answer in time. Not
+ * worth retrying: the next attempt fails the same way, just later. Screens use
+ * this to show an offline state instead of a generic error.
+ */
+export class WgerUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WgerUnavailableError";
+  }
+}
+
+export class WgerTimeoutError extends WgerUnavailableError {
   constructor() {
     super("The exercise service did not respond. Check your connection.");
     this.name = "WgerTimeoutError";
+  }
+}
+
+export class WgerOfflineError extends WgerUnavailableError {
+  constructor() {
+    super("You're offline. Exercise search needs a connection.");
+    this.name = "WgerOfflineError";
   }
 }
 
@@ -56,17 +71,16 @@ async function fetchJson<T>(url: string): Promise<T> {
     if (error instanceof Error && error.name === "AbortError") {
       throw new WgerTimeoutError();
     }
+    // React Native's fetch rejects with a TypeError ("Network request failed")
+    // when there is no connection at all; HTTP errors are thrown above, inside
+    // the try, as plain Errors.
+    if (error instanceof TypeError) {
+      throw new WgerOfflineError();
+    }
     throw error;
   } finally {
     clearTimeout(timer);
   }
-}
-
-function mapFilterOptions(options: WgerFilterOption[]): ExerciseFilterOption[] {
-  return options
-    .map((option) => ({ id: option.id, name: option.name?.trim() ?? "" }))
-    .filter((option) => option.name.length > 0)
-    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function searchWgerExercises(
@@ -96,24 +110,4 @@ export async function getWgerExerciseById(exerciseId: number) {
   const url = `${WGER_BASE_URL}/exerciseinfo/${exerciseId}/`;
   const response = await fetchJson<WgerExerciseInfo>(url);
   return mapWgerExerciseToSearchResult(response);
-}
-
-export async function getWgerExerciseCategories(): Promise<
-  ExerciseFilterOption[]
-> {
-  const url = `${WGER_BASE_URL}/exercisecategory/?limit=200`;
-  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
-  return mapFilterOptions(response.results);
-}
-
-export async function getWgerEquipment(): Promise<ExerciseFilterOption[]> {
-  const url = `${WGER_BASE_URL}/equipment/?limit=200`;
-  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
-  return mapFilterOptions(response.results);
-}
-
-export async function getWgerMuscles(): Promise<ExerciseFilterOption[]> {
-  const url = `${WGER_BASE_URL}/muscle/?limit=200`;
-  const response = await fetchJson<WgerApiListResponse<WgerFilterOption>>(url);
-  return mapFilterOptions(response.results);
 }

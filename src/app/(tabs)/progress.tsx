@@ -2,17 +2,15 @@ import { useRouter } from "expo-router";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react-native";
 import { type ComponentProps, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-import { CustomScreen } from "@/components/common";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CustomScreen, EmptyState, ErrorState, ListRow, LoadingState } from "@/components/common";
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import type { WeightUnit } from "@/db/schema";
-import { VolumeTrendChart } from "@/features/charts/components/VolumeTrendChart";
+import { WeeklyVolumeChart } from "@/features/charts/components/WeeklyVolumeChart";
 import { usePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
 import type { ExercisePersonalRecordsSummary } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
@@ -79,8 +77,7 @@ export default function ProgressScreen() {
   const { selectedDate, selectedDateKey, setSelectedDate, workouts, isLoading } =
     useWorkoutHistory();
   const { dailyTotals } = useWorkoutActivity();
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { weightUnit } = useAppSettings();
   const {
     records,
     isLoading: recordsLoading,
@@ -144,40 +141,39 @@ export default function ProgressScreen() {
 
         {tab === "history" ? (
           <View className="gap-3">
-            <Card>
-              <CardContent>
-                <Calendar
-                  current={selectedDateKey}
-                  markingType="custom"
-                  onDayPress={(day) =>
-                    setSelectedDate(new Date(`${day.dateString}T12:00:00`))
-                  }
-                  markedDates={markedDates}
-                  theme={{
-                    calendarBackground: colors.card,
-                    dayTextColor: colors.foreground,
-                    monthTextColor: colors.foreground,
-                    textDisabledColor: colors.mutedForeground,
-                    arrowColor: colors.primary,
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <View className="border-border bg-card overflow-hidden rounded-lg border p-2">
+              <Calendar
+                current={selectedDateKey}
+                markingType="custom"
+                onDayPress={(day) =>
+                  setSelectedDate(new Date(`${day.dateString}T12:00:00`))
+                }
+                markedDates={markedDates}
+                theme={{
+                  calendarBackground: colors.card,
+                  dayTextColor: colors.foreground,
+                  monthTextColor: colors.foreground,
+                  textSectionTitleColor: colors.text3,
+                  textDisabledColor: colors.text4,
+                  todayTextColor: colors.primary,
+                  arrowColor: colors.primary,
+                  // The faces loaded in _layout.tsx, so the calendar matches
+                  // the type around it.
+                  textMonthFontFamily: "Archivo_700Bold",
+                  textDayFontFamily: "IBMPlexMono_500Medium",
+                  textDayHeaderFontFamily: "IBMPlexMono_600SemiBold",
+                }}
+              />
+            </View>
 
             <Text variant="sectionLabel">
               {format(selectedDate, "PPP").toUpperCase()}
             </Text>
 
-            {isLoading ? (
-              <Text variant="muted">Loading workouts...</Text>
-            ) : null}
+            {isLoading ? <LoadingState /> : null}
 
             {!isLoading && workouts.length === 0 ? (
-              <Card>
-                <CardContent>
-                  <Text>No completed workouts on this date.</Text>
-                </CardContent>
-              </Card>
+              <EmptyState message="No completed workouts on this date." />
             ) : null}
 
             {!isLoading
@@ -215,44 +211,27 @@ export default function ProgressScreen() {
 
         {tab === "trends" ? (
           <View className="border-border bg-surface-sunken rounded-lg border p-4">
-            <VolumeTrendChart />
+            <WeeklyVolumeChart />
           </View>
         ) : null}
 
         {tab === "records" ? (
-          <View className="gap-2">
+          <View>
             {recordsLoading ? (
-              <View className="items-center py-4">
-                <ActivityIndicator color={colors.primary} />
-              </View>
+              <LoadingState />
             ) : recordsError ? (
-              <Card>
-                <CardContent className="gap-2">
-                  <Text className="text-destructive text-sm">
-                    Could not load personal records.
-                  </Text>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onPress={() => void refetchRecords()}
-                  >
-                    <Text>Retry</Text>
-                  </Button>
-                </CardContent>
-              </Card>
+              <ErrorState
+                title="Couldn't load personal records"
+                onRetry={() => void refetchRecords()}
+              />
             ) : records.length === 0 ? (
-              <Card>
-                <CardContent>
-                  <Text variant="muted">
-                    Complete a workout to start tracking personal records.
-                  </Text>
-                </CardContent>
-              </Card>
+              <EmptyState message="Complete a workout to start tracking personal records." />
             ) : (
               records.map((record) => (
-                <Pressable
+                <ListRow
                   key={record.exerciseId}
-                  className="active:opacity-80"
+                  label={record.exerciseName}
+                  value={headlineText(record, weightUnit).toUpperCase()}
                   onPress={() =>
                     router.push({
                       pathname: "/exercise/[exerciseId]",
@@ -262,17 +241,7 @@ export default function ProgressScreen() {
                       },
                     })
                   }
-                >
-                  <Card className="py-0">
-                    <CardContent className="flex-row items-center gap-3 py-3">
-                      <Text className="flex-1">{record.exerciseName}</Text>
-                      <Text variant="muted">
-                        {headlineText(record, weightUnit)}
-                      </Text>
-                      <Icon as={ChevronRight} className="text-muted-foreground" />
-                    </CardContent>
-                  </Card>
-                </Pressable>
+                />
               ))
             )}
           </View>

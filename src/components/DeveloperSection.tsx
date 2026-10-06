@@ -1,12 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Database, Eraser } from "lucide-react-native";
 import { useState } from "react";
-import { View } from "react-native";
 import { toast } from "sonner-native";
 
+import { ListRow } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import {
   clearDemoData,
@@ -21,7 +19,7 @@ const SEEDED_QUERY_KEY = ["demo-data-seeded"] as const;
  * database with a realistic training history so the progress, records and
  * history screens have something to show on a fresh install.
  */
-function DeveloperCard() {
+function DeveloperSection() {
   const queryClient = useQueryClient();
   const [isBusy, setIsBusy] = useState(false);
   const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
@@ -78,39 +76,25 @@ function DeveloperCard() {
     }
   };
 
-  const onSeedPress = () => {
-    if (isSeeded) {
-      setSeedConfirmOpen(true);
-      return;
-    }
-    void runSeed();
-  };
-
   return (
-    <Card>
-      <CardContent className="gap-4 pt-6">
-        <View className="gap-1">
-          <Label>Developer</Label>
-          <Text variant="muted" className="text-xs">
-            {isSeeded
-              ? "Demo data is loaded. Seeding again replaces it and re-anchors the dates to today."
-              : "Fills the database with two templates and about eight weeks of workouts and measurements."}
-          </Text>
-        </View>
-
-        <View className="gap-2">
-          <Button disabled={isBusy} onPress={onSeedPress}>
-            <Text>{isBusy ? "Working..." : "Seed demo data"}</Text>
-          </Button>
-          <Button
-            variant="outline"
-            disabled={isBusy || !isSeeded}
-            onPress={() => setClearConfirmOpen(true)}
-          >
-            <Text className="text-destructive">Clear demo data</Text>
-          </Button>
-        </View>
-      </CardContent>
+    <>
+      <Text variant="sectionLabel" className="mb-1 mt-6">
+        DEVELOPER
+      </Text>
+      <ListRow
+        icon={Database}
+        label={isSeeded ? "Re-seed demo data" : "Seed demo data"}
+        value={isSeeded ? "LOADED" : undefined}
+        disabled={isBusy}
+        onPress={() => (isSeeded ? setSeedConfirmOpen(true) : void runSeed())}
+      />
+      <ListRow
+        icon={Eraser}
+        label="Clear demo data"
+        destructive
+        disabled={isBusy || !isSeeded}
+        onPress={() => setClearConfirmOpen(true)}
+      />
 
       <ConfirmDialog
         open={seedConfirmOpen}
@@ -137,8 +121,8 @@ function DeveloperCard() {
           void runClear();
         }}
       />
-    </Card>
+    </>
   );
 }
 
-export { DeveloperCard };
+export { DeveloperSection };

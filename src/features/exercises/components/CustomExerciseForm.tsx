@@ -1,14 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ChoiceChip } from "@/components/common";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   wgerCategories,
   wgerEquipment,
@@ -44,30 +44,6 @@ type CustomExerciseFormProps = {
 
 function getErrorMessage(errors: FieldErrors<CustomExerciseFormValues>): string | null {
   return errors.name?.message ?? errors.category?.message ?? null;
-}
-
-function Chip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className={cn(
-        "rounded-full border px-3 py-1.5 active:opacity-80",
-        selected ? "border-primary bg-primary" : "border-border bg-transparent",
-      )}
-    >
-      <Text className={cn("text-sm", selected ? "text-primary-foreground" : "text-foreground")}>
-        {label}
-      </Text>
-    </Pressable>
-  );
 }
 
 export function CustomExerciseForm({
@@ -130,7 +106,7 @@ export function CustomExerciseForm({
           render={({ field: { value, onChange } }) => (
             <View className="flex-row flex-wrap gap-2">
               {CATEGORY_OPTIONS.map((option) => (
-                <Chip
+                <ChoiceChip
                   key={option}
                   label={option}
                   selected={value === option}
@@ -150,7 +126,7 @@ export function CustomExerciseForm({
           render={({ field: { value, onChange } }) => (
             <View className="flex-row flex-wrap gap-2">
               {EQUIPMENT_OPTIONS.map((option) => (
-                <Chip
+                <ChoiceChip
                   key={option}
                   label={option}
                   selected={value.includes(option)}
@@ -176,7 +152,7 @@ export function CustomExerciseForm({
           render={({ field: { value, onChange } }) => (
             <View className="flex-row flex-wrap gap-2">
               {MUSCLE_OPTIONS.map((option) => (
-                <Chip
+                <ChoiceChip
                   key={option}
                   label={option}
                   selected={value.includes(option)}
@@ -202,7 +178,7 @@ export function CustomExerciseForm({
           render={({ field: { value, onChange } }) => (
             <View className="flex-row flex-wrap gap-2">
               {MUSCLE_OPTIONS.map((option) => (
-                <Chip
+                <ChoiceChip
                   key={option}
                   label={option}
                   selected={value.includes(option)}
@@ -223,7 +199,7 @@ export function CustomExerciseForm({
       {errorMessage ? <Text className="text-destructive text-sm">{errorMessage}</Text> : null}
 
       <Button loading={isSaving} onPress={() => void onSubmit()}>
-        <Text>Create Exercise</Text>
+        <Text>Create exercise</Text>
       </Button>
     </View>
   );

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ExerciseFilters } from "@/features/exercises/types";
 import { getFavoriteExercises } from "@/features/exercises/repositories/exerciseRepository";
-import { searchWgerExercises } from "@/services/wger/client";
+import { searchWgerExercises, WgerUnavailableError } from "@/services/wger/client";
 
 type UseExerciseSearchResult = {
   debouncedQuery: string;
@@ -14,6 +14,8 @@ type UseExerciseSearchResult = {
   isLoading: boolean;
   isFetching: boolean;
   isError: boolean;
+  /** WGER couldn't be reached (offline or timed out), as opposed to a bad response. */
+  isUnavailable: boolean;
   error: Error | null;
   refetch: () => void;
 };
@@ -87,6 +89,7 @@ export function useExerciseSearch(filters: ExerciseFilters): UseExerciseSearchRe
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
+    isUnavailable: query.error instanceof WgerUnavailableError,
     error: query.error ?? null,
     refetch: () => {
       void query.refetch();

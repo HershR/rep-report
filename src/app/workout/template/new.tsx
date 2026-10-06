@@ -22,8 +22,8 @@ export default function NewTemplateScreen() {
 
   return (
     <CustomScreen scroll>
-      <ScreenHeader title="New Template" />
-      <Text variant="muted" className="mt-2">
+      <ScreenHeader title="New template" />
+      <Text variant="body" className="text-text-3 mt-2">
         Build template using saved exercises.
       </Text>
       <TemplateEditor favorites={favorites} isSaving={isSaving} onSave={onSave} />

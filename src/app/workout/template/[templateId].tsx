@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { CustomScreen, ScreenHeader } from "@/components/common";
+import { CustomScreen, ErrorState, LoadingState, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -38,36 +37,32 @@ export default function TemplateDetailScreen() {
 
   return (
     <CustomScreen scroll>
-      <ScreenHeader title="Edit Template" />
-      <Text variant="muted" className="mt-2">
+      <ScreenHeader title="Edit template" />
+      <Text variant="body" className="text-text-3 mt-2">
         Update name, exercises, and target sets.
       </Text>
 
-      <Button
-        variant="destructive"
-        size="sm"
-        className="mt-4 self-start"
-        onPress={() => setDeleteConfirmOpen(true)}
-      >
-        <Text>Delete Template</Text>
-      </Button>
-
-      {isLoading ? (
-        <Text variant="muted" className="mt-4">
-          Loading template...
-        </Text>
-      ) : null}
+      {isLoading ? <LoadingState className="mt-4" /> : null}
       {error ? (
-        <View className="mt-4 gap-2">
-          <Text className="text-destructive text-sm">Could not load template.</Text>
-          <Button variant="outline" size="sm" className="self-start" onPress={() => void refetch()}>
-            <Text>Retry</Text>
-          </Button>
-        </View>
+        <ErrorState
+          className="mt-4"
+          title="Couldn't load this template"
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       {!isLoading && template ? (
-        <TemplateEditor initialTemplate={template} favorites={favorites} isSaving={isSaving} onSave={onSave} />
+        <>
+          <TemplateEditor
+            initialTemplate={template}
+            favorites={favorites}
+            isSaving={isSaving}
+            onSave={onSave}
+          />
+          <Button variant="ghost" onPress={() => setDeleteConfirmOpen(true)}>
+            <Text className="text-destructive">Delete template</Text>
+          </Button>
+        </>
       ) : null}
 
       <ConfirmDialog

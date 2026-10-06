@@ -31,8 +31,10 @@ export default function NewCustomExerciseScreen() {
 
   return (
     <CustomScreen scroll>
-      <ScreenHeader title="New Custom Exercise" />
-      <Text variant="muted">Add an exercise not found in the exercise library.</Text>
+      <ScreenHeader title="New custom exercise" />
+      <Text variant="body" className="text-text-3 mt-2">
+        Add an exercise not found in the exercise library.
+      </Text>
       <CustomExerciseForm
         initialName={params.initialName}
         isSaving={isCreating}

@@ -4,17 +4,15 @@ import { View } from "react-native";
 
 import { CustomScreen, ScreenHeader } from "@/components/common";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
+import { MeasurementHistoryList } from "@/features/measurements/components/MeasurementHistoryList";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { toDisplayHeightCm, toMetricHeight } from "@/lib/units";
 
 export default function HeightHistoryScreen() {
-  const { appSettings } = useAppSettings();
-  const heightUnit = appSettings?.heightUnit ?? "cm";
+  const { heightUnit } = useAppSettings();
   const {
     history,
     addMeasurement: addHeight,
@@ -82,43 +80,22 @@ export default function HeightHistoryScreen() {
         </Button>
       </View>
 
-      {isLoading ? (
-        <View className="gap-2">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </View>
-      ) : error ? (
-        <View className="gap-2">
-          <Text className="text-destructive text-sm">
-            Couldn&apos;t load height history.
-          </Text>
-          <Button variant="outline" size="sm" onPress={refetch}>
-            <Text>Retry</Text>
-          </Button>
-        </View>
-      ) : history.length === 0 ? (
-        <Text variant="muted">No height entries yet.</Text>
-      ) : (
-        <View className="gap-2">
-          {history
-            .slice()
-            .reverse()
-            .map((item) => (
-              <Card
-                key={item.id}
-                className="flex-row items-center justify-between px-4 py-3"
-              >
-                <Text variant="muted">
-                  {format(new Date(item.measuredAt), "PP")}
-                </Text>
-                <Text>
-                  {toDisplayHeightCm(item.value, heightUnit)}
-                </Text>
-              </Card>
-            ))}
-        </View>
-      )}
+      <Text variant="sectionLabel">HISTORY</Text>
+      <MeasurementHistoryList
+        isLoading={isLoading}
+        error={error}
+        rows={history
+          .slice()
+          .reverse()
+          .map((item) => ({
+            id: item.id,
+            dateText: format(new Date(item.measuredAt), "PP"),
+            valueText: toDisplayHeightCm(item.value, heightUnit),
+          }))}
+        emptyMessage="No height entries yet."
+        errorMessage="Couldn't load height history"
+        onRetry={refetch}
+      />
     </CustomScreen>
   );
 }

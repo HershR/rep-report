@@ -20,6 +20,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
@@ -28,7 +29,8 @@ import { initializeDatabase } from "@/db/init";
 import { NAV_THEME, THEME } from "@/lib/theme";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { sqlite } from "@/db/client";
-import { WgerTimeoutError } from "@/services/wger/client";
+import { ErrorState } from "@/components/common";
+import { WgerUnavailableError } from "@/services/wger/client";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // already hidden; nothing to do
@@ -48,16 +50,36 @@ function ForceDarkScheme() {
   return null;
 }
 
+/**
+ * Expo Router renders this in place of the whole app when a render throws, so
+ * one bad screen shows a recoverable message instead of a blank screen. It sits
+ * outside every provider, so it uses only plain views.
+ */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
+  return (
+    <View
+      style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: THEME.background }}
+    >
+      <ErrorState
+        title="Something went wrong"
+        message={error.message}
+        onRetry={() => void retry()}
+      />
+    </View>
+  );
+}
+
 export default function RootLayout() {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Retrying a timeout just multiplies the wait; everything else
-            // keeps the default backoff.
+            // When WGER is unreachable a retry fails the same way, only later -
+            // offline used to mean ~7s of spinner before any message.
+            // Everything else keeps the default backoff.
             retry: (failureCount, error) =>
-              !(error instanceof WgerTimeoutError) && failureCount < 3,
+              !(error instanceof WgerUnavailableError) && failureCount < 3,
           },
         },
       }),

@@ -266,7 +266,7 @@ export function TemplateEditor({
   const errorMessage = getErrorMessage(errors);
 
   return (
-    <View className="mt-4 gap-3 pb-8">
+    <View className="mt-4 gap-3 pb-4">
       <View className="gap-2">
         <Label>Template name</Label>
         <Controller
@@ -289,7 +289,6 @@ export function TemplateEditor({
           name="description"
           render={({ field: { value, onChange } }) => (
             <Textarea
-              className="bg-background dark:bg-input/30"
               value={value}
               onChangeText={onChange}
               placeholder="Description (optional)"
@@ -303,10 +302,14 @@ export function TemplateEditor({
         <Text className="text-destructive text-sm">{errorMessage}</Text>
       ) : null}
 
-      <Text variant="large">Exercises</Text>
+      <Text variant="sectionLabel" className="mt-3">
+        EXERCISES
+      </Text>
 
       {exerciseFields.length === 0 ? (
-        <Text variant="muted">No exercises added yet.</Text>
+        <Text variant="body" className="text-text-3">
+          No exercises added yet.
+        </Text>
       ) : (
         <View className="gap-3">
           {exerciseFields.map((exercise, index) => (
@@ -331,11 +334,11 @@ export function TemplateEditor({
         variant="outline"
         onPress={() => setShowAddExerciseSheet(true)}
       >
-        <Text>Add Exercise</Text>
+        <Text>Add exercise</Text>
       </Button>
 
       <Button loading={isSaving} onPress={() => void onSubmit()}>
-        <Text>Save Template</Text>
+        <Text>Save template</Text>
       </Button>
 
       <AddSavedExerciseSheet

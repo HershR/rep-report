@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, lte, ne } from "drizzle-orm";
-import { format, startOfWeek, subWeeks } from "date-fns";
+import { differenceInCalendarDays, format, startOfWeek, subWeeks } from "date-fns";
 
 import { db } from "@/db/client";
 import { chunk, createUuid, nowUtc } from "@/db/utils";
@@ -435,12 +435,14 @@ export async function getCurrentWeekProgress(): Promise<WeeklyProgress> {
       session.completedAt >= previousWeekStartIso &&
       session.completedAt < weekStartIso,
   ).length;
-  const weekStartMs = weekStart.getTime();
   const dailySeconds = [0, 0, 0, 0, 0, 0, 0];
   for (const session of sessions) {
-    const dayIndex = Math.floor(
-      (new Date(session.completedAt as string).getTime() - weekStartMs) /
-        86_400_000,
+    // Calendar days, not 24h blocks: in a week where the clocks go back,
+    // Sunday is 25 hours long and a late-Sunday session would otherwise land
+    // on a nonexistent eighth day and vanish from the strip.
+    const dayIndex = differenceInCalendarDays(
+      new Date(session.completedAt as string),
+      weekStart,
     );
     if (dayIndex >= 0 && dayIndex < 7) {
       dailySeconds[dayIndex] += session.durationSeconds ?? 0;

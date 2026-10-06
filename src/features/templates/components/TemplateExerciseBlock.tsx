@@ -52,9 +52,7 @@ export function TemplateExerciseBlock({
   canMoveDown = false,
 }: TemplateExerciseBlockProps) {
   const router = useRouter();
-  const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { distanceUnit, weightUnit } = useAppSettings();
   const showDuration = isCardioExercise(exerciseCategory, exerciseName);
 
   const firstColumnLabel = showDuration ? "TIME" : "REPS";
@@ -74,38 +72,43 @@ export function TemplateExerciseBlock({
             })
           }
         >
-          <Text className="text-primary font-semibold">{exerciseName}</Text>
+          <Text variant="cardTitle" className="text-foreground">
+            {exerciseName}
+          </Text>
         </Pressable>
         <View className="flex-row items-center">
           {onMoveUp ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-11"
+              accessibilityLabel={`Move ${exerciseName} up`}
               disabled={!canMoveUp}
               onPress={onMoveUp}
             >
-              <Icon as={ChevronUp} className="text-muted-foreground size-4" />
+              <Icon as={ChevronUp} className="text-text-3 size-4" />
             </Button>
           ) : null}
           {onMoveDown ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-11"
+              accessibilityLabel={`Move ${exerciseName} down`}
               disabled={!canMoveDown}
               onPress={onMoveDown}
             >
-              <Icon as={ChevronDown} className="text-muted-foreground size-4" />
+              <Icon as={ChevronDown} className="text-text-3 size-4" />
             </Button>
           ) : null}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="size-11"
+            accessibilityLabel={`Remove ${exerciseName}`}
             onPress={onDeleteExercise}
           >
-            <Icon as={Trash2} className="text-muted-foreground size-4" />
+            <Icon as={Trash2} className="text-text-3 size-4" />
           </Button>
         </View>
       </View>
@@ -114,13 +117,13 @@ export function TemplateExerciseBlock({
         <>
           <View className="flex-row items-center gap-2">
             <View className="w-6" />
-            <Text variant="muted" className="flex-1 text-center text-xs">
+            <Text variant="microLabel" className="flex-1 text-center">
               {firstColumnLabel}
             </Text>
-            <Text variant="muted" className="flex-1 text-center text-xs">
+            <Text variant="microLabel" className="flex-1 text-center">
               {secondColumnLabel}
             </Text>
-            <View className="w-8" />
+            <View className="w-11" />
           </View>
           <Separator />
         </>

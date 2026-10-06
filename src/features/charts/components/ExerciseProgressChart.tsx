@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View } from "react-native";
 
+import { EmptyState, ErrorState, LoadingState } from "@/components/common";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
 import type { WeightUnit } from "@/db/schema";
@@ -11,6 +12,8 @@ import { toDisplayWeight } from "@/lib/units";
 type ExerciseProgressChartProps = {
   exerciseId: string;
   weightUnit: WeightUnit;
+  /** Cardio is excluded from strength progress, so there is nothing to chart. */
+  isCardio?: boolean;
 };
 
 type Metric = "weight" | "volume" | "e1rm";
@@ -24,11 +27,18 @@ const METRIC_LABEL: Record<Metric, string> = {
 export function ExerciseProgressChart({
   exerciseId,
   weightUnit,
+  isCardio = false,
 }: ExerciseProgressChartProps) {
-  const { data, isLoading } = useExerciseChart(exerciseId);
+  const { data, isLoading, isError, refetch } = useExerciseChart(exerciseId);
   const [metric, setMetric] = useState<Metric>("weight");
 
-  if (isLoading) return null;
+  if (isCardio) {
+    return <EmptyState message="Progress charts track strength work, so cardio isn't charted." />;
+  }
+  if (isLoading) return <LoadingState />;
+  if (isError) {
+    return <ErrorState title="Couldn't load this chart" onRetry={() => void refetch()} />;
+  }
 
   const series = data ?? [];
   const points = series.map((point) => {
@@ -65,8 +75,8 @@ export function ExerciseProgressChart({
         emptyMessage="Log at least two sessions with this exercise to see progress."
         formatY={(value) => `${Math.round(value)}`}
       />
-      <Text variant="muted" className="text-center text-xs">
-        {`${METRIC_LABEL[metric]} · ${weightUnit} · last 3 months`}
+      <Text variant="meta" className="text-text-3 text-center">
+        {`${METRIC_LABEL[metric]} · ${weightUnit} · last 3 months`.toUpperCase()}
       </Text>
     </View>
   );

@@ -1,6 +1,9 @@
 import { FlashList } from "@shopify/flash-list";
+import { Plus } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
+import { EmptyState } from "@/components/common";
+import { Icon } from "@/components/ui/icon";
 import {
   Sheet,
   SheetContent,
@@ -27,11 +30,11 @@ export function AddSavedExerciseSheet({
     <Sheet open={visible} onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Add Saved Exercise</SheetTitle>
+          <SheetTitle>Add saved exercise</SheetTitle>
         </SheetHeader>
 
         {favorites.length === 0 ? (
-          <Text variant="muted">No saved exercises available.</Text>
+          <EmptyState message="No saved exercises yet. Save some from Search, or create your own from the Saved tab." />
         ) : (
           <View className="h-96">
             <FlashList
@@ -39,11 +42,20 @@ export function AddSavedExerciseSheet({
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <Pressable
-                  className="border-border bg-card active:bg-accent mb-2 flex-row items-center justify-between rounded-md border p-3"
+                  role="button"
+                  accessibilityLabel={`Add ${item.name}`}
+                  className="border-separator h-14 flex-row items-center gap-3 border-b active:opacity-80"
                   onPress={() => onAddExercise(item)}
                 >
-                  <Text>{item.name}</Text>
-                  <Text variant="muted">Add</Text>
+                  <View className="flex-1 gap-1">
+                    <Text variant="itemTitle" numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text variant="microLabel" numberOfLines={1}>
+                      {(item.category || "Uncategorized").toUpperCase()}
+                    </Text>
+                  </View>
+                  <Icon as={Plus} className="text-primary size-5" />
                 </Pressable>
               )}
             />

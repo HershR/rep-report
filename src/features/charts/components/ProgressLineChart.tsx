@@ -1,11 +1,10 @@
-import { matchFont } from "@shopify/react-native-skia";
 import { format } from "date-fns";
-import { useMemo } from "react";
-import { Platform, View } from "react-native";
+import { View } from "react-native";
 import { CartesianChart, Line } from "victory-native";
 
 import { Text } from "@/components/ui/text";
 import { hslStringToRgb } from "@/features/charts/color";
+import { useChartFont } from "@/features/charts/useChartFont";
 import { THEME } from "@/lib/theme";
 
 export type ChartPoint = { t: number; value: number };
@@ -18,8 +17,6 @@ type ProgressLineChartProps = {
   height?: number;
 };
 
-const fontFamily = Platform.select({ ios: "Helvetica", default: "sans-serif" });
-
 export function ProgressLineChart({
   points,
   emptyMessage,
@@ -28,10 +25,7 @@ export function ProgressLineChart({
 }: ProgressLineChartProps) {
   const colors = THEME;
 
-  const font = useMemo(
-    () => matchFont({ fontFamily: fontFamily ?? "sans-serif", fontSize: 11 }),
-    [],
-  );
+  const font = useChartFont();
   const lineColor = hslStringToRgb(colors.chart1);
   const labelColor = hslStringToRgb(colors.mutedForeground);
   const gridColor = hslStringToRgb(colors.border);

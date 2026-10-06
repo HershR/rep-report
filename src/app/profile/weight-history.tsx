@@ -1,94 +1,63 @@
 import { format } from "date-fns";
-import { useState } from "react";
-import { View } from "react-native";
 
 import { CustomScreen, ScreenHeader } from "@/components/common";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
+import { MeasurementEntryForm } from "@/features/measurements/components/MeasurementEntryForm";
+import { MeasurementHistoryList } from "@/features/measurements/components/MeasurementHistoryList";
+import { MeasurementTrendChart } from "@/features/measurements/components/MeasurementTrendChart";
 import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
-import { toMetricWeight, weightToText } from "@/lib/units";
+import { textToMetricWeight, toDisplayWeight, weightToText } from "@/lib/units";
 
 export default function WeightHistoryScreen() {
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "kg";
-  const {
-    history,
-    addMeasurement: addWeight,
-    isLoading,
-    error,
-    refetch,
-  } = useMeasurements("weight");
-  const [weightValue, setWeightValue] = useState("");
+  const { weightUnit } = useAppSettings();
+  const { history, addMeasurement, isAdding, isLoading, error, refetch } =
+    useMeasurements("weight");
 
-  const onAddWeight = async () => {
-    const value = Number(weightValue.trim());
-    if (!Number.isFinite(value) || value <= 0) return;
-    const metricValue = toMetricWeight(value, weightUnit);
-    await addWeight({ value: metricValue });
-    setWeightValue("");
+  const onAdd = async (rawText: string) => {
+    const metricValue = textToMetricWeight(rawText, weightUnit);
+    if (metricValue === null || metricValue <= 0) return;
+    await addMeasurement({ value: metricValue });
   };
 
-  const displayText = (valueInKg: number) =>
-    `${weightToText(valueInKg, weightUnit)} ${weightUnit}`;
+  const rows = history
+    .slice()
+    .reverse()
+    .map((item) => ({
+      id: item.id,
+      dateText: format(new Date(item.measuredAt), "PP"),
+      valueText: `${weightToText(item.value, weightUnit)} ${weightUnit}`,
+    }));
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
       <ScreenHeader title="Weight" />
 
-      <View className="flex-row items-center gap-2">
-        <Input
-          className="flex-1"
-          value={weightValue}
-          onChangeText={setWeightValue}
-          placeholder={`Weight (${weightUnit})`}
-          keyboardType="decimal-pad"
-        />
-        <Button onPress={() => void onAddWeight()}>
-          <Text>Add</Text>
-        </Button>
-      </View>
+      <MeasurementEntryForm
+        placeholder={`Weight (${weightUnit})`}
+        isAdding={isAdding}
+        onAdd={(rawText) => void onAdd(rawText)}
+      />
 
-      {isLoading ? (
-        <View className="gap-2">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </View>
-      ) : error ? (
-        <View className="gap-2">
-          <Text className="text-destructive text-sm">
-            Couldn&apos;t load weight history.
-          </Text>
-          <Button variant="outline" size="sm" onPress={refetch}>
-            <Text>Retry</Text>
-          </Button>
-        </View>
-      ) : history.length === 0 ? (
-        <Text variant="muted">No weight entries yet.</Text>
-      ) : (
-        <View className="gap-2">
-          {history
-            .slice()
-            .reverse()
-            .map((item) => (
-              <Card
-                key={item.id}
-                className="flex-row items-center justify-between px-4 py-3"
-              >
-                <Text variant="muted">
-                  {format(new Date(item.measuredAt), "PP")}
-                </Text>
-                <Text>
-                  {displayText(item.value)}
-                </Text>
-              </Card>
-            ))}
-        </View>
-      )}
+      {history.length > 0 ? (
+        <MeasurementTrendChart
+          points={history.map((item) => ({
+            t: Date.parse(item.measuredAt),
+            value: Number(toDisplayWeight(item.value, weightUnit).toFixed(1)),
+          }))}
+          caption={`BODY WEIGHT · ${weightUnit.toUpperCase()}`}
+        />
+      ) : null}
+
+      <Text variant="sectionLabel">HISTORY</Text>
+      <MeasurementHistoryList
+        isLoading={isLoading}
+        error={error}
+        rows={rows}
+        emptyMessage="No weight entries yet."
+        errorMessage="Couldn't load weight history"
+        onRetry={refetch}
+      />
     </CustomScreen>
   );
 }

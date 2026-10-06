@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import {
   Accordion,
@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ChoiceChip } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import type { ExerciseFilterOption } from "@/features/exercises/types";
-import { cn } from "@/lib/utils";
 
 type ExerciseFilterModalProps = {
   visible: boolean;
@@ -32,35 +32,6 @@ type ExerciseFilterModalProps = {
   onToggleMuscle: (id: number) => void;
   onClearAll: () => void;
 };
-
-function FilterChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className={cn(
-        "rounded-full border px-3 py-1.5 active:opacity-80",
-        selected ? "border-primary bg-primary" : "border-border bg-transparent",
-      )}
-    >
-      <Text
-        className={cn(
-          "text-sm",
-          selected ? "text-primary-foreground" : "text-foreground",
-        )}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 function FilterSection({
   value,
@@ -83,7 +54,7 @@ function FilterSection({
       <AccordionContent>
         <View className="flex-row flex-wrap gap-2">
           {options.map((option) => (
-            <FilterChip
+            <ChoiceChip
               key={option.id}
               label={option.name}
               selected={selectedIds.includes(option.id)}

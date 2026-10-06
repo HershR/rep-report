@@ -52,9 +52,7 @@ export function WorkoutExerciseBlock({
     (workoutSet) => workoutSet.isCompleted !== 1,
   );
   const router = useRouter();
-  const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { distanceUnit, weightUnit } = useAppSettings();
   const showDuration = isCardioExercise(
     workoutExercise.exercise.category,
     workoutExercise.exercise.name,
@@ -90,6 +88,7 @@ export function WorkoutExerciseBlock({
               variant="ghost"
               size="icon"
               className="size-11"
+              accessibilityLabel={`Move ${workoutExercise.exercise.name} up`}
               disabled={!canMoveUp}
               onPress={onMoveUp}
             >
@@ -101,6 +100,7 @@ export function WorkoutExerciseBlock({
               variant="ghost"
               size="icon"
               className="size-11"
+              accessibilityLabel={`Move ${workoutExercise.exercise.name} down`}
               disabled={!canMoveDown}
               onPress={onMoveDown}
             >
@@ -111,6 +111,7 @@ export function WorkoutExerciseBlock({
             variant="ghost"
             size="icon"
             className="size-11"
+            accessibilityLabel={`Remove ${workoutExercise.exercise.name}`}
             onPress={() => onRemoveExercise(workoutExercise.id)}
           >
             <Icon as={Trash2} className="text-text-3 size-4" />
@@ -119,7 +120,9 @@ export function WorkoutExerciseBlock({
       </View>
 
       {workoutExercise.sets.length === 0 ? (
-        <Text variant="muted">No sets yet.</Text>
+        <Text variant="body" className="text-text-3">
+          No sets yet.
+        </Text>
       ) : (
         <>
           <View className="flex-row items-center gap-2 px-2">
@@ -130,10 +133,11 @@ export function WorkoutExerciseBlock({
             <Text variant="microLabel" className="flex-1 text-center">
               {secondColumnLabel.toUpperCase()}
             </Text>
-            <View className="w-9 items-center">
-              <Icon as={Check} className="text-muted-foreground size-3.5" />
+            {/* Same widths as the row's complete and delete buttons below. */}
+            <View className="w-11 items-center">
+              <Icon as={Check} className="text-text-4 size-3.5" />
             </View>
-            <View className="w-8" />
+            <View className="w-11" />
           </View>
           <Separator />
           {workoutExercise.sets.map((workoutSet, index) => (

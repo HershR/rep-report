@@ -3,18 +3,11 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { differenceInYears, format } from "date-fns";
 import { useRouter, type Href } from "expo-router";
-import {
-  ChevronRight,
-  Pencil,
-  Ruler,
-  Settings,
-  Weight,
-  type LucideIcon,
-} from "lucide-react-native";
+import { Pencil, Ruler, Settings, Weight } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, ListRow } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,35 +38,6 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NavRow({
-  icon,
-  label,
-  value,
-  onPress,
-}: {
-  value?: string;
-  icon: LucideIcon;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      role="button"
-      className="border-separator -mx-4 h-14 flex-row items-center gap-3 border-b px-4 active:opacity-80"
-      onPress={onPress}
-    >
-      <Icon as={icon} className="text-text-3 size-5" />
-      <Text className="flex-1 text-[15px] font-medium">{label}</Text>
-      {value ? (
-        <Text variant="meta" className="text-text-3">
-          {value}
-        </Text>
-      ) : null}
-      <Icon as={ChevronRight} className="text-text-4 size-4" />
-    </Pressable>
-  );
-}
-
 export default function ProfileScreen() {
   const router = useRouter();
   const {
@@ -82,9 +46,7 @@ export default function ProfileScreen() {
     isSaving,
     isLoading: profileLoading,
   } = useProfile();
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "kg";
-  const heightUnit = appSettings?.heightUnit ?? "cm";
+  const { weightUnit, heightUnit } = useAppSettings();
   const { latest: latestWeight, history: weightHistory } =
     useMeasurements("weight");
   const { latest: latestHeight } = useMeasurements("height");
@@ -217,18 +179,18 @@ export default function ProfileScreen() {
         <Text variant="sectionLabel" className="mb-2.5">
           BODY
         </Text>
-        <NavRow
+        <ListRow
           icon={Weight}
           label="Weight history"
           value={weightChangeText}
           onPress={() => router.push("/profile/weight-history" as Href)}
         />
-        <NavRow
+        <ListRow
           icon={Ruler}
           label="Height history"
           onPress={() => router.push("/profile/height-history" as Href)}
         />
-        <NavRow
+        <ListRow
           icon={Ruler}
           label="Body measurements"
           onPress={() => router.push("/profile/measurements" as Href)}
@@ -239,7 +201,7 @@ export default function ProfileScreen() {
         <Text variant="sectionLabel" className="mb-2.5">
           PREFERENCES
         </Text>
-        <NavRow
+        <ListRow
           icon={Settings}
           label="Settings"
           value={`${weightUnit} · ${heightUnit}`}

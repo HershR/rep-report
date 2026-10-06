@@ -26,8 +26,8 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-foreground dark:text-muted-foreground text-sm font-medium",
-        value === props.value && "dark:text-foreground"
+        "text-muted-foreground text-sm font-medium",
+        value === props.value && "text-foreground"
       )}
     >
       <TabsPrimitive.Trigger

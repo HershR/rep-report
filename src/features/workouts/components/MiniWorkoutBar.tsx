@@ -37,14 +37,14 @@ export function MiniWorkoutBar() {
       <View className="flex-row items-center gap-3">
         <Icon as={Dumbbell} className="text-primary" size={20} />
         <View className="flex-1">
-          <Text numberOfLines={1} className="font-medium">
+          <Text variant="itemTitle" numberOfLines={1}>
             {activeWorkout.name}
           </Text>
-          <Text variant="muted" className="text-xs">
-            {`In progress · ${formatElapsed(elapsed)}`}
+          <Text variant="meta" className="text-primary">
+            {`IN PROGRESS · ${formatElapsed(elapsed)}`}
           </Text>
         </View>
-        <Icon as={ChevronUp} className="text-muted-foreground" size={20} />
+        <Icon as={ChevronUp} className="text-text-3" size={20} />
       </View>
     </Pressable>
   );

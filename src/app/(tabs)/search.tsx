@@ -1,12 +1,11 @@
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react-native";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, EmptyState, ErrorState, LoadingState } from "@/components/common";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -20,10 +19,8 @@ import {
   wgerEquipment,
   wgerMuscles,
 } from "@/services/wger/constants";
-import { THEME } from "@/lib/theme";
 
 export default function SearchScreen() {
-  const colors = THEME;
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -88,6 +85,7 @@ export default function SearchScreen() {
     isLoading,
     isFetching,
     isError,
+    isUnavailable,
     debouncedQuery,
     refetch,
   } = useExerciseSearch(filters);
@@ -218,54 +216,53 @@ export default function SearchScreen() {
         ) : null}
       </View>
 
-      {isLoading ? (
-        <View className="mt-8 items-center justify-center">
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : null}
+      {isLoading ? <LoadingState className="mt-4" /> : null}
 
-      {isError ? (
-        <Card className="mt-4">
-          <CardContent className="gap-2">
-            <Text>We couldn&apos;t load exercises right now.</Text>
-            <Text variant="muted">Check your connection and try again.</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              className="self-start"
-              onPress={() => void refetch()}
-            >
-              <Text>Retry</Text>
-            </Button>
-          </CardContent>
-        </Card>
+      {isUnavailable ? (
+        // The app is offline-first: everything except search keeps working,
+        // so point at what does rather than only offering a retry.
+        <ErrorState
+          className="mt-4"
+          title="Search needs a connection"
+          message="Your saved exercises, templates and history all work offline."
+          onRetry={() => void refetch()}
+          actions={[
+            { label: "Saved exercises", onPress: () => router.push("/saved" as Href) },
+            { label: "Create custom exercise", onPress: () => router.push("/exercise/new") },
+          ]}
+        />
+      ) : isError ? (
+        <ErrorState
+          className="mt-4"
+          title="Couldn't load exercises"
+          message="The exercise service returned an error."
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       {!isLoading && !isError && items.length === 0 ? (
-        <Card className="mt-4">
-          <CardContent className="gap-2">
-            <Text variant="muted">
-              {debouncedQuery
-                ? "No exercises found. Try another keyword."
-                : "Type an exercise name to start searching."}
-            </Text>
-            {debouncedQuery ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="self-start"
-                onPress={() =>
-                  router.push({
-                    pathname: "/exercise/new",
-                    params: { initialName: debouncedQuery },
-                  })
-                }
-              >
-                <Text>Create Custom Exercise</Text>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+        <EmptyState
+          className="mt-4"
+          message={
+            debouncedQuery
+              ? "No exercises found. Try another keyword."
+              : "Type an exercise name to start searching."
+          }
+          actions={
+            debouncedQuery
+              ? [
+                  {
+                    label: "Create custom exercise",
+                    onPress: () =>
+                      router.push({
+                        pathname: "/exercise/new",
+                        params: { initialName: debouncedQuery },
+                      }),
+                  },
+                ]
+              : []
+          }
+        />
       ) : null}
 
       <View className="mt-4 gap-2">
@@ -302,10 +299,7 @@ export default function SearchScreen() {
           )}
           ListFooterComponent={
             pendingPage !== null && isFetching && !isLoading ? (
-              <View className="mt-4 items-center gap-1">
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text variant="muted">Loading page...</Text>
-              </View>
+              <LoadingState className="mt-2" label="Loading page" />
             ) : !isLoading && !isError && items.length > 0 ? (
               <View className="mt-4 flex-row gap-2 px-4">
                 <Button

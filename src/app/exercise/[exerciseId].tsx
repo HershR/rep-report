@@ -7,10 +7,9 @@ import { Bookmark, ChevronLeft, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, EmptyState, ErrorState, LoadingState } from "@/components/common";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,15 +17,16 @@ import { Text } from "@/components/ui/text";
 import { ExerciseProgressChart } from "@/features/charts/components/ExerciseProgressChart";
 import { useFavoriteExercises } from "@/features/exercises/hooks/useFavoriteExercises";
 import { useActiveWorkout } from "@/features/workouts/hooks/useActiveWorkout";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
 import {
   getExerciseById,
-  isExerciseFavorited,
+  getExerciseByWgerId,
 } from "@/features/exercises/repositories/exerciseRepository";
 import { useExercisePersonalRecords } from "@/features/personal-records/hooks/usePersonalRecords";
 import type { PersonalRecordEntry } from "@/features/personal-records/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
-import { weightToText } from "@/lib/units";
-import { getWgerExerciseById } from "@/services/wger/client";
+import { toDisplayWeight, weightToText } from "@/lib/units";
+import { getWgerExerciseById, WgerUnavailableError } from "@/services/wger/client";
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
@@ -93,11 +93,7 @@ export default function ExerciseDetailScreen() {
   const exerciseId = params.exerciseId;
   const [tab, setTab] = useState<"details" | "records" | "charts">("details");
 
-  const {
-    saveFavoriteExercise,
-    removeFavoriteExercise,
-    getFavoriteExerciseByWgerId,
-  } = useFavoriteExercises();
+  const { saveFavoriteExercise, removeFavoriteExercise } = useFavoriteExercises();
   const {
     activeWorkout,
     startWorkout,
@@ -105,19 +101,7 @@ export default function ExerciseDetailScreen() {
     isSaving: workoutSaving,
   } = useActiveWorkout();
   const [addingToWorkout, setAddingToWorkout] = useState(false);
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
-  const { records: personalRecords, isLoading: personalRecordsLoading } =
-    useExercisePersonalRecords(source === "local" ? exerciseId : undefined);
-  const mostRecentPrDate = personalRecords
-    ? mostRecentAchievedAt([
-        personalRecords.heaviestWeight,
-        personalRecords.bestSetVolume,
-        personalRecords.bestSessionVolume,
-        personalRecords.mostReps,
-        personalRecords.bestEstimated1RM,
-      ])
-    : null;
+  const { weightUnit } = useAppSettings();
 
   const query = useQuery({
     queryKey: ["exercise-detail", source, exerciseId],
@@ -127,19 +111,35 @@ export default function ExerciseDetailScreen() {
       if (source === "local") {
         return getExerciseById(exerciseId);
       }
-      // The wger mapper has no view of the local database, so everything it
-      // returns claims `isFavorite: false`. Without this the bookmark reads
-      // hollow for an exercise that is already saved, and toggling it appears
-      // to do nothing - the refetch just hands back another false.
-      const remote = await getWgerExerciseById(Number(exerciseId));
-      return {
-        ...remote,
-        isFavorite: await isExerciseFavorited(remote.wgerExerciseId),
-      };
+      // Prefer the local copy of a WGER exercise when there is one: it opens
+      // offline, carries the right favorite state, and - having a local id -
+      // unlocks records and charts. Only an exercise never saved or logged
+      // needs the network.
+      const local = await getExerciseByWgerId(Number(exerciseId));
+      if (local) return local;
+      return getWgerExerciseById(Number(exerciseId));
     },
   });
 
   const item = query.data;
+  /**
+   * The local row id, when this exercise has one. History, records and charts
+   * all hang off it - gating them on the `source` route param instead hid them
+   * for any saved exercise opened from Search.
+   */
+  const localExerciseId = item && "createdAt" in item ? item.id : null;
+
+  const { records: personalRecords, isLoading: personalRecordsLoading } =
+    useExercisePersonalRecords(localExerciseId ?? undefined);
+  const mostRecentPrDate = personalRecords
+    ? mostRecentAchievedAt([
+        personalRecords.heaviestWeight,
+        personalRecords.bestSetVolume,
+        personalRecords.bestSessionVolume,
+        personalRecords.mostReps,
+        personalRecords.bestEstimated1RM,
+      ])
+    : null;
   const isCustom = item?.source === "custom";
   const canFavorite = Boolean(item?.wgerExerciseId);
 
@@ -152,30 +152,25 @@ export default function ExerciseDetailScreen() {
     if (!item) return;
     setAddingToWorkout(true);
     try {
-      let localId: string | null = source === "local" ? exerciseId : null;
+      let localId = localExerciseId;
       let didSave = false;
 
       if (!localId && item.wgerExerciseId !== null) {
-        const existing = await getFavoriteExerciseByWgerId(item.wgerExerciseId);
-        if (existing) {
-          localId = existing.id;
-        } else {
-          const saved = await saveFavoriteExercise({
-            id: String(item.wgerExerciseId),
-            wgerExerciseId: item.wgerExerciseId,
-            name: item.name,
-            description: item.description,
-            category: item.category,
-            equipment: item.equipment,
-            primaryMuscles: item.primaryMuscles,
-            secondaryMuscles: item.secondaryMuscles,
-            imageUrl: item.imageUrl,
-            source: "wger",
-            isFavorite: true,
-          });
-          localId = saved.id;
-          didSave = true;
-        }
+        const saved = await saveFavoriteExercise({
+          id: String(item.wgerExerciseId),
+          wgerExerciseId: item.wgerExerciseId,
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          equipment: item.equipment,
+          primaryMuscles: item.primaryMuscles,
+          secondaryMuscles: item.secondaryMuscles,
+          imageUrl: item.imageUrl,
+          source: "wger",
+          isFavorite: true,
+        });
+        localId = saved.id;
+        didSave = true;
       }
       if (!localId) return;
 
@@ -306,29 +301,30 @@ export default function ExerciseDetailScreen() {
         </View>
       ) : null}
 
-      {query.isLoading ? (
-        <Text variant="muted" className="mt-4">
-          Loading exercise...
-        </Text>
-      ) : null}
+      {query.isLoading ? <LoadingState className="mt-4" /> : null}
 
       {query.isError ? (
-        <Card className="mt-4">
-          <CardContent>
-            <Text>Could not load exercise details.</Text>
-          </CardContent>
-        </Card>
+        <ErrorState
+          className="mt-4"
+          title={
+            query.error instanceof WgerUnavailableError
+              ? "This exercise needs a connection"
+              : "Couldn't load this exercise"
+          }
+          message={
+            query.error instanceof WgerUnavailableError
+              ? "Save it while online and it'll open offline from then on."
+              : undefined
+          }
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
       {!query.isLoading && !query.isError && !item ? (
-        <Card className="mt-4">
-          <CardContent>
-            <Text>Exercise not found.</Text>
-          </CardContent>
-        </Card>
+        <EmptyState className="mt-4" message="Exercise not found." />
       ) : null}
 
-      {item && source === "local" && personalRecords ? (
+      {item && localExerciseId && personalRecords ? (
         <View className="mt-4 flex-row gap-2">
           <Stat
             label="EST. 1RM"
@@ -380,8 +376,10 @@ export default function ExerciseDetailScreen() {
             </TabsList>
 
             <TabsContent value="details">
-              <Card className="gap-0 overflow-hidden border-0 bg-transparent p-0">
+              <View className="gap-4 pt-2">
                 {item.imageUrl ? (
+                  // Light ground on purpose: WGER drawings are black line art on
+                  // transparency and vanish against the dark theme.
                   <View className="border-border bg-neutral-200 overflow-hidden rounded-lg border">
                     <ExpoImage
                       source={{ uri: item.imageUrl }}
@@ -392,111 +390,78 @@ export default function ExerciseDetailScreen() {
                   </View>
                 ) : null}
 
-                <CardContent className="gap-4 px-0 pt-4">
-                  {item.description ? (
-                    <Text variant="body">{item.description}</Text>
-                  ) : null}
+                {item.description ? (
+                  <Text variant="body">{item.description}</Text>
+                ) : null}
 
-                  <View className="gap-3">
-                    <MuscleGroup title="Equipment" muscles={item.equipment} />
-                    <MuscleGroup
-                      title="Primary muscles"
-                      muscles={item.primaryMuscles}
-                    />
-                    <MuscleGroup
-                      title="Secondary muscles"
-                      muscles={item.secondaryMuscles}
-                    />
-                  </View>
-                </CardContent>
-              </Card>
+                <View className="gap-3">
+                  <MuscleGroup title="Equipment" muscles={item.equipment} />
+                  <MuscleGroup
+                    title="Primary muscles"
+                    muscles={item.primaryMuscles}
+                  />
+                  <MuscleGroup
+                    title="Secondary muscles"
+                    muscles={item.secondaryMuscles}
+                  />
+                </View>
+              </View>
             </TabsContent>
 
+            {/* The headline records sit in the strip above; this tab holds the
+                volume records that don't fit there. */}
             <TabsContent value="records">
-              <Card>
-                <CardContent className="gap-2 pt-6">
-                  {source !== "local" ? (
-                    <Text variant="muted">
-                      Save this exercise as a favorite to start tracking
-                      personal records.
+              {!localExerciseId ? (
+                <EmptyState message="Save or log this exercise to start tracking personal records." />
+              ) : personalRecordsLoading ? (
+                <LoadingState />
+              ) : personalRecords ? (
+                <View className="gap-3 pt-2">
+                  <View className="flex-row gap-2">
+                    <Stat
+                      label={`BEST SET · ${weightUnit.toUpperCase()}`}
+                      value={
+                        personalRecords.bestSetVolume?.volume != null
+                          ? Math.round(
+                              toDisplayWeight(personalRecords.bestSetVolume.volume, weightUnit),
+                            ).toLocaleString()
+                          : "—"
+                      }
+                    />
+                    <Stat
+                      label={`BEST SESSION · ${weightUnit.toUpperCase()}`}
+                      value={
+                        personalRecords.bestSessionVolume?.volume != null
+                          ? Math.round(
+                              toDisplayWeight(personalRecords.bestSessionVolume.volume, weightUnit),
+                            ).toLocaleString()
+                          : "—"
+                      }
+                    />
+                  </View>
+                  {mostRecentPrDate ? (
+                    <Text variant="meta" className="text-text-3 text-center">
+                      {`LAST PR ${format(new Date(mostRecentPrDate), "PP").toUpperCase()}`}
                     </Text>
-                  ) : personalRecordsLoading ? null : personalRecords ? (
-                    <>
-                      <View className="flex-row">
-                        <Stat
-                          label="Est. 1RM"
-                          value={
-                            personalRecords.bestEstimated1RM?.volume != null
-                              ? `${weightToText(personalRecords.bestEstimated1RM.volume, weightUnit)} ${weightUnit}`
-                              : "—"
-                          }
-                        />
-                        <Stat
-                          label="Heaviest"
-                          value={
-                            personalRecords.heaviestWeight
-                              ? `${weightToText(personalRecords.heaviestWeight.weight, weightUnit)} ${weightUnit}`
-                              : "—"
-                          }
-                        />
-                        <Stat
-                          label="Most Reps"
-                          value={
-                            personalRecords.mostReps
-                              ? String(personalRecords.mostReps.reps)
-                              : "—"
-                          }
-                        />
-                      </View>
-                      <View className="flex-row">
-                        <Stat
-                          label="Best Set Vol."
-                          value={
-                            personalRecords.bestSetVolume
-                              ? `${weightToText(personalRecords.bestSetVolume.volume, weightUnit)} ${weightUnit}`
-                              : "—"
-                          }
-                        />
-                        <Stat
-                          label="Best Session Vol."
-                          value={
-                            personalRecords.bestSessionVolume
-                              ? `${weightToText(personalRecords.bestSessionVolume.volume, weightUnit)} ${weightUnit}`
-                              : "—"
-                          }
-                        />
-                        <View className="flex-1" />
-                      </View>
-                      {mostRecentPrDate ? (
-                        <Text variant="muted" className="text-center text-xs">
-                          {`Last PR hit ${format(new Date(mostRecentPrDate), "PP")}`}
-                        </Text>
-                      ) : null}
-                    </>
-                  ) : (
-                    <Text variant="muted">
-                      Log a workout with this exercise to see personal records.
-                    </Text>
-                  )}
-                </CardContent>
-              </Card>
+                  ) : null}
+                </View>
+              ) : (
+                <EmptyState message="Log a workout with this exercise to see personal records." />
+              )}
             </TabsContent>
 
             <TabsContent value="charts">
-              <Card>
-                <CardContent className="gap-2 pt-6">
-                  {source !== "local" ? (
-                    <Text variant="muted">
-                      Save this exercise as a favorite to see progress charts.
-                    </Text>
-                  ) : (
-                    <ExerciseProgressChart
-                      exerciseId={exerciseId}
-                      weightUnit={weightUnit}
-                    />
-                  )}
-                </CardContent>
-              </Card>
+              {localExerciseId ? (
+                <View className="border-border bg-surface-sunken mt-2 rounded-lg border p-4">
+                  <ExerciseProgressChart
+                    exerciseId={localExerciseId}
+                    weightUnit={weightUnit}
+                    isCardio={isCardioExercise(item.category, item.name)}
+                  />
+                </View>
+              ) : (
+                <EmptyState message="Save or log this exercise to see progress charts." />
+              )}
             </TabsContent>
           </Tabs>
         </FadeInView>

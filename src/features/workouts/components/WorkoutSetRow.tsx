@@ -68,9 +68,7 @@ export function WorkoutSetRow({
   onUpdate,
   onDelete,
 }: WorkoutSetRowProps) {
-  const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { distanceUnit, weightUnit } = useAppSettings();
   const isCompleted = workoutSet.isCompleted === 1;
   const fieldBoxClass = isCompleted
     ? "border-border bg-primary/10"
@@ -251,6 +249,8 @@ export function WorkoutSetRow({
           variant={isCompleted ? "default" : "outline"}
           size="icon"
           className={cn("size-11", isCurrent && !isCompleted && "border-primary/40")}
+          accessibilityLabel={`Set ${index + 1} done`}
+          accessibilityState={{ checked: isCompleted }}
           onPress={() => onUpdate(workoutSet.id, { isCompleted: !isCompleted })}
         >
           <Icon
@@ -266,7 +266,8 @@ export function WorkoutSetRow({
       <Button
         variant="ghost"
         size="icon"
-        className="h-11 w-8"
+        className="size-11"
+        accessibilityLabel={`Delete set ${index + 1}`}
         onPress={() => onDelete(workoutSet.id)}
       >
         <Icon as={Trash2} className="text-text-4 size-4" />

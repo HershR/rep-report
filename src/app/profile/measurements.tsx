@@ -2,8 +2,7 @@ import { useQueries } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { View } from "react-native";
 
-import { CustomScreen, ScreenHeader } from "@/components/common";
-import { MeasurementSummaryCard } from "@/features/measurements/components/MeasurementSummaryCard";
+import { CustomScreen, ListRow, ScreenHeader } from "@/components/common";
 import { getLatestMeasurementByType } from "@/features/measurements/repositories/measurementRepository";
 import { BODY_MEASUREMENT_TYPES, MEASUREMENT_LABELS } from "@/features/measurements/types";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
@@ -11,8 +10,7 @@ import { lengthToText } from "@/lib/units";
 
 export default function BodyMeasurementsScreen() {
   const router = useRouter();
-  const { appSettings } = useAppSettings();
-  const heightUnit = appSettings?.heightUnit ?? "cm";
+  const { heightUnit } = useAppSettings();
 
   const queries = useQueries({
     queries: BODY_MEASUREMENT_TYPES.map((type) => ({
@@ -23,19 +21,19 @@ export default function BodyMeasurementsScreen() {
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>
-      <ScreenHeader title="Body Measurements" />
+      <ScreenHeader title="Body measurements" />
 
-      <View className="gap-2">
+      <View>
         {BODY_MEASUREMENT_TYPES.map((type, index) => {
           const latest = queries[index]?.data;
           const valueText = latest
             ? `${lengthToText(latest.value, heightUnit)} ${heightUnit}`
             : "—";
           return (
-            <MeasurementSummaryCard
+            <ListRow
               key={type}
               label={MEASUREMENT_LABELS[type]}
-              valueText={valueText}
+              value={valueText}
               onPress={() =>
                 router.push({
                   pathname: "/profile/measurements/[type]",

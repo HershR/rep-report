@@ -1,10 +1,10 @@
 import { useRouter, type Href } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { Plus } from "lucide-react-native";
 import { FlashList } from "@shopify/flash-list";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, EmptyState, ErrorState, LoadingState } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -16,7 +16,6 @@ import type { Exercise } from "@/features/exercises/types";
 import { TemplateCard } from "@/features/templates/components/TemplateCard";
 import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
 import type { WorkoutTemplate } from "@/features/templates/types";
-import { THEME } from "@/lib/theme";
 
 type SavedTab = "exercises" | "templates";
 
@@ -29,7 +28,6 @@ type SavedRow =
 
 export default function SavedScreen() {
   const router = useRouter();
-  const colors = THEME;
   const [tab, setTab] = useState<SavedTab>("exercises");
   const { favorites, isLoading, error, removeFavoriteExercise } =
     useFavoriteExercises();
@@ -167,23 +165,11 @@ export default function SavedScreen() {
         renderItem={({ item, index }) => {
           switch (item.kind) {
             case "loading":
-              return (
-                <View className="items-center py-4">
-                  <ActivityIndicator color={colors.primary} />
-                </View>
-              );
+              return <LoadingState />;
             case "error":
-              return (
-                <Text className="text-destructive py-6 text-center text-sm">
-                  {item.message}
-                </Text>
-              );
+              return <ErrorState title={item.message} />;
             case "empty":
-              return (
-                <Text className="text-text-3 py-8 text-center text-sm">
-                  {item.message}
-                </Text>
-              );
+              return <EmptyState message={item.message} />;
             case "exercise":
               return (
                 <ExerciseRow

@@ -8,9 +8,9 @@ import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { MoreHorizontal } from "lucide-react-native";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
-import { CustomScreen, ScreenHeader } from "@/components/common";
+import { CustomScreen, EmptyState, LoadingState, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -181,10 +181,7 @@ export default function WorkoutDetailScreen() {
     return (
       <CustomScreen>
         <ScreenHeader title="Workout" />
-        <View className="flex-1 items-center justify-center gap-2">
-          <ActivityIndicator />
-          <Text variant="muted">Loading workout...</Text>
-        </View>
+        <LoadingState className="flex-1 justify-center" />
       </CustomScreen>
     );
   }
@@ -482,8 +479,8 @@ export default function WorkoutDetailScreen() {
             </>
           }
         />
-        <Text variant="muted" className="mt-2 text-xs">
-          {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`}
+        <Text variant="meta" className="text-text-3 mt-2">
+          {`${completedAtDate ? format(completedAtDate, "PP") : "No date"} · ${Math.round(durationSeconds / 60)} min`.toUpperCase()}
         </Text>
       </View>
 
@@ -494,9 +491,7 @@ export default function WorkoutDetailScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {watchedExercises.length === 0 ? (
-          <Text variant="muted" className="py-8 text-center">
-            No exercises yet. Add one below to get started.
-          </Text>
+          <EmptyState message="No exercises yet. Add one below to get started." />
         ) : (
           watchedExercises.map((exercise, index) => (
             <View key={exercise.id} className="gap-3">
@@ -522,7 +517,7 @@ export default function WorkoutDetailScreen() {
           className="mt-2"
           onPress={() => setShowAddExerciseSheet(true)}
         >
-          <Text>Add Exercise</Text>
+          <Text>Add exercise</Text>
         </Button>
       </ScrollView>
 
@@ -571,7 +566,9 @@ export default function WorkoutDetailScreen() {
             </View>
 
             <View className="flex-row items-center justify-between">
-              <Text variant="muted">Date</Text>
+              <Text variant="body" className="text-text-3">
+                Date
+              </Text>
               <Button
                 variant="outline"
                 size="sm"
@@ -584,7 +581,9 @@ export default function WorkoutDetailScreen() {
             </View>
 
             <View className="flex-row items-center justify-between">
-              <Text variant="muted">Start time</Text>
+              <Text variant="body" className="text-text-3">
+                Start time
+              </Text>
               <Button
                 variant="outline"
                 size="sm"
@@ -597,7 +596,9 @@ export default function WorkoutDetailScreen() {
             </View>
 
             <View className="flex-row items-center justify-between">
-              <Text variant="muted">End time</Text>
+              <Text variant="body" className="text-text-3">
+                End time
+              </Text>
               <Button
                 variant="outline"
                 size="sm"
@@ -655,16 +656,16 @@ export default function WorkoutDetailScreen() {
                 void onRepeatWorkout();
               }}
             >
-              <Text>Repeat Workout</Text>
+              <Text>Repeat workout</Text>
             </Button>
             <Button
-              variant="destructive"
+              variant="ghost"
               onPress={() => {
                 setShowOptions(false);
                 setShowDeleteConfirm(true);
               }}
             >
-              <Text>Delete Workout</Text>
+              <Text className="text-destructive">Delete workout</Text>
             </Button>
           </View>
         </SheetContent>

@@ -84,6 +84,20 @@ export async function getExerciseById(id: string): Promise<Exercise | null> {
   return row ? mapRowToExercise(row) : null;
 }
 
+/**
+ * The local copy of a WGER exercise, saved or not. An exercise gets a local row
+ * the first time it is saved or logged and keeps it after being unsaved, so
+ * this is what ties a WGER id to the user's own history.
+ */
+export async function getExerciseByWgerId(wgerExerciseId: number): Promise<Exercise | null> {
+  const [row] = await db
+    .select()
+    .from(exercises)
+    .where(eq(exercises.wgerExerciseId, wgerExerciseId))
+    .limit(1);
+  return row ? mapRowToExercise(row) : null;
+}
+
 export async function listExercises(search?: string): Promise<Exercise[]> {
   if (!search?.trim()) {
     const rows = await db.select().from(exercises).orderBy(asc(exercises.name));

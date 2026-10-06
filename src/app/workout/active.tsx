@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { toast } from "sonner-native";
 
-import { CustomScreen } from "@/components/common";
+import { CustomScreen, EmptyState, ErrorState, LoadingState } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   AlertDialog,
@@ -93,10 +93,7 @@ export default function ActiveWorkoutScreen() {
     repeatSessionId?: string;
   }>();
   const colors = THEME;
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
-  const restTimerEnabled = (appSettings?.restTimerEnabled ?? 1) === 1;
-  const restTimerDefaultSeconds = appSettings?.restTimerDefaultSeconds ?? 90;
+  const { weightUnit, restTimerEnabled, restTimerDefaultSeconds } = useAppSettings();
   const rest = useRestTimer(() => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast("Rest complete", {
@@ -339,14 +336,9 @@ export default function ActiveWorkoutScreen() {
     return (
       <CustomScreen>
         {error ? (
-          <View className="gap-3">
-            <Text variant="muted">Couldn&apos;t load this workout.</Text>
-            <Button variant="outline" onPress={() => void refetch()}>
-              <Text>Try again</Text>
-            </Button>
-          </View>
+          <ErrorState title="Couldn't load this workout" onRetry={() => void refetch()} />
         ) : (
-          <Text variant="muted">Loading workout...</Text>
+          <LoadingState />
         )}
       </CustomScreen>
     );
@@ -531,9 +523,7 @@ export default function ActiveWorkoutScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {workout.exercises.length === 0 ? (
-          <Text variant="muted" className="py-8 text-center">
-            No exercises yet. Add one below to get started.
-          </Text>
+          <EmptyState message="No exercises yet. Add one below to get started." />
         ) : (
           workout.exercises.map((workoutExercise, index) => (
             <View key={workoutExercise.id} className="gap-3">
@@ -571,7 +561,7 @@ export default function ActiveWorkoutScreen() {
           className="mt-2"
           onPress={() => setShowAddExerciseSheet(true)}
         >
-          <Text>Add Exercise</Text>
+          <Text>Add exercise</Text>
         </Button>
 
         <Button
@@ -579,7 +569,7 @@ export default function ActiveWorkoutScreen() {
           className="mt-4"
           onPress={() => setCancelConfirmOpen(true)}
         >
-          <Text className="text-destructive">Cancel Workout</Text>
+          <Text className="text-destructive">Cancel workout</Text>
         </Button>
       </ScrollView>
 

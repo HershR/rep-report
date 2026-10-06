@@ -47,9 +47,7 @@ export function TemplateSetRow({
   onChangeDistance,
   onDelete,
 }: TemplateSetRowProps) {
-  const { appSettings } = useAppSettings();
-  const distanceUnit = appSettings?.distanceUnit ?? "mi";
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { distanceUnit, weightUnit } = useAppSettings();
 
   const [durationInput, setDurationInput] = useState("");
   const [isDurationFocused, setIsDurationFocused] = useState(false);
@@ -132,16 +130,14 @@ export function TemplateSetRow({
 
   return (
     <View className="flex-row items-center gap-2 py-1.5">
-      <View className="w-6 items-center">
-        <Text variant="muted" className="text-sm">
-          {index + 1}
-        </Text>
+      <View className="border-border-strong size-6 items-center justify-center rounded-full border-2">
+        <Text className="text-text-4 font-mono-semibold text-[10px]">{index + 1}</Text>
       </View>
 
       {isCardio ? (
         <>
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
             value={durationInput}
             onChangeText={onChangeDurationInput}
             keyboardType="numeric"
@@ -152,7 +148,7 @@ export function TemplateSetRow({
             placeholder="00:00:00"
           />
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
             value={distanceInput}
             onChangeText={onChangeDistanceInput}
             keyboardType="decimal-pad"
@@ -165,13 +161,13 @@ export function TemplateSetRow({
       ) : (
         <>
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
             value={repsText}
             onChangeText={onChangeReps}
             keyboardType="numeric"
           />
           <Input
-            className="h-9 flex-1 px-2 text-center"
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
             value={weightInput}
             onChangeText={onChangeWeightInput}
             keyboardType="decimal-pad"
@@ -186,10 +182,11 @@ export function TemplateSetRow({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="size-11"
+        accessibilityLabel={`Delete set ${index + 1}`}
         onPress={onDelete}
       >
-        <Icon as={Trash2} className="text-muted-foreground size-3.5" />
+        <Icon as={Trash2} className="text-text-4 size-4" />
       </Button>
     </View>
   );

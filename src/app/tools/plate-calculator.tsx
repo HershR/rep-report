@@ -3,8 +3,7 @@ import { PlateCalculator } from "@/features/plate-calculator/components/PlateCal
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 
 export default function PlateCalculatorScreen() {
-  const { appSettings } = useAppSettings();
-  const weightUnit = appSettings?.weightUnit ?? "lb";
+  const { weightUnit } = useAppSettings();
 
   return (
     <CustomScreen scroll contentContainerStyle={{ gap: 16 }}>

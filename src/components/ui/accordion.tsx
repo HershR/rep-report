@@ -53,7 +53,7 @@ function AccordionTrigger({
         )}
         {...props}
       >
-        <Text variant="muted">{children}</Text>
+        <Text className="text-text-2 text-sm font-semibold">{children}</Text>
         <Animated.View style={chevronStyle}>
           <Icon as={ChevronDown} className="text-muted-foreground" size={18} />
         </Animated.View>
