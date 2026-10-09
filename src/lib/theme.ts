@@ -1,0 +1,52 @@
+import { DarkTheme, type Theme } from "@react-navigation/native";
+
+/** The app ships dark only; there is no light palette to switch to. */
+export const THEME = {
+  background: "hsl(240 10% 3.92%)",
+  foreground: "hsl(60 8.3% 95.29%)",
+  card: "hsl(240 7.3% 8.04%)",
+  cardForeground: "hsl(60 8.3% 95.29%)",
+  popover: "hsl(240 7.3% 8.04%)",
+  popoverForeground: "hsl(60 8.3% 95.29%)",
+  primary: "hsl(75 100% 60%)",
+  primaryForeground: "hsl(76 100% 2.94%)",
+  secondary: "hsl(240 8.2% 11.96%)",
+  secondaryForeground: "hsl(60 8.3% 95.29%)",
+  muted: "hsl(240 8.3% 9.41%)",
+  mutedForeground: "hsl(240 4.4% 64.31%)",
+  accent: "hsl(240 7.3% 16.08%)",
+  accentForeground: "hsl(60 8.3% 95.29%)",
+  destructive: "hsl(0 70% 35.29%)",
+  border: "hsl(240 6.7% 14.71%)",
+  input: "hsl(240 6.7% 14.71%)",
+  ring: "hsl(75 100% 60%)",
+  radius: "0.875rem",
+  chart1: "hsl(75 100% 60%)",
+  chart2: "hsl(217.22 91.22% 59.8%)",
+  chart3: "hsl(142.09 70.56% 45.29%)",
+  chart4: "hsl(270.74 91.01% 65.1%)",
+  chart5: "hsl(37.69 92.13% 50.2%)",
+  surfaceSunken: "hsl(240 8.6% 6.9%)",
+  surfaceRaised: "hsl(240 8.2% 11.96%)",
+  surfaceInset: "hsl(240 8.3% 9.41%)",
+  borderStrong: "hsl(240 8.7% 18.04%)",
+  separator: "hsl(240 7.7% 10.2%)",
+  text2: "hsl(240 3.8% 79.22%)",
+  text3: "hsl(240 4.1% 57.45%)",
+  text4: "hsl(240 4% 51.37%)",
+  valuePlanned: "hsl(240 4% 55.88%)",
+  valueLogged: "hsl(240 3.8% 79.22%)",
+  accentDim: "hsl(75.5 59.2% 38.43%)",
+} as const;
+
+export const NAV_THEME: Theme = {
+  ...DarkTheme,
+  colors: {
+    background: THEME.background,
+    border: THEME.border,
+    card: THEME.card,
+    notification: THEME.destructive,
+    primary: THEME.primary,
+    text: THEME.foreground,
+  },
+};

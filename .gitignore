@@ -41,3 +41,13 @@ nativewind-env.d.ts
 .vscode/
 /android
 /.idea
+wger.yaml
+# --- Cursor Rules & Settings ---
+.cursor/
+!.cursor/rules/
+
+# --- Claude Code Configuration ---
+.claude/
+!.claude/settings.json
+/plans
+/docs

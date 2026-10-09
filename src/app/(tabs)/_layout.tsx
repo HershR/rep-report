@@ -1,112 +1,99 @@
-import { View } from "react-native";
-import React from "react";
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import { Text } from "@/src/components/ui/text";
-import { LucideIcon } from "lucide-react-native";
-import { Search } from "~/lib/icons/Search";
-import { House } from "~/lib/icons/House";
-import { User } from "~/lib/icons/User";
-import { Bookmark } from "~/lib/icons/Bookmark";
-import { Dumbbell } from "~/lib/icons/Dumbbell";
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import { NAV_THEME } from "~/lib/constants";
-interface TabIconProps {
-  title: string;
-  Icon: LucideIcon;
-  focused: boolean;
+import {
+  BarChart3,
+  Bookmark,
+  Home,
+  Search,
+  User,
+  type LucideIcon,
+} from "lucide-react-native";
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { MiniWorkoutBar } from "@/features/workouts/components/MiniWorkoutBar";
+import { THEME } from "@/lib/theme";
+
+function tabIcon(IconComponent: LucideIcon) {
+  return function TabBarIcon({ color, size }: { color: string; size: number }) {
+    return <IconComponent color={color} size={size} />;
+  };
 }
 
-const TabIcon = ({ title, Icon, focused }: TabIconProps) => {
-  if (focused)
-    return (
-      <View className="flex-1 flex-row w-full min-w-28 min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden">
-        <Icon className="color-primary" size={20} />
-        <Text className="font-semibold ml-2">{title}</Text>
-      </View>
-    );
-  return (
-    <View className="size-full justify-center items-center mt-4 rounded-full">
-      <Icon className="color-primary/50" size={20} />
-    </View>
-  );
-};
-const _Layout = () => {
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
+export default function TabLayout() {
+  const colors = THEME;
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
+      tabBar={(props) => (
+        <View>
+          <MiniWorkoutBar />
+          <BottomTabBar {...props} />
+        </View>
+      )}
       screenOptions={{
-        tabBarShowLabel: false,
-        tabBarItemStyle: {
-          width: "100%",
-          height: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        },
-
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.text3,
         tabBarStyle: {
-          backgroundColor: `${
-            isDarkColorScheme
-              ? NAV_THEME.dark.background
-              : NAV_THEME.light.background
-          }`,
-          overflow: "hidden",
-          position: "absolute",
-          height: 56,
+          backgroundColor: colors.surfaceSunken,
+          borderTopColor: colors.border,
+          height: 62 + insets.bottom,
+          paddingTop: 10,
+          paddingBottom: insets.bottom,
         },
+        tabBarLabelStyle: {
+          fontFamily: "IBMPlexMono_600SemiBold",
+          fontSize: 9,
+          letterSpacing: 0.9,
+          marginTop: 3,
+        },
+        tabBarIconStyle: { marginTop: 2 },
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.foreground,
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="home"
         options={{
           title: "Home",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Home" Icon={House} focused={focused} />
-          ),
+          tabBarLabel: "TODAY",
+          tabBarIcon: tabIcon(Home),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Search",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Search" Icon={Search} focused={focused} />
-          ),
+          tabBarLabel: "SEARCH",
+          tabBarIcon: tabIcon(Search),
         }}
       />
       <Tabs.Screen
-        name="home"
+        name="progress"
         options={{
-          title: "Workouts",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Workouts" Icon={Dumbbell} focused={focused} />
-          ),
+          title: "Progress",
+          tabBarLabel: "PROGRESS",
+          tabBarIcon: tabIcon(BarChart3),
         }}
       />
       <Tabs.Screen
         name="saved"
         options={{
           title: "Saved",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Saved" Icon={Bookmark} focused={focused} />
-          ),
+          tabBarLabel: "SAVED",
+          tabBarIcon: tabIcon(Bookmark),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon title="Profile" Icon={User} focused={focused} />
-          ),
+          tabBarLabel: "PROFILE",
+          tabBarIcon: tabIcon(User),
         }}
       />
     </Tabs>
   );
-};
-export default _Layout;
+}

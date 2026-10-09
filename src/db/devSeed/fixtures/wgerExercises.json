@@ -1,0 +1,432 @@
+{
+  "source": "https://wger.de/api/v2/exerciseinfo/<id>/",
+  "generatedAt": "2026-09-12",
+  "results": [
+    {
+      "id": 73,
+      "category": {
+        "id": 11,
+        "name": "Chest"
+      },
+      "muscles": [
+        {
+          "id": 4,
+          "name": "Pectoralis major"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 2,
+          "name": "Anterior deltoid"
+        },
+        {
+          "id": 5,
+          "name": "Triceps brachii"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        },
+        {
+          "id": 8,
+          "name": "Bench"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/192/Bench-press-1.png",
+          "is_main": true
+        },
+        {
+          "image": "https://wger.de/media/exercise-images/192/Bench-press-2.png",
+          "is_main": false
+        }
+      ],
+      "translations": [
+        {
+          "id": 192,
+          "language": 2,
+          "name": "Bench Press",
+          "description": "<p>Lay down on a bench, the bar should be directly above your eyes, the knees are somewhat angled and the feet are firmly on the floor. Concentrate, breath deeply and grab the bar more than shoulder wide. Bring it slowly down till it briefly touches your chest at the height of your nipples. Push the bar up.</p>\n<p>If you train with a high weight it is advisable to have a <em>spotter</em> that can help you up if you can't lift the weight on your own.</p>\n<p>With the width of the grip you can also control which part of the chest is trained more:</p>\n<ul>\n<li>wide grip: outer chest muscles</li>\n<li>narrow grip: inner chest muscles and triceps</li>\n</ul>\n"
+        }
+      ]
+    },
+    {
+      "id": 538,
+      "category": {
+        "id": 11,
+        "name": "Chest"
+      },
+      "muscles": [
+        {
+          "id": 4,
+          "name": "Pectoralis major"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 2,
+          "name": "Anterior deltoid"
+        },
+        {
+          "id": 5,
+          "name": "Triceps brachii"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        },
+        {
+          "id": 9,
+          "name": "Incline bench"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/41/Incline-bench-press-1.png",
+          "is_main": true
+        },
+        {
+          "image": "https://wger.de/media/exercise-images/41/Incline-bench-press-2.png",
+          "is_main": false
+        },
+        {
+          "image": "https://wger.de/media/exercise-images/538/a1c23996-c8aa-42e3-9dfc-bed0654d849f.png",
+          "is_main": false
+        }
+      ],
+      "translations": [
+        {
+          "id": 163,
+          "language": 2,
+          "name": "Incline Bench Press - Barbell",
+          "description": "<p>To do slowly, tempo is 4010</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 566,
+      "category": {
+        "id": 13,
+        "name": "Shoulders"
+      },
+      "muscles": [
+        {
+          "id": 2,
+          "name": "Anterior deltoid"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/119/seated-barbell-shoulder-press-large-1.png",
+          "is_main": true
+        },
+        {
+          "image": "https://wger.de/media/exercise-images/119/seated-barbell-shoulder-press-large-2.png",
+          "is_main": false
+        }
+      ],
+      "translations": [
+        {
+          "id": 119,
+          "language": 2,
+          "name": "Shoulder Press, Barbell",
+          "description": "<p>Sit on a bench, the back rest should be almost vertical. Take a barbell with a shoulder wide grip and bring it up to chest height. Press the weight up, but don't stretch the arms completely. Go slowly down and repeat.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 1510,
+      "category": {
+        "id": 12,
+        "name": "Back"
+      },
+      "muscles": [
+        {
+          "id": 12,
+          "name": "Latissimus dorsi"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [
+        {
+          "id": 12,
+          "name": "Cable machine"
+        }
+      ],
+      "images": [],
+      "translations": [
+        {
+          "id": 2469,
+          "language": 2,
+          "name": "Neutral Grip Lat Pulldown",
+          "description": "<p>Lat pull downs with a neutral grip on the bar.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 91,
+      "category": {
+        "id": 8,
+        "name": "Arms"
+      },
+      "muscles": [
+        {
+          "id": 1,
+          "name": "Biceps brachii"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 13,
+          "name": "Brachialis"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/74/Bicep-curls-1.png",
+          "is_main": true
+        },
+        {
+          "image": "https://wger.de/media/exercise-images/74/Bicep-curls-2.png",
+          "is_main": false
+        }
+      ],
+      "translations": [
+        {
+          "id": 74,
+          "language": 2,
+          "name": "Biceps Curls With Barbell",
+          "description": "<p>Hold the Barbell shoulder-wide, the back is straight, the shoulders slightly back, the arms are streched. Bend the arms, bringing the weight up, with a fast movement. Without pausing, let down the bar with a slow and controlled movement.</p>\n<p>Don't allow your body to swing during the exercise, all work is done by the biceps, which are the only mucles that should move (pay attention to the elbows).</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 1185,
+      "category": {
+        "id": 8,
+        "name": "Arms"
+      },
+      "muscles": [
+        {
+          "id": 5,
+          "name": "Triceps brachii"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [
+        {
+          "id": 12,
+          "name": "Cable machine"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/1185/c5ca283d-8958-4fd8-9d59-a3f52a3ac66b.jpg",
+          "is_main": true
+        }
+      ],
+      "translations": [
+        {
+          "id": 2141,
+          "language": 2,
+          "name": "Triceps Pushdown",
+          "description": "<p>Triceps pushdown on cable using lat bar.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 615,
+      "category": {
+        "id": 9,
+        "name": "Legs"
+      },
+      "muscles": [
+        {
+          "id": 10,
+          "name": "Quadriceps femoris"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 8,
+          "name": "Gluteus maximus"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        }
+      ],
+      "images": [],
+      "translations": [
+        {
+          "id": 111,
+          "language": 2,
+          "name": "Squats",
+          "description": "<p>Place a barbell in a rack just below shoulder-height. Dip under the bar to put it behind the neck across the top of the back, and grip the bar with the hands wider than shoulder-width apart. Lift the chest up and squeeze the shoulder blades together to keep the straight back throughout the entire movement. Stand up to bring the bar off the rack and step backwards, then place the feet so that they are a little wider than shoulder-width apart. Sit back into hips and keep the back straight and the chest up, squatting down so the hips are below the knees. From the bottom of the squat, press feet into the ground and push hips forward to return to the top of the standing position.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 184,
+      "category": {
+        "id": 12,
+        "name": "Back"
+      },
+      "muscles": [
+        {
+          "id": 12,
+          "name": "Latissimus dorsi"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 8,
+          "name": "Gluteus maximus"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 1,
+          "name": "Barbell"
+        }
+      ],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/184/1709c405-620a-4d07-9658-fade2b66a2df.jpeg",
+          "is_main": true
+        }
+      ],
+      "translations": [
+        {
+          "id": 105,
+          "language": 2,
+          "name": "Deadlifts",
+          "description": "<p>Stand firmly, with your feet slightly more than shoulder wide apart. Stand directly behind the bar where it should barely touch your shin, your feet pointing a bit out. Bend down with a straight back, the knees also pointing somewhat out. Grab the bar with a shoulder wide grip, one overhand, one underhand (mixed grip).</p>\n<p>Pull the weight up. At the highest point make a slight hollow back and pull the bar back. Hold 1 or 2 seconds that position. Go down, making sure the back is not bent. Once down you can either go back again as soon as the weights touch the floor, or make a pause, depending on the weight.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 371,
+      "category": {
+        "id": 9,
+        "name": "Legs"
+      },
+      "muscles": [
+        {
+          "id": 11,
+          "name": "Biceps femoris"
+        },
+        {
+          "id": 7,
+          "name": "Gastrocnemius"
+        },
+        {
+          "id": 8,
+          "name": "Gluteus maximus"
+        },
+        {
+          "id": 10,
+          "name": "Quadriceps femoris"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/371/d2136f96-3a43-4d4c-9944-1919c4ca1ce1.webp",
+          "is_main": true
+        }
+      ],
+      "translations": [
+        {
+          "id": 788,
+          "language": 2,
+          "name": "Leg Press",
+          "description": "<p>The leg press is a weight training exercise in which the individual pushes a weight or resistance away from them using their legs.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 364,
+      "category": {
+        "id": 9,
+        "name": "Legs"
+      },
+      "muscles": [
+        {
+          "id": 11,
+          "name": "Biceps femoris"
+        },
+        {
+          "id": 8,
+          "name": "Gluteus maximus"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [],
+      "images": [
+        {
+          "image": "https://wger.de/media/exercise-images/364/b318dde9-f5f2-489f-940a-cd864affb9e3.png",
+          "is_main": true
+        }
+      ],
+      "translations": [
+        {
+          "id": 792,
+          "language": 2,
+          "name": "Leg Curl",
+          "description": "<p>The leg curl, also known as the hamstring curl, is an isolation exercise that targets the hamstring muscles. The exercise involves flexing the lower leg against resistance towards the buttocks. Other exercises that can be used to strengthen the hamstrings are the glute-ham raise and the deadlift.</p>\n"
+        }
+      ]
+    },
+    {
+      "id": 590,
+      "category": {
+        "id": 14,
+        "name": "Calves"
+      },
+      "muscles": [
+        {
+          "id": 15,
+          "name": "Soleus"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 7,
+          "name": "Gastrocnemius"
+        }
+      ],
+      "equipment": [],
+      "images": [],
+      "translations": [
+        {
+          "id": 103,
+          "language": 2,
+          "name": "Sitting Calf Raises",
+          "description": "<p>Sit on a bench for calf raises and check that the feet are half free and that you can completely stretch the calf muscles down. Pull your calves up, going as far (up) as you can. Make at the highest point a short pause of 1 or 2 seconds and go down.</p>\n"
+        }
+      ]
+    }
+  ]
+}

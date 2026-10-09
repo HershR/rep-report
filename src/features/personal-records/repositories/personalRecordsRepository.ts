@@ -1,0 +1,273 @@
+import { and, eq, gte, inArray, isNotNull, ne } from "drizzle-orm";
+
+import { db } from "@/db/client";
+import { exercises, workoutSessionExercises, workoutSessions, workoutSets } from "@/db/schema";
+import { isHeavier } from "@/features/personal-records/compare";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
+import type {
+  ExercisePersonalRecords,
+  ExercisePersonalRecordsSummary,
+  PersonalRecordEntry,
+} from "@/features/personal-records/types";
+
+type QualifyingSet = {
+  exerciseId: string;
+  workoutSessionId: string;
+  achievedAt: string;
+  weight: number | null;
+  reps: number | null;
+};
+
+/**
+ * Completed, non-warmup sets from finished workouts, optionally narrowed to one
+ * exercise and/or a `since` cutoff (ISO). One join, so the filters run in SQL
+ * on indexed columns - rather than loading every finished session and passing
+ * all their ids back through an ever-growing `IN (...)` list, which this used
+ * to do on every set completion.
+ */
+async function getQualifyingSets(
+  filter: { exerciseId?: string; since?: string } = {},
+): Promise<QualifyingSet[]> {
+  const conditions = [
+    eq(workoutSessions.status, "completed"),
+    isNotNull(workoutSessions.completedAt),
+    eq(workoutSets.isCompleted, 1),
+    ne(workoutSets.setType, "warmup"),
+  ];
+  if (filter.exerciseId) {
+    conditions.push(eq(workoutSessionExercises.exerciseId, filter.exerciseId));
+  }
+  if (filter.since) {
+    conditions.push(gte(workoutSessions.completedAt, filter.since));
+  }
+
+  const rows = await db
+    .select({
+      exerciseId: workoutSessionExercises.exerciseId,
+      workoutSessionId: workoutSessions.id,
+      achievedAt: workoutSessions.completedAt,
+      weight: workoutSets.weight,
+      reps: workoutSets.reps,
+    })
+    .from(workoutSets)
+    .innerJoin(
+      workoutSessionExercises,
+      eq(workoutSets.workoutSessionExerciseId, workoutSessionExercises.id),
+    )
+    .innerJoin(workoutSessions, eq(workoutSessionExercises.workoutSessionId, workoutSessions.id))
+    .where(and(...conditions));
+
+  return rows.flatMap((row) =>
+    row.achievedAt === null ? [] : [{ ...row, achievedAt: row.achievedAt }],
+  );
+}
+
+function computeRecordsFromSets(exerciseId: string, sets: QualifyingSet[]): ExercisePersonalRecords {
+  let heaviestWeight: PersonalRecordEntry | null = null;
+  let bestSetVolume: PersonalRecordEntry | null = null;
+  let mostReps: PersonalRecordEntry | null = null;
+  let bestEstimated1RM: PersonalRecordEntry | null = null;
+  const sessionVolumes = new Map<string, { volume: number; achievedAt: string }>();
+
+  // Oldest first, so a tie keeps the date it was first achieved.
+  const chronological = [...sets].sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
+
+  for (const set of chronological) {
+    if (
+      set.weight !== null &&
+      (heaviestWeight === null || isHeavier(set.weight, heaviestWeight.weight ?? -Infinity))
+    ) {
+      heaviestWeight = {
+        weight: set.weight,
+        reps: set.reps,
+        volume: null,
+        achievedAt: set.achievedAt,
+        workoutSessionId: set.workoutSessionId,
+      };
+    }
+
+    if (set.reps !== null && (mostReps === null || set.reps > (mostReps.reps ?? -Infinity))) {
+      mostReps = {
+        weight: set.weight,
+        reps: set.reps,
+        volume: null,
+        achievedAt: set.achievedAt,
+        workoutSessionId: set.workoutSessionId,
+      };
+    }
+
+    if (set.weight !== null && set.reps !== null) {
+      const volume = set.weight * set.reps;
+
+      if (bestSetVolume === null || volume > (bestSetVolume.volume ?? -Infinity)) {
+        bestSetVolume = {
+          weight: set.weight,
+          reps: set.reps,
+          volume,
+          achievedAt: set.achievedAt,
+          workoutSessionId: set.workoutSessionId,
+        };
+      }
+
+      // Epley 1RM estimate; a true single is its own max (avoids the +3.3% skew).
+      const epley = set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
+      if (
+        bestEstimated1RM === null ||
+        epley > (bestEstimated1RM.volume ?? -Infinity)
+      ) {
+        bestEstimated1RM = {
+          weight: set.weight,
+          reps: set.reps,
+          volume: epley,
+          achievedAt: set.achievedAt,
+          workoutSessionId: set.workoutSessionId,
+        };
+      }
+
+      const existingSessionVolume = sessionVolumes.get(set.workoutSessionId);
+      if (existingSessionVolume) {
+        existingSessionVolume.volume += volume;
+      } else {
+        sessionVolumes.set(set.workoutSessionId, { volume, achievedAt: set.achievedAt });
+      }
+    }
+  }
+
+  let bestSessionVolume: PersonalRecordEntry | null = null;
+  for (const [workoutSessionId, entry] of sessionVolumes) {
+    if (bestSessionVolume === null || entry.volume > (bestSessionVolume.volume ?? -Infinity)) {
+      bestSessionVolume = {
+        weight: null,
+        reps: null,
+        volume: entry.volume,
+        achievedAt: entry.achievedAt,
+        workoutSessionId,
+      };
+    }
+  }
+
+  return {
+    exerciseId,
+    heaviestWeight,
+    bestSetVolume,
+    bestSessionVolume,
+    mostReps,
+    bestEstimated1RM,
+  };
+}
+
+function hasAnyRecord(records: ExercisePersonalRecords): boolean {
+  return Boolean(
+    records.heaviestWeight ||
+      records.bestSetVolume ||
+      records.bestSessionVolume ||
+      records.mostReps ||
+      records.bestEstimated1RM,
+  );
+}
+
+export async function getExercisePersonalRecords(exerciseId: string): Promise<ExercisePersonalRecords | null> {
+  const [exerciseRow] = await db
+    .select({ id: exercises.id, name: exercises.name, category: exercises.category })
+    .from(exercises)
+    .where(eq(exercises.id, exerciseId))
+    .limit(1);
+  if (!exerciseRow || isCardioExercise(exerciseRow.category, exerciseRow.name)) return null;
+
+  const sets = await getQualifyingSets({ exerciseId });
+  if (sets.length === 0) return null;
+
+  const records = computeRecordsFromSets(exerciseId, sets);
+  return hasAnyRecord(records) ? records : null;
+}
+
+export type ExerciseSessionPoint = {
+  /** Epoch ms of the session's completedAt — the chart x value. */
+  t: number;
+  maxWeightKg: number;
+  sessionVolumeKg: number;
+  /** Best estimated 1RM (Epley) across the session's working sets, in kg. */
+  maxEpleyKg: number;
+};
+
+/**
+ * Per-session progress series for one exercise, oldest→newest, limited to
+ * `opts.since` (ISO cutoff) in the query layer. Reuses the same qualifying-set
+ * pipeline as personal records (completed, non-warmup working sets).
+ */
+export async function getExerciseSessionSeries(
+  exerciseId: string,
+  opts?: { since?: string },
+): Promise<ExerciseSessionPoint[]> {
+  const [exerciseRow] = await db
+    .select({ id: exercises.id, name: exercises.name, category: exercises.category })
+    .from(exercises)
+    .where(eq(exercises.id, exerciseId))
+    .limit(1);
+  if (!exerciseRow || isCardioExercise(exerciseRow.category, exerciseRow.name)) return [];
+
+  const windowed = await getQualifyingSets({ exerciseId, since: opts?.since });
+  if (windowed.length === 0) return [];
+
+  const bySession = new Map<
+    string,
+    { t: number; maxWeightKg: number; sessionVolumeKg: number; maxEpleyKg: number }
+  >();
+  for (const set of windowed) {
+    const t = Date.parse(set.achievedAt);
+    if (Number.isNaN(t)) continue;
+    const entry = bySession.get(set.workoutSessionId) ?? {
+      t,
+      maxWeightKg: 0,
+      sessionVolumeKg: 0,
+      maxEpleyKg: 0,
+    };
+    if (set.weight !== null && set.weight > entry.maxWeightKg) entry.maxWeightKg = set.weight;
+    if (set.weight !== null && set.reps !== null) {
+      entry.sessionVolumeKg += set.weight * set.reps;
+      // Epley 1RM estimate; a true single is its own max (avoids the +3.3% skew at 1 rep).
+      const epley = set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
+      if (epley > entry.maxEpleyKg) entry.maxEpleyKg = epley;
+    }
+    bySession.set(set.workoutSessionId, entry);
+  }
+
+  return [...bySession.values()].sort((a, b) => a.t - b.t);
+}
+
+export async function getAllPersonalRecords(): Promise<ExercisePersonalRecordsSummary[]> {
+  const sets = await getQualifyingSets();
+  if (sets.length === 0) return [];
+
+  const setsByExerciseId = new Map<string, QualifyingSet[]>();
+  for (const set of sets) {
+    const list = setsByExerciseId.get(set.exerciseId) ?? [];
+    list.push(set);
+    setsByExerciseId.set(set.exerciseId, list);
+  }
+
+  const exerciseRows = await db
+    .select({ id: exercises.id, name: exercises.name, category: exercises.category })
+    .from(exercises)
+    .where(inArray(exercises.id, [...setsByExerciseId.keys()]));
+
+  const summaries: ExercisePersonalRecordsSummary[] = [];
+  for (const exerciseRow of exerciseRows) {
+    if (isCardioExercise(exerciseRow.category, exerciseRow.name)) continue;
+
+    const exerciseSets = setsByExerciseId.get(exerciseRow.id);
+    if (!exerciseSets || exerciseSets.length === 0) continue;
+
+    const records = computeRecordsFromSets(exerciseRow.id, exerciseSets);
+    if (!hasAnyRecord(records)) continue;
+
+    summaries.push({
+      ...records,
+      exerciseName: exerciseRow.name,
+      exerciseCategory: exerciseRow.category,
+    });
+  }
+
+  summaries.sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
+  return summaries;
+}

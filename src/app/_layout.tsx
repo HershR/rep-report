@@ -1,216 +1,142 @@
-import "../global.css";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { View, Text } from "react-native";
-import { DateProvider } from "../context/DateContext";
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
-import { drizzle } from "drizzle-orm/expo-sqlite";
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
-import migrations from "@/drizzle/migrations";
+import "@/global.css";
+
 import {
-  Theme,
-  ThemeProvider,
-  DefaultTheme,
-  DarkTheme,
-} from "@react-navigation/native";
-import { Platform } from "react-native";
-import { NAV_THEME } from "~/lib/constants";
-import { useColorScheme } from "~/lib/useColorScheme";
+  Archivo_400Regular,
+  Archivo_500Medium,
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+} from "@expo-google-fonts/archivo";
+import {
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+} from "@expo-google-fonts/ibm-plex-mono";
+import { ThemeProvider } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PortalHost } from "@rn-primitives/portal";
-import Toast from "react-native-toast-message";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import ActivityLoader from "../components/ActivityLoader";
-import { MeasurementUnitProvider } from "../context/MeasurementUnitContext";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "nativewind";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Button } from "../components/ui/button";
-import { resetDatebase, resetMigrations } from "../db/dbHelpers";
-import * as schema from "@/src//db/schema";
+import { Toaster } from "sonner-native";
 
-const DATABASE_NAME = "workouts";
-const LIGHT_THEME: Theme = {
-  ...DefaultTheme,
-  colors: NAV_THEME.light,
-};
-export const DARK_THEME: Theme = {
-  ...DarkTheme,
-  colors: NAV_THEME.dark,
-};
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+import { initializeDatabase } from "@/db/init";
+import { NAV_THEME, THEME } from "@/lib/theme";
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { sqlite } from "@/db/client";
+import { ErrorState } from "@/components/common";
+import { WgerUnavailableError } from "@/services/wger/client";
 
-export default function RootLayout() {
-  //db
-  const expoDb = openDatabaseSync(DATABASE_NAME, {
-    enableChangeListener: true,
-  });
-  const db = drizzle(expoDb, { schema });
-  const { success, error } = useMigrations(db, migrations);
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // already hidden; nothing to do
+});
 
-  //rnr ui lib
-  const hasMounted = useRef(false);
-  const { colorScheme, isDarkColorScheme, setColorScheme } = useColorScheme();
-  const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
-  const [measurementUnit, setMeasurementUnit] = useState<Unit | null>(null);
+/**
+ * The app is dark only. NativeWind still needs the scheme pinned so `dark:`
+ * variants resolve; the CSS custom properties are dark in :root regardless.
+ */
+function ForceDarkScheme() {
+  const { setColorScheme } = useColorScheme();
+
   useEffect(() => {
-    loadTheme();
-    loadMeasurementUnit();
-  }, []);
+    setColorScheme("dark");
+  }, [setColorScheme]);
 
-  const loadMeasurementUnit = async () => {
-    const savedMeasurementUnit = await AsyncStorage.getItem("measurementUnit");
-    if (savedMeasurementUnit === null) {
-      await AsyncStorage.setItem("measurementUnit", "imperial");
-    }
-    setMeasurementUnit(
-      savedMeasurementUnit === "imperial" ? "imperial" : "metric"
-    );
-  };
-  const loadTheme = async () => {
-    const savedTheme = await AsyncStorage.getItem("theme");
-    if (savedTheme === null) {
-      await AsyncStorage.setItem("theme", colorScheme);
-    } else {
-      setColorScheme(savedTheme === "dark" ? "dark" : "light"); // Default to system if no saved theme
-    }
-  };
-  useIsomorphicLayoutEffect(() => {
-    if (hasMounted.current) {
-      return;
-    }
+  return null;
+}
 
-    if (Platform.OS === "web") {
-      // Adds the background color to the html element to prevent white background on overscroll.
-      document.documentElement.classList.add("bg-background");
-    }
-    setIsColorSchemeLoaded(true);
-    hasMounted.current = true;
-  }, []);
-
-  if (error) {
-    return (
-      <View>
-        <Text>Migration error: {error.message}</Text>
-        <Button
-          variant={"destructive"}
-          onPress={async () => {
-            await resetMigrations(db);
-          }}
-        >
-          <Text>Reset Migrations</Text>
-        </Button>
-        <Button
-          className="mt-2"
-          variant={"destructive"}
-          onPress={async () => {
-            await resetDatebase(db);
-          }}
-        >
-          <Text>Reset Database</Text>
-        </Button>
-      </View>
-    );
-  }
-  if (!success) {
-    return (
-      <View>
-        <Text>Migration is in progress...</Text>
-      </View>
-    );
-  }
-  if (
-    !isColorSchemeLoaded ||
-    measurementUnit === null ||
-    measurementUnit === undefined
-  ) {
-    return null;
-  }
-
+/**
+ * Expo Router renders this in place of the whole app when a render throws, so
+ * one bad screen shows a recoverable message instead of a blank screen. It sits
+ * outside every provider, so it uses only plain views.
+ */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
   return (
-    <>
-      <Suspense fallback={<ActivityLoader />}>
-        <SQLiteProvider
-          databaseName={DATABASE_NAME}
-          options={{ enableChangeListener: true }}
-          useSuspense
-        >
-          <MeasurementUnitProvider defaultUnit={measurementUnit}>
-            <DateProvider>
-              <ThemeProvider
-                value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}
-              >
-                <SafeAreaProvider>
-                  <StatusBar
-                    hidden={false}
-                    style={isDarkColorScheme ? "light" : "dark"}
-                    backgroundColor={NAV_THEME[colorScheme].background}
-                  />
-                  <Stack
-                    screenOptions={{
-                      headerStyle: {
-                        backgroundColor: NAV_THEME[colorScheme].background,
-                      },
-                      headerTitleStyle: {
-                        color: NAV_THEME[colorScheme].text,
-                      },
-                      headerShadowVisible: true,
-                      headerTransparent: true,
-                    }}
-                  >
-                    <Stack.Screen
-                      name="index"
-                      options={{ headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="(tabs)"
-                      options={{ headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="exercise/[id]"
-                      options={{
-                        title: "Exercise Details",
-                        headerShown: false,
-                      }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="workout/create/[id]"
-                      options={{ title: "New Workout", headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="workout/update/[id]"
-                      options={{ title: "Edit Workout", headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="routine/create"
-                      options={{ title: "New Routine", headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="routine/[id]"
-                      options={{ title: "Routine Details", headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="routine/update/[id]"
-                      options={{ title: "Edit Routine", headerShown: false }}
-                    ></Stack.Screen>
-                    <Stack.Screen
-                      name="(user)"
-                      options={{ headerShown: false }}
-                    ></Stack.Screen>
-                  </Stack>
-                  <PortalHost />
-                  <Toast />
-                </SafeAreaProvider>
-              </ThemeProvider>
-            </DateProvider>
-          </MeasurementUnitProvider>
-        </SQLiteProvider>
-      </Suspense>
-    </>
+    <View
+      style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: THEME.background }}
+    >
+      <ErrorState
+        title="Something went wrong"
+        message={error.message}
+        onRetry={() => void retry()}
+      />
+    </View>
   );
 }
-const useIsomorphicLayoutEffect =
-  Platform.OS === "web" && typeof window === "undefined"
-    ? useEffect
-    : useLayoutEffect;
+
+export default function RootLayout() {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // When WGER is unreachable a retry fails the same way, only later -
+            // offline used to mean ~7s of spinner before any message.
+            // Everything else keeps the default backoff.
+            retry: (failureCount, error) =>
+              !(error instanceof WgerUnavailableError) && failureCount < 3,
+          },
+        },
+      }),
+  );
+  const [fontsLoaded, fontError] = useFonts({
+    Archivo_400Regular,
+    Archivo_500Medium,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
+  const colors = THEME;
+
+  useEffect(() => {
+    initializeDatabase().catch((error) => {
+      console.error("DB init failed", error);
+    });
+  }, []);
+  useDrizzleStudio(sqlite);
+
+  // Hold the splash until the faces are ready, so text never paints in the
+  // fallback and reflows. A font error still releases it - shipping the
+  // system stack beats hanging on the splash.
+  useEffect(() => {
+    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ForceDarkScheme />
+          <ThemeProvider value={NAV_THEME}>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: colors.card },
+                headerTintColor: colors.foreground,
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: colors.background },
+                headerShown: false,
+              }}
+            >
+              <Stack.Screen
+                name="workout/active"
+                options={{ presentation: "modal" }}
+              />
+            </Stack>
+            <PortalHost />
+            <Toaster theme="dark" position="top-center" />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}

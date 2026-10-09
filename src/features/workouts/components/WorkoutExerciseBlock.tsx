@@ -1,0 +1,170 @@
+import { useRouter } from "expo-router";
+import { Check, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react-native";
+import { Pressable, View } from "react-native";
+
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Separator } from "@/components/ui/separator";
+import { Text } from "@/components/ui/text";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
+import { WorkoutSetRow } from "@/features/workouts/components/WorkoutSetRow";
+import { isCardioExercise } from "@/features/workouts/utils/isCardioExercise";
+import type { WorkoutSessionExerciseWithDetails } from "@/features/workouts/types";
+
+type WorkoutExerciseBlockProps = {
+  workoutExercise: WorkoutSessionExerciseWithDetails;
+  commitSetChangesOnChange?: boolean;
+  onAddSet: (workoutSessionExerciseId: string) => void;
+  onRemoveExercise: (workoutSessionExerciseId: string) => void;
+  onUpdateSet: (
+    setId: string,
+    input: {
+      reps?: number | null;
+      weight?: number | null;
+      durationSeconds?: number | null;
+      distance?: number | null;
+      isCompleted?: boolean;
+    },
+  ) => void;
+  onDeleteSet: (setId: string) => void;
+  onEditValue?: (setId: string, field: "reps" | "weight") => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+};
+
+export function WorkoutExerciseBlock({
+  workoutExercise,
+  commitSetChangesOnChange = false,
+  onAddSet,
+  onRemoveExercise,
+  onUpdateSet,
+  onDeleteSet,
+  onEditValue,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
+}: WorkoutExerciseBlockProps) {
+  // First set not yet ticked - highlighted so you never lose your place.
+  const currentSetIndex = workoutExercise.sets.findIndex(
+    (workoutSet) => workoutSet.isCompleted !== 1,
+  );
+  const router = useRouter();
+  const { distanceUnit, weightUnit } = useAppSettings();
+  const showDuration = isCardioExercise(
+    workoutExercise.exercise.category,
+    workoutExercise.exercise.name,
+  );
+
+  const firstColumnLabel = showDuration ? "TIME" : "REPS";
+  const secondColumnLabel = showDuration
+    ? `DIST (${distanceUnit.toUpperCase()})`
+    : `WEIGHT (${weightUnit.toUpperCase()})`;
+
+  return (
+    <View className="gap-2">
+      <View className="flex-row items-center justify-between">
+        <Pressable
+          className="flex-1 active:opacity-70"
+          onPress={() =>
+            router.push({
+              pathname: "/exercise/[exerciseId]",
+              params: {
+                exerciseId: workoutExercise.exerciseId,
+                source: "local",
+              },
+            })
+          }
+        >
+          <Text variant="cardTitle" className="text-foreground">
+            {workoutExercise.exercise.name}
+          </Text>
+        </Pressable>
+        <View className="flex-row items-center">
+          {onMoveUp ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11"
+              accessibilityLabel={`Move ${workoutExercise.exercise.name} up`}
+              disabled={!canMoveUp}
+              onPress={onMoveUp}
+            >
+              <Icon as={ChevronUp} className="text-text-3 size-4" />
+            </Button>
+          ) : null}
+          {onMoveDown ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11"
+              accessibilityLabel={`Move ${workoutExercise.exercise.name} down`}
+              disabled={!canMoveDown}
+              onPress={onMoveDown}
+            >
+              <Icon as={ChevronDown} className="text-text-3 size-4" />
+            </Button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11"
+            accessibilityLabel={`Remove ${workoutExercise.exercise.name}`}
+            onPress={() => onRemoveExercise(workoutExercise.id)}
+          >
+            <Icon as={Trash2} className="text-text-3 size-4" />
+          </Button>
+        </View>
+      </View>
+
+      {workoutExercise.sets.length === 0 ? (
+        <Text variant="body" className="text-text-3">
+          No sets yet.
+        </Text>
+      ) : (
+        <>
+          <View className="flex-row items-center gap-2 px-2">
+            <View className="w-6" />
+            <Text variant="microLabel" className="flex-1 text-center">
+              {firstColumnLabel.toUpperCase()}
+            </Text>
+            <Text variant="microLabel" className="flex-1 text-center">
+              {secondColumnLabel.toUpperCase()}
+            </Text>
+            {/* Same widths as the row's complete and delete buttons below. */}
+            <View className="w-11 items-center">
+              <Icon as={Check} className="text-text-4 size-3.5" />
+            </View>
+            <View className="w-11" />
+          </View>
+          <Separator />
+          {workoutExercise.sets.map((workoutSet, index) => (
+            <WorkoutSetRow
+              key={workoutSet.id}
+              index={index}
+              workoutSet={workoutSet}
+              isCardio={showDuration}
+              isCurrent={index === currentSetIndex}
+              onEditValue={onEditValue}
+              commitOnChange={commitSetChangesOnChange}
+              onUpdate={onUpdateSet}
+              onDelete={onDeleteSet}
+            />
+          ))}
+        </>
+      )}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2 self-start"
+        onPress={() => onAddSet(workoutExercise.id)}
+      >
+        <Icon as={Plus} className="text-primary size-4" />
+        <Text className="text-primary">Add set</Text>
+      </Button>
+    </View>
+  );
+}

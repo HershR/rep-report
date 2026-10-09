@@ -1,286 +1,259 @@
-import { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import { useMeasurementUnit } from "@/src/context/MeasurementUnitContext";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { differenceInYears, format } from "date-fns";
+import { useRouter, type Href } from "expo-router";
+import { Pencil, Ruler, Settings, Weight } from "lucide-react-native";
+import { useState } from "react";
+import { View } from "react-native";
+
+import { CustomScreen, ListRow } from "@/components/common";
+import { Button } from "@/components/ui/button";
 import {
-  convertHeightString,
-  convertWeightString,
-} from "@/src/utils/measurementConversion";
-import HeightSelectorModal from "@/src/components/HeightSelectorModal";
-//db
-import * as schema from "@/src//db/schema";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { updateUserSetting } from "@/src/db/dbHelpers";
-//ui
-import { useColorScheme } from "@/src/lib/useColorScheme";
-import { NAV_THEME } from "@/src/lib/constants";
-import { Text } from "@/src/components/ui/text";
-import { Switch } from "@/src/components/ui/switch";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { Separator } from "~/components/ui/separator";
-//icons
-import { User } from "@/src/lib/icons/User";
-import { MoonStar } from "@/src/lib/icons/MoonStar";
-import { Sun } from "@/src/lib/icons/Sun";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
-import { Ruler } from "@/src/lib/icons/Ruler";
-import { Cake } from "@/src/lib/icons/Cake";
-import { eq } from "drizzle-orm";
-import { utcToLocalMidnight } from "@/src/utils/datetimeConversion";
-import { seedDatabase } from "@/src/db/seed";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/components/ui/text";
+import { useMeasurements } from "@/features/measurements/hooks/useMeasurements";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { useWorkoutActivity } from "@/features/workouts/hooks/useWorkoutActivity";
+import { toDisplayHeightCm, toDisplayWeight, weightToText } from "@/lib/units";
 
-const Profile = () => {
-  const [age, setAge] = useState<number | null>();
-  const [height, setHeight] = useState<number | null>();
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isHeightModalVisible, setHeightModalVisibility] = useState(false);
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="border-border bg-card h-[72px] flex-1 justify-between rounded-lg border p-3">
+      <Text variant="microLabel">{label.toUpperCase()}</Text>
+      <Text variant="numeral" className="text-[21px]" numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
 
-  const { colorScheme, isDarkColorScheme, toggleColorScheme } =
-    useColorScheme();
+export default function ProfileScreen() {
   const router = useRouter();
-  const { unit, toggleUnit } = useMeasurementUnit();
+  const {
+    profile,
+    saveProfile,
+    isSaving,
+    isLoading: profileLoading,
+  } = useProfile();
+  const { weightUnit, heightUnit } = useAppSettings();
+  const { latest: latestWeight, history: weightHistory } =
+    useMeasurements("weight");
+  const { latest: latestHeight } = useMeasurements("height");
+  const { dailyTotals } = useWorkoutActivity();
 
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
-  const { data: weight } = useLiveQuery(
-    drizzleDb.query.weightHistory.findFirst({
-      orderBy: (weight_history, { desc }) => [
-        desc(weight_history.date_created),
-      ],
-    })
-  );
-  const { data: userDob } = useLiveQuery(
-    drizzleDb.query.userSettings.findFirst({
-      where: eq(schema.userSettings.key, "dob"),
-    })
-  );
+  const [editOpen, setEditOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDobPicker, setShowDobPicker] = useState(false);
 
-  const { data: userHeight } = useLiveQuery(
-    drizzleDb.query.userSettings.findFirst({
-      where: eq(schema.userSettings.key, "height"),
-    })
-  );
+  const openEdit = () => {
+    setDisplayName(profile?.displayName ?? "");
+    setDateOfBirth(profile?.dateOfBirth ? new Date(profile.dateOfBirth) : null);
+    setShowDobPicker(false);
+    setEditOpen(true);
+  };
 
-  useEffect(() => {
-    if (userDob) {
-      const date = new Date(userDob.value);
-      const today = new Date();
-      const age = today.getFullYear() - date.getFullYear();
-      const monthDiff = today.getMonth() - date.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < date.getDate())
-      ) {
-        setAge(age - 1);
-      } else {
-        setAge(age);
-      }
-    } else {
-      setAge(0);
+  const onChangeDob = (event: DateTimePickerEvent, selected?: Date) => {
+    if (event.type === "dismissed") {
+      setShowDobPicker(false);
+      return;
     }
-  }, [userDob]);
-
-  useEffect(() => {
-    const getHeight = async () => {
-      if (userHeight) {
-        setHeight(parseFloat(userHeight.value));
-      } else {
-        setHeight(0);
-      }
-    };
-    getHeight();
-  }, [userHeight]);
-
-  const setUnit = async (unit: Unit) => {
-    await AsyncStorage.setItem("measurementUnit", unit);
+    if (!selected) return;
+    setDateOfBirth(selected);
+    setShowDobPicker(false);
   };
-  const setTheme = async (theme: string) => {
-    await AsyncStorage.setItem("theme", theme);
+
+  const onSaveProfile = async () => {
+    if (!displayName.trim()) return;
+    await saveProfile({
+      displayName: displayName.trim(),
+      dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : null,
+    });
+    setEditOpen(false);
   };
+
+  const initials = (profile?.displayName ?? "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "—";
+
+  const sessionTotal = dailyTotals.reduce(
+    (total, day) => total + day.sessionCount,
+    0,
+  );
+
+  const memberSince = profile?.createdAt
+    ? [
+        `TRAINING SINCE ${format(new Date(profile.createdAt), "MMM yyyy").toUpperCase()}`,
+        sessionTotal > 0
+          ? `${sessionTotal} SESSION${sessionTotal === 1 ? "" : "S"}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "SET UP YOUR PROFILE";
+
+  const ageText = profile?.dateOfBirth
+    ? String(differenceInYears(new Date(), new Date(profile.dateOfBirth)))
+    : "—";
+
+  const weightText = latestWeight
+    ? `${weightToText(latestWeight.value, weightUnit)} ${weightUnit}`
+    : "—";
+
+  const previousWeight = weightHistory.at(-2) ?? null;
+  const weightChangeText =
+    latestWeight && previousWeight
+      ? (() => {
+          const change =
+            toDisplayWeight(latestWeight.value, weightUnit) -
+            toDisplayWeight(previousWeight.value, weightUnit);
+          const rounded = Math.round(change * 10) / 10;
+          if (rounded === 0) return undefined;
+          return `${rounded > 0 ? "+" : "−"}${Math.abs(rounded)} ${weightUnit}`;
+        })()
+      : undefined;
+
+  const heightText = latestHeight
+    ? toDisplayHeightCm(latestHeight.value, heightUnit)
+    : "—";
 
   return (
-    <>
-      <SafeAreaWrapper hasTabBar viewStyle="my-5">
-        <View className="flex-1 max-w-screen-md pt-6 mt-4">
-          <View className="flex-row gap-x-10">
-            <View className="flex justify-center items-center">
-              <View className="w-32 aspect-square rounded-full bg-secondary justify-center items-center overflow-hidden">
-                <User className="color-primary" size={80}></User>
-              </View>
-            </View>
-            <View className="flex-1 justify-center">
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Age</Text>
-                <Text className="text-xl font-medium text-right">{age} yr</Text>
-              </View>
-              <Separator className="" />
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Height</Text>
-                <Text className="text-xl font-medium text-right">
-                  {height ? convertHeightString(height, "metric", unit) : "NA"}
-                </Text>
-              </View>
-              <Separator className="" />
-              <View className="flex-1 flex-row justify-between items-center">
-                <Text className="text-xl font-medium text-left">Weight</Text>
-                <Text className="text-xl font-medium text-right">
-                  {weight?.weight
-                    ? convertWeightString(weight.weight, "imperial", unit)
-                    : "NA"}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <Separator className="my-4" />
-          <View className="flex-1">
-            <ScrollView
-              className="flex-1 w-full"
-              showsVerticalScrollIndicator={false}
-              contentContainerClassName="gap-y-4"
-            >
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">App Theme</Text>
-                <View className="flex-row items-center gap-x-2">
-                  <Sun className="color-primary" size={24} />
-                  <Switch
-                    checked={isDarkColorScheme}
-                    onCheckedChange={async () => {
-                      await setTheme(
-                        colorScheme === "light" ? "dark" : "light"
-                      );
-                      toggleColorScheme();
-                    }}
-                  />
-                  <MoonStar className="color-primary" size={24} />
-                </View>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Units</Text>
-                <View className="flex-row items-center gap-x-2">
-                  <Text className="min-w-6 text-center text-xl font-semibold">
-                    Lb
-                  </Text>
-                  <Switch
-                    checked={unit === "metric"}
-                    onCheckedChange={async () => {
-                      await setUnit(
-                        unit === "imperial" ? "metric" : "imperial"
-                      );
-                      toggleUnit();
-                    }}
-                  />
-                  <Text className="min-w-6 text-center text-xl font-semibold">
-                    Kg
-                  </Text>
-                </View>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">My Weight</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => router.push("/weight")}
-                >
-                  <Ionicons
-                    name="scale"
-                    size={24}
-                    color={
-                      colorScheme === "light"
-                        ? NAV_THEME.light.primary
-                        : NAV_THEME.dark.primary
-                    }
-                  />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Update Height</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => setHeightModalVisibility(true)}
-                >
-                  <Ruler className="color-primary" />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Update Age</Text>
-                <Button
-                  variant={"ghost"}
-                  size="icon"
-                  className="flex-row w-14"
-                  onPress={() => setDatePickerVisibility(true)}
-                >
-                  <Cake className="color-primary" />
-                  <ChevronRight size={24} className="color-primary" />
-                </Button>
-              </View>
-              {/* <Separator />
-              <View className="flex-1 flex-row h-14 rounded-md bg-background justify-between items-center px-4">
-                <Text className="text-xl font-medium">Seed Database</Text>
-                <Button onPress={async () => seedDatabase(drizzleDb)}>
-                  <Text>Seed</Text>
-                </Button>
-              </View> */}
-            </ScrollView>
-          </View>
+    <CustomScreen scroll contentContainerStyle={{ paddingBottom: 24 }}>
+      <View className="h-9 flex-row items-center justify-between">
+        <Text variant="screenTitle">Profile</Text>
+        <Button
+          variant="ghost"
+          className="-mr-2.5 h-9 px-2.5"
+          accessibilityLabel="Edit profile"
+          onPress={openEdit}
+        >
+          <Icon as={Pencil} className="text-text-3 size-4" />
+          <Text className="text-text-3 text-[13px] font-semibold">Edit</Text>
+        </Button>
+      </View>
+
+      {profileLoading ? (
+        <View className="mt-4 gap-4">
+          <Skeleton className="h-14 w-52" />
+          <Skeleton className="h-[72px] w-full" />
         </View>
-      </SafeAreaWrapper>
-      <View className="flex">
-        <HeightSelectorModal
-          isVisable={isHeightModalVisible}
-          defaultHeight={height || 0}
-          unit={unit}
-          onSubmit={async (height: number) => {
-            if (height) {
-              await updateUserSetting(drizzleDb, "height", height.toString());
-            }
-            setHeightModalVisibility(false);
-          }}
-          onClose={() => {
-            setHeightModalVisibility(false);
-          }}
+      ) : (
+        <>
+          <View className="mt-4 flex-row items-center gap-3.5">
+            <View className="border-border-strong bg-surface-raised size-14 items-center justify-center rounded-full border">
+              <Text variant="numeral" className="text-primary text-[18px]">
+                {initials}
+              </Text>
+            </View>
+            <View className="flex-1 gap-1">
+              <Text className="text-[19px] font-bold tracking-tight">
+                {profile?.displayName ?? "Your name"}
+              </Text>
+              <Text variant="microLabel">{memberSince}</Text>
+            </View>
+          </View>
+
+          <View className="mt-4 flex-row gap-2">
+            <Stat label="Age" value={ageText} />
+            <Stat label="Weight" value={weightText} />
+            <Stat label="Height" value={heightText} />
+          </View>
+        </>
+      )}
+
+      <View className="mt-6">
+        <Text variant="sectionLabel" className="mb-2.5">
+          BODY
+        </Text>
+        <ListRow
+          icon={Weight}
+          label="Weight history"
+          value={weightChangeText}
+          onPress={() => router.push("/profile/weight-history" as Href)}
+        />
+        <ListRow
+          icon={Ruler}
+          label="Height history"
+          onPress={() => router.push("/profile/height-history" as Href)}
+        />
+        <ListRow
+          icon={Ruler}
+          label="Body measurements"
+          onPress={() => router.push("/profile/measurements" as Href)}
         />
       </View>
 
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        isDarkModeEnabled={isDarkColorScheme}
-        is24Hour={true}
-        date={userDob?.value ? new Date(userDob.value) : new Date()}
-        onConfirm={async (date) => {
-          if (date) {
-            const tzDate = utcToLocalMidnight(date);
-            await updateUserSetting(drizzleDb, "dob", tzDate.toISOString());
-          }
-          setDatePickerVisibility(false);
-        }}
-        onCancel={() => {
-          setDatePickerVisibility(false);
-        }}
-        minimumDate={new Date(1900, 0, 1)}
-        maximumDate={new Date()}
-        timePickerModeAndroid="spinner"
-        modalPropsIOS={{
-          presentationStyle: "formSheet",
-        }}
-      />
-    </>
-  );
-};
+      <View className="mt-6">
+        <Text variant="sectionLabel" className="mb-2.5">
+          PREFERENCES
+        </Text>
+        <ListRow
+          icon={Settings}
+          label="Settings"
+          value={`${weightUnit} · ${heightUnit}`}
+          onPress={() => router.push("/settings" as Href)}
+        />
+      </View>
 
-export default Profile;
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit profile</DialogTitle>
+          </DialogHeader>
+
+          <View className="gap-4">
+            <View className="gap-2">
+              <Label>What should we call you?</Label>
+              <Input
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="Display name"
+              />
+            </View>
+
+            <View className="gap-2">
+              <Label>Date of birth (optional)</Label>
+              <Button variant="outline" onPress={() => setShowDobPicker(true)}>
+                <Text>
+                  {dateOfBirth
+                    ? format(dateOfBirth, "PPP")
+                    : "Set date of birth"}
+                </Text>
+              </Button>
+              {showDobPicker ? (
+                <DateTimePicker
+                  mode="date"
+                  value={dateOfBirth ?? new Date(2000, 0, 1)}
+                  onChange={onChangeDob}
+                />
+              ) : null}
+            </View>
+          </View>
+
+          <DialogFooter>
+            <Button variant="outline" onPress={() => setEditOpen(false)}>
+              <Text>Cancel</Text>
+            </Button>
+            <Button loading={isSaving} onPress={() => void onSaveProfile()}>
+              <Text>Save</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </CustomScreen>
+  );
+}

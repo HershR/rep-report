@@ -1,25 +1,28 @@
 {
   "expo": {
-    "name": "RepReport",
-    "slug": "RepReport",
-    "version": "1.0.0",
+    "name": "Rep Report",
+    "slug": "rep-report",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
-    "scheme": "repreport",
-    "userInterfaceStyle": "automatic",
+    "scheme": "rep-report",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/adaptive-icon.png",
-        "backgroundColor": "#1a1a1aff"
+        "backgroundColor": "#09090B",
+        "foregroundImage": "./src/assets/images/android-icon-foreground.png",
+        "backgroundImage": "./src/assets/images/android-icon-background.png",
+        "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hersh_r.repreport"
     },
     "web": {
-      "bundler": "metro",
       "output": "static",
       "favicon": "./src/assets/images/favicon.png"
     },
@@ -31,19 +34,15 @@
           "image": "./src/assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#1a1a1aff"
+          "backgroundColor": "#09090B"
         }
       ],
       "expo-sqlite",
-      [
-        "expo-screen-orientation",
-        {
-          "initialOrientation": "PORTRAIT"
-        }
-      ]
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     }
   }
 }

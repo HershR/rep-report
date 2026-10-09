@@ -1,230 +1,140 @@
-import { DateTime } from "luxon";
-import { useRouter } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { DateData, Direction } from "react-native-calendars/src/types";
-import { CalendarProvider, ExpandableCalendar } from "react-native-calendars";
-import { twMerge } from "tailwind-merge";
-import SearchBar from "@/src/components/SearchBar";
-import ActivityLoader from "@/src/components/ActivityLoader";
-import SafeAreaWrapper from "@/src/components/SafeAreaWrapper";
-import CompletedWorkoutList from "@/src/components/lists/CompletedWorkoutList";
-//db
-import * as schema from "@/src/db/schema";
-import { workouts } from "@/src/db/schema";
-import { between, desc } from "drizzle-orm";
-import { useSQLiteContext } from "expo-sqlite";
-import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
-//ui
-import { Text } from "~/components/ui/text";
-import { NAV_THEME } from "~/lib/constants";
-import { useColorScheme } from "~/lib/useColorScheme";
-import { Separator } from "@/src/components/ui/separator";
-import { CalendarDays } from "@/src/lib/icons/CalendarDays";
-import { ChevronRight } from "@/src/lib/icons/ChevronRight";
+import { useRouter, type Href } from "expo-router";
+import { Calculator, ChevronRight, Plus, Settings } from "lucide-react-native";
+import { View } from "react-native";
 
-export default function Home() {
+import { CustomScreen } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { FadeInView } from "@/components/ui/fade-in-view";
+import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/components/ui/text";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { useWorkoutTemplates } from "@/features/templates/hooks/useWorkoutTemplates";
+import { summarizeTemplate } from "@/features/templates/utils/summarizeTemplate";
+import { WeeklyProgressCard } from "@/features/workouts/components/WeeklyProgressCard";
+
+const WEEKDAY_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+  month: "short",
+  day: "numeric",
+};
+
+export default function HomeScreen() {
   const router = useRouter();
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
-  const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
-  const [selectedDate, setSelectedDate] = useState(DateTime.now());
-  const [selectedMonth, setSelectedMonth] = useState(
-    DateTime.now().toISODate()
-  );
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [daysWorkouts, setDaysWorkouts] = useState<WorkoutWithExercise[]>([]);
-  const db = useSQLiteContext();
-  const drizzleDb = drizzle(db, { schema });
+  const { templates, isLoading: templatesLoading } = useWorkoutTemplates();
+  const { profile } = useProfile();
 
-  useDrizzleStudio(db);
+  const today = new Date()
+    .toLocaleDateString(undefined, WEEKDAY_FORMAT)
+    .toUpperCase();
 
-  const {
-    data: monthsWorkouts,
-    updatedAt: workoutLoaded,
-    error: workoutError,
-  } = useLiveQuery(
-    drizzleDb.query.workouts.findMany({
-      where: between(
-        workouts.date,
-        selectedDate.startOf("month").toISODate(),
-        selectedDate.endOf("month").toISODate()
-      ),
-      with: {
-        exercise: true,
-        sets: true,
-      },
-      orderBy: desc(workouts.last_updated),
-    }),
-    [selectedMonth]
-  );
-
-  useEffect(() => {
-    if (workoutError) {
-      console.error("Error fetching workouts:", workoutError);
-    }
-  }, [workoutError]);
-  useEffect(() => {
-    if (monthsWorkouts) {
-      setDaysWorkouts(
-        monthsWorkouts.filter((x) => x.date === selectedDate.toISODate())
-      );
-    }
-  }, [selectedDate, monthsWorkouts]);
-
-  useEffect(() => {
-    const splitDate = selectedMonth.split("-");
-    const month = splitDate[1];
-    const year = splitDate[0];
-    if (
-      parseInt(month) !== selectedDate.month ||
-      parseInt(year) !== selectedDate.year
-    ) {
-      setSelectedMonth(selectedDate.toISODate());
-    }
-  }, [selectedDate]);
-
-  const onDayPress = useCallback((day: DateData) => {
-    // console.log("onDayPress", day);
-    setSelectedDate(
-      selectedDate.set({ day: day.day, month: day.month, year: day.year })
-    );
-  }, []);
-
-  const toggleCalendarExpansion = useCallback(() => {
-    calendarRef.current?.toggleCalendarPosition();
-  }, []);
-
-  const renderHeader = useCallback((date: Date) => {
-    return (
-      <TouchableOpacity
-        className="flex-row justify-center items-center m-3 gap-x-4"
-        onPress={toggleCalendarExpansion}
-      >
-        <Text className="text-2xl font-medium">
-          {DateTime.fromISO(date.toISOString()).toFormat("LLLL yyyy")}
-        </Text>
-        <CalendarDays className="color-primary" size={26} />
-      </TouchableOpacity>
-    );
-  }, []);
-
-  const renderArrow = (direction: Direction) => {
-    return (
-      <ChevronRight
-        className={twMerge(
-          "color-primary",
-          direction === "left" ? "rotate-180" : ""
-        )}
-        size={24}
-      />
-    );
-  };
-  const marked = useMemo(() => {
-    const dates = new Set(monthsWorkouts.map((x) => x.date));
-    const markedDates: { [key: string]: any } = {};
-    dates.forEach(
-      (x) =>
-        (markedDates[x] = {
-          marked: true,
-        })
-    );
-
-    return {
-      ...markedDates,
-      [selectedDate.toISODate()]: {
-        selected: true,
-        disableTouchEvent: true,
-      },
-    };
-  }, [selectedDate, daysWorkouts]);
-
-  const CALENDARTHEME = {
-    backgroundColor: NAV_THEME[colorScheme].background,
-    calendarBackground: NAV_THEME[colorScheme].background,
-    selectedDayBackgroundColor: NAV_THEME[colorScheme].primary,
-    selectedDayTextColor: NAV_THEME[colorScheme].border,
-    dotColor: NAV_THEME[colorScheme].primary,
-    arrowColor: NAV_THEME[colorScheme].primary,
-    monthTextColor: NAV_THEME[colorScheme].text,
-    textDisabledColor: NAV_THEME[colorScheme].border,
-    dayTextColor: NAV_THEME[colorScheme].text,
-    todayTextColor: NAV_THEME[colorScheme].text,
-    todayDotColor: NAV_THEME[colorScheme].text,
-    todayBackgroundColor: NAV_THEME[colorScheme].border,
-  };
   return (
-    <>
-      <CalendarProvider
-        date={selectedDate.toISODate()}
-        onDateChanged={(date) => {
-          const newDate = DateTime.fromFormat(date, "yyyy-MM-dd");
-          //@ts-ignore
-          setSelectedDate(newDate);
-        }}
-        onMonthChange={onDayPress}
-      >
-        <SafeAreaView
-          edges={["top", "left", "right"]}
-          onLayout={() => {
-            setShowCalendar(true);
-          }}
+    <CustomScreen scroll contentContainerStyle={{ paddingBottom: 24 }}>
+      <View className="flex-row items-center justify-between pb-4">
+        <View className="gap-1">
+          <Text variant="sectionLabel">{today}</Text>
+          <Text className="text-[21px] font-bold tracking-tight">
+            {profile ? `Hi ${profile.displayName}` : "Today"}
+          </Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-mr-2 size-11"
+          accessibilityLabel="Settings"
+          onPress={() => router.push("/settings" as Href)}
         >
-          {showCalendar && (
-            <ExpandableCalendar
-              ref={calendarRef}
-              key={colorScheme}
-              theme={CALENDARTHEME}
-              firstDay={1}
-              renderHeader={renderHeader}
-              renderArrow={renderArrow}
-              current={selectedDate.toISODate()}
-              markedDates={marked}
-              onDayPress={onDayPress}
-              allowShadow={false}
-              enableSwipeMonths={false}
-              closeOnDayPress={false}
-              hideKnob
-              disablePan
-              disableWeekScroll
-              disableArrowLeft={false}
-              disableArrowRight={false}
-              disableAllTouchEventsForDisabledDays
-            />
-          )}
-        </SafeAreaView>
+          <Icon as={Settings} className="text-text-3 size-5" />
+        </Button>
+      </View>
 
-        <Separator className="mt-2 mb-4" />
-        <SafeAreaWrapper hasTabBar hasHeader viewStyle="mt-0">
-          {!workoutLoaded ? (
-            <ActivityLoader />
-          ) : workoutError ? (
-            <Text>Failed to Load Workouts</Text>
-          ) : (
-            <View className="flex-1 gap-y-2">
-              <SearchBar
-                placeholder={"Add exercise"}
-                value={""}
-                onPress={() => router.push("/search")}
-              />
-              {!workoutLoaded ? (
-                <ActivityLoader />
-              ) : (
-                <>
-                  <Text className="text-xl font-semibold mt-2 mb-2">
-                    {selectedDate?.toISODate() === DateTime.now().toISODate()
-                      ? "Today's Workouts"
-                      : selectedDate?.toFormat("LLL dd, yyyy")}
-                    :
-                  </Text>
-                  <CompletedWorkoutList workouts={daysWorkouts} />
-                </>
-              )}
+      <WeeklyProgressCard />
+
+      <Button
+        size="lg"
+        className="mt-3.5 h-14"
+        onPress={() =>
+          router.push({
+            pathname: "/workout/active",
+            params: { name: "Workout" },
+          })
+        }
+      >
+        <Icon as={Plus} className="text-primary-foreground size-5" />
+        <Text className="text-[16px]">Start empty workout</Text>
+      </Button>
+
+      <View className="mt-5">
+        <View className="h-6 flex-row items-center justify-between">
+          <Text variant="sectionLabel">TEMPLATES</Text>
+          {templates.length > 0 ? (
+            <Button
+              variant="ghost"
+              className="-mr-2.5 h-6 px-2.5 py-0"
+              onPress={() => router.push("/saved" as Href)}
+            >
+              <Text className="text-text-3 text-xs font-semibold">See all</Text>
+            </Button>
+          ) : null}
+        </View>
+
+        {templatesLoading ? (
+          <View className="mt-2.5 gap-2">
+            <Skeleton className="h-[58px] w-full rounded-lg" />
+            <Skeleton className="h-[58px] w-full rounded-lg" />
+          </View>
+        ) : templates.length === 0 ? (
+          <FadeInView>
+            <Text className="text-text-3 mt-2.5 text-sm">
+              No templates yet. Create one in the Saved tab.
+            </Text>
+          </FadeInView>
+        ) : (
+          <FadeInView>
+            <View className="mt-2.5 gap-2">
+              {templates.slice(0, 3).map((template, index) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  className="border-border bg-card h-[58px] flex-row justify-start gap-3 px-3.5"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/workout/active",
+                      params: { templateId: template.id, name: template.name },
+                    })
+                  }
+                >
+                  <View className="bg-surface-raised size-9 items-center justify-center rounded-md">
+                    <Text variant="meta" className="text-text-2">
+                      {String.fromCharCode(65 + index)}
+                    </Text>
+                  </View>
+                  <View className="flex-1 gap-1">
+                    <Text variant="itemTitle" numberOfLines={1}>
+                      {template.name}
+                    </Text>
+                    <Text variant="microLabel">
+                      {summarizeTemplate(template)}
+                    </Text>
+                  </View>
+                  <Icon as={ChevronRight} className="text-text-4 size-4" />
+                </Button>
+              ))}
             </View>
-          )}
-        </SafeAreaWrapper>
-      </CalendarProvider>
-    </>
+          </FadeInView>
+        )}
+      </View>
+
+      {/* One utility row; it does not warrant a section header of its own. */}
+      <Button
+        variant="outline"
+        className="border-border bg-surface-inset mt-3.5 h-12 flex-row justify-start gap-3 px-3.5"
+        onPress={() => router.push("/tools/plate-calculator" as Href)}
+      >
+        <Icon as={Calculator} className="text-text-3 size-[18px]" />
+        <Text className="flex-1 text-sm font-medium">Plate calculator</Text>
+        <Icon as={ChevronRight} className="text-text-4 size-4" />
+      </Button>
+    </CustomScreen>
   );
 }

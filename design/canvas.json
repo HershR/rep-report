@@ -1,0 +1,134 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Screens"
+    },
+    {
+      "id": "page-2",
+      "name": "Other directions"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "Today",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Workout.dc.html",
+      "title": "Active workout (live)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1",
+      "is_interactive": true
+    },
+    {
+      "file": "Keypad.dc.html",
+      "title": "Set entry",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Search.dc.html",
+      "title": "Exercise search",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Exercise.dc.html",
+      "title": "Exercise detail",
+      "x": 0,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Progress.dc.html",
+      "title": "Progress",
+      "x": 490,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Profile.dc.html",
+      "title": "Profile",
+      "x": 980,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "title": "B \u00b7 One set at a time",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "DirectionC.dc.html",
+      "title": "C \u00b7 The log",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "Saved.dc.html",
+      "title": "Saved templates",
+      "x": 1470,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "system-note",
+      "x": 1980,
+      "y": 0,
+      "w": 300,
+      "text": "THE SYSTEM\n\nType - Archivo (display / UI), IBM Plex Mono (all numerals, micro-labels). Numeral slots are fixed-width and right-aligned, which is what actually makes the columns hold.\n\nGround - #09090B page, #131316 card, #101013 recessed figure surface, #1C1C21 raised, #16161A inset, #232328 / #18181C hairlines.\n\nText - #F4F4F2 primary, #C8C8CC body, #A0A0A8 secondary, #8E8E97 tertiary, #7E7E88 quaternary. The whole ramp was lifted one step after the first pass: the old tertiary sat at 4.5:1 and the step below it at 3.7:1 while carrying real numbers.\n\nValue states - #8A8A93 planned, #F4F4F2 current, #C8C8CC logged. Dim, bright, settled.\n\nAccent - #CCFF33 only for live, done, or the one primary action. Fill 0.11, border 0.28, glow 0.15. Chart bars use #7E9C28, the same hue held back, so the current week can be the only full-strength bar.\n\nRadii - 8 inset, 12-15 cards and controls, pill for chips.\n\nTargets - 44x44 minimum everywhere. The only things under it are inline text links (See all, Edit), which get padded hit areas that extend past their visual bounds."
+    },
+    {
+      "id": "workout-note",
+      "x": 490,
+      "y": -150,
+      "w": 390,
+      "text": "This one is live \u2014 tick a set to see the row commit and the rest timer dock in. \"Add set\" works too. Rest length is a tweak above the frame."
+    },
+    {
+      "id": "directions-note",
+      "x": 0,
+      "y": -170,
+      "w": 880,
+      "page": "page-2",
+      "text": "Two other ways the logging screen could go, if the committed direction on page 1 isn't the one. Both are deliberately rough \u2014 they're here to pick an idea from, not a look.",
+      "kind": "note"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

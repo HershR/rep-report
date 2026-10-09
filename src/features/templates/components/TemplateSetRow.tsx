@@ -1,0 +1,193 @@
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { Trash2 } from "lucide-react-native";
+
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
+import {
+  durationDisplayToSeconds,
+  formatDurationInput,
+  secondsToDurationDisplay,
+} from "@/features/workouts/utils/durationInput";
+import { parseTemplateNumberText } from "@/features/templates/types";
+import {
+  distanceToText,
+  resolveDistanceText,
+  resolveWeightText,
+  weightToText,
+} from "@/lib/units";
+
+type TemplateSetRowProps = {
+  index: number;
+  repsText: string;
+  weightText: string;
+  durationText: string;
+  distanceText: string;
+  isCardio: boolean;
+  onChangeReps: (value: string) => void;
+  onChangeWeight: (value: string) => void;
+  onChangeDuration: (value: string) => void;
+  onChangeDistance: (value: string) => void;
+  onDelete: () => void;
+};
+
+export function TemplateSetRow({
+  index,
+  repsText,
+  weightText,
+  durationText,
+  distanceText,
+  isCardio,
+  onChangeReps,
+  onChangeWeight,
+  onChangeDuration,
+  onChangeDistance,
+  onDelete,
+}: TemplateSetRowProps) {
+  const { distanceUnit, weightUnit } = useAppSettings();
+
+  const [durationInput, setDurationInput] = useState("");
+  const [isDurationFocused, setIsDurationFocused] = useState(false);
+  const [distanceInput, setDistanceInput] = useState("");
+  const [isDistanceFocused, setIsDistanceFocused] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
+  const [isWeightFocused, setIsWeightFocused] = useState(false);
+
+  useEffect(() => {
+    if (isDurationFocused) return;
+    const secondsValue = Number(durationText || "0");
+    setDurationInput(
+      secondsToDurationDisplay(
+        Number.isFinite(secondsValue) ? secondsValue : 0,
+      ),
+    );
+  }, [durationText, isDurationFocused]);
+
+  useEffect(() => {
+    if (isDistanceFocused) return;
+    const kmValue = Number(distanceText || "0");
+    setDistanceInput(
+      distanceToText(
+        Number.isFinite(kmValue) && kmValue > 0 ? kmValue : null,
+        distanceUnit,
+      ),
+    );
+  }, [distanceText, distanceUnit, isDistanceFocused]);
+
+  useEffect(() => {
+    if (isWeightFocused) return;
+    const kgValue = Number(weightText || "0");
+    setWeightInput(
+      weightToText(
+        Number.isFinite(kgValue) && kgValue > 0 ? kgValue : null,
+        weightUnit,
+      ),
+    );
+  }, [weightText, weightUnit, isWeightFocused]);
+
+  const commitDuration = () => {
+    setIsDurationFocused(false);
+    onChangeDuration(String(durationDisplayToSeconds(durationInput)));
+  };
+
+  const onChangeDurationInput = (value: string) => {
+    const formatted = formatDurationInput(value);
+    setDurationInput(formatted);
+    onChangeDuration(String(durationDisplayToSeconds(formatted)));
+  };
+
+  // The form holds canonical km/kg as text; text that still reads as that value
+  // keeps it exactly instead of re-deriving it from rounded display text.
+  const storedKm = parseTemplateNumberText(distanceText);
+  const storedKg = parseTemplateNumberText(weightText);
+
+  const commitDistance = () => {
+    setIsDistanceFocused(false);
+    const metricValue = resolveDistanceText(distanceInput, distanceUnit, [storedKm]);
+    onChangeDistance(metricValue === null ? "" : String(metricValue));
+  };
+
+  const onChangeDistanceInput = (value: string) => {
+    setDistanceInput(value);
+    const metricValue = resolveDistanceText(value, distanceUnit, [storedKm]);
+    onChangeDistance(metricValue === null ? "" : String(metricValue));
+  };
+
+  const commitWeight = () => {
+    setIsWeightFocused(false);
+    const metricValue = resolveWeightText(weightInput, weightUnit, [storedKg]);
+    onChangeWeight(metricValue === null ? "" : String(metricValue));
+  };
+
+  const onChangeWeightInput = (value: string) => {
+    setWeightInput(value);
+    const metricValue = resolveWeightText(value, weightUnit, [storedKg]);
+    onChangeWeight(metricValue === null ? "" : String(metricValue));
+  };
+
+  return (
+    <View className="flex-row items-center gap-2 py-1.5">
+      <View className="border-border-strong size-6 items-center justify-center rounded-full border-2">
+        <Text className="text-text-4 font-mono-semibold text-[10px]">{index + 1}</Text>
+      </View>
+
+      {isCardio ? (
+        <>
+          <Input
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
+            value={durationInput}
+            onChangeText={onChangeDurationInput}
+            keyboardType="numeric"
+            onFocus={() => setIsDurationFocused(true)}
+            onEndEditing={commitDuration}
+            onBlur={commitDuration}
+            onSubmitEditing={commitDuration}
+            placeholder="00:00:00"
+          />
+          <Input
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
+            value={distanceInput}
+            onChangeText={onChangeDistanceInput}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsDistanceFocused(true)}
+            onEndEditing={commitDistance}
+            onBlur={commitDistance}
+            onSubmitEditing={commitDistance}
+          />
+        </>
+      ) : (
+        <>
+          <Input
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
+            value={repsText}
+            onChangeText={onChangeReps}
+            keyboardType="numeric"
+          />
+          <Input
+            className="h-11 flex-1 px-2 text-center font-mono-semibold text-[17px]"
+            value={weightInput}
+            onChangeText={onChangeWeightInput}
+            keyboardType="decimal-pad"
+            onFocus={() => setIsWeightFocused(true)}
+            onEndEditing={commitWeight}
+            onBlur={commitWeight}
+            onSubmitEditing={commitWeight}
+          />
+        </>
+      )}
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-11"
+        accessibilityLabel={`Delete set ${index + 1}`}
+        onPress={onDelete}
+      >
+        <Icon as={Trash2} className="text-text-4 size-4" />
+      </Button>
+    </View>
+  );
+}
