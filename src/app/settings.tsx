@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { useRouter, type Href } from "expo-router";
-import { Download, Ruler, Timer, TimerReset, Trash2, Upload } from "lucide-react-native";
+import { FolderDown, Ruler, Share2, Timer, TimerReset, Trash2, Upload } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Switch, View } from "react-native";
 import { toast } from "sonner-native";
@@ -9,7 +9,10 @@ import { CustomScreen, ListRow, ScreenHeader } from "@/components/common";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DeveloperSection } from "@/components/DeveloperSection";
 import { Text } from "@/components/ui/text";
-import { useDataManagement } from "@/features/backup/hooks/useDataManagement";
+import {
+  useDataManagement,
+  type ExportDestination,
+} from "@/features/backup/hooks/useDataManagement";
 import { useAppSettings } from "@/features/profile/hooks/useAppSettings";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -93,9 +96,12 @@ export default function SettingsScreen() {
     );
   };
 
-  const onExport = async () => {
+  const onExport = async (destination: ExportDestination) => {
     try {
-      await exportData();
+      const outcome = await exportData(destination);
+      if (outcome.status === "saved") {
+        toast.success("Backup saved", { description: outcome.fileName });
+      }
     } catch (error) {
       toast.error("Export failed", { description: errorMessage(error, "Please try again.") });
     }
@@ -184,10 +190,21 @@ export default function SettingsScreen() {
         DATA
       </Text>
       <Text variant="body" className="text-text-3 mb-2">
-        Everything is stored on this device only. Export a backup before
+        Everything is stored on this device only. Save a backup before
         reinstalling or switching phones.
       </Text>
-      <ListRow icon={Download} label="Export data" disabled={isBusy} onPress={() => void onExport()} />
+      <ListRow
+        icon={FolderDown}
+        label="Save backup to device"
+        disabled={isBusy}
+        onPress={() => void onExport("device")}
+      />
+      <ListRow
+        icon={Share2}
+        label="Share backup"
+        disabled={isBusy}
+        onPress={() => void onExport("share")}
+      />
       <ListRow
         icon={Upload}
         label="Restore from backup"
@@ -212,7 +229,7 @@ export default function SettingsScreen() {
         open={restoreConfirmOpen}
         onOpenChange={setRestoreConfirmOpen}
         title="Restore from a backup?"
-        description="This replaces everything on this device - workouts, templates, saved exercises, measurements and settings, including a workout in progress. Export first if you want to keep what's here."
+        description="This replaces everything on this device - workouts, templates, saved exercises, measurements and settings, including a workout in progress. Save a backup first if you want to keep what's here."
         confirmLabel="Choose file"
         destructive
         onConfirm={() => {

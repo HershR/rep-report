@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import * as DocumentPicker from "expo-document-picker";
-import { File, Paths } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 import {
@@ -11,7 +11,21 @@ import {
   parseBackup,
 } from "@/features/backup/repositories/backupRepository";
 
+export type ExportDestination = "device" | "share";
+export type ExportOutcome =
+  | { status: "saved"; fileName: string }
+  | { status: "shared" }
+  | { status: "cancelled" };
 export type RestoreOutcome = "restored" | "cancelled";
+
+const backupFileName = () =>
+  `rep-report-backup-${format(new Date(), "yyyy-MM-dd-HHmmss")}.json`;
+
+// iOS rejects with ERR_FILE_PICKING_CANCELLED, Android with ERR_PICKER_CANCELLED.
+function isPickerCancelled(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === "string" && code.endsWith("_CANCELLED");
+}
 
 /** Export, restore and wipe the whole local database. */
 export function useDataManagement() {
@@ -22,23 +36,36 @@ export function useDataManagement() {
   const resetCache = () => queryClient.resetQueries();
 
   const exportMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (destination: ExportDestination): Promise<ExportOutcome> => {
+      const fileName = backupFileName();
+
+      if (destination === "device") {
+        // The system folder picker: Files on iOS, the storage access
+        // framework on Android (Downloads, Documents, an SD card...).
+        const directory = await Directory.pickDirectoryAsync().catch((error: unknown) => {
+          if (isPickerCancelled(error)) return null;
+          throw error;
+        });
+        if (!directory) return { status: "cancelled" };
+        const json = JSON.stringify(await exportAllData());
+        directory.createFile(fileName, "application/json").write(json);
+        return { status: "saved", fileName };
+      }
+
       if (!(await Sharing.isAvailableAsync())) {
         throw new Error("Sharing isn't available on this device.");
       }
       const backup = await exportAllData();
-      const file = new File(
-        Paths.cache,
-        `rep-report-backup-${format(new Date(), "yyyy-MM-dd-HHmm")}.json`,
-      );
+      const file = new File(Paths.cache, fileName);
       if (file.exists) file.delete();
       file.create();
       file.write(JSON.stringify(backup));
       await Sharing.shareAsync(file.uri, {
         mimeType: "application/json",
         UTI: "public.json",
-        dialogTitle: "Save your Rep Report backup",
+        dialogTitle: "Share your Rep Report backup",
       });
+      return { status: "shared" };
     },
   });
 
